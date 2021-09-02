@@ -26,7 +26,7 @@ setup(
         ]
     },
     platforms="any",
-    python_requires=">=3.9",
+    python_requires=">=3.6",
     install_requires=[
         "pip-api==0.0.20",
     ],
@@ -39,7 +39,9 @@ setup(
             "pytest-cov",
             "coverage[toml]",
             "twine",
-            "pdoc3",
+            # NOTE(ww): pdoc3 does not support Python 3.6. Re-enable this once 3.7 is
+            # our minimally supported version.
+            # "pdoc3",
             "mypy",
         ]
     },

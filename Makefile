@@ -30,10 +30,12 @@ test:
 		pytest --cov=pip_audit test/ && \
 		python -m coverage report -m --fail-under 100
 
-.PHONY: doc
-doc:
-	. env/bin/activate && \
-		PYTHONWARNINGS='error::UserWarning' pdoc --force --html pip_audit
+# NOTE(ww): pdoc3 does not support Python 3.6. Re-enable this once 3.7 is
+# our minimally supported version.
+# .PHONY: doc
+# doc:
+# 	. env/bin/activate && \
+# 		PYTHONWARNINGS='error::UserWarning' pdoc --force --html pip_audit
 
 .PHONY: package
 package:
