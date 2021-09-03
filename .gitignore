@@ -1,0 +1,7 @@
+env/
+pip-wheel-metadata/
+*.egg-info/
+__pycache__/
+.coverage
+html/
+dist/
