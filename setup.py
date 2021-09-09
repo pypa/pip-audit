@@ -34,7 +34,7 @@ setup(
         "dev": [
             "flake8",
             "black",
-            "dataclasses"
+            "dataclasses",
             "isort",
             "pytest",
             "pytest-cov",
