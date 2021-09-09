@@ -29,6 +29,8 @@ setup(
     python_requires=">=3.6",
     install_requires=[
         "pip-api==0.0.20",
+        "packaging==21.0.0",
+        # TODO: Remove this once 3.7 is our minimally supported version.
         "dataclasses==0.6",
     ],
     extras_require={
@@ -40,10 +42,11 @@ setup(
             "pytest-cov",
             "coverage[toml]",
             "twine",
-            # NOTE(ww): pdoc3 does not support Python 3.6. Re-enable this once 3.7 is
+            # NOTE: pdoc3 does not support Python 3.6. Re-enable this once 3.7 is
             # our minimally supported version.
             # "pdoc3",
             "mypy",
+            # TODO: Remove this once 3.7 is our minimally supported version.
             "types-dataclasses",
             "types-requests",
         ]
