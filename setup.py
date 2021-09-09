@@ -44,6 +44,7 @@ setup(
             # our minimally supported version.
             # "pdoc3",
             "mypy",
+            "types-dataclasses",
             "types-requests",
         ]
     },
