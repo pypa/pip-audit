@@ -29,12 +29,12 @@ setup(
     python_requires=">=3.6",
     install_requires=[
         "pip-api==0.0.20",
+        "dataclasses==0.6",
     ],
     extras_require={
         "dev": [
             "flake8",
             "black",
-            "dataclasses",
             "isort",
             "pytest",
             "pytest-cov",
