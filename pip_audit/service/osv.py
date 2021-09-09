@@ -3,7 +3,7 @@ from typing import List
 
 import requests
 
-from .service import Dependency, VulnerabilityResult, VulnerabilityService
+from .interface import Dependency, VulnerabilityResult, VulnerabilityService
 
 
 class OsvService(VulnerabilityService):
