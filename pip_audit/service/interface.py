@@ -20,7 +20,7 @@ class VulnerabilityResult:
 
 
 class VulnerabilityService(ABC):
-    def query(self, spec: Dependency) -> List[VulnerabilityResult]:
+    def query(self, spec: Dependency) -> List[VulnerabilityResult]:  # pragma: no cover
         raise NotImplementedError
 
     def query_all(self, specs: List[Dependency]) -> Dict[Dependency, List[VulnerabilityResult]]:
