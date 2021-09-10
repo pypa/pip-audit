@@ -17,7 +17,7 @@ class OutputFormat(str, enum.Enum):
     Output formats supported by the `pip-audit` CLI.
     """
 
-    Plain = "plain"
+    Columns = "columns"
     Json = "json"
 
     def __str__(self):
@@ -59,7 +59,7 @@ def audit():
         "--format",
         type=OutputFormat,
         choices=OutputFormat,
-        default=OutputFormat.Plain,
+        default=OutputFormat.Columns,
         help="the format to emit audit results in",
     )
     parser.add_argument(
