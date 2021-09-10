@@ -48,6 +48,7 @@ setup(
             "mypy",
             # TODO: Remove this once 3.7 is our minimally supported version.
             "types-dataclasses",
+            "types-requests",
         ]
     },
     classifiers=[

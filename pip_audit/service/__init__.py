@@ -1,1 +1,7 @@
-from .interface import Dependency, VulnerabilityResult, VulnerabilityService  # noqa: F401
+from .interface import (  # noqa: F401
+    Dependency,
+    ServiceError,
+    VulnerabilityResult,
+    VulnerabilityService
+)
+from .osv import OsvService  # noqa: F401
