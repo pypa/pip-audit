@@ -12,11 +12,16 @@ class Dependency:
 
 
 @dataclass(frozen=True)
+class VersionRange:
+    introduced: Optional[Version]
+    fixed: Optional[Version]
+
+
+@dataclass(frozen=True)
 class VulnerabilityResult:
     id: str
     description: str
-    version_introduced: Optional[Version]
-    version_fixed: Optional[Version]
+    version_range: List[VersionRange]
 
 
 class VulnerabilityService(ABC):
@@ -29,3 +34,7 @@ class VulnerabilityService(ABC):
         for spec in specs:
             results[spec] = self.query(spec)
         return results
+
+
+class ServiceError(Exception):
+    pass

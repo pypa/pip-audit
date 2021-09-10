@@ -3,7 +3,9 @@ from typing import List
 
 import requests
 
-from .interface import Dependency, VulnerabilityResult, VulnerabilityService
+from pip_audit.service.interface import VersionRange
+
+from .interface import Dependency, ServiceError, VulnerabilityResult, VulnerabilityService
 
 
 class OsvService(VulnerabilityService):
@@ -21,8 +23,9 @@ class OsvService(VulnerabilityService):
 
         results: List[VulnerabilityResult] = []
 
-        # TODO(alex): Figure out what to do here
-        assert response.status_code == 200
+        # Check for an unsuccessful status code
+        if response.status_code != 200:
+            raise ServiceError(f"Received an unsuccessful status code: {response.status_code}")
 
         # If the response is empty, that means that the package/version pair doesn't have any
         # associated vulnerabilities
@@ -35,16 +38,17 @@ class OsvService(VulnerabilityService):
         for vuln in response_json["vulns"]:
             id = vuln["id"]
             description = vuln["details"]
-            version_introduced = None
-            version_fixed = None
+            version_range: List[VersionRange] = []
             for ranges in vuln["affects"]["ranges"]:
                 # We only care about PyPI versions
                 if ranges["type"] == "ECOSYSTEM":
+                    version_introduced = None
+                    version_fixed = None
                     if "introduced" in ranges:
                         version_introduced = ranges["introduced"]
                     if "fixed" in ranges:
                         version_fixed = ranges["fixed"]
-                    break
-            results.append(VulnerabilityResult(id, description, version_introduced, version_fixed))
+                    version_range.append(VersionRange(version_introduced, version_fixed))
+            results.append(VulnerabilityResult(id, description, version_range))
 
         return results
