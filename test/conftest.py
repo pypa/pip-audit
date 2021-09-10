@@ -5,7 +5,7 @@ from pip_audit.service.interface import (
     Dependency,
     VersionRange,
     VulnerabilityResult,
-    VulnerabilityService
+    VulnerabilityService,
 )
 
 
