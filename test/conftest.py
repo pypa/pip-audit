@@ -1,6 +1,7 @@
 import pytest
 from packaging.version import Version
 
+from pip_audit.dependency_source.interface import DependencySource
 from pip_audit.service.interface import (
     Dependency,
     VersionRange,
@@ -40,3 +41,12 @@ def vuln_service():
             return []
 
     return Service
+
+
+@pytest.fixture(autouse=True)
+def dep_source(spec):
+    class Source(DependencySource):
+        def collect(self):
+            yield spec("1.0.1")
+
+    return Source
