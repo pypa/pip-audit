@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
@@ -25,6 +25,7 @@ class VulnerabilityResult:
 
 
 class VulnerabilityService(ABC):
+    @abstractmethod
     def query(self, spec: Dependency) -> List[VulnerabilityResult]:  # pragma: no cover
         raise NotImplementedError
 
