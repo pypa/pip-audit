@@ -2,6 +2,7 @@
 line_length = 100
 multi_line_output = 3
 known_first_party = "pip_audit"
+include_trailing_comma = true
 
 [tool.black]
 line-length = 100
