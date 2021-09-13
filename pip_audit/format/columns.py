@@ -20,23 +20,27 @@ def tabulate(rows: Iterable[Iterable[Any]]) -> Tuple[List[str], List[int]]:
 
 class ColumnsFormat(VulnerabilityFormat):
     def format(self, result: Dict[service.Dependency, List[service.VulnerabilityResult]]) -> str:
-        rows = []
-        rows.append(["Package", "Version", "ID", "Description", "Affected Versions"])
+        vuln_data: List[List[Any]] = []
+        vuln_data.append(["Package", "Version", "ID", "Description", "Affected Versions"])
         for dep, vulns in result.items():
             for vuln in vulns:
-                rows.append(self._format_vuln(dep, vuln))
-        vuln_strings, sizes = tabulate(rows)
-        # Create and add a separator.
-        if len(rows) > 0:
-            vuln_strings.insert(1, " ".join(map(lambda x: "-" * x, sizes)))
-        result_columns = str()
-        for row in vuln_strings:
-            if result_columns:
-                result_columns += "\n"
-            result_columns += row
-        return result_columns
+                vuln_data.append(self._format_vuln(dep, vuln))
 
-    def _format_vuln(self, dep: service.Dependency, vuln: service.VulnerabilityResult):
+        vuln_strings, sizes = tabulate(vuln_data)
+
+        # Create and add a separator.
+        if len(vuln_data) > 0:
+            vuln_strings.insert(1, " ".join(map(lambda x: "-" * x, sizes)))
+
+        columns_string = str()
+        for row in vuln_strings:
+            if columns_string:
+                columns_string += "\n"
+            columns_string += row
+
+        return columns_string
+
+    def _format_vuln(self, dep: service.Dependency, vuln: service.VulnerabilityResult) -> List[Any]:
         return [
             dep.package,
             dep.version,

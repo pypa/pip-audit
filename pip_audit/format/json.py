@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import pip_audit.service as service
 
@@ -13,14 +13,16 @@ class JsonFormat(VulnerabilityFormat):
             output_json.append(self._format_dep(dep, vulns))
         return json.dumps(output_json)
 
-    def _format_dep(self, dep: service.Dependency, vulns: List[service.VulnerabilityResult]):
+    def _format_dep(
+        self, dep: service.Dependency, vulns: List[service.VulnerabilityResult]
+    ) -> Dict[str, Any]:
         return {
             "package": dep.package,
             "version": str(dep.version),
             "vulns": [self._format_vuln(vuln) for vuln in vulns],
         }
 
-    def _format_vuln(self, vuln: service.VulnerabilityResult):
+    def _format_vuln(self, vuln: service.VulnerabilityResult) -> Dict[str, Any]:
         return {
             "id": vuln.id,
             "description": vuln.description,
@@ -29,7 +31,7 @@ class JsonFormat(VulnerabilityFormat):
             ],
         }
 
-    def _format_version_range(self, version_range: service.VersionRange):
+    def _format_version_range(self, version_range: service.VersionRange) -> Dict[str, str]:
         version_range_json = {}
         if version_range.introduced is not None:
             version_range_json["introduced"] = str(version_range.introduced)
