@@ -2,10 +2,8 @@ import json
 
 import pip_audit.format as format
 
-from .vuln_data import TEST_VULN_DATA
 
-
-def test_json():
+def test_json(vuln_data):
     json_format = format.JsonFormat()
     expected_json = [
         {
@@ -41,4 +39,4 @@ def test_json():
             ],
         },
     ]
-    assert json_format.format(TEST_VULN_DATA) == json.dumps(expected_json)
+    assert json_format.format(vuln_data) == json.dumps(expected_json)

@@ -1,10 +1,11 @@
 from typing import Dict, List
 
+import pytest
 from packaging.version import Version
 
 import pip_audit.service as service
 
-TEST_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
+_TEST_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
     service.Dependency(package="foo", version="1.0"): [
         service.VulnerabilityResult(
             id="VULN-0",
@@ -28,3 +29,8 @@ TEST_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
         )
     ],
 }
+
+
+@pytest.fixture(autouse=True)
+def vuln_data():
+    return _TEST_VULN_DATA
