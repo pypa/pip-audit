@@ -40,6 +40,7 @@ setup(
             "isort",
             "pytest",
             "pytest-cov",
+            "pretend",
             "coverage[toml]",
             "twine",
             # NOTE: pdoc3 does not support Python 3.6. Re-enable this once 3.7 is
