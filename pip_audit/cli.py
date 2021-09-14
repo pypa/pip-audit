@@ -7,6 +7,11 @@ import enum
 import logging
 import os
 
+from pip_audit.audit import AuditOptions, Auditor
+from pip_audit.dependency_source import PipSource
+from pip_audit.format import ColumnsFormat, JsonFormat
+from pip_audit.service import OsvService
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PIP_AUDIT_LOGLEVEL", "INFO").upper())
 
@@ -79,3 +84,20 @@ def audit():
 
     args = parser.parse_args()
     logger.debug(f"parsed arguments: {args}")
+
+    if args.requirements:
+        raise NotImplementedError
+
+    if args.vulnerability_service != VulnerabilityService.Osv:
+        raise NotImplementedError
+
+    if args.format == OutputFormat.Columns:
+        formatter = ColumnsFormat()
+    else:
+        formatter = JsonFormat()
+
+    source = PipSource()
+    service = OsvService()
+    auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run))
+
+    print(formatter.format(auditor.audit(source)))
