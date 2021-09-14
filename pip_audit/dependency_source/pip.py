@@ -6,7 +6,7 @@ by `pip-api`.
 import logging
 from typing import Iterator
 
-import pip_api  # type: ignore
+import pip_api
 from packaging.version import Version
 
 from pip_audit.dependency_source import DependencySource, DependencySourceError
