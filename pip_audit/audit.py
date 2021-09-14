@@ -4,6 +4,7 @@ Core auditing APIs.
 
 from dataclasses import dataclass
 
+from pip_audit.dependency_source import DependencySource
 from pip_audit.service import VulnerabilityService
 
 
@@ -17,6 +18,12 @@ class AuditOptions:
 
 
 class Auditor:
-    def __init__(self, service: VulnerabilityService, options: AuditOptions):
+    def __init__(
+        self, source: DependencySource, service: VulnerabilityService, options: AuditOptions
+    ):
+        self._source = source
         self._service = service
         self._options = options
+
+    def audit(self):
+        raise NotImplementedError

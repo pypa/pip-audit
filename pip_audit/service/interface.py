@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, Iterator, List, Optional
 
 from packaging.version import Version
 
@@ -29,7 +29,7 @@ class VulnerabilityService(ABC):
     def query(self, spec: Dependency) -> List[VulnerabilityResult]:  # pragma: no cover
         raise NotImplementedError
 
-    def query_all(self, specs: List[Dependency]) -> Dict[Dependency, List[VulnerabilityResult]]:
+    def query_all(self, specs: Iterator[Dependency]) -> Dict[Dependency, List[VulnerabilityResult]]:
         # Naive implementation that can be overridden if a particular service supports bulk queries
         results: Dict[Dependency, List[VulnerabilityResult]] = {}
         for spec in specs:
