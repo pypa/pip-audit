@@ -33,3 +33,11 @@ make release BUMP_ARGS="--major"
 ```
 
 `make release` will fail if there are any untracked changes in the source tree.
+
+If `make release` succeeds, you'll see an output like this:
+
+```
+RUN ME MANUALLY: git push origin main && git push origin vX.Y.Z
+```
+
+Run that last command sequence to complete the release.
