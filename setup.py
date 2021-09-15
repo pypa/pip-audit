@@ -35,6 +35,7 @@ setup(
     ],
     extras_require={
         "dev": [
+            "bump",
             "flake8",
             "black",
             "isort",

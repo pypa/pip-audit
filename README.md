@@ -14,3 +14,22 @@ git clone https://github.com/trailofbits/pip-audit && cd pip-audit
 make dev && source env/bin/activate
 pip-audit --help
 ```
+
+## Release process
+
+Releases of `pip-audit` are managed via [`bump`](https://github.com/di/bump)
+and GitHub Actions.
+
+```bash
+# default release (patch bump)
+make release
+
+# override the default
+# vX.Y.Z -> vX.Y.Z-rc.0
+make release BUMP_ARGS="--pre rc.0"
+
+# vX.Y.Z -> vN.0.0
+make release BUMP_ARGS="--major"
+```
+
+`make release` will fail if there are any untracked changes in the source tree.
