@@ -58,5 +58,6 @@ setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
         "Intended Audience :: Developers",
+        "Topic :: Security",
     ],
 )
