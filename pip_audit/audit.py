@@ -1,0 +1,52 @@
+"""
+Core auditing APIs.
+"""
+
+import logging
+from dataclasses import dataclass
+from typing import Dict, List
+
+from pip_audit.dependency_source import DependencySource
+from pip_audit.service import Dependency, VulnerabilityResult, VulnerabilityService
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class AuditOptions:
+    """
+    Settings the control the behavior of an `Auditor` instance.
+    """
+
+    dry_run: bool = False
+
+
+class Auditor:
+    def __init__(
+        self,
+        service: VulnerabilityService,
+        options: AuditOptions = AuditOptions(),
+    ):
+        """
+        Create a new auditor. Auditors start with no dependencies to audit;
+        each `audit` step is fed a `DependencySource`.
+
+        The behavior of the auditor can be optionally tweaked with the `options`
+        parameter.
+        """
+        self._service = service
+        self._options = options
+
+    def audit(self, source: DependencySource) -> Dict[Dependency, List[VulnerabilityResult]]:
+        """
+        Perform the auditing step, collecting dependencies from `source`.
+        """
+        specs = source.collect()
+
+        if self._options.dry_run:
+            # Drain the iterator in dry-run mode.
+            for spec in specs:
+                logger.info(f"Dry run: would have audited {spec.package}")
+            return {}
+        else:
+            return self._service.query_all(specs)
