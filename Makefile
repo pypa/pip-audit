@@ -4,6 +4,9 @@ ALL_PY_SRCS := setup.py \
 	$(shell find $(PY_MODULE) -name '*.py') \
 	$(shell find test -name '*.py')
 
+# Optionally overridden by the user in the `release` target.
+BUMP_ARGS :=
+
 .PHONY: all
 all:
 	@echo "Run my targets individually!"
@@ -40,8 +43,17 @@ test:
 .PHONY: package
 package:
 	. env/bin/activate && \
-		python3 setup.py sdist && \
-		twine upload --repository pypi dist/*
+		python3 -m build
+
+.PHONY: release
+release:
+	@. env/bin/activate && \
+		NEXT_VERSION=$$(bump $(BUMP_ARGS)) && \
+		git add pip_audit/version.py && git diff --quiet --exit-code && \
+		git commit -m "version: v$${NEXT_VERSION}" && \
+		git tag v$${NEXT_VERSION} && \
+		echo "RUN ME MANUALLY: git push origin main && git push origin v$${NEXT_VERSION}"
+
 
 .PHONY: edit
 edit:
