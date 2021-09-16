@@ -1,4 +1,5 @@
 import pretend
+import pytest
 from packaging.version import Version
 
 from pip_audit import audit
@@ -13,17 +14,19 @@ def test_audit(vuln_service, dep_source):
     auditor = Auditor(service)
     results = auditor.audit(source)
 
-    assert isinstance(results, dict)
-
-    assert results == {
-        next(source.collect()): [
+    assert next(results) == (
+        next(source.collect()),
+        [
             VulnerabilityResult(
                 id="fake-id",
                 description="this is not a real result",
                 version_range=[VersionRange(introduced=Version("1.0.0"), fixed=Version("1.1.0"))],
             )
-        ]
-    }
+        ],
+    )
+
+    with pytest.raises(StopIteration):
+        next(results)
 
 
 def test_audit_dry_run(monkeypatch, vuln_service, dep_source):
@@ -36,7 +39,8 @@ def test_audit_dry_run(monkeypatch, vuln_service, dep_source):
     monkeypatch.setattr(auditor, "_service", service)
     monkeypatch.setattr(audit, "logger", logger)
 
-    _ = auditor.audit(source)
+    # dict-construct here to consume the iterator, causing the effects below.
+    _ = dict(auditor.audit(source))
 
     # In dry-run mode, no calls should be made the the vuln service,
     # but an appropriate number of logging calls should be made.

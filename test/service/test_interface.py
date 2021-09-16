@@ -4,7 +4,7 @@ def test_vulnerability_service(vuln_service, spec):
 
     assert len(service.query(spec)) == 1
 
-    all_ = service.query_all([spec])
+    all_ = dict(service.query_all([spec]))
     assert len(all_) == 1
     assert len(all_[spec]) == 1
 
