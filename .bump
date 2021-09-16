@@ -1,0 +1,3 @@
+[bump]
+input = pip_audit/version.py
+reset = true
