@@ -47,8 +47,7 @@ class Auditor:
 
         if self._options.dry_run:
             # Drain the iterator in dry-run mode.
-            for spec in specs:
-                logger.info(f"Dry run: would have audited {spec.package}")
+            logger.info(f"Dry run: would have audited {len(list(specs))} packages")
             return {}
         else:
             yield from self._service.query_all(specs)

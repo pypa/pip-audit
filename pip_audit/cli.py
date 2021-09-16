@@ -7,6 +7,8 @@ import enum
 import logging
 import os
 
+from progress.spinner import Spinner  # type: ignore
+
 from pip_audit.audit import AuditOptions, Auditor
 from pip_audit.dependency_source import PipSource
 from pip_audit.format import ColumnsFormat, JsonFormat, VulnerabilityFormat
@@ -111,4 +113,8 @@ def audit():
     source = PipSource()
     auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run))
 
-    print(formatter.format(auditor.audit(source)))
+    result = {}
+    for (spec, vulns) in Spinner("Auditing").iter(auditor.audit(source)):
+        result[spec] = vulns
+
+    print(formatter.format(result))
