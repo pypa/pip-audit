@@ -15,6 +15,7 @@ from pip_audit.dependency_source import PipSource
 from pip_audit.format import ColumnsFormat, JsonFormat, VulnerabilityFormat
 from pip_audit.service import OsvService, VulnerabilityService
 from pip_audit.util import assert_never
+from pip_audit.version import __version__
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PIP_AUDIT_LOGLEVEL", "INFO").upper())
@@ -83,9 +84,11 @@ def audit():
     The primary entrypoint for `pip-audit`.
     """
     parser = argparse.ArgumentParser(
+        prog="pip-audit",
         description="audit the Python environment for dependencies with known vulnerabilities",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    parser.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument(
         "-r",
         "--requirement",
