@@ -1,4 +1,3 @@
-import sys
 from email.message import EmailMessage
 from email.parser import BytesParser
 from io import BytesIO
@@ -13,7 +12,6 @@ from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name
 from packaging.version import InvalidVersion, Version
-from resolvelib import BaseReporter, Resolver
 
 from .extras_provider import ExtrasProvider
 
@@ -30,7 +28,7 @@ class Candidate:
         self._metadata = None
         self._dependencies = None
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         if not self.extras:
             return f"<{self.name}=={self.version}>"
         return f"<{self.name}[{','.join(self.extras)}]=={self.version}>"
@@ -40,10 +38,6 @@ class Candidate:
         if self._metadata is None:
             self._metadata = get_metadata_for_wheel(self.url)
         return self._metadata
-
-    @property
-    def requires_python(self):
-        return self.metadata.get("Requires-Python")
 
     def _get_dependencies(self):
         deps = self.metadata.get_all("Requires-Dist", [])

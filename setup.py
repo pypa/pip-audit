@@ -54,6 +54,7 @@ setup(
             # TODO: Remove this once 3.7 is our minimally supported version.
             "types-dataclasses",
             "types-requests",
+            "types-html5lib",
         ]
     },
     classifiers=[

@@ -43,7 +43,7 @@ class DependencyResolver(ABC):
     """
 
     @abstractmethod
-    def resolve(self, req: Requirement) -> List[Dependency]:
+    def resolve(self, req: Requirement) -> List[Dependency]:  # pragma: no cover
         raise NotImplementedError
 
     def resolve_all(
