@@ -2,12 +2,7 @@ import pytest
 from packaging.version import Version
 
 from pip_audit.dependency_source.interface import DependencySource
-from pip_audit.service.interface import (
-    Dependency,
-    VersionRange,
-    VulnerabilityResult,
-    VulnerabilityService,
-)
+from pip_audit.service.interface import Dependency, VulnerabilityResult, VulnerabilityService
 
 
 @pytest.fixture(autouse=True)
@@ -32,9 +27,7 @@ def vuln_service():
                     VulnerabilityResult(
                         id="fake-id",
                         description="this is not a real result",
-                        version_range=[
-                            VersionRange(introduced=Version("1.0.0"), fixed=Version("1.1.0"))
-                        ],
+                        fix_versions=[fixed],
                     )
                 ]
 

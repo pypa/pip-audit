@@ -2,8 +2,7 @@ import json
 from typing import List
 
 import requests
-
-from pip_audit.service.interface import VersionRange
+from packaging.version import Version
 
 from .interface import Dependency, ServiceError, VulnerabilityResult, VulnerabilityService
 
@@ -38,17 +37,24 @@ class OsvService(VulnerabilityService):
         for vuln in response_json["vulns"]:
             id = vuln["id"]
             description = vuln["details"]
-            version_range: List[VersionRange] = []
-            for ranges in vuln["affects"]["ranges"]:
+            fix_versions: List[Version] = []
+            for affected in vuln["affected"]:
+                pkg = affected["package"]
                 # We only care about PyPI versions
-                if ranges["type"] == "ECOSYSTEM":
-                    version_introduced = None
-                    version_fixed = None
-                    if "introduced" in ranges:
-                        version_introduced = ranges["introduced"]
-                    if "fixed" in ranges:
-                        version_fixed = ranges["fixed"]
-                    version_range.append(VersionRange(version_introduced, version_fixed))
-            results.append(VulnerabilityResult(id, description, version_range))
+                if pkg["name"] == spec.package and pkg["ecosystem"] == "PyPI":
+                    for ranges in affected["ranges"]:
+                        if ranges["type"] == "ECOSYSTEM":
+                            # Filter out non-fix versions
+                            fix_version_strs = [
+                                version["fixed"]
+                                for version in ranges["events"]
+                                if "fixed" in version
+                            ]
+                            # Convert them to version objects
+                            fix_versions = [
+                                Version(version_str) for version_str in fix_version_strs
+                            ]
+                            break
+            results.append(VulnerabilityResult(id, description, fix_versions))
 
         return results

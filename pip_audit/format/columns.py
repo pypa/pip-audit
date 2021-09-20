@@ -1,6 +1,8 @@
 from itertools import zip_longest
 from typing import Any, Dict, Iterable, List, Tuple
 
+from packaging.version import Version
+
 import pip_audit.service as service
 
 from .interface import VulnerabilityFormat
@@ -46,15 +48,8 @@ class ColumnsFormat(VulnerabilityFormat):
             dep.version,
             vuln.id,
             vuln.description,
-            self._format_version_range(vuln.version_range),
+            self._format_fix_versions(vuln.fix_versions),
         ]
 
-    def _format_version_range(self, version_range: List[service.VersionRange]) -> str:
-        range_string = str()
-        for v in version_range:
-            if range_string:
-                range_string += ", "
-            introduced = v.introduced if v.introduced is not None else "N/A"
-            fixed = v.fixed if v.fixed is not None else "N/A"
-            range_string += f"({introduced} => fix: {fixed})"
-        return range_string
+    def _format_fix_versions(self, fix_versions: List[Version]) -> str:
+        return ",".join([str(version) for version in fix_versions])

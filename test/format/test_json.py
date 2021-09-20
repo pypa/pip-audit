@@ -13,17 +13,15 @@ def test_json(vuln_data):
                 {
                     "id": "VULN-0",
                     "description": "The first vulnerability",
-                    "version_range": [
-                        {"introduced": "0.9", "fixed": "1.1"},
-                        {"fixed": "1.4"},
+                    "fix_versions": [
+                        "1.1",
+                        "1.4",
                     ],
                 },
                 {
                     "id": "VULN-1",
                     "description": "The second vulnerability",
-                    "version_range": [
-                        {"introduced": "0.5", "fixed": "1.0"},
-                    ],
+                    "fix_versions": ["1.0"],
                 },
             ],
         },
@@ -31,11 +29,7 @@ def test_json(vuln_data):
             "package": "bar",
             "version": "0.1",
             "vulns": [
-                {
-                    "id": "VULN-2",
-                    "description": "The third vulnerability",
-                    "version_range": [{"introduced": "0.1"}],
-                }
+                {"id": "VULN-2", "description": "The third vulnerability", "fix_versions": []}
             ],
         },
     ]

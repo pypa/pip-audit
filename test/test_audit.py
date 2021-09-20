@@ -4,7 +4,7 @@ from packaging.version import Version
 
 from pip_audit import audit
 from pip_audit.audit import AuditOptions, Auditor
-from pip_audit.service.interface import VersionRange, VulnerabilityResult
+from pip_audit.service.interface import VulnerabilityResult
 
 
 def test_audit(vuln_service, dep_source):
@@ -20,7 +20,7 @@ def test_audit(vuln_service, dep_source):
             VulnerabilityResult(
                 id="fake-id",
                 description="this is not a real result",
-                version_range=[VersionRange(introduced=Version("1.0.0"), fixed=Version("1.1.0"))],
+                fix_versions=[Version("1.1.0")],
             )
         ],
     )
