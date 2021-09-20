@@ -1,3 +1,10 @@
+"""
+A (wheel-only) `resolvelib` provider implementation that resolves against PyPI.
+
+Closely adapted from `resolvelib`'s examples, which are copyrighted by the `resolvelib`
+authors under the ISC license.
+"""
+
 from email.message import EmailMessage
 from email.parser import BytesParser
 from io import BytesIO
