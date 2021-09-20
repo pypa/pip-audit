@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Iterator, List, Optional, Tuple
+from typing import Iterator, List, Tuple
 
 from packaging.version import Version
 
@@ -12,16 +12,10 @@ class Dependency:
 
 
 @dataclass(frozen=True)
-class VersionRange:
-    introduced: Optional[Version]
-    fixed: Optional[Version]
-
-
-@dataclass(frozen=True)
 class VulnerabilityResult:
     id: str
     description: str
-    version_range: List[VersionRange]
+    fix_versions: List[Version]
 
 
 class VulnerabilityService(ABC):

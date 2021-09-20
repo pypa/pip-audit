@@ -26,15 +26,5 @@ class JsonFormat(VulnerabilityFormat):
         return {
             "id": vuln.id,
             "description": vuln.description,
-            "version_range": [
-                self._format_version_range(version) for version in vuln.version_range
-            ],
+            "fix_versions": [str(version) for version in vuln.fix_versions],
         }
-
-    def _format_version_range(self, version_range: service.VersionRange) -> Dict[str, str]:
-        version_range_json = {}
-        if version_range.introduced is not None:
-            version_range_json["introduced"] = str(version_range.introduced)
-        if version_range.fixed is not None:
-            version_range_json["fixed"] = str(version_range.fixed)
-        return version_range_json
