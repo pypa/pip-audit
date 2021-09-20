@@ -28,16 +28,20 @@ def test_resolvelib():
     req = Requirement("flask==2.0.1")
     resolved_deps = dict(resolver.resolve_all([req]))
     assert len(resolved_deps) == 1
-    expected_deps = [
-        Dependency("flask", Version("2.0.1")),
-        Dependency("werkzeug", Version("2.0.1")),
-        Dependency("jinja2", Version("3.0.1")),
-        Dependency("itsdangerous", Version("2.0.1")),
-        Dependency("click", Version("8.0.1")),
-        Dependency("markupsafe", Version("2.0.1")),
-    ]
+    expected_deps = set(
+        [
+            Dependency("flask", Version("2.0.1")),
+            Dependency("werkzeug", Version("2.0.1")),
+            Dependency("jinja2", Version("3.0.1")),
+            Dependency("itsdangerous", Version("2.0.1")),
+            Dependency("click", Version("8.0.1")),
+            Dependency("markupsafe", Version("2.0.1")),
+        ]
+    )
     assert req in resolved_deps
-    assert resolved_deps[req] == expected_deps
+    # Earlier Python versions have some extra dependencies. To avoid conditionals here, let's just
+    # check that the dependencies we specify are a subset.
+    assert expected_deps.issubset(resolved_deps[req])
 
 
 def test_resolvelib_extras():
