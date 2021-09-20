@@ -6,15 +6,35 @@ import argparse
 import enum
 import logging
 import os
+from typing import Any, Dict
+
+from progress.spinner import Spinner as BaseSpinner  # type: ignore
 
 from pip_audit.audit import AuditOptions, Auditor
 from pip_audit.dependency_source import PipSource
 from pip_audit.format import ColumnsFormat, JsonFormat, VulnerabilityFormat
 from pip_audit.service import OsvService, VulnerabilityService
 from pip_audit.util import assert_never
+from pip_audit.version import __version__
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PIP_AUDIT_LOGLEVEL", "INFO").upper())
+
+
+class AuditSpinner(BaseSpinner):
+    def __init__(self, message: str = "", **kwargs: Dict[str, Any]):
+        super().__init__(message=message, **kwargs)
+        self._base_message = self.message
+
+    def update(self):
+        item = getattr(self, "iter_value", None)
+        if item is not None:
+            (spec, _) = item
+            self.message = f"{self._base_message} {spec.package} ({spec.version})"
+
+        i = self.index % len(self.phases)
+        line = f"{self.phases[i]} {self.message}"
+        self.writeln(line)
 
 
 @enum.unique
@@ -64,9 +84,11 @@ def audit():
     The primary entrypoint for `pip-audit`.
     """
     parser = argparse.ArgumentParser(
+        prog="pip-audit",
         description="audit the Python environment for dependencies with known vulnerabilities",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    parser.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument(
         "-r",
         "--requirement",
@@ -111,4 +133,8 @@ def audit():
     source = PipSource()
     auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run))
 
-    print(formatter.format(auditor.audit(source)))
+    result = {}
+    for (spec, vulns) in AuditSpinner("Auditing").iter(auditor.audit(source)):
+        result[spec] = vulns
+
+    print(formatter.format(result))
