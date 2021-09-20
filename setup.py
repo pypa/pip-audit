@@ -32,6 +32,7 @@ setup(
         "packaging>=21.0.0",
         # TODO: Remove this once 3.7 is our minimally supported version.
         "dataclasses>=0.6",
+        "progress>=1.6",
     ],
     extras_require={
         "dev": [
