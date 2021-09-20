@@ -41,3 +41,11 @@ RUN ME MANUALLY: git push origin main && git push origin vX.Y.Z
 ```
 
 Run that last command sequence to complete the release.
+
+## Licensing
+
+`pip-audit` is licensed under the Apache 2.0 License.
+
+`pip-audit` reuses and modifies examples from
+[`resolvelib`](https://github.com/sarugaku/resolvelib), which is licensed under
+the ISC license.

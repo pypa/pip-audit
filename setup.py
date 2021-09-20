@@ -33,6 +33,8 @@ setup(
         # TODO: Remove this once 3.7 is our minimally supported version.
         "dataclasses>=0.6",
         "progress>=1.6",
+        "resolvelib>=0.7.1",
+        "html5lib>=1.1",
     ],
     extras_require={
         "dev": [
@@ -52,6 +54,7 @@ setup(
             # TODO: Remove this once 3.7 is our minimally supported version.
             "types-dataclasses",
             "types-requests",
+            "types-html5lib",
         ]
     },
     classifiers=[

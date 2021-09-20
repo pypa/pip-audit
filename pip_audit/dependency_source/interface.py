@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Iterator
+from typing import Iterator, List, Tuple
+
+from packaging.requirements import Requirement
 
 from pip_audit.service import Dependency
 
@@ -29,3 +31,25 @@ class DependencySourceError(Exception):
     """
 
     pass
+
+
+class DependencyResolver(ABC):
+    """
+    Represents an abstract resolver of Python dependencies that takes a single
+    dependency and returns all of its transitive dependencies.
+
+    Concrete dependency sources may use a resolver as part of their
+    implementation.
+    """
+
+    @abstractmethod
+    def resolve(self, req: Requirement) -> List[Dependency]:  # pragma: no cover
+        raise NotImplementedError
+
+    def resolve_all(
+        self, reqs: Iterator[Requirement]
+    ) -> Iterator[Tuple[Requirement, List[Dependency]]]:
+        # Naive implementation that can be overriden if a particular resolver is
+        # designed to resolve a list of dependencies
+        for req in reqs:
+            yield (req, self.resolve(req))
