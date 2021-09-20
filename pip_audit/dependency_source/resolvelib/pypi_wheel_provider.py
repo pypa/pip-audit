@@ -12,8 +12,7 @@ from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name
 from packaging.version import InvalidVersion, Version
-
-from .extras_provider import ExtrasProvider
+from resolvelib.providers import AbstractProvider
 
 PYTHON_VERSION = Version(python_version())
 
@@ -50,7 +49,7 @@ class Candidate:
             else:
                 for e in extras:
                     if r.marker.evaluate({"extra": e}):
-                        yield r
+                        yield r  # pragma: no cover
 
     @property
     def dependencies(self):
@@ -101,19 +100,12 @@ def get_metadata_for_wheel(url):
                 return p.parse(z.open(n), headersonly=True)
 
     # If we didn't find the metadata, return an empty dict
-    return EmailMessage()
+    return EmailMessage()  # pragma: no cover
 
 
-class PyPIProvider(ExtrasProvider):
+class PyPIProvider(AbstractProvider):
     def identify(self, requirement_or_candidate):
         return canonicalize_name(requirement_or_candidate.name)
-
-    def get_extras_for(self, requirement_or_candidate):
-        # Extras is a set, which is not hashable
-        return tuple(sorted(requirement_or_candidate.extras))
-
-    def get_base_requirement(self, candidate):
-        return Requirement("{}=={}".format(candidate.name, candidate.version))
 
     def get_preference(self, identifier, resolutions, candidates, information):
         return sum(1 for _ in candidates[identifier])
