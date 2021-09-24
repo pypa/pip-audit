@@ -2,6 +2,7 @@ pip-audit
 =========
 
 ![CI](https://github.com/trailofbits/pip-audit/workflows/CI/badge.svg)
+[![PyPI version](https://badge.fury.io/py/pip-audit.svg)](https://badge.fury.io/py/pip-audit)
 
 `pip-audit` is a prototype tool for scanning Python environments for packages with known vulnerabilities. It uses the Python Packaging Advisory Database (https://github.com/pypa/advisory-db) as a source of vulnerability reports.
 
