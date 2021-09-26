@@ -45,11 +45,32 @@ def test_resolvelib():
 
 
 def test_resolvelib_extras():
-    # TODO(alex): The resolver currently doesn't support extras
     resolver = resolvelib.ResolveLibResolver()
-    req = Requirement("requests[security,tests]>=2.8.1")
-    with pytest.raises(AssertionError, match="extras not supported"):
-        dict(resolver.resolve_all([req]))
+
+    # First check the dependencies without extras and as a basis for comparison
+    req = Requirement("requests>=2.8.1")
+    resolved_deps = dict(resolver.resolve_all([req]))
+    assert len(resolved_deps) == 1
+    expected_deps = set(
+        [
+            Dependency("requests", Version("2.26.0")),
+            Dependency("charset-normalizer", Version("2.0.6")),
+            Dependency("idna", Version("3.2")),
+            Dependency("certifi", Version("2021.5.30")),
+            Dependency("urllib3", Version("1.26.7")),
+        ]
+    )
+    assert req in resolved_deps
+    assert expected_deps == set(resolved_deps[req])
+
+    # Check that using the `socks` and `use_chardet_on_py3` extras pulls in additional dependencies
+    req = Requirement("requests[socks,use_chardet_on_py3]>=2.8.1")
+    resolved_deps = dict(resolver.resolve_all([req]))
+    assert len(resolved_deps) == 1
+    expected_deps.add(Dependency("chardet", Version("4.0.0")))
+    expected_deps.add(Dependency("pysocks", Version("1.7.1")))
+    assert req in resolved_deps
+    assert expected_deps == set(resolved_deps[req])
 
 
 def test_resolvelib_patched(monkeypatch):
