@@ -10,6 +10,7 @@ from email.parser import BytesParser
 from io import BytesIO
 from operator import attrgetter
 from platform import python_version
+from typing import Set
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -122,11 +123,8 @@ class PyPIProvider(AbstractProvider):
 
         bad_versions = {c.version for c in incompatibilities[identifier]}
 
-        # TODO(alex): When do we have multiple requirements for a single dependency anyway?
-        #
-        # I'll need to figure out what situation this is modelling before I can decide whether it's
-        # ok to do this
-        extras = set()
+        # Accumulate extras
+        extras: Set[str] = set()
         for r in requirements:
             extras |= r.extras
 
