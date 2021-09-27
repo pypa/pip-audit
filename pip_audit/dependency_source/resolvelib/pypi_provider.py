@@ -11,7 +11,6 @@ from io import BytesIO
 from operator import attrgetter
 from platform import python_version
 from tarfile import TarFile
-from typing import Tuple
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -19,8 +18,8 @@ import html5lib
 import requests
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
-from packaging.utils import canonicalize_name
-from packaging.version import InvalidVersion, Version
+from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel_filename
+from packaging.version import Version
 from resolvelib.providers import AbstractProvider
 
 PYTHON_VERSION = Version(python_version())
@@ -87,46 +86,24 @@ def get_project_from_pypi(project, extras):
 
         path = urlparse(url).path
         filename = path.rpartition("/")[-1]
-        # Handle wheels and source distributions
-        if not filename.endswith(".whl") and not filename.endswith(".tar.gz"):
-            continue
 
-        is_wheel: bool = filename.endswith(".whl")
+        # Handle wheels and source distributions
+        try:
+            if filename.endswith(".whl"):
+                (name, version, _, _) = parse_wheel_filename(filename)
+                is_wheel = True
+            else:
+                # If it doesn't look like a wheel, try to parse it as an
+                # sdist. This will raise for incorrect looking filenames,
+                # which we'll then skip via the exception handler.
+                (name, version) = parse_sdist_filename(filename)
+                is_wheel = False
+        except Exception:
+            continue
 
         # TODO: Handle compatibility tags?
 
-        # Very primitive wheel filename parsing
-        try:
-            name, version = parse_filename(filename, is_wheel)
-        except InvalidVersion:
-            # Ignore files with invalid versions
-            continue
-
         yield Candidate(name, version, url=url, extras=extras, is_wheel=is_wheel)
-
-
-def parse_filename(filename: str, is_wheel: bool) -> Tuple[str, Version]:
-    original_filename = filename
-    # Strip out the file extension
-    if is_wheel:
-        filename = filename[:-4]
-    else:
-        filename = filename[:-7]
-    # Go through each segment and try to create a version with it. If it fails, we're still in the
-    # package name, so we should keep appending the segments to the name.
-    name = str()
-    version = None
-    for s in filename.split("-"):
-        try:
-            version = Version(s)
-            break
-        except InvalidVersion:
-            if name:
-                name += "-"
-            name += s
-    if version is None:
-        raise InvalidVersion(f"Unable to parse filename {original_filename}")
-    return name, version
 
 
 def get_metadata_for_wheel(url):
