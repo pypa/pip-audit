@@ -174,7 +174,8 @@ class PyPIProvider(AbstractProvider):
             if candidate.version not in bad_versions
             and all(candidate.version in r.specifier for r in requirements)
         )
-        return sorted(candidates, key=attrgetter("version"), reverse=True)
+        # We want to prefer more recent versions and prioritize wheels
+        return sorted(candidates, key=attrgetter("version", "is_wheel"), reverse=True)
 
     def is_satisfied_by(self, requirement, candidate):
         if canonicalize_name(requirement.name) != candidate.name:
