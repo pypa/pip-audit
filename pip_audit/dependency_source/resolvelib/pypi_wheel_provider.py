@@ -10,6 +10,7 @@ from email.parser import BytesParser
 from io import BytesIO
 from operator import attrgetter
 from platform import python_version
+from tarfile import TarFile
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -98,7 +99,6 @@ def get_project_from_pypi(project, extras):
             name, version = filename[:-4].split("-")[:2]
         else:
             name, version = filename[:-7].split("-")[:2]
-        print(f"Working on {name} and {version}")
         try:
             version = Version(version)
         except InvalidVersion:
@@ -121,6 +121,13 @@ def get_metadata_for_wheel(url):
 
 
 def get_metadata_for_sdist(url):
+    data = requests.get(url).content
+    with TarFile.open(fileobj=BytesIO(data), mode="r:gz") as t:
+        for n in t.getnames():
+            if n.endswith("PKG-INFO"):
+                p = BytesParser()
+                return p.parse(t.extractfile(n), headersonly=True)
+
     return EmailMessage()
 
 
