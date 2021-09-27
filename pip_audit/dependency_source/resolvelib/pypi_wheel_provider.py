@@ -25,11 +25,12 @@ PYTHON_VERSION = Version(python_version())
 
 
 class Candidate:
-    def __init__(self, name, version, url=None, extras=None):
+    def __init__(self, name, version, url=None, extras=None, is_wheel=True):
         self.name = canonicalize_name(name)
         self.version = version
         self.url = url
         self.extras = extras
+        self.is_wheel = is_wheel
 
         self._metadata = None
         self._dependencies = None
@@ -42,7 +43,10 @@ class Candidate:
     @property
     def metadata(self):
         if self._metadata is None:
-            self._metadata = get_metadata_for_wheel(self.url)
+            if self.is_wheel:
+                self._metadata = get_metadata_for_wheel(self.url)
+            else:
+                self._metadata = get_metadata_for_sdist(self.url)
         return self._metadata
 
     def _get_dependencies(self):
@@ -81,21 +85,27 @@ def get_project_from_pypi(project, extras):
 
         path = urlparse(url).path
         filename = path.rpartition("/")[-1]
-        # We only handle wheels
-        if not filename.endswith(".whl"):
+        # Handle wheels and source distributions
+        if not filename.endswith(".whl") and not filename.endswith(".tar.gz"):
             continue
+
+        is_wheel: bool = filename.endswith(".whl")
 
         # TODO: Handle compatibility tags?
 
         # Very primitive wheel filename parsing
-        name, version = filename[:-4].split("-")[:2]
+        if is_wheel:
+            name, version = filename[:-4].split("-")[:2]
+        else:
+            name, version = filename[:-7].split("-")[:2]
+        print(f"Working on {name} and {version}")
         try:
             version = Version(version)
         except InvalidVersion:
             # Ignore files with invalid versions
             continue
 
-        yield Candidate(name, version, url=url, extras=extras)
+        yield Candidate(name, version, url=url, extras=extras, is_wheel=is_wheel)
 
 
 def get_metadata_for_wheel(url):
@@ -108,6 +118,10 @@ def get_metadata_for_wheel(url):
 
     # If we didn't find the metadata, return an empty dict
     return EmailMessage()  # pragma: no cover
+
+
+def get_metadata_for_sdist(url):
+    return EmailMessage()
 
 
 class PyPIProvider(AbstractProvider):

@@ -52,6 +52,16 @@ def test_resolvelib_extras():
         dict(resolver.resolve_all([req]))
 
 
+def test_resolvelib_sdist():
+    resolver = resolvelib.ResolveLibResolver()
+    req = Requirement("ansible==4.6.0")
+    resolved_deps = dict(resolver.resolve_all([req]))
+    assert len(resolved_deps) == 1
+    expected_deps = set()
+    assert req in resolved_deps
+    assert expected_deps == resolved_deps[req]
+
+
 def test_resolvelib_patched(monkeypatch):
     # In the following unit tests, we'll be mocking certain function calls to test corner cases in
     # the resolver. Before doing that, use the mocks to exercise the happy path to ensure that
