@@ -11,7 +11,7 @@ from resolvelib import BaseReporter, Resolver
 from pip_audit.dependency_source import DependencyResolver
 from pip_audit.service.interface import Dependency
 
-from .pypi_wheel_provider import PyPIProvider
+from .pypi_provider import PyPIProvider
 
 
 class ResolveLibResolver(DependencyResolver):

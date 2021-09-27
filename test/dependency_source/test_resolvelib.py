@@ -7,7 +7,7 @@ from packaging.version import Version
 from resolvelib.resolvers import InconsistentCandidate, ResolutionImpossible
 
 from pip_audit.dependency_source import resolvelib
-from pip_audit.dependency_source.resolvelib import pypi_wheel_provider
+from pip_audit.dependency_source.resolvelib import pypi_provider
 from pip_audit.service.interface import Dependency
 
 
@@ -74,9 +74,7 @@ def test_resolvelib_patched(monkeypatch):
     )
 
     monkeypatch.setattr(requests, "get", lambda _: get_package_mock(data))
-    monkeypatch.setattr(
-        pypi_wheel_provider, "get_metadata_for_wheel", lambda _: get_metadata_mock()
-    )
+    monkeypatch.setattr(pypi_provider, "get_metadata_for_wheel", lambda _: get_metadata_mock())
 
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
@@ -115,9 +113,7 @@ def test_resolvelib_canonical_name_mismatch(monkeypatch):
     )
 
     monkeypatch.setattr(requests, "get", lambda _: get_package_mock(data))
-    monkeypatch.setattr(
-        pypi_wheel_provider, "get_metadata_for_wheel", lambda _: get_metadata_mock()
-    )
+    monkeypatch.setattr(pypi_provider, "get_metadata_for_wheel", lambda _: get_metadata_mock())
 
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
@@ -136,9 +132,7 @@ def test_resolvelib_invalid_version(monkeypatch):
     )
 
     monkeypatch.setattr(requests, "get", lambda _: get_package_mock(data))
-    monkeypatch.setattr(
-        pypi_wheel_provider, "get_metadata_for_wheel", lambda _: get_metadata_mock()
-    )
+    monkeypatch.setattr(pypi_provider, "get_metadata_for_wheel", lambda _: get_metadata_mock())
 
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")

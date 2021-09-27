@@ -1,5 +1,5 @@
 """
-A (wheel-only) `resolvelib` provider implementation that resolves against PyPI.
+A `resolvelib` provider implementation that resolves against PyPI.
 
 Closely adapted from `resolvelib`'s examples, which are copyrighted by the `resolvelib`
 authors under the ISC license.
