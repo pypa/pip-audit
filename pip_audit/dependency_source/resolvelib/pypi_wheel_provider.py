@@ -11,6 +11,7 @@ from io import BytesIO
 from operator import attrgetter
 from platform import python_version
 from tarfile import TarFile
+from typing import Tuple
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -95,17 +96,37 @@ def get_project_from_pypi(project, extras):
         # TODO: Handle compatibility tags?
 
         # Very primitive wheel filename parsing
-        if is_wheel:
-            name, version = filename[:-4].split("-")[:2]
-        else:
-            name, version = filename[:-7].split("-")[:2]
         try:
-            version = Version(version)
+            name, version = parse_filename(filename, is_wheel)
         except InvalidVersion:
             # Ignore files with invalid versions
             continue
 
         yield Candidate(name, version, url=url, extras=extras, is_wheel=is_wheel)
+
+
+def parse_filename(filename: str, is_wheel: bool) -> Tuple[str, Version]:
+    original_filename = filename
+    # Strip out the file extension
+    if is_wheel:
+        filename = filename[:-4]
+    else:
+        filename = filename[:-7]
+    # Go through each segment and try to create a version with it. If it fails, we're still in the
+    # package name, so we should keep appending the segments to the name.
+    name = str()
+    version = None
+    for s in filename.split("-"):
+        try:
+            version = Version(s)
+            break
+        except InvalidVersion:
+            if name:
+                name += "-"
+            name += s
+    if version is None:
+        raise InvalidVersion(f"Unable to parse filename {original_filename}")
+    return name, version
 
 
 def get_metadata_for_wheel(url):
@@ -128,7 +149,7 @@ def get_metadata_for_sdist(url):
                 p = BytesParser()
                 return p.parse(t.extractfile(n), headersonly=True)
 
-    return EmailMessage()
+    return EmailMessage()  # pragma: no cover
 
 
 class PyPIProvider(AbstractProvider):

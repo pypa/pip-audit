@@ -52,14 +52,14 @@ def test_resolvelib_extras():
         dict(resolver.resolve_all([req]))
 
 
-def test_resolvelib_sdist():
+def test_resolvelib_filename_parsing():
     resolver = resolvelib.ResolveLibResolver()
-    req = Requirement("ansible==4.6.0")
+    req = Requirement("ansible-core==2.11.5")
     resolved_deps = dict(resolver.resolve_all([req]))
     assert len(resolved_deps) == 1
-    expected_deps = set()
+    expected_deps = set([Dependency("ansible-core", Version("2.11.5"))])
     assert req in resolved_deps
-    assert expected_deps == resolved_deps[req]
+    assert expected_deps == set(resolved_deps[req])
 
 
 def test_resolvelib_patched(monkeypatch):
