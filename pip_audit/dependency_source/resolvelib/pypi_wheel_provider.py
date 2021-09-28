@@ -10,6 +10,7 @@ from email.parser import BytesParser
 from io import BytesIO
 from operator import attrgetter
 from platform import python_version
+from typing import Set
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -119,16 +120,20 @@ class PyPIProvider(AbstractProvider):
 
     def find_matches(self, identifier, requirements, incompatibilities):
         requirements = list(requirements[identifier])
-        assert not any(r.extras for r in requirements), "extras not supported in this example"
 
         bad_versions = {c.version for c in incompatibilities[identifier]}
+
+        # Accumulate extras
+        extras: Set[str] = set()
+        for r in requirements:
+            extras |= r.extras
 
         # Need to pass the extras to the search, so they
         # are added to the candidate at creation - we
         # treat candidates as immutable once created.
         candidates = (
             candidate
-            for candidate in get_project_from_pypi(identifier, set())
+            for candidate in get_project_from_pypi(identifier, extras)
             if candidate.version not in bad_versions
             and all(candidate.version in r.specifier for r in requirements)
         )
