@@ -5,6 +5,8 @@ Closely adapted from `resolvelib`'s examples, which are copyrighted by the `reso
 authors under the ISC license.
 """
 
+import os
+import shutil
 from email.message import EmailMessage
 from email.parser import BytesParser
 from io import BytesIO
@@ -27,13 +29,12 @@ PYTHON_VERSION = Version(python_version())
 
 
 class Candidate:
-    def __init__(self, name, version, url=None, extras=None, is_wheel=True, filename=str()):
+    def __init__(self, name, version, url=None, extras=None, is_wheel=True):
         self.name = canonicalize_name(name)
         self.version = version
         self.url = url
         self.extras = extras
         self.is_wheel = is_wheel
-        self.filename = filename
 
         self._metadata = None
         self._dependencies = None
@@ -105,7 +106,7 @@ def get_project_from_pypi(project, extras):
 
         # TODO: Handle compatibility tags?
 
-        yield Candidate(name, version, url=url, extras=extras, is_wheel=is_wheel, filename=filename)
+        yield Candidate(name, version, url=url, extras=extras, is_wheel=is_wheel)
 
 
 def get_metadata_for_wheel(url):
@@ -125,14 +126,14 @@ def get_metadata_for_sdist(url):
 
     # Extract archive onto the disk
     with TarFile.open(fileobj=BytesIO(data), mode="r:gz") as t:
+        # The directory is the first member in a tarball
+        names = t.getnames()
+        pkg_dir = names[0]
         t.extractall()
 
-    import os
-
-    # TODO(alex): Substitute the directory name here
     cwd = os.getcwd()
-    pkg_path = os.path.join(cwd, "ansible-core-2.11.5")
-    ve = VirtualEnvironment("test_env/")
+    pkg_path = os.path.join(cwd, pkg_dir)
+    ve = VirtualEnvironment("tmp_env/")
     ve.install(f"-e {pkg_path}")
 
     metadata = EmailMessage()
@@ -141,6 +142,9 @@ def get_metadata_for_sdist(url):
         if name.startswith("-e"):
             continue
         metadata["Requires-Dist"] = f"{name}=={version}"
+
+    # Get rid of the virtual env we made
+    shutil.rmtree("tmp_env/")
 
     return metadata
 
