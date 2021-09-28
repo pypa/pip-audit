@@ -11,6 +11,7 @@ from io import BytesIO
 from operator import attrgetter
 from platform import python_version
 from tarfile import TarFile
+from typing import List
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -21,17 +22,19 @@ from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel_filename
 from packaging.version import Version
 from resolvelib.providers import AbstractProvider
+from virtualenvapi.manage import VirtualEnvironment  # type: ignore
 
 PYTHON_VERSION = Version(python_version())
 
 
 class Candidate:
-    def __init__(self, name, version, url=None, extras=None, is_wheel=True):
+    def __init__(self, name, version, url=None, extras=None, is_wheel=True, filename=str()):
         self.name = canonicalize_name(name)
         self.version = version
         self.url = url
         self.extras = extras
         self.is_wheel = is_wheel
+        self.filename = filename
 
         self._metadata = None
         self._dependencies = None
@@ -103,7 +106,7 @@ def get_project_from_pypi(project, extras):
 
         # TODO: Handle compatibility tags?
 
-        yield Candidate(name, version, url=url, extras=extras, is_wheel=is_wheel)
+        yield Candidate(name, version, url=url, extras=extras, is_wheel=is_wheel, filename=filename)
 
 
 def get_metadata_for_wheel(url):
@@ -120,13 +123,27 @@ def get_metadata_for_wheel(url):
 
 def get_metadata_for_sdist(url):
     data = requests.get(url).content
-    with TarFile.open(fileobj=BytesIO(data), mode="r:gz") as t:
-        for n in t.getnames():
-            if n.endswith("PKG-INFO"):
-                p = BytesParser()
-                return p.parse(t.extractfile(n), headersonly=True)
 
-    return EmailMessage()  # pragma: no cover
+    # Extract archive onto the disk
+    with TarFile.open(fileobj=BytesIO(data), mode="r:gz") as t:
+        t.extractall()
+
+    import os
+
+    # TODO(alex): Substitute the directory name here
+    cwd = os.getcwd()
+    pkg_path = os.path.join(cwd, "ansible-core-2.11.5")
+    ve = VirtualEnvironment("test_env/")
+    ve.install(f"-e {pkg_path}")
+
+    reqs: List[Requirement] = []
+    for name, version in ve.installed_packages:
+        if name.startswith("-e"):
+            continue
+        reqs.append(Requirement(f"{name}=={version}"))
+
+    # Just to keep things working
+    return EmailMessage()
 
 
 class PyPIProvider(AbstractProvider):
