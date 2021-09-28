@@ -52,12 +52,28 @@ def test_resolvelib_extras():
         dict(resolver.resolve_all([req]))
 
 
-def test_resolvelib_filename_parsing():
+def test_resolvelib_sdist():
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("ansible-core==2.11.5")
     resolved_deps = dict(resolver.resolve_all([req]))
     assert len(resolved_deps) == 1
-    expected_deps = set([Dependency("ansible-core", Version("2.11.5"))])
+    expected_deps = set(
+        [
+            Dependency("ansible-core", Version("2.11.5")),
+            Dependency("pip", Version("21.2.4")),
+            Dependency("pyparsing", Version("2.4.7")),
+            Dependency("jinja2", Version("3.0.1")),
+            Dependency("pycparser", Version("2.20")),
+            Dependency("pyyaml", Version("5.4.1")),
+            Dependency("cffi", Version("1.14.6")),
+            Dependency("resolvelib", Version("0.5.4")),
+            Dependency("packaging", Version("21.0")),
+            Dependency("cryptography", Version("3.4.8")),
+            Dependency("wheel", Version("0.37.0")),
+            Dependency("setuptools", Version("57.4.0")),
+            Dependency("markupsafe", Version("2.0.1")),
+        ]
+    )
     assert req in resolved_deps
     assert expected_deps == set(resolved_deps[req])
 

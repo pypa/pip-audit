@@ -11,7 +11,6 @@ from io import BytesIO
 from operator import attrgetter
 from platform import python_version
 from tarfile import TarFile
-from typing import List
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -136,14 +135,14 @@ def get_metadata_for_sdist(url):
     ve = VirtualEnvironment("test_env/")
     ve.install(f"-e {pkg_path}")
 
-    reqs: List[Requirement] = []
+    metadata = EmailMessage()
+
     for name, version in ve.installed_packages:
         if name.startswith("-e"):
             continue
-        reqs.append(Requirement(f"{name}=={version}"))
+        metadata["Requires-Dist"] = f"{name}=={version}"
 
-    # Just to keep things working
-    return EmailMessage()
+    return metadata
 
 
 class PyPIProvider(AbstractProvider):
