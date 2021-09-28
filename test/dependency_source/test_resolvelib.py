@@ -60,7 +60,6 @@ def test_resolvelib_sdist():
     expected_deps = set(
         [
             Dependency("ansible-core", Version("2.11.5")),
-            Dependency("pip", Version("21.2.4")),
             Dependency("pyparsing", Version("2.4.7")),
             Dependency("jinja2", Version("3.0.1")),
             Dependency("pycparser", Version("2.20")),
@@ -69,13 +68,11 @@ def test_resolvelib_sdist():
             Dependency("resolvelib", Version("0.5.4")),
             Dependency("packaging", Version("21.0")),
             Dependency("cryptography", Version("3.4.8")),
-            Dependency("wheel", Version("0.37.0")),
-            Dependency("setuptools", Version("57.4.0")),
             Dependency("markupsafe", Version("2.0.1")),
         ]
     )
     assert req in resolved_deps
-    assert expected_deps == set(resolved_deps[req])
+    assert expected_deps.issubset(resolved_deps[req])
 
 
 def test_resolvelib_wheel_patched(monkeypatch):
