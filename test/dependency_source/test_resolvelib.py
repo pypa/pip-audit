@@ -88,7 +88,7 @@ def test_resolvelib_sdist():
             Dependency("cffi", Version("1.14.6")),
             Dependency("resolvelib", Version("0.5.4")),
             Dependency("packaging", Version("21.0")),
-            Dependency("cryptography", Version("3.4.8")),
+            Dependency("cryptography", Version("35.0.0")),
             Dependency("markupsafe", Version("2.0.1")),
         ]
     )

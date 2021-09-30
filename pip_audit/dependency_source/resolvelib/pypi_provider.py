@@ -6,13 +6,13 @@ authors under the ISC license.
 """
 
 import os
-import shutil
 from email.message import EmailMessage
 from email.parser import BytesParser
 from io import BytesIO
 from operator import attrgetter
 from platform import python_version
 from tarfile import TarFile
+from tempfile import TemporaryDirectory
 from typing import Set
 from urllib.parse import urlparse
 from zipfile import ZipFile
@@ -124,28 +124,31 @@ def get_metadata_for_wheel(url):
 
 def get_metadata_for_sdist(url):
     data = requests.get(url).content
-
-    # Extract archive onto the disk
-    with TarFile.open(fileobj=BytesIO(data), mode="r:gz") as t:
-        # The directory is the first member in a tarball
-        names = t.getnames()
-        pkg_dir = names[0]
-        t.extractall()
-
-    cwd = os.getcwd()
-    pkg_path = os.path.join(cwd, pkg_dir)
-    ve = VirtualEnvironment("tmp_env/")
-    ve.install(f"-e {pkg_path}")
-
     metadata = EmailMessage()
 
-    for name, version in ve.installed_packages:
-        if name.startswith("-e"):
-            continue
-        metadata["Requires-Dist"] = f"{name}=={version}"
+    with TemporaryDirectory() as pkg_dir:
+        # Extract archive onto the disk
+        with TarFile.open(fileobj=BytesIO(data), mode="r:gz") as t:
+            # The directory is the first member in a tarball
+            names = t.getnames()
+            pkg_name = names[0]
+            t.extractall(pkg_dir)
 
-    # Get rid of the virtual env we made
-    shutil.rmtree("tmp_env/")
+        # Put together a full path of where the source distribution is
+        pkg_path = os.path.join(pkg_dir, pkg_name)
+
+        with TemporaryDirectory() as ve_dir:
+            ve = VirtualEnvironment(ve_dir)
+            ve.install(f"-e {pkg_path}")
+
+            for name, version in ve.installed_packages:
+                # Skip the editable package since that's the one we're finding dependencies for
+                #
+                # The `virtualenvapi` package also has a bug where comments in the `pip freeze`
+                # output are returned. Skip package names starting with a comment marker.
+                if name.startswith("-e") or name.startswith("#"):
+                    continue
+                metadata["Requires-Dist"] = f"{name}=={version}"
 
     return metadata
 
