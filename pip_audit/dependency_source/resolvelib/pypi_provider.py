@@ -77,7 +77,9 @@ class Candidate:
 def get_project_from_pypi(project, extras):
     """Return candidates created from the project name and extras."""
     url = "https://pypi.org/simple/{}".format(project)
-    data = requests.get(url).content
+    response: requests.Response = requests.get(url)
+    response.raise_for_status()
+    data = response.content
     doc = html5lib.parse(data, namespaceHTMLElements=False)
     for i in doc.findall(".//a"):
         url = i.attrib["href"]
@@ -123,7 +125,9 @@ def get_metadata_for_wheel(url):
 
 
 def get_metadata_for_sdist(url):
-    data = requests.get(url).content
+    response: requests.Response = requests.get(url)
+    response.raise_for_status()
+    data = response.content
     metadata = EmailMessage()
 
     with TemporaryDirectory() as pkg_dir:

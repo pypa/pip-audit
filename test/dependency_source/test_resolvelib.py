@@ -4,6 +4,7 @@ import pytest
 import requests
 from packaging.requirements import Requirement
 from packaging.version import Version
+from requests.exceptions import HTTPError
 from resolvelib.resolvers import InconsistentCandidate, ResolutionImpossible
 
 from pip_audit.dependency_source import resolvelib
@@ -15,6 +16,9 @@ def get_package_mock(data):
     class Doc:
         def __init__(self, content):
             self.content = content
+
+        def raise_for_status(self):
+            pass
 
     return Doc(data)
 
@@ -202,4 +206,20 @@ def test_resolvelib_sdist_invalid_suffix(monkeypatch):
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
     with pytest.raises(ResolutionImpossible):
+        dict(resolver.resolve_all([req]))
+
+
+def test_resolvelib_http_error(monkeypatch):
+    def get_http_error_mock():
+        class Doc:
+            def raise_for_status(self):
+                raise HTTPError
+
+        return Doc()
+
+    monkeypatch.setattr(requests, "get", lambda _: get_http_error_mock())
+
+    resolver = resolvelib.ResolveLibResolver()
+    req = Requirement("flask==2.0.1")
+    with pytest.raises(resolvelib.ResolveLibResolverError):
         dict(resolver.resolve_all([req]))
