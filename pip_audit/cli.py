@@ -6,12 +6,13 @@ import argparse
 import enum
 import logging
 import os
-from typing import Any, Dict
+from pathlib import Path
+from typing import Any, Dict, List
 
 from progress.spinner import Spinner as BaseSpinner  # type: ignore
 
 from pip_audit.audit import AuditOptions, Auditor
-from pip_audit.dependency_source import PipSource
+from pip_audit.dependency_source import PipSource, RequirementSource, ResolveLibResolver
 from pip_audit.format import ColumnsFormat, JsonFormat, VulnerabilityFormat
 from pip_audit.service import OsvService, VulnerabilityService
 from pip_audit.util import assert_never
@@ -124,13 +125,15 @@ def audit():
     args = parser.parse_args()
     logger.debug(f"parsed arguments: {args}")
 
-    if args.requirements:
-        raise NotImplementedError
-
     service = args.vulnerability_service.to_service()
     formatter = args.format.to_format()
 
-    source = PipSource()
+    req_files: List[Path] = [Path(req.name) for req in args.requirements]
+    if req_files:
+        source = RequirementSource(req_files, ResolveLibResolver())
+    else:
+        source = PipSource()
+
     auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run))
 
     result = {}

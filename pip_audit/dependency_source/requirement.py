@@ -1,5 +1,5 @@
-import os
-from typing import Iterator
+from pathlib import Path
+from typing import Iterator, List
 
 from packaging.requirements import Requirement
 from pip_api import parse_requirements
@@ -10,17 +10,20 @@ from pip_audit.service import Dependency
 
 
 class RequirementSource(DependencySource):
-    def __init__(self, filename: os.PathLike, resolver: DependencyResolver):
-        self.filename = filename
+    def __init__(self, filenames: List[Path], resolver: DependencyResolver):
+        self.filenames = filenames
         self.resolver = resolver
 
     def collect(self) -> Iterator[Dependency]:
-        reqs = parse_requirements(filename=self.filename)
+        # TODO(alex): I wonder whether we need to do some deduplication of requirements/dependencies
+        # here
+        for filename in self.filenames:
+            reqs = parse_requirements(filename=filename)
 
-        # Invoke the dependency resolver to turn requirements into dependencies
-        for _, req in reqs.items():
-            if isinstance(req, UnparsedRequirement):
-                raise RuntimeError
+            # Invoke the dependency resolver to turn requirements into dependencies
+            for _, req in reqs.items():
+                if isinstance(req, UnparsedRequirement):
+                    raise RuntimeError
             deps = self.resolver.resolve(Requirement(str(req)))
             for dep in deps:
                 yield dep
