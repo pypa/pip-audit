@@ -6,12 +6,13 @@ Resolve a list of dependencies via the `resolvelib` API as well as a custom
 from typing import List
 
 from packaging.requirements import Requirement
+from requests.exceptions import HTTPError
 from resolvelib import BaseReporter, Resolver
 
-from pip_audit.dependency_source import DependencyResolver
+from pip_audit.dependency_source import DependencyResolver, DependencyResolverError
 from pip_audit.service.interface import Dependency
 
-from .pypi_wheel_provider import PyPIProvider
+from .pypi_provider import PyPIProvider
 
 
 class ResolveLibResolver(DependencyResolver):
@@ -22,7 +23,14 @@ class ResolveLibResolver(DependencyResolver):
 
     def resolve(self, req: Requirement) -> List[Dependency]:
         deps: List[Dependency] = []
-        result = self.resolver.resolve([req])
+        try:
+            result = self.resolver.resolve([req])
+        except HTTPError as e:
+            raise ResolveLibResolverError("failed to resolve dependencies") from e
         for name, candidate in result.mapping.items():
             deps.append(Dependency(name, candidate.version))
         return deps
+
+
+class ResolveLibResolverError(DependencyResolverError):
+    pass

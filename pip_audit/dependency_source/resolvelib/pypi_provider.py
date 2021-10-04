@@ -1,15 +1,18 @@
 """
-A (wheel-only) `resolvelib` provider implementation that resolves against PyPI.
+A `resolvelib` provider implementation that resolves against PyPI.
 
 Closely adapted from `resolvelib`'s examples, which are copyrighted by the `resolvelib`
 authors under the ISC license.
 """
 
+import os
 from email.message import EmailMessage
 from email.parser import BytesParser
 from io import BytesIO
 from operator import attrgetter
 from platform import python_version
+from tarfile import TarFile
+from tempfile import TemporaryDirectory
 from typing import Set
 from urllib.parse import urlparse
 from zipfile import ZipFile
@@ -18,19 +21,21 @@ import html5lib
 import requests
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
-from packaging.utils import canonicalize_name
-from packaging.version import InvalidVersion, Version
+from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel_filename
+from packaging.version import Version
 from resolvelib.providers import AbstractProvider
+from virtualenvapi.manage import VirtualEnvironment  # type: ignore
 
 PYTHON_VERSION = Version(python_version())
 
 
 class Candidate:
-    def __init__(self, name, version, url=None, extras=None):
+    def __init__(self, name, version, url=None, extras=None, is_wheel=True):
         self.name = canonicalize_name(name)
         self.version = version
         self.url = url
         self.extras = extras
+        self.is_wheel = is_wheel
 
         self._metadata = None
         self._dependencies = None
@@ -43,7 +48,10 @@ class Candidate:
     @property
     def metadata(self):
         if self._metadata is None:
-            self._metadata = get_metadata_for_wheel(self.url)
+            if self.is_wheel:
+                self._metadata = get_metadata_for_wheel(self.url)
+            else:
+                self._metadata = get_metadata_for_sdist(self.url)
         return self._metadata
 
     def _get_dependencies(self):
@@ -69,7 +77,9 @@ class Candidate:
 def get_project_from_pypi(project, extras):
     """Return candidates created from the project name and extras."""
     url = "https://pypi.org/simple/{}".format(project)
-    data = requests.get(url).content
+    response: requests.Response = requests.get(url)
+    response.raise_for_status()
+    data = response.content
     doc = html5lib.parse(data, namespaceHTMLElements=False)
     for i in doc.findall(".//a"):
         url = i.attrib["href"]
@@ -82,21 +92,24 @@ def get_project_from_pypi(project, extras):
 
         path = urlparse(url).path
         filename = path.rpartition("/")[-1]
-        # We only handle wheels
-        if not filename.endswith(".whl"):
+
+        # Handle wheels and source distributions
+        try:
+            if filename.endswith(".whl"):
+                (name, version, _, _) = parse_wheel_filename(filename)
+                is_wheel = True
+            else:
+                # If it doesn't look like a wheel, try to parse it as an
+                # sdist. This will raise for incorrect looking filenames,
+                # which we'll then skip via the exception handler.
+                (name, version) = parse_sdist_filename(filename)
+                is_wheel = False
+        except Exception:
             continue
 
         # TODO: Handle compatibility tags?
 
-        # Very primitive wheel filename parsing
-        name, version = filename[:-4].split("-")[:2]
-        try:
-            version = Version(version)
-        except InvalidVersion:
-            # Ignore files with invalid versions
-            continue
-
-        yield Candidate(name, version, url=url, extras=extras)
+        yield Candidate(name, version, url=url, extras=extras, is_wheel=is_wheel)
 
 
 def get_metadata_for_wheel(url):
@@ -109,6 +122,39 @@ def get_metadata_for_wheel(url):
 
     # If we didn't find the metadata, return an empty dict
     return EmailMessage()  # pragma: no cover
+
+
+def get_metadata_for_sdist(url):
+    response: requests.Response = requests.get(url)
+    response.raise_for_status()
+    data = response.content
+    metadata = EmailMessage()
+
+    with TemporaryDirectory() as pkg_dir:
+        # Extract archive onto the disk
+        with TarFile.open(fileobj=BytesIO(data), mode="r:gz") as t:
+            # The directory is the first member in a tarball
+            names = t.getnames()
+            pkg_name = names[0]
+            t.extractall(pkg_dir)
+
+        # Put together a full path of where the source distribution is
+        pkg_path = os.path.join(pkg_dir, pkg_name)
+
+        with TemporaryDirectory() as ve_dir:
+            ve = VirtualEnvironment(ve_dir)
+            ve.install(f"-e {pkg_path}")
+
+            for name, version in ve.installed_packages:
+                # Skip the editable package since that's the one we're finding dependencies for
+                #
+                # The `virtualenvapi` package also has a bug where comments in the `pip freeze`
+                # output are returned. Skip package names starting with a comment marker.
+                if name.startswith("-e") or name.startswith("#"):
+                    continue
+                metadata["Requires-Dist"] = f"{name}=={version}"
+
+    return metadata
 
 
 class PyPIProvider(AbstractProvider):
@@ -137,7 +183,8 @@ class PyPIProvider(AbstractProvider):
             if candidate.version not in bad_versions
             and all(candidate.version in r.specifier for r in requirements)
         )
-        return sorted(candidates, key=attrgetter("version"), reverse=True)
+        # We want to prefer more recent versions and prioritize wheels
+        return sorted(candidates, key=attrgetter("version", "is_wheel"), reverse=True)
 
     def is_satisfied_by(self, requirement, candidate):
         if canonicalize_name(requirement.name) != candidate.name:

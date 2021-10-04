@@ -35,6 +35,8 @@ setup(
         "progress>=1.6",
         "resolvelib>=0.7.1",
         "html5lib>=1.1",
+        "virtualenv>=20.8.1",
+        "virtualenv-api>=2.1.18",
     ],
     extras_require={
         "dev": [

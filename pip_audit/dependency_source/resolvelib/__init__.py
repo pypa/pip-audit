@@ -1,1 +1,1 @@
-from .resolvelib import ResolveLibResolver  # noqa: F401
+from .resolvelib import ResolveLibResolver, ResolveLibResolverError  # noqa: F401

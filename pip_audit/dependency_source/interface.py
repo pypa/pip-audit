@@ -53,3 +53,14 @@ class DependencyResolver(ABC):
         # designed to resolve a list of dependencies
         for req in reqs:
             yield (req, self.resolve(req))
+
+
+class DependencyResolverError(Exception):
+    """
+    Raised when a `DependencyResolver` fails to resolve its dependencies.
+
+    Concrete implementations are expected to subclass this exception to
+    provide more context.
+    """
+
+    pass
