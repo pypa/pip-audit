@@ -24,6 +24,6 @@ class RequirementSource(DependencySource):
             for _, req in reqs.items():
                 if isinstance(req, UnparsedRequirement):
                     raise RuntimeError
-            deps = self.resolver.resolve(Requirement(str(req)))
-            for dep in deps:
-                yield dep
+                deps = self.resolver.resolve(Requirement(str(req)))
+                for dep in deps:
+                    yield dep
