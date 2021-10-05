@@ -3,7 +3,7 @@ from typing import Iterator, List
 
 from packaging.requirements import Requirement
 from pip_api import parse_requirements
-from pip_api._parse_requirements import UnparsedRequirement
+from pip_api.exceptions import PipError
 
 from pip_audit.dependency_source import (
     DependencyResolver,
@@ -23,18 +23,17 @@ class RequirementSource(DependencySource):
         # TODO(alex): I wonder whether we need to do some deduplication of requirements/dependencies
         # here
         for filename in self.filenames:
-            reqs = parse_requirements(filename=filename)
+            try:
+                reqs = parse_requirements(filename=filename)
+            except PipError as pe:
+                raise RequirementSourceError("requirement parsing raised an error") from pe
 
             # Invoke the dependency resolver to turn requirements into dependencies
             for _, req in reqs.items():
-                if isinstance(req, UnparsedRequirement):
-                    raise RequirementSourceError(
-                        f"Requirement source does not support unparsed requirements: {req}"
-                    )
                 try:
                     deps = self.resolver.resolve(Requirement(str(req)))
                 except DependencyResolverError as dre:
-                    raise RequirementSourceError("Dependency resolver threw an error") from dre
+                    raise RequirementSourceError("dependency resolver raised an error") from dre
                 for dep in deps:
                     yield dep
 
