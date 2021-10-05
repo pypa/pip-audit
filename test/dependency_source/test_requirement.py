@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List
 
 import pytest
 from packaging.requirements import Requirement
@@ -24,6 +25,35 @@ def test_requirement_source(monkeypatch):
     assert Dependency("flask", Version("2.0.1")) in specs
 
 
+def test_requirement_source_multiple_files(monkeypatch):
+    file1 = "requirements1.txt"
+    file2 = "requirements2.txt"
+    file3 = "requirements3.txt"
+
+    source = requirement.RequirementSource(
+        [Path(file1), Path(file2), Path(file3)],
+        ResolveLibResolver(),
+    )
+
+    def read_file_mock(f):
+        filename = f.name
+        if filename == file1:
+            return ["flask==2.0.1"]
+        elif filename == file2:
+            return ["requests==2.8.1"]
+        else:
+            assert filename == file3
+            return ["pip-api==0.0.22\n", "packaging==21.0"]
+
+    monkeypatch.setattr(_parse_requirements, "_read_file", read_file_mock)
+
+    specs = list(source.collect())
+    assert Dependency("flask", Version("2.0.1")) in specs
+    assert Dependency("requests", Version("2.8.1")) in specs
+    assert Dependency("pip-api", Version("0.0.22")) in specs
+    assert Dependency("packaging", Version("21.0")) in specs
+
+
 def test_requirement_source_parse_error(monkeypatch):
     source = requirement.RequirementSource([Path("requirements.txt")], ResolveLibResolver())
 
@@ -40,7 +70,7 @@ def test_requirement_source_parse_error(monkeypatch):
 def test_requirement_source_resolver_error(monkeypatch):
     # Pass the requirement source a resolver that automatically raises errors
     class MockResolver(DependencyResolver):
-        def resolve(self, req: Requirement):
+        def resolve(self, req: Requirement) -> List[Dependency]:
             raise DependencyResolverError
 
     source = requirement.RequirementSource([Path("requirements.txt")], MockResolver())
