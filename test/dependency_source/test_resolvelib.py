@@ -1,4 +1,5 @@
 from email.message import EmailMessage
+from typing import List
 
 import pytest
 import requests
@@ -27,25 +28,41 @@ def get_metadata_mock():
     return EmailMessage()
 
 
+def check_deps(resolved_deps: List[Dependency], expected_deps: List[Dependency]):
+    # We don't want to just check that the two lists are equal because:
+    # - Some packages install additional dependencies for specific versions of Python. It's only
+    #   practical to check that the resolved dependencies contain all the expected ones (but there
+    #   may be more and that's ok).
+    # - A common pattern is for packages to pin a minimum version for a dependency. This means that
+    #   the exact resolved version of a dependency will change when new versions of it are
+    #   published. Therefore, our check should make sure that the resolved version is greater than
+    #   or equal to the expected version.
+    for expected in expected_deps:
+        found = False
+        for resolved in resolved_deps:
+            if expected.package == resolved.package and expected.version <= resolved.version:
+                found = True
+                break
+        assert found
+
+
 def test_resolvelib():
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
     resolved_deps = dict(resolver.resolve_all([req]))
     assert len(resolved_deps) == 1
-    expected_deps = set(
-        [
-            Dependency("flask", Version("2.0.1")),
-            Dependency("werkzeug", Version("2.0.1")),
-            Dependency("jinja2", Version("3.0.1")),
-            Dependency("itsdangerous", Version("2.0.1")),
-            Dependency("click", Version("8.0.1")),
-            Dependency("markupsafe", Version("2.0.1")),
-        ]
-    )
+    expected_deps = [
+        Dependency("flask", Version("2.0.1")),
+        Dependency("werkzeug", Version("2.0.1")),
+        Dependency("jinja2", Version("3.0.1")),
+        Dependency("itsdangerous", Version("2.0.1")),
+        Dependency("click", Version("8.0.1")),
+        Dependency("markupsafe", Version("2.0.1")),
+    ]
     assert req in resolved_deps
     # Earlier Python versions have some extra dependencies. To avoid conditionals here, let's just
     # check that the dependencies we specify are a subset.
-    assert expected_deps.issubset(resolved_deps[req])
+    check_deps(resolved_deps[req], expected_deps)
 
 
 def test_resolvelib_extras():
@@ -55,26 +72,25 @@ def test_resolvelib_extras():
     req = Requirement("requests>=2.8.1")
     resolved_deps = dict(resolver.resolve_all([req]))
     assert len(resolved_deps) == 1
-    expected_deps = set(
-        [
-            Dependency("requests", Version("2.26.0")),
-            Dependency("charset-normalizer", Version("2.0.6")),
-            Dependency("idna", Version("3.2")),
-            Dependency("certifi", Version("2021.5.30")),
-            Dependency("urllib3", Version("1.26.7")),
-        ]
-    )
+    expected_deps = [
+        Dependency("requests", Version("2.26.0")),
+        Dependency("charset-normalizer", Version("2.0.6")),
+        Dependency("idna", Version("3.2")),
+        Dependency("certifi", Version("2021.5.30")),
+        Dependency("urllib3", Version("1.26.7")),
+    ]
     assert req in resolved_deps
-    assert expected_deps == set(resolved_deps[req])
+    check_deps(resolved_deps[req], expected_deps)
 
     # Check that using the `socks` and `use_chardet_on_py3` extras pulls in additional dependencies
     req = Requirement("requests[socks,use_chardet_on_py3]>=2.8.1")
     resolved_deps = dict(resolver.resolve_all([req]))
     assert len(resolved_deps) == 1
-    expected_deps.add(Dependency("chardet", Version("4.0.0")))
-    expected_deps.add(Dependency("pysocks", Version("1.7.1")))
+    expected_deps.extend(
+        [Dependency("chardet", Version("4.0.0")), Dependency("pysocks", Version("1.7.1"))]
+    )
     assert req in resolved_deps
-    assert expected_deps == set(resolved_deps[req])
+    check_deps(resolved_deps[req], expected_deps)
 
 
 def test_resolvelib_sdist():
@@ -82,22 +98,20 @@ def test_resolvelib_sdist():
     req = Requirement("ansible-core==2.11.5")
     resolved_deps = dict(resolver.resolve_all([req]))
     assert len(resolved_deps) == 1
-    expected_deps = set(
-        [
-            Dependency("ansible-core", Version("2.11.5")),
-            Dependency("pyparsing", Version("2.4.7")),
-            Dependency("jinja2", Version("3.0.1")),
-            Dependency("pycparser", Version("2.20")),
-            Dependency("pyyaml", Version("5.4.1")),
-            Dependency("cffi", Version("1.14.6")),
-            Dependency("resolvelib", Version("0.5.4")),
-            Dependency("packaging", Version("21.0")),
-            Dependency("cryptography", Version("35.0.0")),
-            Dependency("markupsafe", Version("2.0.1")),
-        ]
-    )
+    expected_deps = [
+        Dependency("ansible-core", Version("2.11.5")),
+        Dependency("pyparsing", Version("2.4.7")),
+        Dependency("jinja2", Version("3.0.1")),
+        Dependency("pycparser", Version("2.20")),
+        Dependency("pyyaml", Version("5.4.1")),
+        Dependency("cffi", Version("1.14.6")),
+        Dependency("resolvelib", Version("0.5.4")),
+        Dependency("packaging", Version("21.0")),
+        Dependency("cryptography", Version("35.0.0")),
+        Dependency("markupsafe", Version("2.0.1")),
+    ]
     assert req in resolved_deps
-    assert expected_deps.issubset(resolved_deps[req])
+    check_deps(resolved_deps[req], expected_deps)
 
 
 def test_resolvelib_wheel_patched(monkeypatch):
