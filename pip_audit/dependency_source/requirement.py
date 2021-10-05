@@ -29,13 +29,13 @@ class RequirementSource(DependencySource):
                 raise RequirementSourceError("requirement parsing raised an error") from pe
 
             # Invoke the dependency resolver to turn requirements into dependencies
-            for _, req in reqs.items():
-                try:
-                    deps = self.resolver.resolve(Requirement(str(req)))
-                except DependencyResolverError as dre:
-                    raise RequirementSourceError("dependency resolver raised an error") from dre
-                for dep in deps:
-                    yield dep
+            reqs: List[Requirement] = [Requirement(str(req)) for req in reqs.values()]
+            try:
+                for _, deps in self.resolver.resolve_all(reqs):
+                    for dep in deps:
+                        yield dep
+            except DependencyResolverError as dre:
+                raise RequirementSourceError("dependency resolver raised an error") from dre
 
 
 class RequirementSourceError(DependencySourceError):
