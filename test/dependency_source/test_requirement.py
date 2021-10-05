@@ -27,6 +27,8 @@ def test_requirement_source(monkeypatch):
 def test_requirement_source_parse_error(monkeypatch):
     source = requirement.RequirementSource([Path("requirements.txt")], ResolveLibResolver())
 
+    # Duplicate dependencies aren't allowed in a requirements file so we should expect the parser to
+    # raise here
     monkeypatch.setattr(
         _parse_requirements, "_read_file", lambda _: ["flask==2.0.1\n", "flask==2.0.0"]
     )
