@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterator, List
+from typing import Iterator, List, Set
 
 from packaging.requirements import Requirement
 from pip_api import parse_requirements
@@ -20,8 +20,7 @@ class RequirementSource(DependencySource):
         self.resolver = resolver
 
     def collect(self) -> Iterator[Dependency]:
-        # TODO(alex): I wonder whether we need to do some deduplication of requirements/dependencies
-        # here
+        collected: Set[Dependency] = set()
         for filename in self.filenames:
             try:
                 reqs = parse_requirements(filename=filename)
@@ -33,6 +32,10 @@ class RequirementSource(DependencySource):
             try:
                 for _, deps in self.resolver.resolve_all(iter(req_values)):
                     for dep in deps:
+                        # Don't allow duplicate dependencies to be returned
+                        if dep in collected:
+                            continue
+                        collected.add(dep)
                         yield dep
             except DependencyResolverError as dre:
                 raise RequirementSourceError("dependency resolver raised an error") from dre

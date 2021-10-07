@@ -79,3 +79,18 @@ def test_requirement_source_resolver_error(monkeypatch):
 
     with pytest.raises(DependencySourceError):
         list(source.collect())
+
+
+def test_requirement_source_duplicate_dependencies(monkeypatch):
+    source = requirement.RequirementSource(
+        [Path("requirements1.txt"), Path("requirements2.txt")], ResolveLibResolver()
+    )
+
+    # Return the same requirements for both files
+    monkeypatch.setattr(_parse_requirements, "_read_file", lambda _: ["flask==2.0.1"])
+
+    specs = list(source.collect())
+
+    # If the dependency list has duplicates, then converting to a set will reduce the length of the
+    # collection
+    assert len(specs) == len(set(specs))
