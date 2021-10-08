@@ -33,13 +33,24 @@ class VirtualEnvWrapper(venv.EnvBuilder):
         self.packages = []
         lines = list_output.split(linesep)
         for line in lines:
+            # Skip source distributions and comments
             if not line or line.startswith("#") or line.startswith("-e"):
                 continue
             parts = line.split("==")
+            if len(parts) != 2:
+                raise VirtualEnvWrapperError(f"Malformed line in `pip freeze` output: {line}")
             self.packages.append((parts[0], Version(parts[1])))
 
     @property
     def installed_packages(self) -> Iterator[Tuple[str, Version]]:
-        assert self.packages is not None
+        if self.packages is None:
+            raise VirtualEnvWrapperError(
+                "Invalid usage of wrapper."
+                "The `create` method must be called before inspecting `installed_packages`."
+            )
         for name, version in self.packages:
             yield (name, version)
+
+
+class VirtualEnvWrapperError(Exception):
+    pass
