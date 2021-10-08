@@ -45,5 +45,6 @@ class VirtualEnv(venv.EnvBuilder):
 
         yield from self._packages
 
+
 class VirtualEnvError(Exception):
     pass
