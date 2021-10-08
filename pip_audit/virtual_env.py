@@ -42,9 +42,8 @@ class VirtualEnv(venv.EnvBuilder):
                 "Invalid usage of wrapper."
                 "The `create` method must be called before inspecting `installed_packages`."
             )
-        for package in self._packages:
-            yield package
 
+        yield from self._packages
 
 class VirtualEnvError(Exception):
     pass
