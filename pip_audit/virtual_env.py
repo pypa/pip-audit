@@ -33,7 +33,7 @@ class VirtualEnvWrapper(venv.EnvBuilder):
         self.packages = []
         lines = list_output.split(linesep)
         for line in lines:
-            if not line or line.startswith("#"):
+            if not line or line.startswith("#") or line.startswith("-e"):
                 continue
             parts = line.split("==")
             self.packages.append((parts[0], Version(parts[1])))

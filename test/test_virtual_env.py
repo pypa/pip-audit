@@ -6,3 +6,4 @@ def test_virtual_env():
     ve.create("test_env/")
     packages = list(ve.installed_packages)
     print(packages)
+    ve.clear_directory("test_env/")
