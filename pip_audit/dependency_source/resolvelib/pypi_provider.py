@@ -25,7 +25,7 @@ from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel
 from packaging.version import Version
 from resolvelib.providers import AbstractProvider
 
-from pip_audit.virtual_env import VirtualEnvWrapper
+from pip_audit.virtual_env import VirtualEnv
 
 PYTHON_VERSION = Version(python_version())
 
@@ -143,7 +143,7 @@ def get_metadata_for_sdist(url):
         pkg_path = os.path.join(pkg_dir, pkg_name)
 
         with TemporaryDirectory() as ve_dir:
-            ve = VirtualEnvWrapper([f"-e {pkg_path}"])
+            ve = VirtualEnv([f"-e {pkg_path}"])
             ve.create(ve_dir)
             for name, version in ve.installed_packages:
                 metadata["Requires-Dist"] = f"{name}=={str(version)}"

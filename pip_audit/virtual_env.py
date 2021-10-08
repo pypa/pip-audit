@@ -10,7 +10,7 @@ from typing import Iterator, List, Optional, Tuple
 from packaging.version import Version
 
 
-class VirtualEnvWrapper(venv.EnvBuilder):
+class VirtualEnv(venv.EnvBuilder):
     def __init__(self, install_cmds: List[str]):
         super().__init__(with_pip=True)
         self.install_cmds = install_cmds
@@ -38,13 +38,13 @@ class VirtualEnvWrapper(venv.EnvBuilder):
                 continue
             parts = line.split("==")
             if len(parts) != 2:
-                raise VirtualEnvWrapperError(f"Malformed line in `pip freeze` output: {line}")
+                raise VirtualEnvError(f"Malformed line in `pip freeze` output: {line}")
             self.packages.append((parts[0], Version(parts[1])))
 
     @property
     def installed_packages(self) -> Iterator[Tuple[str, Version]]:
         if self.packages is None:
-            raise VirtualEnvWrapperError(
+            raise VirtualEnvError(
                 "Invalid usage of wrapper."
                 "The `create` method must be called before inspecting `installed_packages`."
             )
@@ -52,5 +52,5 @@ class VirtualEnvWrapper(venv.EnvBuilder):
             yield (name, version)
 
 
-class VirtualEnvWrapperError(Exception):
+class VirtualEnvError(Exception):
     pass
