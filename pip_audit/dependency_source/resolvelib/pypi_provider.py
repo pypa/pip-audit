@@ -143,7 +143,7 @@ def get_metadata_for_sdist(url):
         pkg_path = os.path.join(pkg_dir, pkg_name)
 
         with TemporaryDirectory() as ve_dir:
-            ve = VirtualEnv([f"-e {pkg_path}"])
+            ve = VirtualEnv(["-e", pkg_path])
             ve.create(ve_dir)
             for name, version in ve.installed_packages:
                 metadata["Requires-Dist"] = f"{name}=={str(version)}"

@@ -11,18 +11,16 @@ from packaging.version import Version
 
 
 class VirtualEnv(venv.EnvBuilder):
-    def __init__(self, install_cmds: List[str]):
+    def __init__(self, install_args: List[str]):
         super().__init__(with_pip=True)
-        self._install_cmds = install_cmds
+        self._install_args = install_args
         self._packages: Optional[List[Tuple[str, Version]]] = None
 
     # Override this hook with custom behaviour
     def post_setup(self, context):
         # Install our packages
-        for install_cmd in self._install_cmds:
-            cmd = [context.env_exe, "-m", "pip", "install"]
-            cmd.extend(install_cmd.split())
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        cmd = [context.env_exe, "-m", "pip", "install", *self._install_args]
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
 
         # Now parse the `pip list` output to figure out what packages our
         # environment contains
