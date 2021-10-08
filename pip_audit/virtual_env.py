@@ -1,5 +1,5 @@
 """
-Create, modify and introspect virtual environments.
+Create virtual environments with a custom set of packages and inspect their dependencies.
 """
 
 import subprocess
