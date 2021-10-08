@@ -35,7 +35,7 @@ class VirtualEnv(venv.EnvBuilder):
         for line in lines:
             # Skip source distributions and comments
             if not line or line.startswith("#") or line.startswith("-e"):
-                continue
+                continue  # pragma: no cover
             parts = line.split("==")
             if len(parts) != 2:
                 raise VirtualEnvError(f"Malformed line in `pip freeze` output: {line}")
