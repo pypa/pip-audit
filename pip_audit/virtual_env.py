@@ -43,7 +43,9 @@ class VirtualEnv(venv.EnvBuilder):
         # environment contains
         list_cmd = [context.env_exe, "-m", "pip", "list", "-l", "--format", "json"]
         try:
-            process = subprocess.run(list_cmd, check=True, capture_output=True)
+            process = subprocess.run(
+                list_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
+            )
         except subprocess.CalledProcessError as cpe:
             raise VirtualEnvError(f"Failed to run `pip list`: {list_cmd}") from cpe
         list_output = process.stdout.decode("utf-8")
