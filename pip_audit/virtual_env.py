@@ -18,14 +18,35 @@ class VirtualEnv(venv.EnvBuilder):
 
     # Override this hook with custom behaviour
     def post_setup(self, context):
+        # Firstly, upgrade our `pip` versions since `ensurepip` can leave us with an old version
+        pip_upgrade_cmd = [context.env_exe, "-m", "pip", "install", "--upgrade", "pip"]
+        try:
+            subprocess.run(
+                pip_upgrade_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+        except subprocess.CalledProcessError as cpe:
+            raise VirtualEnvError(f"Failed to upgrade `pip`: {pip_upgrade_cmd}") from cpe
+
         # Install our packages
-        cmd = [context.env_exe, "-m", "pip", "install", *self._install_args]
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        package_install_cmd = [context.env_exe, "-m", "pip", "install", *self._install_args]
+        try:
+            subprocess.run(
+                package_install_cmd,
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except subprocess.CalledProcessError as cpe:
+            raise VirtualEnvError(f"Failed to install packages: {package_install_cmd}") from cpe
 
         # Now parse the `pip list` output to figure out what packages our
         # environment contains
         list_cmd = [context.env_exe, "-m", "pip", "list", "-l", "--format", "json"]
-        list_output = subprocess.check_output(list_cmd).decode("utf-8")
+        try:
+            process = subprocess.run(list_cmd, check=True, capture_output=True)
+        except subprocess.CalledProcessError as cpe:
+            raise VirtualEnvError(f"Failed to run `pip list`: {list_cmd}") from cpe
+        list_output = process.stdout.decode("utf-8")
         package_list = json.loads(list_output)
 
         # Convert into a series of name, version pairs
