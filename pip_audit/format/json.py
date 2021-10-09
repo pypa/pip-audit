@@ -7,6 +7,9 @@ from .interface import VulnerabilityFormat
 
 
 class JsonFormat(VulnerabilityFormat):
+    def __init__(self, output_desc: bool):
+        self.output_desc = output_desc
+
     def format(self, result: Dict[service.Dependency, List[service.VulnerabilityResult]]) -> str:
         output_json = []
         for dep, vulns in result.items():
@@ -23,8 +26,10 @@ class JsonFormat(VulnerabilityFormat):
         }
 
     def _format_vuln(self, vuln: service.VulnerabilityResult) -> Dict[str, Any]:
-        return {
+        vuln_json = {
             "id": vuln.id,
-            "description": vuln.description,
             "fix_versions": [str(version) for version in vuln.fix_versions],
         }
+        if self.output_desc:
+            vuln_json["description"] = vuln.description
+        return vuln_json
