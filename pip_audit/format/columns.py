@@ -26,7 +26,7 @@ class ColumnsFormat(VulnerabilityFormat):
 
     def format(self, result: Dict[service.Dependency, List[service.VulnerabilityResult]]) -> str:
         vuln_data: List[List[Any]] = []
-        vuln_data.append(["Package", "Version", "ID", "Affected Versions"])
+        vuln_data.append(["Package", "Version", "ID", "Fix Versions"])
         if self.output_desc:
             vuln_data[0].append("Description")
         for dep, vulns in result.items():
