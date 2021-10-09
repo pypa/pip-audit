@@ -34,3 +34,32 @@ def test_json(vuln_data):
         },
     ]
     assert json_format.format(vuln_data) == json.dumps(expected_json)
+
+
+def test_json_no_desc(vuln_data):
+    json_format = format.JsonFormat(False)
+    expected_json = [
+        {
+            "package": "foo",
+            "version": "1.0",
+            "vulns": [
+                {
+                    "id": "VULN-0",
+                    "fix_versions": [
+                        "1.1",
+                        "1.4",
+                    ],
+                },
+                {
+                    "id": "VULN-1",
+                    "fix_versions": ["1.0"],
+                },
+            ],
+        },
+        {
+            "package": "bar",
+            "version": "0.1",
+            "vulns": [{"id": "VULN-2", "fix_versions": []}],
+        },
+    ]
+    assert json_format.format(vuln_data) == json.dumps(expected_json)
