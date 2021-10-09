@@ -26,9 +26,10 @@ class ColumnsFormat(VulnerabilityFormat):
 
     def format(self, result: Dict[service.Dependency, List[service.VulnerabilityResult]]) -> str:
         vuln_data: List[List[Any]] = []
-        vuln_data.append(["Package", "Version", "ID", "Fix Versions"])
+        header = ["Package", "Version", "ID", "Fix Versions"]
         if self.output_desc:
-            vuln_data[0].append("Description")
+            header.append("Description")
+        vuln_data.append(header)
         for dep, vulns in result.items():
             for vuln in vulns:
                 vuln_data.append(self._format_vuln(dep, vuln))
