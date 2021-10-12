@@ -24,7 +24,8 @@ from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel_filename
 from packaging.version import Version
 from resolvelib.providers import AbstractProvider
-from virtualenvapi.manage import VirtualEnvironment  # type: ignore
+
+from pip_audit.virtual_env import VirtualEnv
 
 PYTHON_VERSION = Version(python_version())
 
@@ -142,17 +143,10 @@ def get_metadata_for_sdist(url):
         pkg_path = os.path.join(pkg_dir, pkg_name)
 
         with TemporaryDirectory() as ve_dir:
-            ve = VirtualEnvironment(ve_dir)
-            ve.install(f"-e {pkg_path}")
-
+            ve = VirtualEnv(["-e", pkg_path])
+            ve.create(ve_dir)
             for name, version in ve.installed_packages:
-                # Skip the editable package since that's the one we're finding dependencies for
-                #
-                # The `virtualenvapi` package also has a bug where comments in the `pip freeze`
-                # output are returned. Skip package names starting with a comment marker.
-                if name.startswith("-e") or name.startswith("#"):
-                    continue
-                metadata["Requires-Dist"] = f"{name}=={version}"
+                metadata["Requires-Dist"] = f"{name}=={str(version)}"
 
     return metadata
 
