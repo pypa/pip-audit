@@ -21,9 +21,15 @@ def tabulate(rows: Iterable[Iterable[Any]]) -> Tuple[List[str], List[int]]:
 
 
 class ColumnsFormat(VulnerabilityFormat):
+    def __init__(self, output_desc: bool):
+        self.output_desc = output_desc
+
     def format(self, result: Dict[service.Dependency, List[service.VulnerabilityResult]]) -> str:
         vuln_data: List[List[Any]] = []
-        vuln_data.append(["Package", "Version", "ID", "Description", "Affected Versions"])
+        header = ["Package", "Version", "ID", "Fix Versions"]
+        if self.output_desc:
+            header.append("Description")
+        vuln_data.append(header)
         for dep, vulns in result.items():
             for vuln in vulns:
                 vuln_data.append(self._format_vuln(dep, vuln))
@@ -43,13 +49,15 @@ class ColumnsFormat(VulnerabilityFormat):
         return columns_string
 
     def _format_vuln(self, dep: service.Dependency, vuln: service.VulnerabilityResult) -> List[Any]:
-        return [
+        vuln_data = [
             dep.package,
             dep.version,
             vuln.id,
-            vuln.description,
             self._format_fix_versions(vuln.fix_versions),
         ]
+        if self.output_desc:
+            vuln_data.append(vuln.description)
+        return vuln_data
 
     def _format_fix_versions(self, fix_versions: List[Version]) -> str:
         return ",".join([str(version) for version in fix_versions])

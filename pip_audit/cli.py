@@ -47,11 +47,11 @@ class OutputFormatChoice(str, enum.Enum):
     Columns = "columns"
     Json = "json"
 
-    def to_format(self) -> VulnerabilityFormat:
+    def to_format(self, output_desc: bool) -> VulnerabilityFormat:
         if self is OutputFormatChoice.Columns:
-            return ColumnsFormat()
+            return ColumnsFormat(output_desc)
         elif self is OutputFormatChoice.Json:
-            return JsonFormat()
+            return JsonFormat(output_desc)
         else:
             assert_never(self)
 
@@ -73,6 +73,30 @@ class VulnerabilityServiceChoice(str, enum.Enum):
             return OsvService()
         elif self is VulnerabilityServiceChoice.Pypi:
             raise NotImplementedError
+        else:
+            assert_never(self)
+
+    def __str__(self):
+        return self.value
+
+
+@enum.unique
+class VulnerabilityDescriptionChoice(str, enum.Enum):
+    """
+    Whether or not vulnerability descriptions should be added to the `pip-audit` output.
+    """
+
+    On = "on"
+    Off = "off"
+    Auto = "auto"
+
+    def to_bool(self, format_: OutputFormatChoice) -> bool:
+        if self is VulnerabilityDescriptionChoice.On:
+            return True
+        elif self is VulnerabilityDescriptionChoice.Off:
+            return False
+        elif self is VulnerabilityDescriptionChoice.Auto:
+            return bool(format_.value == OutputFormatChoice.Json)
         else:
             assert_never(self)
 
@@ -121,12 +145,21 @@ def audit():
         action="store_true",
         help="collect all dependencies but do not perform the auditing step",
     )
+    parser.add_argument(
+        "--desc",
+        type=VulnerabilityDescriptionChoice,
+        choices=VulnerabilityDescriptionChoice,
+        default=VulnerabilityDescriptionChoice.Auto,
+        help="include a description for each vulnerability; "
+        "`auto` only includes a description for the `json` format",
+    )
 
     args = parser.parse_args()
     logger.debug(f"parsed arguments: {args}")
 
     service = args.vulnerability_service.to_service()
-    formatter = args.format.to_format()
+    output_desc = args.desc.to_bool(args.format)
+    formatter = args.format.to_format(output_desc)
 
     req_files: List[Path] = [Path(req.name) for req in args.requirements]
     if req_files:
