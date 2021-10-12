@@ -115,6 +115,12 @@ def audit():
     )
     parser.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument(
+        "-l",
+        "--local",
+        action="store_true",
+        help="show only results for dependencies in the local environment",
+    )
+    parser.add_argument(
         "-r",
         "--requirement",
         type=argparse.FileType("r"),
@@ -165,7 +171,7 @@ def audit():
     if req_files:
         source = RequirementSource(req_files, ResolveLibResolver())
     else:
-        source = PipSource()
+        source = PipSource(local=args.local)
 
     auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run))
 

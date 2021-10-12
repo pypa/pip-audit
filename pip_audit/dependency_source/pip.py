@@ -27,7 +27,9 @@ _PIP_VERSION = Version(str(pip_api.PIP_VERSION))
 
 
 class PipSource(DependencySource):
-    def __init__(self):
+    def __init__(self, *, local: bool = False):
+        self._local = local
+
         if _PIP_VERSION < _MINIMUM_RELIABLE_PIP_VERSION:
             logger.warning(
                 f"Warning: pip {_PIP_VERSION} is very old, and may not provide reliable "
@@ -39,7 +41,7 @@ class PipSource(DependencySource):
         # The `pip list` call that underlies `pip_api` could fail for myriad reasons.
         # We collect them all into a single well-defined error.
         try:
-            for (_, dist) in pip_api.installed_distributions().items():
+            for (_, dist) in pip_api.installed_distributions(local=self._local).items():
                 yield Dependency(package=dist.name, version=Version(str(dist.version)))
         except Exception as e:
             raise PipSourceError("failed to list installed distributions") from e
