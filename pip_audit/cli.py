@@ -90,14 +90,15 @@ class VulnerabilityDescriptionChoice(str, enum.Enum):
     Off = "off"
     Auto = "auto"
 
-    def to_bool(self, format: OutputFormatChoice) -> bool:
-        if self.value == self.On:
+    def to_bool(self, format_: OutputFormatChoice) -> bool:
+        if self is VulnerabilityDescriptionChoice.On:
             return True
-        elif self.value == self.Off:
+        elif self is VulnerabilityDescriptionChoice.Off:
             return False
+        elif self is VulnerabilityDescriptionChoice.Auto:
+            return bool(format_.value == OutputFormatChoice.Json)
         else:
-            assert self.value == self.Auto
-            return bool(format.value == OutputFormatChoice.Json)
+            assert_never(self)
 
     def __str__(self):
         return self.value
