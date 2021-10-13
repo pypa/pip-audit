@@ -7,14 +7,14 @@ import enum
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from progress.spinner import Spinner as BaseSpinner  # type: ignore
 
 from pip_audit.audit import AuditOptions, Auditor
 from pip_audit.dependency_source import PipSource, RequirementSource, ResolveLibResolver
 from pip_audit.format import ColumnsFormat, JsonFormat, VulnerabilityFormat
-from pip_audit.service import OsvService, VulnerabilityService
+from pip_audit.service import Dependency, OsvService, VulnerabilityService
 from pip_audit.util import assert_never
 from pip_audit.version import __version__
 
@@ -30,7 +30,10 @@ class AuditSpinner(BaseSpinner):
     def update(self):
         item = getattr(self, "iter_value", None)
         if item is not None:
-            (spec, _) = item
+            if isinstance(item, Tuple):
+                (spec, _) = item
+            else:
+                spec = item
             self.message = f"{self._base_message} {spec.package} ({spec.version})"
 
         i = self.index % len(self.phases)
@@ -173,10 +176,14 @@ def audit():
     else:
         source = PipSource(local=args.local)
 
+    specs: List[Dependency] = []
+    for spec in AuditSpinner("Collecting").iter(source.collect()):
+        specs.append(spec)
+
     auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run))
 
     result = {}
-    for (spec, vulns) in AuditSpinner("Auditing").iter(auditor.audit(source)):
+    for (spec, vulns) in AuditSpinner("Auditing").iter(auditor.audit(specs)):
         result[spec] = vulns
 
     print(formatter.format(result))

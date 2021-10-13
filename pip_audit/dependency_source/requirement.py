@@ -30,8 +30,8 @@ class RequirementSource(DependencySource):
             # Invoke the dependency resolver to turn requirements into dependencies
             req_values: List[Requirement] = [Requirement(str(req)) for req in reqs.values()]
             try:
-                for _, deps in self.resolver.resolve_all(iter(req_values)):
-                    for dep in deps:
+                for req in req_values:
+                    for dep in self.resolver.resolve(req):
                         # Don't allow duplicate dependencies to be returned
                         if dep in collected:
                             continue

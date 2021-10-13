@@ -11,8 +11,9 @@ def test_audit(vuln_service, dep_source):
     service = vuln_service()
     source = dep_source()
 
+    specs = source.collect()
     auditor = Auditor(service)
-    results = auditor.audit(source)
+    results = auditor.audit(specs)
 
     assert next(results) == (
         next(source.collect()),
@@ -33,6 +34,7 @@ def test_audit_dry_run(monkeypatch, vuln_service, dep_source):
     service = vuln_service()
     source = dep_source()
 
+    specs = source.collect()
     auditor = Auditor(service, options=AuditOptions(dry_run=True))
     service = pretend.stub(query_all=pretend.call_recorder(lambda s: None))
     logger = pretend.stub(info=pretend.call_recorder(lambda s: None))
@@ -40,7 +42,7 @@ def test_audit_dry_run(monkeypatch, vuln_service, dep_source):
     monkeypatch.setattr(audit, "logger", logger)
 
     # dict-construct here to consume the iterator, causing the effects below.
-    _ = dict(auditor.audit(source))
+    _ = dict(auditor.audit(specs))
 
     # In dry-run mode, no calls should be made the the vuln service,
     # but an appropriate number of logging calls should be made.
