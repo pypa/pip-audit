@@ -3,6 +3,7 @@ from typing import List
 from unittest import mock
 
 from packaging.version import Version
+from requests.exceptions import HTTPError
 
 import pip_audit.service as service
 
@@ -51,13 +52,13 @@ class OsvServiceTest(unittest.TestCase):
 
     def get_error_response(*args, **kwargs):
         class MockResponse:
-            def __init__(self, status_code):
-                self.status_code = status_code
+            def raise_for_status(self):
+                raise HTTPError
 
-        return MockResponse(404)
+        return MockResponse()
 
     @mock.patch("pip_audit.service.osv.requests.post", side_effect=get_error_response)
     def test_osv_error_response(self, mock_post):
         osv = service.OsvService()
         dep = service.Dependency("jinja2", Version("2.4.1"))
-        self.assertRaisesRegex(service.ServiceError, "404", lambda: dict(osv.query_all([dep])))
+        self.assertRaises(service.ServiceError, lambda: dict(osv.query_all([dep])))
