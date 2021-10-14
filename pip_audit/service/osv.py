@@ -23,8 +23,10 @@ class OsvService(VulnerabilityService):
         results: List[VulnerabilityResult] = []
 
         # Check for an unsuccessful status code
-        if response.status_code != 200:
-            raise ServiceError(f"Received an unsuccessful status code: {response.status_code}")
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as http_error:
+            raise ServiceError from http_error
 
         # If the response is empty, that means that the package/version pair doesn't have any
         # associated vulnerabilities
@@ -55,6 +57,10 @@ class OsvService(VulnerabilityService):
                                 Version(version_str) for version_str in fix_version_strs
                             ]
                             break
+
+            # The ranges aren't guaranteed to come in chronological order
+            fix_versions.sort()
+
             results.append(VulnerabilityResult(id, description, fix_versions))
 
         return results
