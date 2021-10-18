@@ -1,7 +1,7 @@
 from typing import List
 
 import requests
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
 
 from .interface import Dependency, ServiceError, VulnerabilityResult, VulnerabilityService
 
@@ -18,24 +18,18 @@ class PyPIService(VulnerabilityService):
         response_json = response.json()
         results: List[VulnerabilityResult] = []
 
-        # No `vulns` key means that there are no vulnerabilities for any version
-        if "vulns" not in response_json:
+        vulns = response_json.get("vulnerabilities")
+
+        # No `vulnerabilities` key means that there are no vulnerabilities for any version
+        if vulns is None:
             return results
 
-        vulns = response_json["vulns"]
-
-        # If the current version doesn't exist in the `vulns` array
-        if str(spec.version) not in vulns:
-            return results
-
-        version_vulns = vulns[str(spec.version)]
-        for v in version_vulns:
+        for v in vulns:
             # Put together the fix versions list
-            fix_versions: List[Version] = []
-            ranges = v["ranges"]
-            for r in ranges:
-                if "fixed" in r:
-                    fix_versions.append(Version(r["fixed"]))
+            try:
+                fix_versions = [Version(fixed_in) for fixed_in in v["fixed_in"]]
+            except InvalidVersion as iv:
+                raise ServiceError(f'Received malformed version from PyPI: {v["fixed_in"]}') from iv
 
             # The ranges aren't guaranteed to come in chronological order
             fix_versions.sort()
