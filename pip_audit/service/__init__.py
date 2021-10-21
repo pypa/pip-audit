@@ -5,3 +5,4 @@ from .interface import (  # noqa: F401
     VulnerabilityService,
 )
 from .osv import OsvService  # noqa: F401
+from .pypi import PyPIService  # noqa: F401
