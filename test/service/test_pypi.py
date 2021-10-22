@@ -150,6 +150,7 @@ def test_pypi_invalid_version(monkeypatch):
 
 
 def test_pypi_not_modified_response_without_cache(monkeypatch):
+    # A 304 response only makes sense if we supplied an ETag to our request
     def get_mock_response():
         class MockResponse:
             status_code = 304
@@ -204,7 +205,7 @@ def test_pypi_cache_invalidation(monkeypatch):
         fix_versions=[Version("1.1"), Version("1.4")],
     )
 
-    # Simulate the case where our cache entry is invalidated.
+    # Simulate the case where our cache entry is invalidated
     def new_json():
         return {
             "vulnerabilities": [
