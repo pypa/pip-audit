@@ -1,10 +1,24 @@
-from typing import List
+import os
+import tempfile
+from typing import List, Optional
 
 import pytest
 import requests
 from packaging.version import Version
 
 import pip_audit.service as service
+
+cache_dir: Optional[tempfile.TemporaryDirectory] = None
+
+
+def setup_function(function):
+    global cache_dir
+    cache_dir = tempfile.TemporaryDirectory()
+    os.environ["PIP_AUDIT_CACHE"] = cache_dir.name
+
+
+def teardown_function(function):
+    cache_dir.cleanup()
 
 
 def get_mock_session(func):

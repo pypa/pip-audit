@@ -1,5 +1,6 @@
+import logging
 import os
-from typing import List
+from typing import Any, List, Optional
 
 import requests
 from cachecontrol import CacheControl  # type: ignore
@@ -8,18 +9,60 @@ from packaging.version import InvalidVersion, Version
 
 from .interface import Dependency, ServiceError, VulnerabilityResult, VulnerabilityService
 
+logger = logging.getLogger(__name__)
+
+
+class SafeFileCache(FileCache):
+    def __init__(self, directory):
+        self.logged_warning = False
+        super().__init__(directory)
+
+    def get(self, key: str) -> Optional[Any]:
+        try:
+            return super().get(key)
+        except Exception as e:  # pragma: no cover
+            if not self.logged_warning:
+                logger.warning(
+                    f"Failed to read from cache directory, performance may be degraded: {e}"
+                )
+                self.logged_warning = True
+            return None
+
+    def set(self, key: str, value: str) -> None:
+        try:
+            super().set(key, value)
+        except Exception as e:  # pragma: no cover
+            if not self.logged_warning:
+                logger.warning(
+                    f"Failed to write to cache directory, performance may be degraded: {e}"
+                )
+                self.logged_warning = True
+
+    def delete(self, key: str) -> None:  # pragma: no cover
+        try:
+            super().delete(key)
+        except Exception as e:
+            if not self.logged_warning:
+                logger.warning(
+                    f"Failed to delete file from cache directory, performance may be degraded: {e}"
+                )
+                self.logged_warning = True
+
 
 def _get_cached_session():
     return CacheControl(
-        requests.Session(), cache=FileCache(os.environ.get("PIP_AUDIT_CACHE", ".pip-audit-cache"))
+        requests.Session(),
+        cache=SafeFileCache(os.environ.get("PIP_AUDIT_CACHE", ".pip-audit-cache")),
     )
 
 
 class PyPIService(VulnerabilityService):
+    def __init__(self):
+        self.session = _get_cached_session()
+
     def query(self, spec: Dependency) -> List[VulnerabilityResult]:
         url = f"https://pypi.org/pypi/{spec.package}/{str(spec.version)}/json"
-        session = _get_cached_session()
-        response: requests.Response = session.get(url=url)
+        response: requests.Response = self.session.get(url=url)
         try:
             response.raise_for_status()
         except requests.HTTPError as http_error:
