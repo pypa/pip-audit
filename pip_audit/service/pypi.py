@@ -1,3 +1,4 @@
+import os
 from typing import List
 
 import requests
@@ -9,7 +10,9 @@ from .interface import Dependency, ServiceError, VulnerabilityResult, Vulnerabil
 
 
 def _get_cached_session():
-    return CacheControl(requests.Session(), cache=FileCache(".pip-audit-cache"))
+    return CacheControl(
+        requests.Session(), cache=FileCache(os.environ.get("PIP_AUDIT_CACHE", ".pip-audit-cache"))
+    )
 
 
 class PyPIService(VulnerabilityService):
