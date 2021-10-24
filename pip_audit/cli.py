@@ -14,7 +14,7 @@ from progress.spinner import Spinner as BaseSpinner  # type: ignore
 from pip_audit.audit import AuditOptions, Auditor
 from pip_audit.dependency_source import PipSource, RequirementSource, ResolveLibResolver
 from pip_audit.format import ColumnsFormat, JsonFormat, VulnerabilityFormat
-from pip_audit.service import OsvService, VulnerabilityService
+from pip_audit.service import OsvService, PyPIService, VulnerabilityService
 from pip_audit.util import assert_never
 from pip_audit.version import __version__
 
@@ -72,7 +72,7 @@ class VulnerabilityServiceChoice(str, enum.Enum):
         if self is VulnerabilityServiceChoice.Osv:
             return OsvService()
         elif self is VulnerabilityServiceChoice.Pypi:
-            raise NotImplementedError
+            return PyPIService()
         else:
             assert_never(self)
 
