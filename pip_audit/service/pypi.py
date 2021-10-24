@@ -2,8 +2,8 @@ import os
 from typing import List
 
 import requests
-from cachecontrol import CacheControl
-from cachecontrol.caches import FileCache
+from cachecontrol import CacheControl  # type: ignore
+from cachecontrol.caches import FileCache  # type: ignore
 from packaging.version import InvalidVersion, Version
 
 from .interface import Dependency, ServiceError, VulnerabilityResult, VulnerabilityService
