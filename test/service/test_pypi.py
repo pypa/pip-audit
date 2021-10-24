@@ -7,6 +7,17 @@ from packaging.version import Version
 import pip_audit.service as service
 
 
+def get_mock_session(func):
+    class MockSession:
+        def __init__(self, create_response):
+            self.create_response = create_response
+
+        def get(self, url):
+            return self.create_response()
+
+    return MockSession(func)
+
+
 def test_pypi():
     pypi = service.PyPIService()
     dep = service.Dependency("jinja2", Version("2.4.1"))
@@ -38,7 +49,9 @@ def test_pypi_http_error(monkeypatch):
 
         return MockResponse()
 
-    monkeypatch.setattr(requests, "get", lambda url: get_error_response())
+    monkeypatch.setattr(
+        service.pypi, "_get_cached_session", lambda: get_mock_session(get_error_response)
+    )
 
     pypi = service.PyPIService()
     dep = service.Dependency("jinja2", Version("2.4.1"))
@@ -65,7 +78,9 @@ def test_pypi_mocked_response(monkeypatch):
 
         return MockResponse()
 
-    monkeypatch.setattr(requests, "get", lambda url: get_mock_response())
+    monkeypatch.setattr(
+        service.pypi, "_get_cached_session", lambda: get_mock_session(get_mock_response)
+    )
 
     pypi = service.PyPIService()
     dep = service.Dependency("foo", Version("1.0"))
@@ -91,7 +106,9 @@ def test_pypi_no_vuln_key(monkeypatch):
 
         return MockResponse()
 
-    monkeypatch.setattr(requests, "get", lambda url: get_mock_response())
+    monkeypatch.setattr(
+        service.pypi, "_get_cached_session", lambda: get_mock_session(get_mock_response)
+    )
 
     pypi = service.PyPIService()
     dep = service.Dependency("foo", Version("1.0"))
@@ -120,7 +137,9 @@ def test_pypi_invalid_version(monkeypatch):
 
         return MockResponse()
 
-    monkeypatch.setattr(requests, "get", lambda url: get_mock_response())
+    monkeypatch.setattr(
+        service.pypi, "_get_cached_session", lambda: get_mock_session(get_mock_response)
+    )
 
     pypi = service.PyPIService()
     dep = service.Dependency("foo", Version("1.0"))

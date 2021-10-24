@@ -1,15 +1,22 @@
 from typing import List
 
 import requests
+from cachecontrol import CacheControl
+from cachecontrol.caches import FileCache
 from packaging.version import InvalidVersion, Version
 
 from .interface import Dependency, ServiceError, VulnerabilityResult, VulnerabilityService
 
 
+def _get_cached_session():
+    return CacheControl(requests.Session(), cache=FileCache(".pip-audit-cache"))
+
+
 class PyPIService(VulnerabilityService):
     def query(self, spec: Dependency) -> List[VulnerabilityResult]:
         url = f"https://pypi.org/pypi/{spec.package}/{str(spec.version)}/json"
-        response: requests.Response = requests.get(url=url)
+        session = _get_cached_session()
+        response: requests.Response = session.get(url=url)
         try:
             response.raise_for_status()
         except requests.HTTPError as http_error:
