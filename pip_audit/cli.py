@@ -125,7 +125,6 @@ def audit():
         "--requirement",
         type=argparse.FileType("r"),
         action="append",
-        default=[],
         dest="requirements",
         help="audit the given requirements file; this option can be used multiple times",
     )
@@ -167,8 +166,8 @@ def audit():
     output_desc = args.desc.to_bool(args.format)
     formatter = args.format.to_format(output_desc)
 
-    req_files: List[Path] = [Path(req.name) for req in args.requirements]
-    if req_files:
+    if args.requirements is not None:
+        req_files: List[Path] = [Path(req.name) for req in args.requirements]
         source = RequirementSource(req_files, ResolveLibResolver())
     else:
         source = PipSource(local=args.local)
