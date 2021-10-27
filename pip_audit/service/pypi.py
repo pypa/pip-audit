@@ -52,7 +52,8 @@ class SafeFileCache(FileCache):
 
 
 def _get_pip_cache() -> str:
-    # If `pip` is in the `PATH`, let's try to reuse the `pip` HTTP cache
+    # Unless the cache directory is specifically set by `PIP_AUDIT_CACHE`, we try to share the `pip`
+    # HTTP cache
     cmd = [sys.executable, "-m", "pip", "cache", "dir"]
     try:
         process = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
