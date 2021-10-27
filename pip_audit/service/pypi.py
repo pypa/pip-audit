@@ -51,8 +51,9 @@ class SafeFileCache(FileCache):
             pass
 
         # We don't want to use lock files since `pip` isn't going to recognise those. We should
-        # write to the cache in the same way that `pip` does. That is, write to a temporary file
-        # and then move it into place.
+        # write to the cache in a similar way to how `pip` does it. We create a temporary file then
+        # create a hard link to it with the correct name such that it appears atomically to other
+        # concurrent `pip` or `pip-audit` instances.
         with NamedTemporaryFile(dir=os.path.dirname(name)) as f:
             f.write(value)
             os.link(f.name, name)
