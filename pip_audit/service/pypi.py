@@ -1,5 +1,7 @@
 import logging
 import os
+import subprocess
+import sys
 from typing import Any, List, Optional
 
 import requests
@@ -49,10 +51,22 @@ class SafeFileCache(FileCache):
                 self.logged_warning = True
 
 
+def _get_pip_cache() -> str:
+    # If `pip` is in the `PATH`, let's try to reuse the `pip` HTTP cache
+    cmd = [sys.executable, "-m", "pip", "cache", "dir"]
+    try:
+        process = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as cpe:
+        raise ServiceError(f"Failed to query the `pip` HTTP cache directory: {cmd}") from cpe
+    cache_dir = process.stdout.decode("utf-8")
+    http_cache_dir = os.path.join(cache_dir, "http")
+    return http_cache_dir
+
+
 def _get_cached_session():
     return CacheControl(
         requests.Session(),
-        cache=SafeFileCache(os.environ.get("PIP_AUDIT_CACHE", ".pip-audit-cache")),
+        cache=SafeFileCache(os.environ.get("PIP_AUDIT_CACHE", _get_pip_cache())),
     )
 
 
