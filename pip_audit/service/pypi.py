@@ -2,6 +2,7 @@ import logging
 import os
 import subprocess
 import sys
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, List, Optional
 
@@ -70,8 +71,8 @@ class SafeFileCache(FileCache):
 
 
 def _get_pip_cache() -> str:
-    # Unless the cache directory is specifically set by `PIP_AUDIT_CACHE`, we try to share the `pip`
-    # HTTP cache
+    # Unless the cache directory is specifically set by the `--cache-dir` option, we try to share
+    # the `pip` HTTP cache
     cmd = [sys.executable, "-m", "pip", "cache", "dir"]
     try:
         process = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
@@ -82,16 +83,17 @@ def _get_pip_cache() -> str:
     return http_cache_dir
 
 
-def _get_cached_session():
+def _get_cached_session(cache_dir: Optional[Path]):
+    pip_cache_dir = _get_pip_cache()
     return CacheControl(
         requests.Session(),
-        cache=SafeFileCache(os.environ.get("PIP_AUDIT_CACHE", _get_pip_cache())),
+        cache=SafeFileCache(cache_dir if cache_dir is not None else pip_cache_dir),
     )
 
 
 class PyPIService(VulnerabilityService):
-    def __init__(self):
-        self.session = _get_cached_session()
+    def __init__(self, cache_dir: Optional[Path]):
+        self.session = _get_cached_session(cache_dir)
 
     def query(self, spec: Dependency) -> List[VulnerabilityResult]:
         url = f"https://pypi.org/pypi/{spec.package}/{str(spec.version)}/json"

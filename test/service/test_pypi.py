@@ -1,4 +1,3 @@
-import os
 import tempfile
 from typing import List, Optional
 
@@ -14,7 +13,6 @@ cache_dir: Optional[tempfile.TemporaryDirectory] = None
 def setup_function(function):
     global cache_dir
     cache_dir = tempfile.TemporaryDirectory()
-    os.environ["PIP_AUDIT_CACHE"] = cache_dir.name
 
 
 def teardown_function(function):
@@ -33,7 +31,7 @@ def get_mock_session(func):
 
 
 def test_pypi():
-    pypi = service.PyPIService()
+    pypi = service.PyPIService(cache_dir.name)
     dep = service.Dependency("jinja2", Version("2.4.1"))
     results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
     assert len(results) == 1
@@ -43,7 +41,7 @@ def test_pypi():
 
 
 def test_pypi_multiple_pkg():
-    pypi = service.PyPIService()
+    pypi = service.PyPIService(cache_dir.name)
     deps: List[service.Dependency] = [
         service.Dependency("jinja2", Version("2.4.1")),
         service.Dependency("flask", Version("0.5")),
@@ -64,10 +62,10 @@ def test_pypi_http_error(monkeypatch):
         return MockResponse()
 
     monkeypatch.setattr(
-        service.pypi, "_get_cached_session", lambda: get_mock_session(get_error_response)
+        service.pypi, "_get_cached_session", lambda _: get_mock_session(get_error_response)
     )
 
-    pypi = service.PyPIService()
+    pypi = service.PyPIService(cache_dir.name)
     dep = service.Dependency("jinja2", Version("2.4.1"))
     with pytest.raises(service.ServiceError):
         dict(pypi.query_all([dep]))
@@ -93,10 +91,10 @@ def test_pypi_mocked_response(monkeypatch):
         return MockResponse()
 
     monkeypatch.setattr(
-        service.pypi, "_get_cached_session", lambda: get_mock_session(get_mock_response)
+        service.pypi, "_get_cached_session", lambda _: get_mock_session(get_mock_response)
     )
 
-    pypi = service.PyPIService()
+    pypi = service.PyPIService(cache_dir.name)
     dep = service.Dependency("foo", Version("1.0"))
     results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
     assert len(results) == 1
@@ -121,10 +119,10 @@ def test_pypi_no_vuln_key(monkeypatch):
         return MockResponse()
 
     monkeypatch.setattr(
-        service.pypi, "_get_cached_session", lambda: get_mock_session(get_mock_response)
+        service.pypi, "_get_cached_session", lambda _: get_mock_session(get_mock_response)
     )
 
-    pypi = service.PyPIService()
+    pypi = service.PyPIService(cache_dir.name)
     dep = service.Dependency("foo", Version("1.0"))
     results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
     assert len(results) == 1
@@ -152,10 +150,10 @@ def test_pypi_invalid_version(monkeypatch):
         return MockResponse()
 
     monkeypatch.setattr(
-        service.pypi, "_get_cached_session", lambda: get_mock_session(get_mock_response)
+        service.pypi, "_get_cached_session", lambda _: get_mock_session(get_mock_response)
     )
 
-    pypi = service.PyPIService()
+    pypi = service.PyPIService(cache_dir.name)
     dep = service.Dependency("foo", Version("1.0"))
     with pytest.raises(service.ServiceError):
         dict(pypi.query_all([dep]))
