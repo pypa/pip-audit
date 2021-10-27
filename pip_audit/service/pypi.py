@@ -2,6 +2,7 @@ import logging
 import os
 import subprocess
 import sys
+from tempfile import NamedTemporaryFile
 from typing import Any, List, Optional
 
 import requests
@@ -30,15 +31,31 @@ class SafeFileCache(FileCache):
                 self.logged_warning = True
             return None
 
-    def set(self, key: str, value: str) -> None:
+    def set(self, key: str, value: bytes) -> None:
         try:
-            super().set(key, value)
+            self._set_impl(key, value)
         except Exception as e:  # pragma: no cover
             if not self.logged_warning:
                 logger.warning(
                     f"Failed to write to cache directory, performance may be degraded: {e}"
                 )
                 self.logged_warning = True
+
+    def _set_impl(self, key: str, value: bytes) -> None:
+        name: str = super()._fn(key)
+
+        # Make sure the directory exists
+        try:
+            os.makedirs(os.path.dirname(name), self.dirmode)
+        except (IOError, OSError):  # pragma: no cover
+            pass
+
+        # We don't want to use lock files since `pip` isn't going to recognise those. We should
+        # write to the cache in the same way that `pip` does. That is, write to a temporary file
+        # and then move it into place.
+        with NamedTemporaryFile(dir=os.path.dirname(name)) as f:
+            f.write(value)
+            os.link(f.name, name)
 
     def delete(self, key: str) -> None:  # pragma: no cover
         try:
@@ -57,9 +74,9 @@ def _get_pip_cache() -> str:
     cmd = [sys.executable, "-m", "pip", "cache", "dir"]
     try:
         process = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-    except subprocess.CalledProcessError as cpe:
+    except subprocess.CalledProcessError as cpe:  # pragma: no cover
         raise ServiceError(f"Failed to query the `pip` HTTP cache directory: {cmd}") from cpe
-    cache_dir = process.stdout.decode("utf-8")
+    cache_dir = process.stdout.decode("utf-8").strip("\n")
     http_cache_dir = os.path.join(cache_dir, "http")
     return http_cache_dir
 
