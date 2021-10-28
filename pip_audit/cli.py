@@ -13,7 +13,7 @@ from pip_audit.audit import AuditOptions, Auditor
 from pip_audit.dependency_source import PipSource, RequirementSource, ResolveLibResolver
 from pip_audit.format import ColumnsFormat, JsonFormat, VulnerabilityFormat
 from pip_audit.service import OsvService, VulnerabilityService
-from pip_audit.state import AuditState
+from pip_audit.state import AuditSpinner
 from pip_audit.util import assert_never
 from pip_audit.version import __version__
 
@@ -148,7 +148,7 @@ def audit():
     service = args.vulnerability_service.to_service()
     output_desc = args.desc.to_bool(args.format)
     formatter = args.format.to_format(output_desc)
-    state = AuditState()
+    state = AuditSpinner()
 
     if args.requirements is not None:
         req_files: List[Path] = [Path(req.name) for req in args.requirements]

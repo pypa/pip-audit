@@ -1,9 +1,16 @@
+from abc import ABC, abstractmethod
 from typing import Any, Dict
 
 from progress.spinner import Spinner as BaseSpinner  # type: ignore
 
 
-class AuditState(BaseSpinner):  # pragma: no cover
+class AuditState(ABC):
+    @abstractmethod
+    def update_state(self, message: str) -> None:
+        raise NotImplementedError  # pragma: no cover
+
+
+class AuditSpinner(AuditState, BaseSpinner):  # pragma: no cover
     def __init__(self, message: str = "", **kwargs: Dict[str, Any]):
         super().__init__(message=message, **kwargs)
         self._base_message = self.message
