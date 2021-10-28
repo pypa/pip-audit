@@ -25,7 +25,7 @@ from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel
 from packaging.version import Version
 from resolvelib.providers import AbstractProvider
 
-from pip_audit.spinner import AuditSpinner
+from pip_audit.state import AuditState
 from pip_audit.virtual_env import VirtualEnv
 
 PYTHON_VERSION = Version(python_version())
@@ -153,8 +153,8 @@ def get_metadata_for_sdist(url):
 
 
 class PyPIProvider(AbstractProvider):
-    def __init__(self, spinner: Optional[AuditSpinner] = None):
-        self.spinner = spinner
+    def __init__(self, state: Optional[AuditState] = None):
+        self.state = state
 
     def identify(self, requirement_or_candidate):
         return canonicalize_name(requirement_or_candidate.name)
@@ -163,8 +163,8 @@ class PyPIProvider(AbstractProvider):
         return sum(1 for _ in candidates[identifier])
 
     def find_matches(self, identifier, requirements, incompatibilities):
-        if self.spinner is not None:
-            self.spinner.update_message(f"Resolving {identifier}")  # pragma: no cover
+        if self.state is not None:
+            self.state.update_state(f"Resolving {identifier}")  # pragma: no cover
 
         requirements = list(requirements[identifier])
 

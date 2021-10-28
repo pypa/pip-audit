@@ -11,14 +11,14 @@ from resolvelib import BaseReporter, Resolver
 
 from pip_audit.dependency_source import DependencyResolver, DependencyResolverError
 from pip_audit.service.interface import Dependency
-from pip_audit.spinner import AuditSpinner
+from pip_audit.state import AuditState
 
 from .pypi_provider import PyPIProvider
 
 
 class ResolveLibResolver(DependencyResolver):
-    def __init__(self, spinner: Optional[AuditSpinner] = None):
-        self.provider = PyPIProvider(spinner)
+    def __init__(self, state: Optional[AuditState] = None):
+        self.provider = PyPIProvider(state)
         self.reporter = BaseReporter()
         self.resolver: Resolver = Resolver(self.provider, self.reporter)
 

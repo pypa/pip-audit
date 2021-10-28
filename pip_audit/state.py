@@ -3,7 +3,7 @@ from typing import Any, Dict
 from progress.spinner import Spinner as BaseSpinner  # type: ignore
 
 
-class AuditSpinner(BaseSpinner):  # pragma: no cover
+class AuditState(BaseSpinner):  # pragma: no cover
     def __init__(self, message: str = "", **kwargs: Dict[str, Any]):
         super().__init__(message=message, **kwargs)
         self._base_message = self.message
@@ -13,6 +13,6 @@ class AuditSpinner(BaseSpinner):  # pragma: no cover
         line = f"{self.phases[i]} {self.message}"
         self.writeln(line)
 
-    def update_message(self, message: str) -> None:
+    def update_state(self, message: str) -> None:
         self.message = message
         self.next()
