@@ -6,6 +6,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, List, Optional
 
+import pip_api
 import requests
 from cachecontrol import CacheControl  # type: ignore
 from cachecontrol.caches import FileCache  # type: ignore
@@ -14,6 +15,12 @@ from packaging.version import InvalidVersion, Version
 from .interface import Dependency, ServiceError, VulnerabilityResult, VulnerabilityService
 
 logger = logging.getLogger(__name__)
+
+# The `cache dir` command was added to `pip` as of 20.1 so we should check before trying to use it
+# to discover the `pip` HTTP cache
+_MINIMUM_PIP_VERSION = Version("20.1")
+
+_PIP_VERSION = Version(str(pip_api.PIP_VERSION))
 
 
 class SafeFileCache(FileCache):
@@ -83,12 +90,25 @@ def _get_pip_cache() -> str:
     return http_cache_dir
 
 
-def _get_cached_session(cache_dir: Optional[Path]):
-    pip_cache_dir = _get_pip_cache()
-    return CacheControl(
-        requests.Session(),
-        cache=SafeFileCache(cache_dir if cache_dir is not None else pip_cache_dir),
+def _get_cache_dir(custom_cache_dir: Optional[Path]) -> str:
+    pip_cache_dir: Optional[str] = (
+        _get_pip_cache() if _PIP_VERSION <= _MINIMUM_PIP_VERSION else None
     )
+    if custom_cache_dir is not None:
+        return custom_cache_dir.name
+    elif pip_cache_dir is not None:  # pragma: no cover
+        return pip_cache_dir
+    else:  # pragma: no cover
+        fallback_path = os.path.join(Path.home(), ".pip-audit-cache")
+        logger.warn(
+            f"Warning: pip {_PIP_VERSION} doesn't support the `cache dir` subcommand, unable to "
+            f'reuse the `pip` HTTP cache and using "{fallback_path}" instead'
+        )
+        return fallback_path
+
+
+def _get_cached_session(cache_dir: Optional[Path]):
+    return CacheControl(requests.Session(), cache=SafeFileCache(_get_cache_dir(cache_dir)))
 
 
 class PyPIService(VulnerabilityService):

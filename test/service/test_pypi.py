@@ -31,7 +31,7 @@ def get_mock_session(func):
 
 
 def test_pypi():
-    pypi = service.PyPIService(cache_dir.name)
+    pypi = service.PyPIService(cache_dir)
     dep = service.Dependency("jinja2", Version("2.4.1"))
     results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
     assert len(results) == 1
@@ -41,7 +41,7 @@ def test_pypi():
 
 
 def test_pypi_multiple_pkg():
-    pypi = service.PyPIService(cache_dir.name)
+    pypi = service.PyPIService(cache_dir)
     deps: List[service.Dependency] = [
         service.Dependency("jinja2", Version("2.4.1")),
         service.Dependency("flask", Version("0.5")),
@@ -65,7 +65,7 @@ def test_pypi_http_error(monkeypatch):
         service.pypi, "_get_cached_session", lambda _: get_mock_session(get_error_response)
     )
 
-    pypi = service.PyPIService(cache_dir.name)
+    pypi = service.PyPIService(cache_dir)
     dep = service.Dependency("jinja2", Version("2.4.1"))
     with pytest.raises(service.ServiceError):
         dict(pypi.query_all([dep]))
@@ -94,7 +94,7 @@ def test_pypi_mocked_response(monkeypatch):
         service.pypi, "_get_cached_session", lambda _: get_mock_session(get_mock_response)
     )
 
-    pypi = service.PyPIService(cache_dir.name)
+    pypi = service.PyPIService(cache_dir)
     dep = service.Dependency("foo", Version("1.0"))
     results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
     assert len(results) == 1
@@ -122,7 +122,7 @@ def test_pypi_no_vuln_key(monkeypatch):
         service.pypi, "_get_cached_session", lambda _: get_mock_session(get_mock_response)
     )
 
-    pypi = service.PyPIService(cache_dir.name)
+    pypi = service.PyPIService(cache_dir)
     dep = service.Dependency("foo", Version("1.0"))
     results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
     assert len(results) == 1
@@ -153,7 +153,7 @@ def test_pypi_invalid_version(monkeypatch):
         service.pypi, "_get_cached_session", lambda _: get_mock_session(get_mock_response)
     )
 
-    pypi = service.PyPIService(cache_dir.name)
+    pypi = service.PyPIService(cache_dir)
     dep = service.Dependency("foo", Version("1.0"))
     with pytest.raises(service.ServiceError):
         dict(pypi.query_all([dep]))
