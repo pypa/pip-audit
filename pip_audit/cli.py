@@ -148,19 +148,19 @@ def audit():
     service = args.vulnerability_service.to_service()
     output_desc = args.desc.to_bool(args.format)
     formatter = args.format.to_format(output_desc)
-    state = AuditSpinner()
 
-    if args.requirements is not None:
-        req_files: List[Path] = [Path(req.name) for req in args.requirements]
-        source = RequirementSource(req_files, ResolveLibResolver(state), state)
-    else:
-        source = PipSource(local=args.local)
+    with AuditSpinner() as state:
+        if args.requirements is not None:
+            req_files: List[Path] = [Path(req.name) for req in args.requirements]
+            source = RequirementSource(req_files, ResolveLibResolver(state), state)
+        else:
+            source = PipSource(local=args.local)
 
-    auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run))
+        auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run))
 
-    result = {}
-    for (spec, vulns) in auditor.audit(source):
-        state.update_state(f"Auditing {spec.package} ({spec.version})")
-        result[spec] = vulns
+        result = {}
+        for (spec, vulns) in auditor.audit(source):
+            state.update_state(f"Auditing {spec.package} ({spec.version})")
+            result[spec] = vulns
 
     print(formatter.format(result))
