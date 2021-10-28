@@ -152,7 +152,7 @@ def audit():
 
     if args.requirements is not None:
         req_files: List[Path] = [Path(req.name) for req in args.requirements]
-        source = RequirementSource(req_files, ResolveLibResolver(state))
+        source = RequirementSource(req_files, ResolveLibResolver(state), state)
     else:
         source = PipSource(local=args.local)
 
