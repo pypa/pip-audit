@@ -7,35 +7,18 @@ import enum
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List
-
-from progress.spinner import Spinner as BaseSpinner  # type: ignore
+from typing import List
 
 from pip_audit.audit import AuditOptions, Auditor
 from pip_audit.dependency_source import PipSource, RequirementSource, ResolveLibResolver
 from pip_audit.format import ColumnsFormat, JsonFormat, VulnerabilityFormat
 from pip_audit.service import OsvService, VulnerabilityService
+from pip_audit.state import AuditSpinner
 from pip_audit.util import assert_never
 from pip_audit.version import __version__
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PIP_AUDIT_LOGLEVEL", "INFO").upper())
-
-
-class AuditSpinner(BaseSpinner):
-    def __init__(self, message: str = "", **kwargs: Dict[str, Any]):
-        super().__init__(message=message, **kwargs)
-        self._base_message = self.message
-
-    def update(self):
-        item = getattr(self, "iter_value", None)
-        if item is not None:
-            (spec, _) = item
-            self.message = f"{self._base_message} {spec.package} ({spec.version})"
-
-        i = self.index % len(self.phases)
-        line = f"{self.phases[i]} {self.message}"
-        self.writeln(line)
 
 
 @enum.unique
@@ -166,16 +149,18 @@ def audit():
     output_desc = args.desc.to_bool(args.format)
     formatter = args.format.to_format(output_desc)
 
-    if args.requirements is not None:
-        req_files: List[Path] = [Path(req.name) for req in args.requirements]
-        source = RequirementSource(req_files, ResolveLibResolver())
-    else:
-        source = PipSource(local=args.local)
+    with AuditSpinner() as state:
+        if args.requirements is not None:
+            req_files: List[Path] = [Path(req.name) for req in args.requirements]
+            source = RequirementSource(req_files, ResolveLibResolver(state), state)
+        else:
+            source = PipSource(local=args.local)
 
-    auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run))
+        auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run))
 
-    result = {}
-    for (spec, vulns) in AuditSpinner("Auditing").iter(auditor.audit(source)):
-        result[spec] = vulns
+        result = {}
+        for (spec, vulns) in auditor.audit(source):
+            state.update_state(f"Auditing {spec.package} ({spec.version})")
+            result[spec] = vulns
 
     print(formatter.format(result))
