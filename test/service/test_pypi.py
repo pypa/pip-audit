@@ -1,6 +1,7 @@
 import tempfile
 from typing import List, Optional
 
+import pretend
 import pytest
 import requests
 from packaging.version import Version
@@ -157,3 +158,19 @@ def test_pypi_invalid_version(monkeypatch):
     dep = service.Dependency("foo", Version("1.0"))
     with pytest.raises(service.ServiceError):
         dict(pypi.query_all([dep]))
+
+
+def test_pypi_warns_about_old_pip(monkeypatch):
+    monkeypatch.setattr(service.pypi, "_PIP_VERSION", Version("1.0.0"))
+    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    monkeypatch.setattr(service.pypi, "logger", logger)
+
+    # If we supply a cache directory, we're not relying on finding the `pip` cache so no need to log
+    # a warning
+    service.PyPIService(cache_dir)
+    assert len(logger.warning.calls) == 0
+
+    # However, if we're not specifying a cache directory, we'll try to call `pip cache dir`. If we
+    # have an old `pip`, then we should expect a warning to be logged
+    service.PyPIService()
+    assert len(logger.warning.calls) == 1

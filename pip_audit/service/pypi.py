@@ -92,15 +92,15 @@ def _get_pip_cache() -> str:
 
 def _get_cache_dir(custom_cache_dir: Optional[Path]) -> str:
     pip_cache_dir: Optional[str] = (
-        _get_pip_cache() if _PIP_VERSION <= _MINIMUM_PIP_VERSION else None
+        _get_pip_cache() if _PIP_VERSION >= _MINIMUM_PIP_VERSION else None
     )
     if custom_cache_dir is not None:
         return custom_cache_dir.name
     elif pip_cache_dir is not None:  # pragma: no cover
         return pip_cache_dir
-    else:  # pragma: no cover
+    else:
         fallback_path = os.path.join(Path.home(), ".pip-audit-cache")
-        logger.warn(
+        logger.warning(
             f"Warning: pip {_PIP_VERSION} doesn't support the `cache dir` subcommand, unable to "
             f'reuse the `pip` HTTP cache and using "{fallback_path}" instead'
         )
@@ -112,7 +112,7 @@ def _get_cached_session(cache_dir: Optional[Path]):
 
 
 class PyPIService(VulnerabilityService):
-    def __init__(self, cache_dir: Optional[Path]):
+    def __init__(self, cache_dir: Optional[Path] = None):
         self.session = _get_cached_session(cache_dir)
 
     def query(self, spec: Dependency) -> List[VulnerabilityResult]:
