@@ -3,7 +3,7 @@ from typing import Any, Dict
 from progress.spinner import Spinner as BaseSpinner  # type: ignore
 
 
-class AuditSpinner(BaseSpinner):
+class AuditSpinner(BaseSpinner):  # pragma: no cover
     def __init__(self, message: str = "", **kwargs: Dict[str, Any]):
         super().__init__(message=message, **kwargs)
         self._base_message = self.message

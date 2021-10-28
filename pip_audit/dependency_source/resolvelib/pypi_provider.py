@@ -13,7 +13,7 @@ from operator import attrgetter
 from platform import python_version
 from tarfile import TarFile
 from tempfile import TemporaryDirectory
-from typing import Set
+from typing import Optional, Set
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -153,7 +153,7 @@ def get_metadata_for_sdist(url):
 
 
 class PyPIProvider(AbstractProvider):
-    def __init__(self, spinner: AuditSpinner):
+    def __init__(self, spinner: Optional[AuditSpinner] = None):
         self.spinner = spinner
 
     def identify(self, requirement_or_candidate):
@@ -163,7 +163,8 @@ class PyPIProvider(AbstractProvider):
         return sum(1 for _ in candidates[identifier])
 
     def find_matches(self, identifier, requirements, incompatibilities):
-        self.spinner.update_message(f"Resolving {identifier}")
+        if self.spinner is not None:
+            self.spinner.update_message(f"Resolving {identifier}")  # pragma: no cover
 
         requirements = list(requirements[identifier])
 
