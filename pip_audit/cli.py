@@ -7,12 +7,12 @@ import enum
 import logging
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from pip_audit.audit import AuditOptions, Auditor
 from pip_audit.dependency_source import PipSource, RequirementSource, ResolveLibResolver
 from pip_audit.format import ColumnsFormat, JsonFormat, VulnerabilityFormat
-from pip_audit.service import OsvService, VulnerabilityService
+from pip_audit.service import OsvService, PyPIService, VulnerabilityService
 from pip_audit.state import AuditSpinner
 from pip_audit.util import assert_never
 from pip_audit.version import __version__
@@ -51,11 +51,11 @@ class VulnerabilityServiceChoice(str, enum.Enum):
     Osv = "osv"
     Pypi = "pypi"
 
-    def to_service(self) -> VulnerabilityService:
+    def to_service(self, cache_dir: Optional[Path]) -> VulnerabilityService:
         if self is VulnerabilityServiceChoice.Osv:
             return OsvService()
         elif self is VulnerabilityServiceChoice.Pypi:
-            raise NotImplementedError
+            return PyPIService(cache_dir)
         else:
             assert_never(self)
 
@@ -141,11 +141,16 @@ def audit():
         help="include a description for each vulnerability; "
         "`auto` only includes a description for the `json` format",
     )
+    parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        help="the directory to use as an HTTP cache for PyPI; uses the `pip` HTTP cache by default",
+    )
 
     args = parser.parse_args()
     logger.debug(f"parsed arguments: {args}")
 
-    service = args.vulnerability_service.to_service()
+    service = args.vulnerability_service.to_service(args.cache_dir)
     output_desc = args.desc.to_bool(args.format)
     formatter = args.format.to_format(output_desc)
 

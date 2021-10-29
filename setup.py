@@ -35,6 +35,8 @@ setup(
         "progress>=1.6",
         "resolvelib>=0.8.0",
         "html5lib>=1.1",
+        "CacheControl==0.12.6",
+        "lockfile>=0.12.2",
     ],
     extras_require={
         "dev": [

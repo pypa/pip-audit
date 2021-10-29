@@ -1,14 +1,38 @@
-from typing import List
+import tempfile
+from typing import List, Optional
 
+import pretend
 import pytest
 import requests
 from packaging.version import Version
 
 import pip_audit.service as service
 
+cache_dir: Optional[tempfile.TemporaryDirectory] = None
+
+
+def setup_function(function):
+    global cache_dir
+    cache_dir = tempfile.TemporaryDirectory()
+
+
+def teardown_function(function):
+    cache_dir.cleanup()
+
+
+def get_mock_session(func):
+    class MockSession:
+        def __init__(self, create_response):
+            self.create_response = create_response
+
+        def get(self, url):
+            return self.create_response()
+
+    return MockSession(func)
+
 
 def test_pypi():
-    pypi = service.PyPIService()
+    pypi = service.PyPIService(cache_dir)
     dep = service.Dependency("jinja2", Version("2.4.1"))
     results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
     assert len(results) == 1
@@ -18,7 +42,7 @@ def test_pypi():
 
 
 def test_pypi_multiple_pkg():
-    pypi = service.PyPIService()
+    pypi = service.PyPIService(cache_dir)
     deps: List[service.Dependency] = [
         service.Dependency("jinja2", Version("2.4.1")),
         service.Dependency("flask", Version("0.5")),
@@ -38,9 +62,11 @@ def test_pypi_http_error(monkeypatch):
 
         return MockResponse()
 
-    monkeypatch.setattr(requests, "get", lambda url: get_error_response())
+    monkeypatch.setattr(
+        service.pypi, "_get_cached_session", lambda _: get_mock_session(get_error_response)
+    )
 
-    pypi = service.PyPIService()
+    pypi = service.PyPIService(cache_dir)
     dep = service.Dependency("jinja2", Version("2.4.1"))
     with pytest.raises(service.ServiceError):
         dict(pypi.query_all([dep]))
@@ -65,9 +91,11 @@ def test_pypi_mocked_response(monkeypatch):
 
         return MockResponse()
 
-    monkeypatch.setattr(requests, "get", lambda url: get_mock_response())
+    monkeypatch.setattr(
+        service.pypi, "_get_cached_session", lambda _: get_mock_session(get_mock_response)
+    )
 
-    pypi = service.PyPIService()
+    pypi = service.PyPIService(cache_dir)
     dep = service.Dependency("foo", Version("1.0"))
     results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
     assert len(results) == 1
@@ -91,9 +119,11 @@ def test_pypi_no_vuln_key(monkeypatch):
 
         return MockResponse()
 
-    monkeypatch.setattr(requests, "get", lambda url: get_mock_response())
+    monkeypatch.setattr(
+        service.pypi, "_get_cached_session", lambda _: get_mock_session(get_mock_response)
+    )
 
-    pypi = service.PyPIService()
+    pypi = service.PyPIService(cache_dir)
     dep = service.Dependency("foo", Version("1.0"))
     results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
     assert len(results) == 1
@@ -120,9 +150,27 @@ def test_pypi_invalid_version(monkeypatch):
 
         return MockResponse()
 
-    monkeypatch.setattr(requests, "get", lambda url: get_mock_response())
+    monkeypatch.setattr(
+        service.pypi, "_get_cached_session", lambda _: get_mock_session(get_mock_response)
+    )
 
-    pypi = service.PyPIService()
+    pypi = service.PyPIService(cache_dir)
     dep = service.Dependency("foo", Version("1.0"))
     with pytest.raises(service.ServiceError):
         dict(pypi.query_all([dep]))
+
+
+def test_pypi_warns_about_old_pip(monkeypatch):
+    monkeypatch.setattr(service.pypi, "_PIP_VERSION", Version("1.0.0"))
+    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    monkeypatch.setattr(service.pypi, "logger", logger)
+
+    # If we supply a cache directory, we're not relying on finding the `pip` cache so no need to log
+    # a warning
+    service.PyPIService(cache_dir)
+    assert len(logger.warning.calls) == 0
+
+    # However, if we're not specifying a cache directory, we'll try to call `pip cache dir`. If we
+    # have an old `pip`, then we should expect a warning to be logged
+    service.PyPIService()
+    assert len(logger.warning.calls) == 1
