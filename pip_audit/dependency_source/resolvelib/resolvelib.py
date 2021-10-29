@@ -3,7 +3,7 @@ Resolve a list of dependencies via the `resolvelib` API as well as a custom
 `resolvelib.Provider` that uses PyPI as an information source.
 """
 
-from typing import List
+from typing import List, Optional
 
 from packaging.requirements import Requirement
 from requests.exceptions import HTTPError
@@ -11,15 +11,16 @@ from resolvelib import BaseReporter, Resolver
 
 from pip_audit.dependency_source import DependencyResolver, DependencyResolverError
 from pip_audit.service.interface import Dependency
+from pip_audit.state import AuditState
 
 from .pypi_provider import PyPIProvider
 
 
 class ResolveLibResolver(DependencyResolver):
-    def __init__(self):
-        self.provider = PyPIProvider()
+    def __init__(self, state: Optional[AuditState] = None):
+        self.provider = PyPIProvider(state)
         self.reporter = BaseReporter()
-        self.resolver = Resolver(self.provider, self.reporter)
+        self.resolver: Resolver = Resolver(self.provider, self.reporter)
 
     def resolve(self, req: Requirement) -> List[Dependency]:
         deps: List[Dependency] = []

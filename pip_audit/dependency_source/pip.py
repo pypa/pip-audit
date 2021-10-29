@@ -4,13 +4,14 @@ by `pip-api`.
 """
 
 import logging
-from typing import Iterator
+from typing import Iterator, Optional
 
 import pip_api
 from packaging.version import Version
 
 from pip_audit.dependency_source import DependencySource, DependencySourceError
 from pip_audit.service import Dependency
+from pip_audit.state import AuditState
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +28,9 @@ _PIP_VERSION = Version(str(pip_api.PIP_VERSION))
 
 
 class PipSource(DependencySource):
-    def __init__(self, *, local: bool = False):
+    def __init__(self, *, local: bool = False, state: Optional[AuditState] = None):
         self._local = local
+        self.state = state
 
         if _PIP_VERSION < _MINIMUM_RELIABLE_PIP_VERSION:
             logger.warning(
@@ -42,7 +44,12 @@ class PipSource(DependencySource):
         # We collect them all into a single well-defined error.
         try:
             for (_, dist) in pip_api.installed_distributions(local=self._local).items():
-                yield Dependency(package=dist.name, version=Version(str(dist.version)))
+                dep = Dependency(package=dist.name, version=Version(str(dist.version)))
+                if self.state is not None:
+                    self.state.update_state(
+                        f"Collecting {dep.package} ({dep.version})"
+                    )  # pragma: no cover
+                yield dep
         except Exception as e:
             raise PipSourceError("failed to list installed distributions") from e
 
