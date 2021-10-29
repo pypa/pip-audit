@@ -20,6 +20,38 @@ support from Google. This is not an official Google product.
 pip install pip-audit
 ```
 
+## Usage
+
+```
+usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f {columns,json}]
+                 [-s {osv,pypi}] [-d] [--desc {on,off,auto}]
+                 [--cache-dir CACHE_DIR]
+
+audit the Python environment for dependencies with known vulnerabilities
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -V, --version         show program's version number and exit
+  -l, --local           show only results for dependencies in the local
+                        environment (default: False)
+  -r REQUIREMENTS, --requirement REQUIREMENTS
+                        audit the given requirements file; this option can be
+                        used multiple times (default: None)
+  -f {columns,json}, --format {columns,json}
+                        the format to emit audit results in (default: columns)
+  -s {osv,pypi}, --vulnerability-service {osv,pypi}
+                        the vulnerability service to audit dependencies
+                        against (default: pypi)
+  -d, --dry-run         collect all dependencies but do not perform the
+                        auditing step (default: False)
+  --desc {on,off,auto}  include a description for each vulnerability; `auto`
+                        only includes a description for the `json` format
+                        (default: auto)
+  --cache-dir CACHE_DIR
+                        the directory to use as an HTTP cache for PyPI; uses
+                        the `pip` HTTP cache by default (default: None)
+```
+
 ## Licensing
 
 `pip-audit` is licensed under the Apache 2.0 License.
