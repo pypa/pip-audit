@@ -124,7 +124,7 @@ def audit():
         "--vulnerability-service",
         type=VulnerabilityServiceChoice,
         choices=VulnerabilityServiceChoice,
-        default=VulnerabilityServiceChoice.Osv,
+        default=VulnerabilityServiceChoice.Pypi,
         help="the vulnerability service to audit dependencies against",
     )
     parser.add_argument(
