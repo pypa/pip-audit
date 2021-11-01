@@ -54,6 +54,10 @@ optional arguments:
                         the `pip` HTTP cache by default (default: None)
 ```
 
+## Contributing
+
+See [the contributing docs](CONTRIBUTING.md) for details.
+
 ## Licensing
 
 `pip-audit` is licensed under the Apache 2.0 License.
