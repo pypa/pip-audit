@@ -54,6 +54,38 @@ optional arguments:
                         the `pip` HTTP cache by default (default: None)
 ```
 
+## Examples
+
+Auditing dependencies for the current Python environment:
+```
+$ pip-audit
+Package Version ID Fix Versions
+------- ------- -- ------------
+```
+
+Auditing dependencies for a given requirements file:
+```
+$ pip-audit -r ./requirements.txt
+Package   Version ID            Fix Versions
+--------- ------- ------------- ------------
+```
+
+Auditing dependencies for the current Python environment excluding system packages:
+```
+$ pip-audit -r ./requirements.txt -l
+Package   Version ID            Fix Versions
+--------- ------- ------------- ------------
+```
+
+Auditing dependencies when there are vulnerabilities present:
+```
+$ pip-audit
+Package Version ID             Fix Versions
+------- ------- -------------- ------------
+Flask   0.5     PYSEC-2019-179 1.0
+Flask   0.5     PYSEC-2018-66  0.12.3
+```
+
 ## Contributing
 
 See [the contributing docs](CONTRIBUTING.md) for details.
