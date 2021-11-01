@@ -17,7 +17,7 @@ support from Google. This is not an official Google product.
 `pip`:
 
 ```bash
-pip install pip-audit
+python -m pip install pip-audit
 ```
 
 ## Usage
