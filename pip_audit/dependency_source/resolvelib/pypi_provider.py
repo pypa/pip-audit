@@ -59,8 +59,9 @@ class Candidate:
     @property
     def metadata(self):
         if self._metadata is None:
-            if self.state is not None:
+            if self.state is not None:  # pragma: no cover
                 self.state.update_state(f"Fetching metadata for {self.name} ({self.version})")
+
             if self.is_wheel:
                 self._metadata = get_metadata_for_wheel(self.url)
             else:
