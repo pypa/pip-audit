@@ -32,12 +32,21 @@ PYTHON_VERSION = Version(python_version())
 
 
 class Candidate:
-    def __init__(self, name, version, url=None, extras=None, is_wheel=True):
+    def __init__(
+        self,
+        name,
+        version,
+        url=None,
+        extras=None,
+        is_wheel=True,
+        state: Optional[AuditState] = None,
+    ):
         self.name = canonicalize_name(name)
         self.version = version
         self.url = url
         self.extras = extras
         self.is_wheel = is_wheel
+        self.state = state
 
         self._metadata = None
         self._dependencies = None
@@ -50,6 +59,8 @@ class Candidate:
     @property
     def metadata(self):
         if self._metadata is None:
+            if self.state is not None:
+                self.state.update_state(f"Fetching metadata for {self.name} ({self.version})")
             if self.is_wheel:
                 self._metadata = get_metadata_for_wheel(self.url)
             else:
@@ -76,7 +87,7 @@ class Candidate:
         return self._dependencies
 
 
-def get_project_from_pypi(project, extras):
+def get_project_from_pypi(project, extras, state: Optional[AuditState]):
     """Return candidates created from the project name and extras."""
     url = "https://pypi.org/simple/{}".format(project)
     response: requests.Response = requests.get(url)
@@ -111,7 +122,7 @@ def get_project_from_pypi(project, extras):
 
         # TODO: Handle compatibility tags?
 
-        yield Candidate(name, version, url=url, extras=extras, is_wheel=is_wheel)
+        yield Candidate(name, version, url=url, extras=extras, is_wheel=is_wheel, state=state)
 
 
 def get_metadata_for_wheel(url):
@@ -180,7 +191,7 @@ class PyPIProvider(AbstractProvider):
         # treat candidates as immutable once created.
         candidates = (
             candidate
-            for candidate in get_project_from_pypi(identifier, extras)
+            for candidate in get_project_from_pypi(identifier, extras, self.state)
             if candidate.version not in bad_versions
             and all(candidate.version in r.specifier for r in requirements)
         )
