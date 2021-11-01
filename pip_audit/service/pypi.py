@@ -25,29 +25,29 @@ _PIP_VERSION = Version(str(pip_api.PIP_VERSION))
 
 class SafeFileCache(FileCache):
     def __init__(self, directory):
-        self.logged_warning = False
+        self._logged_warning = False
         super().__init__(directory)
 
     def get(self, key: str) -> Optional[Any]:
         try:
             return super().get(key)
         except Exception as e:  # pragma: no cover
-            if not self.logged_warning:
+            if not self._logged_warning:
                 logger.warning(
                     f"Failed to read from cache directory, performance may be degraded: {e}"
                 )
-                self.logged_warning = True
+                self._logged_warning = True
             return None
 
     def set(self, key: str, value: bytes) -> None:
         try:
             self._set_impl(key, value)
         except Exception as e:  # pragma: no cover
-            if not self.logged_warning:
+            if not self._logged_warning:
                 logger.warning(
                     f"Failed to write to cache directory, performance may be degraded: {e}"
                 )
-                self.logged_warning = True
+                self._logged_warning = True
 
     def _set_impl(self, key: str, value: bytes) -> None:
         name: str = super()._fn(key)
@@ -59,22 +59,27 @@ class SafeFileCache(FileCache):
             pass
 
         # We don't want to use lock files since `pip` isn't going to recognise those. We should
-        # write to the cache in a similar way to how `pip` does it. We create a temporary file then
-        # create a hard link to it with the correct name such that it appears atomically to other
-        # concurrent `pip` or `pip-audit` instances.
-        with NamedTemporaryFile(dir=os.path.dirname(name)) as f:
-            f.write(value)
-            os.link(f.name, name)
+        # write to the cache in a similar way to how `pip` does it. We create a temporary file,
+        # then atomically replace the actual cache key's filename with it. This ensures
+        # that other concurrent `pip` or `pip-audit` instances don't read partial data.
+        with NamedTemporaryFile(delete=False, dir=os.path.dirname(name)) as io:
+            io.write(value)
+
+            # NOTE(ww): Similar to what `pip` does in `adjacent_tmp_file`.
+            io.flush()
+            os.fsync(io.fileno())
+
+            os.replace(io.name, name)
 
     def delete(self, key: str) -> None:  # pragma: no cover
         try:
             super().delete(key)
         except Exception as e:
-            if not self.logged_warning:
+            if not self._logged_warning:
                 logger.warning(
                     f"Failed to delete file from cache directory, performance may be degraded: {e}"
                 )
-                self.logged_warning = True
+                self._logged_warning = True
 
 
 def _get_pip_cache() -> str:
