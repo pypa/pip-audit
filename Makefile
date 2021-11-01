@@ -7,6 +7,21 @@ ALL_PY_SRCS := setup.py \
 # Optionally overridden by the user in the `release` target.
 BUMP_ARGS :=
 
+# Optionally overridden by the user in the `test` target.
+TESTS :=
+
+# If the user selects a specific test pattern to run, set `pytest` to fail fast
+# and only run tests that match the pattern.
+# Otherwise, run all tests and enable coverage assertions, since we expect
+# complete test coverage.
+ifneq ($(TESTS),)
+	TEST_ARGS := -x -k $(TESTS)
+	COV_ARGS :=
+else
+	TEST_ARGS :=
+	COV_ARGS := --fail-under 100
+endif
+
 .PHONY: all
 all:
 	@echo "Run my targets individually!"
@@ -30,8 +45,8 @@ lint:
 .PHONY: test
 test:
 	. env/bin/activate && \
-		pytest --cov=pip_audit test/ && \
-		python -m coverage report -m --fail-under 100
+		pytest --cov=pip_audit test/ $(TEST_ARGS) && \
+		python -m coverage report -m $(COV_ARGS)
 
 # NOTE(ww): pdoc3 does not support Python 3.6. Re-enable this once 3.7 is
 # our minimally supported version.

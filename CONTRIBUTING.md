@@ -90,6 +90,9 @@ You can run the tests locally, either with Make:
 
 ```bash
 make test
+
+# filter by pattern (uses `pytest -k`)
+make test TESTS=test_audit_dry_run
 ```
 
 ...or manually:
