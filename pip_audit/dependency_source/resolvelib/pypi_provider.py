@@ -133,7 +133,7 @@ class Candidate:
             pkg_path = os.path.join(pkg_dir, pkg_name)
 
             with TemporaryDirectory() as ve_dir:
-                ve = VirtualEnv(["-e", pkg_path])
+                ve = VirtualEnv(["-e", pkg_path], self.state)
                 ve.create(ve_dir)
 
                 if self.state is not None:
