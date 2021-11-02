@@ -32,12 +32,21 @@ PYTHON_VERSION = Version(python_version())
 
 
 class Candidate:
-    def __init__(self, name, version, url=None, extras=None, is_wheel=True):
+    def __init__(
+        self,
+        name,
+        version,
+        url=None,
+        extras=None,
+        is_wheel=True,
+        state: Optional[AuditState] = None,
+    ):
         self.name = canonicalize_name(name)
         self.version = version
         self.url = url
         self.extras = extras
         self.is_wheel = is_wheel
+        self.state = state
 
         self._metadata = None
         self._dependencies = None
@@ -50,10 +59,13 @@ class Candidate:
     @property
     def metadata(self):
         if self._metadata is None:
+            if self.state is not None:  # pragma: no cover
+                self.state.update_state(f"Fetching metadata for {self.name} ({self.version})")
+
             if self.is_wheel:
-                self._metadata = get_metadata_for_wheel(self.url)
+                self._metadata = self._get_metadata_for_wheel()
             else:
-                self._metadata = get_metadata_for_sdist(self.url)
+                self._metadata = self._get_metadata_for_sdist()
         return self._metadata
 
     def _get_dependencies(self):
@@ -75,8 +87,68 @@ class Candidate:
             self._dependencies = list(self._get_dependencies())
         return self._dependencies
 
+    def _get_metadata_for_wheel(self):
+        data = requests.get(self.url).content
 
-def get_project_from_pypi(project, extras):
+        if self.state is not None:
+            self.state.update_state(
+                f"Extracting wheel for {self.name} ({self.version})"
+            )  # pragma: no cover
+
+        with ZipFile(BytesIO(data)) as z:
+            for n in z.namelist():
+                if n.endswith(".dist-info/METADATA"):
+                    p = BytesParser()
+                    return p.parse(z.open(n), headersonly=True)
+
+        # If we didn't find the metadata, return an empty dict
+        return EmailMessage()  # pragma: no cover
+
+    def _get_metadata_for_sdist(self):
+        response: requests.Response = requests.get(self.url)
+        response.raise_for_status()
+        data = response.content
+        metadata = EmailMessage()
+
+        with TemporaryDirectory() as pkg_dir:
+            if self.state is not None:
+                self.state.update_state(
+                    f"Extracting source distribution for {self.name} ({self.version})"
+                )  # pragma: no cover
+
+            # Extract archive onto the disk
+            with TarFile.open(fileobj=BytesIO(data), mode="r:gz") as t:
+                # The directory is the first member in a tarball
+                names = t.getnames()
+                pkg_name = names[0]
+                t.extractall(pkg_dir)
+
+            if self.state is not None:
+                self.state.update_state(
+                    f"Installing source distribution in isolated environment for {self.name} "
+                    f"({self.version})"
+                )  # pragma: no cover
+
+            # Put together a full path of where the source distribution is
+            pkg_path = os.path.join(pkg_dir, pkg_name)
+
+            with TemporaryDirectory() as ve_dir:
+                ve = VirtualEnv(["-e", pkg_path], self.state)
+                ve.create(ve_dir)
+
+                if self.state is not None:
+                    self.state.update_state(
+                        f"Querying installed packages for {self.name} ({self.version})"
+                    )  # pragma: no cover
+
+                installed_packages = ve.installed_packages
+                for name, version in installed_packages:
+                    metadata["Requires-Dist"] = f"{name}=={str(version)}"
+
+        return metadata
+
+
+def get_project_from_pypi(project, extras, state: Optional[AuditState]):
     """Return candidates created from the project name and extras."""
     url = "https://pypi.org/simple/{}".format(project)
     response: requests.Response = requests.get(url)
@@ -111,45 +183,7 @@ def get_project_from_pypi(project, extras):
 
         # TODO: Handle compatibility tags?
 
-        yield Candidate(name, version, url=url, extras=extras, is_wheel=is_wheel)
-
-
-def get_metadata_for_wheel(url):
-    data = requests.get(url).content
-    with ZipFile(BytesIO(data)) as z:
-        for n in z.namelist():
-            if n.endswith(".dist-info/METADATA"):
-                p = BytesParser()
-                return p.parse(z.open(n), headersonly=True)
-
-    # If we didn't find the metadata, return an empty dict
-    return EmailMessage()  # pragma: no cover
-
-
-def get_metadata_for_sdist(url):
-    response: requests.Response = requests.get(url)
-    response.raise_for_status()
-    data = response.content
-    metadata = EmailMessage()
-
-    with TemporaryDirectory() as pkg_dir:
-        # Extract archive onto the disk
-        with TarFile.open(fileobj=BytesIO(data), mode="r:gz") as t:
-            # The directory is the first member in a tarball
-            names = t.getnames()
-            pkg_name = names[0]
-            t.extractall(pkg_dir)
-
-        # Put together a full path of where the source distribution is
-        pkg_path = os.path.join(pkg_dir, pkg_name)
-
-        with TemporaryDirectory() as ve_dir:
-            ve = VirtualEnv(["-e", pkg_path])
-            ve.create(ve_dir)
-            for name, version in ve.installed_packages:
-                metadata["Requires-Dist"] = f"{name}=={str(version)}"
-
-    return metadata
+        yield Candidate(name, version, url=url, extras=extras, is_wheel=is_wheel, state=state)
 
 
 class PyPIProvider(AbstractProvider):
@@ -180,7 +214,7 @@ class PyPIProvider(AbstractProvider):
         # treat candidates as immutable once created.
         candidates = (
             candidate
-            for candidate in get_project_from_pypi(identifier, extras)
+            for candidate in get_project_from_pypi(identifier, extras, self.state)
             if candidate.version not in bad_versions
             and all(candidate.version in r.specifier for r in requirements)
         )
