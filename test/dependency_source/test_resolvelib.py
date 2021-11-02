@@ -126,7 +126,9 @@ def test_resolvelib_wheel_patched(monkeypatch):
     )
 
     monkeypatch.setattr(requests, "get", lambda _: get_package_mock(data))
-    monkeypatch.setattr(pypi_provider, "get_metadata_for_wheel", lambda _: get_metadata_mock())
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+    )
 
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
@@ -144,7 +146,9 @@ def test_resolvelib_sdist_patched(monkeypatch, suffix):
     data = f'<a href="https://example.com/Flask-2.0.1.{suffix}">Flask-2.0.1.{suffix}</a><br/>'
 
     monkeypatch.setattr(requests, "get", lambda _: get_package_mock(data))
-    monkeypatch.setattr(pypi_provider, "get_metadata_for_sdist", lambda _: get_metadata_mock())
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _: get_metadata_mock()
+    )
 
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
@@ -183,7 +187,9 @@ def test_resolvelib_wheel_canonical_name_mismatch(monkeypatch):
     )
 
     monkeypatch.setattr(requests, "get", lambda _: get_package_mock(data))
-    monkeypatch.setattr(pypi_provider, "get_metadata_for_wheel", lambda _: get_metadata_mock())
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+    )
 
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
@@ -202,7 +208,9 @@ def test_resolvelib_wheel_invalid_version(monkeypatch):
     )
 
     monkeypatch.setattr(requests, "get", lambda _: get_package_mock(data))
-    monkeypatch.setattr(pypi_provider, "get_metadata_for_wheel", lambda _: get_metadata_mock())
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+    )
 
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
@@ -215,7 +223,9 @@ def test_resolvelib_sdist_invalid_suffix(monkeypatch):
     data = '<a href="https://example.com/Flask-2.0.1.foo">Flask-2.0.1.foo</a><br/>'
 
     monkeypatch.setattr(requests, "get", lambda _: get_package_mock(data))
-    monkeypatch.setattr(pypi_provider, "get_metadata_for_wheel", lambda _: get_metadata_mock())
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+    )
 
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
