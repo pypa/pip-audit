@@ -54,9 +54,42 @@ def test_pypi_multiple_pkg():
     assert len(results[deps[1]]) > 0
 
 
-def test_pypi_http_error(monkeypatch):
+def test_pypi_http_notfound(monkeypatch):
+    # If we get a "not found" response, that means that we're querying a package or version that
+    # isn't known to PyPI. If that's the case, we should just log a warning and continue on with
+    # the audit.
     def get_error_response():
         class MockResponse:
+            # 404: Not Found
+            status_code = 404
+
+            def raise_for_status(self):
+                raise requests.HTTPError
+
+        return MockResponse()
+
+    monkeypatch.setattr(
+        service.pypi, "_get_cached_session", lambda _: get_mock_session(get_error_response)
+    )
+    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    monkeypatch.setattr(service.pypi, "logger", logger)
+
+    pypi = service.PyPIService(cache_dir)
+    dep = service.Dependency("jinja2", Version("2.4.1"))
+    results = dict(pypi.query_all([dep]))
+    assert len(results) == 1
+    assert dep in results
+    assert len(results[dep]) == 0
+    assert len(logger.warning.calls) == 1
+
+
+def test_pypi_http_error(monkeypatch):
+    # Any error response other than "not found" should raise an error.
+    def get_error_response():
+        class MockResponse:
+            # 403: Forbidden
+            status_code = 403
+
             def raise_for_status(self):
                 raise requests.HTTPError
 
