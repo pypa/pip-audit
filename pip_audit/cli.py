@@ -98,7 +98,7 @@ class ProgressSpinnerChoice(str, enum.Enum):
     On = "on"
     Off = "off"
 
-    def to_bool(self) -> bool:
+    def __bool__(self) -> bool:
         return self is ProgressSpinnerChoice.On
 
     def __str__(self):
@@ -167,6 +167,7 @@ def audit():
     parser.add_argument(
         "--progress-spinner",
         type=ProgressSpinnerChoice,
+        choices=ProgressSpinnerChoice,
         default=ProgressSpinnerChoice.On,
         help="display a progress spinner",
     )
@@ -179,7 +180,7 @@ def audit():
     formatter = args.format.to_format(output_desc)
 
     with ExitStack() as stack:
-        state = stack.enter_context(AuditSpinner()) if args.progress_spinner.to_bool() else None
+        state = stack.enter_context(AuditSpinner()) if args.progress_spinner else None
 
         if args.requirements is not None:
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
