@@ -126,6 +126,12 @@ class PyPIService(VulnerabilityService):
         try:
             response.raise_for_status()
         except requests.HTTPError as http_error:
+            if response.status_code == 404:
+                logger.warning(
+                    "Warning: Dependency not found on PyPI and could not be"
+                    f"audited: {spec.package} ({spec.version})"
+                )
+                return []
             raise ServiceError from http_error
 
         response_json = response.json()
