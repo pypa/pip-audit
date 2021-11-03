@@ -6,6 +6,7 @@ import argparse
 import enum
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import List, Optional
 
@@ -164,8 +165,18 @@ def audit():
         auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run))
 
         result = {}
+        pkg_count = 0
+        vuln_count = 0
         for (spec, vulns) in auditor.audit(source):
             state.update_state(f"Auditing {spec.package} ({spec.version})")
             result[spec] = vulns
+            if len(vulns) > 0:
+                pkg_count += 1
+                vuln_count += len(vulns)
 
-    print(formatter.format(result))
+    if vuln_count > 0:
+        print(f"Found {vuln_count} known vulnerabilities in {pkg_count} packages", file=sys.stderr)
+        print(formatter.format(result))
+        sys.exit(1)
+    else:
+        print("No known vulnerabilities found", file=sys.stderr)
