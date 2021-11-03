@@ -27,7 +27,7 @@ python -m pip install pip-audit
 ```
 usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f {columns,json}]
                  [-s {osv,pypi}] [-d] [--desc {on,off,auto}]
-                 [--cache-dir CACHE_DIR]
+                 [--cache-dir CACHE_DIR] [--progress-spinner {on,off}]
 
 audit the Python environment for dependencies with known vulnerabilities
 
@@ -52,6 +52,8 @@ optional arguments:
   --cache-dir CACHE_DIR
                         the directory to use as an HTTP cache for PyPI; uses
                         the `pip` HTTP cache by default (default: None)
+  --progress-spinner {on,off}
+                        display a progress spinner (default: on)
 ```
 
 ## Examples
