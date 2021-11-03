@@ -7,6 +7,7 @@ import enum
 import logging
 import os
 import sys
+from contextlib import ExitStack
 from pathlib import Path
 from typing import List, Optional
 
@@ -88,6 +89,22 @@ class VulnerabilityDescriptionChoice(str, enum.Enum):
         return self.value
 
 
+@enum.unique
+class ProgressSpinnerChoice(str, enum.Enum):
+    """
+    Whether or not `pip-audit` should display a progress spinner.
+    """
+
+    On = "on"
+    Off = "off"
+
+    def __bool__(self) -> bool:
+        return self is ProgressSpinnerChoice.On
+
+    def __str__(self):
+        return self.value
+
+
 def audit():
     """
     The primary entrypoint for `pip-audit`.
@@ -147,6 +164,13 @@ def audit():
         type=Path,
         help="the directory to use as an HTTP cache for PyPI; uses the `pip` HTTP cache by default",
     )
+    parser.add_argument(
+        "--progress-spinner",
+        type=ProgressSpinnerChoice,
+        choices=ProgressSpinnerChoice,
+        default=ProgressSpinnerChoice.On,
+        help="display a progress spinner",
+    )
 
     args = parser.parse_args()
     logger.debug(f"parsed arguments: {args}")
@@ -155,7 +179,9 @@ def audit():
     output_desc = args.desc.to_bool(args.format)
     formatter = args.format.to_format(output_desc)
 
-    with AuditSpinner() as state:
+    with ExitStack() as stack:
+        state = stack.enter_context(AuditSpinner()) if args.progress_spinner else None
+
         if args.requirements is not None:
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
             source = RequirementSource(req_files, ResolveLibResolver(state), state)
@@ -168,7 +194,8 @@ def audit():
         pkg_count = 0
         vuln_count = 0
         for (spec, vulns) in auditor.audit(source):
-            state.update_state(f"Auditing {spec.package} ({spec.version})")
+            if state is not None:
+                state.update_state(f"Auditing {spec.package} ({spec.version})")
             result[spec] = vulns
             if len(vulns) > 0:
                 pkg_count += 1
