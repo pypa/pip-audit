@@ -175,8 +175,8 @@ def audit():
                 vuln_count += len(vulns)
 
     if vuln_count > 0:
-        print(f"Found {vuln_count} known vulnerabilities in {pkg_count} packages")
+        print(f"Found {vuln_count} known vulnerabilities in {pkg_count} packages", file=sys.stderr)
         print(formatter.format(result))
         sys.exit(1)
     else:
-        print("No known vulnerabilities found")
+        print("No known vulnerabilities found", file=sys.stderr)
