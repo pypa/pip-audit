@@ -35,6 +35,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
+        # NOTE(ww): Important: use pip-audit's minimum supported Python version
+        # in this check, since Python can change the `--help` rendering in
+        # `argparse` between major versions.
+        with:
+          python-version: "3.6"
       - name: deps
         run: make dev
       - name: check-readme
