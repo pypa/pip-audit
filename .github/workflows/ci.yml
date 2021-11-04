@@ -30,3 +30,25 @@ jobs:
         run: make lint
       - name: test
         run: make test
+  check-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        # NOTE(ww): Important: use pip-audit's minimum supported Python version
+        # in this check, since Python can change the `--help` rendering in
+        # `argparse` between major versions.
+        with:
+          python-version: "3.6"
+      - name: deps
+        run: make dev
+      - name: check-readme
+        run: |
+          diff \
+            <( \
+              awk '/@begin-pip-audit-help@/{f=1;next} /@end-pip-audit-help@/{f=0} f' \
+                < README.md | sed '1d;$d' \
+            ) \
+            <( \
+              make run ARGS="--help" \
+            )
