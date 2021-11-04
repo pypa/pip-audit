@@ -33,6 +33,11 @@ dev:
 		pip install --upgrade pip && \
 		pip install -e .[dev]
 
+
+.PHONY: run
+run:
+	@. env/bin/activate && pip-audit $(ARGS)
+
 .PHONY: lint
 lint:
 	. env/bin/activate && \

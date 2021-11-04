@@ -24,6 +24,7 @@ python -m pip install pip-audit
 
 ## Usage
 
+<!-- @begin-pip-audit-help@ -->
 ```
 usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f {columns,json}]
                  [-s {osv,pypi}] [-d] [--desc {on,off,auto}]
@@ -55,6 +56,7 @@ optional arguments:
   --progress-spinner {on,off}
                         display a progress spinner (default: on)
 ```
+<!-- @end-pip-audit-help@ -->
 
 ## Examples
 
