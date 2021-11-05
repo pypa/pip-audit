@@ -44,7 +44,7 @@ class RequirementSource(DependencySource):
                             continue
                         if self.state is not None:
                             self.state.update_state(
-                                f"Collecting {dep.package} ({dep.version})"
+                                f"Collecting {dep.name} ({dep.version})"
                             )  # pragma: no cover
                         collected.add(dep)
                         yield dep

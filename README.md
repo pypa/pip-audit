@@ -82,20 +82,20 @@ Audit dependencies when there are vulnerabilities present:
 ```
 $ pip-audit
 Found 2 known vulnerabilities in 1 packages
-Package Version ID             Fix Versions
-------- ------- -------------- ------------
-Flask   0.5     PYSEC-2019-179 1.0
-Flask   0.5     PYSEC-2018-66  0.12.3
+Name  Version ID             Fix Versions
+----  ------- -------------- ------------
+Flask 0.5     PYSEC-2019-179 1.0
+Flask 0.5     PYSEC-2018-66  0.12.3
 ```
 
 Audit dependencies including descriptions:
 ```
 $ pip-audit --desc
 Found 2 known vulnerabilities in 1 packages
-Package Version ID             Fix Versions Description
-------- ------- -------------- ------------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Flask   0.5     PYSEC-2019-179 1.0          The Pallets Project Flask before 1.0 is affected by: unexpected memory usage. The impact is: denial of service. The attack vector is: crafted encoded JSON data. The fixed version is: 1. NOTE: this may overlap CVE-2018-1000656.
-Flask   0.5     PYSEC-2018-66  0.12.3       The Pallets Project flask version Before 0.12.3 contains a CWE-20: Improper Input Validation vulnerability in flask that can result in Large amount of memory usage possibly leading to denial of service. This attack appear to be exploitable via Attacker provides JSON data in incorrect encoding. This vulnerability appears to have been fixed in 0.12.3. NOTE: this may overlap CVE-2019-1010083.
+Name  Version ID             Fix Versions Description
+----  ------- -------------- ------------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Flask 0.5     PYSEC-2019-179 1.0          The Pallets Project Flask before 1.0 is affected by: unexpected memory usage. The impact is: denial of service. The attack vector is: crafted encoded JSON data. The fixed version is: 1. NOTE: this may overlap CVE-2018-1000656.
+Flask 0.5     PYSEC-2018-66  0.12.3       The Pallets Project flask version Before 0.12.3 contains a CWE-20: Improper Input Validation vulnerability in flask that can result in Large amount of memory usage possibly leading to denial of service. This attack appear to be exploitable via Attacker provides JSON data in incorrect encoding. This vulnerability appears to have been fixed in 0.12.3. NOTE: this may overlap CVE-2019-1010083.
 ```
 
 Audit dependencies in JSON format:
@@ -104,7 +104,7 @@ $ pip-audit -f json | jq
 Found 2 known vulnerabilities in 1 packages
 [
   {
-    "package": "flask",
+    "name": "flask",
     "version": "0.5",
     "vulns": [
       {
@@ -124,27 +124,27 @@ Found 2 known vulnerabilities in 1 packages
     ]
   },
   {
-    "package": "jinja2",
+    "name": "jinja2",
     "version": "3.0.2",
     "vulns": []
   },
   {
-    "package": "pip",
+    "name": "pip",
     "version": "21.3.1",
     "vulns": []
   },
   {
-    "package": "setuptools",
+    "name": "setuptools",
     "version": "57.4.0",
     "vulns": []
   },
   {
-    "package": "werkzeug",
+    "name": "werkzeug",
     "version": "2.0.2",
     "vulns": []
   },
   {
-    "package": "markupsafe",
+    "name": "markupsafe",
     "version": "2.0.1",
     "vulns": []
   }

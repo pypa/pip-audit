@@ -2,13 +2,19 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Iterator, List, Tuple
 
+from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 
 @dataclass(frozen=True)
 class Dependency:
-    package: str
+    name: str
     version: Version
+
+    # TODO(ww): Use functools.cached_property when supported Python is 3.8+.
+    @property
+    def canonical_name(self) -> str:
+        return canonicalize_name(self.name)
 
 
 @dataclass(frozen=True)

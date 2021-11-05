@@ -121,7 +121,7 @@ class PyPIService(VulnerabilityService):
         self.session = _get_cached_session(cache_dir)
 
     def query(self, spec: Dependency) -> List[VulnerabilityResult]:
-        url = f"https://pypi.org/pypi/{spec.package}/{str(spec.version)}/json"
+        url = f"https://pypi.org/pypi/{spec.canonical_name}/{str(spec.version)}/json"
         response: requests.Response = self.session.get(url=url)
         try:
             response.raise_for_status()
@@ -129,7 +129,7 @@ class PyPIService(VulnerabilityService):
             if response.status_code == 404:
                 logger.warning(
                     "Warning: Dependency not found on PyPI and could not be"
-                    f"audited: {spec.package} ({spec.version})"
+                    f"audited: {spec.canonical_name} ({spec.version})"
                 )
                 return []
             raise ServiceError from http_error

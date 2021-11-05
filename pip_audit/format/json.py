@@ -20,7 +20,7 @@ class JsonFormat(VulnerabilityFormat):
         self, dep: service.Dependency, vulns: List[service.VulnerabilityResult]
     ) -> Dict[str, Any]:
         return {
-            "package": dep.package,
+            "name": dep.canonical_name,
             "version": str(dep.version),
             "vulns": [self._format_vuln(vuln) for vuln in vulns],
         }

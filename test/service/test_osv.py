@@ -1,5 +1,5 @@
 import unittest
-from typing import List
+from typing import Dict, List
 from unittest import mock
 
 from packaging.version import Version
@@ -12,18 +12,31 @@ class OsvServiceTest(unittest.TestCase):
     def test_osv(self):
         osv = service.OsvService()
         dep = service.Dependency("jinja2", Version("2.4.1"))
-        results: List[service.VulnerabilityResult] = dict(osv.query_all([dep]))
+        results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+            osv.query_all([dep])
+        )
         self.assertEqual(len(results), 1)
         self.assertTrue(dep in results)
         vulns = results[dep]
         self.assertGreater(len(vulns), 0)
+
+    def test_osv_uses_canonical_package_name(self):
+        # OSV's API only recognizes canonicalized package names, so make sure
+        # that our adapter is canonicalizing any dependencies passed into it.
+        osv = service.OsvService()
+        dep = service.Dependency("PyYAML", Version("5.3"))
+        results: List[service.VulnerabilityResult] = osv.query(dep)
+
+        self.assertGreater(len(results), 0)
 
     def test_osv_version_ranges(self):
         # Try a package with vulnerabilities that have an explicitly stated introduced and fixed
         # version
         osv = service.OsvService()
         dep = service.Dependency("ansible", Version("2.8.0"))
-        results: List[service.VulnerabilityResult] = dict(osv.query_all([dep]))
+        results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+            osv.query_all([dep])
+        )
         self.assertEqual(len(results), 1)
         self.assertTrue(dep in results)
         vulns = results[dep]
@@ -35,7 +48,9 @@ class OsvServiceTest(unittest.TestCase):
             service.Dependency("jinja2", Version("2.4.1")),
             service.Dependency("flask", Version("0.5")),
         ]
-        results: List[service.VulnerabilityResult] = dict(osv.query_all(deps))
+        results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+            osv.query_all(deps)
+        )
         self.assertEqual(len(results), 2)
         self.assertTrue(deps[0] in results and deps[1] in results)
         self.assertGreater(len(results[deps[0]]), 0)
@@ -44,7 +59,9 @@ class OsvServiceTest(unittest.TestCase):
     def test_osv_no_vuln(self):
         osv = service.OsvService()
         dep = service.Dependency("foo", Version("1.0.0"))
-        results: List[service.VulnerabilityResult] = dict(osv.query_all([dep]))
+        results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+            osv.query_all([dep])
+        )
         self.assertEqual(len(results), 1)
         self.assertTrue(dep in results)
         vulns = results[dep]

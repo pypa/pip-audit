@@ -12,7 +12,7 @@ class OsvService(VulnerabilityService):
         # Query OSV's REST API for the given package/version
         url = "https://api.osv.dev/v1/query"
         query = {
-            "package": {"name": spec.package, "ecosystem": "PyPI"},
+            "package": {"name": spec.canonical_name, "ecosystem": "PyPI"},
             "version": str(spec.version),
         }
         response: requests.Response = requests.post(
@@ -43,7 +43,7 @@ class OsvService(VulnerabilityService):
             for affected in vuln["affected"]:
                 pkg = affected["package"]
                 # We only care about PyPI versions
-                if pkg["name"] == spec.package and pkg["ecosystem"] == "PyPI":
+                if pkg["name"] == spec.canonical_name and pkg["ecosystem"] == "PyPI":
                     for ranges in affected["ranges"]:
                         if ranges["type"] == "ECOSYSTEM":
                             # Filter out non-fix versions
