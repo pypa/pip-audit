@@ -12,7 +12,7 @@ class OsvService(VulnerabilityService):
         # Query OSV's REST API for the given package/version
         url = "https://api.osv.dev/v1/query"
         query = {
-            "package": {"name": spec.package, "ecosystem": "PyPI"},
+            "package": {"name": spec.canonicalized_package, "ecosystem": "PyPI"},
             "version": str(spec.version),
         }
         response: requests.Response = requests.post(

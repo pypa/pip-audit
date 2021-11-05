@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Iterator, List, Tuple
 
+from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 
@@ -9,6 +10,11 @@ from packaging.version import Version
 class Dependency:
     package: str
     version: Version
+
+    # TODO(ww): Use functools.cached_property when supported Python is 3.8+.
+    @property
+    def canonicalized_package(self) -> str:
+        return canonicalize_name(self.package)
 
 
 @dataclass(frozen=True)

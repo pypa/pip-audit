@@ -121,7 +121,7 @@ class PyPIService(VulnerabilityService):
         self.session = _get_cached_session(cache_dir)
 
     def query(self, spec: Dependency) -> List[VulnerabilityResult]:
-        url = f"https://pypi.org/pypi/{spec.package}/{str(spec.version)}/json"
+        url = f"https://pypi.org/pypi/{spec.canonicalized_package}/{str(spec.version)}/json"
         response: requests.Response = self.session.get(url=url)
         try:
             response.raise_for_status()
