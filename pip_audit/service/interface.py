@@ -8,13 +8,13 @@ from packaging.version import Version
 
 @dataclass(frozen=True)
 class Dependency:
-    package: str
+    name: str
     version: Version
 
     # TODO(ww): Use functools.cached_property when supported Python is 3.8+.
     @property
-    def canonicalized_package(self) -> str:
-        return canonicalize_name(self.package)
+    def canonical_name(self) -> str:
+        return canonicalize_name(self.name)
 
 
 @dataclass(frozen=True)

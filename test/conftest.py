@@ -8,7 +8,7 @@ from pip_audit.service.interface import Dependency, VulnerabilityResult, Vulnera
 @pytest.fixture(autouse=True)
 def spec():
     def _spec(version):
-        return Dependency(package="foo", version=Version(version))
+        return Dependency(name="foo", version=Version(version))
 
     return _spec
 
@@ -22,7 +22,7 @@ def vuln_service():
             introduced = Version("1.0.0")
             fixed = Version("1.1.0")
 
-            if spec.package == "foo" and (introduced <= spec.version < fixed):
+            if spec.name == "foo" and (introduced <= spec.version < fixed):
                 return [
                     VulnerabilityResult(
                         id="fake-id",

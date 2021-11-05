@@ -7,7 +7,7 @@ def test_json(vuln_data):
     json_format = format.JsonFormat(True)
     expected_json = [
         {
-            "package": "foo",
+            "name": "foo",
             "version": "1.0",
             "vulns": [
                 {
@@ -26,7 +26,7 @@ def test_json(vuln_data):
             ],
         },
         {
-            "package": "bar",
+            "name": "bar",
             "version": "0.1",
             "vulns": [
                 {"id": "VULN-2", "fix_versions": [], "description": "The third vulnerability"}
@@ -40,7 +40,7 @@ def test_json_no_desc(vuln_data):
     json_format = format.JsonFormat(False)
     expected_json = [
         {
-            "package": "foo",
+            "name": "foo",
             "version": "1.0",
             "vulns": [
                 {
@@ -57,7 +57,7 @@ def test_json_no_desc(vuln_data):
             ],
         },
         {
-            "package": "bar",
+            "name": "bar",
             "version": "0.1",
             "vulns": [{"id": "VULN-2", "fix_versions": []}],
         },

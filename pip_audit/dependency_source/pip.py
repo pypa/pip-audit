@@ -44,10 +44,10 @@ class PipSource(DependencySource):
         # We collect them all into a single well-defined error.
         try:
             for (_, dist) in pip_api.installed_distributions(local=self._local).items():
-                dep = Dependency(package=dist.name, version=Version(str(dist.version)))
+                dep = Dependency(name=dist.name, version=Version(str(dist.version)))
                 if self.state is not None:
                     self.state.update_state(
-                        f"Collecting {dep.package} ({dep.version})"
+                        f"Collecting {dep.name} ({dep.version})"
                     )  # pragma: no cover
                 yield dep
         except Exception as e:

@@ -14,8 +14,8 @@ def test_pip_source():
     # We're running under pytest, so we can safely assume that pytest is in
     # our execution environment. We're also running pip_audit itself, so we
     # can safely test for ourselves.
-    pytest_spec = Dependency(package="pytest", version=Version(pytest.__version__))
-    pip_audit_spec = Dependency(package="pip-audit", version=Version(pip_audit.__version__))
+    pytest_spec = Dependency(name="pytest", version=Version(pytest.__version__))
+    pip_audit_spec = Dependency(name="pip-audit", version=Version(pip_audit.__version__))
 
     specs = list(source.collect())
     assert pytest_spec in specs

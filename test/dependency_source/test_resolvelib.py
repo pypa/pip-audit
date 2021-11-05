@@ -40,7 +40,7 @@ def check_deps(resolved_deps: List[Dependency], expected_deps: List[Dependency])
     for expected in expected_deps:
         found = False
         for resolved in resolved_deps:
-            if expected.package == resolved.package and expected.version <= resolved.version:
+            if expected.name == resolved.name and expected.version <= resolved.version:
                 found = True
                 break
         assert found

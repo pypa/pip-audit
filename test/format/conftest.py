@@ -6,7 +6,7 @@ from packaging.version import Version
 import pip_audit.service as service
 
 _TEST_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
-    service.Dependency(package="foo", version="1.0"): [
+    service.Dependency(name="foo", version="1.0"): [
         service.VulnerabilityResult(
             id="VULN-0",
             description="The first vulnerability",
@@ -21,7 +21,7 @@ _TEST_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
             fix_versions=[Version("1.0")],
         ),
     ],
-    service.Dependency(package="bar", version="0.1"): [
+    service.Dependency(name="bar", version="0.1"): [
         service.VulnerabilityResult(
             id="VULN-2",
             description="The third vulnerability",
