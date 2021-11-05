@@ -13,7 +13,7 @@ from typing import List, Optional
 
 from pip_audit.audit import AuditOptions, Auditor
 from pip_audit.dependency_source import PipSource, RequirementSource, ResolveLibResolver
-from pip_audit.format import ColumnsFormat, JsonFormat, VulnerabilityFormat
+from pip_audit.format import ColumnsFormat, CycloneDxFormat, JsonFormat, VulnerabilityFormat
 from pip_audit.service import OsvService, PyPIService, VulnerabilityService
 from pip_audit.state import AuditSpinner
 from pip_audit.util import assert_never
@@ -31,12 +31,15 @@ class OutputFormatChoice(str, enum.Enum):
 
     Columns = "columns"
     Json = "json"
+    CycloneDx = "cyclonedx"
 
     def to_format(self, output_desc: bool) -> VulnerabilityFormat:
         if self is OutputFormatChoice.Columns:
             return ColumnsFormat(output_desc)
         elif self is OutputFormatChoice.Json:
             return JsonFormat(output_desc)
+        elif self is OutputFormatChoice.CycloneDx:
+            return CycloneDxFormat()
         else:
             assert_never(self)
 
@@ -195,12 +198,14 @@ def audit():
         vuln_count = 0
         for (spec, vulns) in auditor.audit(source):
             if state is not None:
-                state.update_state(f"Auditing {spec.package} ({spec.version})")
+                state.update_state(f"Auditing {spec.name} ({spec.version})")
             result[spec] = vulns
             if len(vulns) > 0:
                 pkg_count += 1
                 vuln_count += len(vulns)
 
+    # TODO(ww): Refine this: we should always output if our output format is an SBOM
+    # or other manifest format (like the default JSON format).
     if vuln_count > 0:
         print(f"Found {vuln_count} known vulnerabilities in {pkg_count} packages", file=sys.stderr)
         print(formatter.format(result))
