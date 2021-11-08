@@ -13,3 +13,4 @@ omit = ["pip_audit/cli.py"]
 
 [tool.interrogate]
 exclude = ["setup.py", "env", "test"]
+ignore-semiprivate = true
