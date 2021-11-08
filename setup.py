@@ -3,7 +3,7 @@
 from setuptools import find_packages, setup
 
 version = {}
-with open("./pip_audit/version.py") as f:
+with open("./pip_audit/_version.py") as f:
     exec(f.read(), version)
 
 with open("./README.md") as f:
