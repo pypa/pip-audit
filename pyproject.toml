@@ -12,5 +12,7 @@ line-length = 100
 omit = ["pip_audit/cli.py"]
 
 [tool.interrogate]
-exclude = ["setup.py", "env", "test"]
+# don't enforce documentation coverage for packaging, testing, the virtual
+# environment, or the CLI (which is documented separately).
+exclude = ["setup.py", "env", "test", "pip_audit/cli.py"]
 ignore-semiprivate = true
