@@ -1,3 +1,8 @@
+"""
+Interfaces for interacting with "dependency sources", i.e. sources
+of fully resolved Python dependency trees.
+"""
+
 from abc import ABC, abstractmethod
 from typing import Iterator, List, Tuple
 
@@ -44,13 +49,20 @@ class DependencyResolver(ABC):
 
     @abstractmethod
     def resolve(self, req: Requirement) -> List[Dependency]:  # pragma: no cover
+        """
+        Resolve a single `Requirement` into a list of concrete `Dependency` instances.
+        """
         raise NotImplementedError
 
     def resolve_all(
         self, reqs: Iterator[Requirement]
     ) -> Iterator[Tuple[Requirement, List[Dependency]]]:
-        # Naive implementation that can be overriden if a particular resolver is
-        # designed to resolve a list of dependencies
+        """
+        Resolve a collection of `Requirement`s into their respective `Dependency` sets.
+
+        `DependencyResolver` implementations can override this implementation with
+        a more optimized one.
+        """
         for req in reqs:
             yield (req, self.resolve(req))
 

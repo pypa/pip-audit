@@ -17,12 +17,25 @@ from .pypi_provider import PyPIProvider
 
 
 class ResolveLibResolver(DependencyResolver):
-    def __init__(self, state: Optional[AuditState] = None):
+    """
+    An implementation of `DependencyResolver` that uses `resolvelib` as its
+    backend dependency resolution strategy.
+    """
+
+    def __init__(self, state: Optional[AuditState] = None) -> None:
+        """
+        Create a new `ResolveLibResolver`.
+
+        `state` is an optional `AuditState` to use for state callbacks.
+        """
         self.provider = PyPIProvider(state)
         self.reporter = BaseReporter()
         self.resolver: Resolver = Resolver(self.provider, self.reporter)
 
     def resolve(self, req: Requirement) -> List[Dependency]:
+        """
+        Resolve the given `Requirement` into a `Dependency` list.
+        """
         deps: List[Dependency] = []
         try:
             result = self.resolver.resolve([req])
@@ -34,4 +47,8 @@ class ResolveLibResolver(DependencyResolver):
 
 
 class ResolveLibResolverError(DependencyResolverError):
+    """
+    A `resolvelib`-specific `DependencyResolverError`.
+    """
+
     pass
