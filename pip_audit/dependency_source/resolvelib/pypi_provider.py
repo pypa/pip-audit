@@ -223,7 +223,7 @@ class PyPIProvider(AbstractProvider):
 
     def __init__(self, state: Optional[AuditState] = None):
         """
-        Creates a new `PyPIProvider`.
+        Create a new `PyPIProvider`.
 
         `state` is an optional `AuditState` to use for state callbacks.
         """

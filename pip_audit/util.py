@@ -1,6 +1,7 @@
 """
 Utilities functions for `pip-audit`.
 """
+
 from typing import NoReturn  # pragma: no cover
 
 

@@ -1,6 +1,6 @@
 """
-An interface for propagating feedback from the API to provide responsive progress indicators as well
-as a progress spinner implementation for use with CLI applications.
+Interfaces for for propagating feedback from the API to provide responsive progress indicators as
+well as a progress spinner implementation for use with CLI applications.
 """
 
 from abc import ABC, abstractmethod
