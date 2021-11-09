@@ -64,6 +64,7 @@ local environment.
 * [`isort`](https://github.com/PyCQA/isort): Import sorting, ordering
 * [`flake8`](https://flake8.pycqa.org/en/latest/): PEP-8 linting, style enforcement
 * [`mypy`](https://mypy.readthedocs.io/en/stable/): Static type checking
+* [`interrogate`](https://interrogate.readthedocs.io/en/latest/): Documentation coverage
 
 You can run all of the tools locally, either with Make:
 
@@ -79,6 +80,7 @@ black pip_audit/ test/
 isort pip_audit/ test/
 flake8 pip_audit/ test/
 mypy pip_audit
+interrogate -c pyproject.toml .
 ```
 
 ### Testing

@@ -1,1 +1,5 @@
-from pip_audit.version import __version__  # noqa: F401
+"""
+Version information for `pip-audit`.
+"""
+
+from pip_audit._version import __version__  # noqa: F401

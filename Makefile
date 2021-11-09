@@ -45,6 +45,7 @@ lint:
 		isort $(ALL_PY_SRCS) && \
 		flake8 $(ALL_PY_SRCS) && \
 		mypy $(PY_MODULE) && \
+		interrogate -c pyproject.toml . && \
 		git diff --exit-code
 
 .PHONY: test
@@ -69,7 +70,7 @@ package:
 release:
 	@. env/bin/activate && \
 		NEXT_VERSION=$$(bump $(BUMP_ARGS)) && \
-		git add pip_audit/version.py && git diff --quiet --exit-code && \
+		git add pip_audit/_version.py && git diff --quiet --exit-code && \
 		git commit -m "version: v$${NEXT_VERSION}" && \
 		git tag v$${NEXT_VERSION} && \
 		echo "RUN ME MANUALLY: git push origin main && git push origin v$${NEXT_VERSION}"

@@ -1,3 +1,7 @@
+"""
+Functionality for formatting vulnerability results as an array of JSON objects.
+"""
+
 import json
 from typing import Any, Dict, List
 
@@ -7,10 +11,27 @@ from .interface import VulnerabilityFormat
 
 
 class JsonFormat(VulnerabilityFormat):
+    """
+    An implementation of `VulnerabilityFormat` that formats vulnerability results as an array of
+    JSON objects.
+    """
+
     def __init__(self, output_desc: bool):
+        """
+        Create a new `JsonFormat`.
+
+        `output_desc` is a flag to determine whether descriptions for each vulnerability should be
+        included in the output as they can be quite long and make the output difficult to read.
+        """
         self.output_desc = output_desc
 
     def format(self, result: Dict[service.Dependency, List[service.VulnerabilityResult]]) -> str:
+        """
+        Returns a JSON formatted string for a given mapping of dependencies to vulnerability
+        results.
+
+        See `VulnerabilityFormat.format`.
+        """
         output_json = []
         for dep, vulns in result.items():
             output_json.append(self._format_dep(dep, vulns))

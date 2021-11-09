@@ -28,7 +28,19 @@ _PIP_VERSION = Version(str(pip_api.PIP_VERSION))
 
 
 class PipSource(DependencySource):
-    def __init__(self, *, local: bool = False, state: Optional[AuditState] = None):
+    """
+    Wraps `pip` (specifically `pip list`) as a dependency source.
+    """
+
+    def __init__(self, *, local: bool = False, state: Optional[AuditState] = None) -> None:
+        """
+        Create a new `PipSource`.
+
+        `local` determines whether to do a "local-only" list. If `True`, the
+        `DependencySource` does not expose globally installed packages.
+
+        `state` is an optional `AuditState` to use for state callbacks.
+        """
         self._local = local
         self.state = state
 
@@ -40,6 +52,12 @@ class PipSource(DependencySource):
             )
 
     def collect(self) -> Iterator[Dependency]:
+        """
+        Collect all of the dependencies discovered by this `PipSource`.
+
+        Raises a `PipSourceError` on any errors.
+        """
+
         # The `pip list` call that underlies `pip_api` could fail for myriad reasons.
         # We collect them all into a single well-defined error.
         try:
@@ -55,4 +73,6 @@ class PipSource(DependencySource):
 
 
 class PipSourceError(DependencySourceError):
+    """A `pip` specific `DependencySourceError`."""
+
     pass

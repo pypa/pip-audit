@@ -1,3 +1,7 @@
+"""
+Dependency source interfaces and implementations for `pip-audit`.
+"""
+
 from .interface import (  # noqa: F401
     DependencyResolver,
     DependencyResolverError,

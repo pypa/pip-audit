@@ -13,7 +13,7 @@ from operator import attrgetter
 from platform import python_version
 from tarfile import TarFile
 from tempfile import TemporaryDirectory
-from typing import Optional, Set
+from typing import List, Optional, Set
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -32,15 +32,25 @@ PYTHON_VERSION = Version(python_version())
 
 
 class Candidate:
+    """
+    Represents a dependency candidate. A dependency being resolved may have
+    multiple candidates, which go through a selection process guided by various
+    weights (version, `sdist` vs. `wheel`, etc.)
+    """
+
     def __init__(
         self,
-        name,
-        version,
-        url=None,
-        extras=None,
-        is_wheel=True,
+        name: str,
+        version: Version,
+        url: Optional[str] = None,
+        extras: bool = None,
+        is_wheel: bool = True,
         state: Optional[AuditState] = None,
-    ):
+    ) -> None:
+        """
+        Create a new `Candidate`.
+        """
+
         self.name = canonicalize_name(name)
         self.version = version
         self.url = url
@@ -48,16 +58,23 @@ class Candidate:
         self.is_wheel = is_wheel
         self.state = state
 
-        self._metadata = None
-        self._dependencies = None
+        self._metadata: Optional[EmailMessage] = None
+        self._dependencies: Optional[List[Requirement]] = None
 
     def __repr__(self):  # pragma: no cover
+        """
+        A string representation for `Candidate`.
+        """
         if not self.extras:
             return f"<{self.name}=={self.version}>"
         return f"<{self.name}[{','.join(self.extras)}]=={self.version}>"
 
     @property
-    def metadata(self):
+    def metadata(self) -> EmailMessage:
+        """
+        Return the package metadata for this candidate.
+        """
+
         if self._metadata is None:
             if self.state is not None:  # pragma: no cover
                 self.state.update_state(f"Fetching metadata for {self.name} ({self.version})")
@@ -69,6 +86,9 @@ class Candidate:
         return self._metadata
 
     def _get_dependencies(self):
+        """
+        Computes the dependency set for this candidate.
+        """
         deps = self.metadata.get_all("Requires-Dist", [])
         extras = self.extras if self.extras else [""]
 
@@ -82,12 +102,18 @@ class Candidate:
                         yield r  # pragma: no cover
 
     @property
-    def dependencies(self):
+    def dependencies(self) -> List[Requirement]:
+        """
+        Returns the list of `Requirement`s for this candidate.
+        """
         if self._dependencies is None:
             self._dependencies = list(self._get_dependencies())
         return self._dependencies
 
     def _get_metadata_for_wheel(self):
+        """
+        Extracts the metadata for this candidate, if it's a wheel.
+        """
         data = requests.get(self.url).content
 
         if self.state is not None:
@@ -105,6 +131,9 @@ class Candidate:
         return EmailMessage()  # pragma: no cover
 
     def _get_metadata_for_sdist(self):
+        """
+        Extracts the metadata for this candidate, if it's a source distribution.
+        """
         response: requests.Response = requests.get(self.url)
         response.raise_for_status()
         data = response.content
@@ -187,16 +216,35 @@ def get_project_from_pypi(project, extras, state: Optional[AuditState]):
 
 
 class PyPIProvider(AbstractProvider):
+    """
+    An implementation of `resolvelib`'s `AbstractProvider` that uses
+    the official Python Package Index.
+    """
+
     def __init__(self, state: Optional[AuditState] = None):
+        """
+        Create a new `PyPIProvider`.
+
+        `state` is an optional `AuditState` to use for state callbacks.
+        """
         self.state = state
 
     def identify(self, requirement_or_candidate):
+        """
+        See `resolvelib.providers.AbstractProvider.identify`.
+        """
         return canonicalize_name(requirement_or_candidate.name)
 
     def get_preference(self, identifier, resolutions, candidates, information, backtrack_causes):
+        """
+        See `resolvelib.providers.AbstractProvider.get_preference`.
+        """
         return sum(1 for _ in candidates[identifier])
 
     def find_matches(self, identifier, requirements, incompatibilities):
+        """
+        See `resolvelib.providers.AbstractProvider.find_matches`.
+        """
         if self.state is not None:
             self.state.update_state(f"Resolving {identifier}")  # pragma: no cover
 
@@ -222,9 +270,15 @@ class PyPIProvider(AbstractProvider):
         return sorted(candidates, key=attrgetter("version", "is_wheel"), reverse=True)
 
     def is_satisfied_by(self, requirement, candidate):
+        """
+        See `resolvelib.providers.AbstractProvider.is_satisfied_by`.
+        """
         if canonicalize_name(requirement.name) != candidate.name:
             return False
         return candidate.version in requirement.specifier
 
     def get_dependencies(self, candidate):
+        """
+        See `resolvelib.providers.AbstractProvider.get_dependencies`.
+        """
         return candidate.dependencies

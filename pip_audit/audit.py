@@ -22,6 +22,13 @@ class AuditOptions:
 
 
 class Auditor:
+    """
+    The core class of the `pip-audit` API.
+
+    For a given dependency source and vulnerability service, supply a mapping of dependencies to
+    known vulnerabilities.
+    """
+
     def __init__(
         self,
         service: VulnerabilityService,
