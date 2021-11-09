@@ -11,7 +11,7 @@ import pip_audit.service as service
 from .interface import VulnerabilityFormat
 
 
-class PipAuditResultParser(BaseParser):
+class _PipAuditResultParser(BaseParser):
     def __init__(self, result: Dict[service.Dependency, List[service.VulnerabilityResult]]):
         super().__init__()
 
@@ -37,8 +37,19 @@ class PipAuditResultParser(BaseParser):
 
 
 class CycloneDxFormat(VulnerabilityFormat):
+    """
+    An implementation of `VulnerabilityFormat` that formats vulnerability results using CycloneDX.
+    The container format used by CycloneDX can be additionally configured.
+    """
+
     def format(self, result: Dict[service.Dependency, List[service.VulnerabilityResult]]) -> str:
-        parser = PipAuditResultParser(result)
+        """
+        Returns a CycloneDX formatted string for a given mapping of dependencies to vulnerability
+        results.
+
+        See `VulnerabilityFormat.format`.
+        """
+        parser = _PipAuditResultParser(result)
         bom = Bom.from_parser(parser)
 
         # TODO(ww): Configurable output format.
