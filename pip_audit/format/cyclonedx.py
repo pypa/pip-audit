@@ -1,3 +1,7 @@
+"""
+Functionality for formatting vulnerability results using the CycloneDX SBOM format.
+"""
+
 from typing import Dict, List
 
 from cyclonedx import output  # type: ignore
