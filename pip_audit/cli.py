@@ -31,15 +31,18 @@ class OutputFormatChoice(str, enum.Enum):
 
     Columns = "columns"
     Json = "json"
-    CycloneDx = "cyclonedx"
+    CycloneDxJson = "cyclonedx-json"
+    CycloneDxXml = "cyclonedx-xml"
 
     def to_format(self, output_desc: bool) -> VulnerabilityFormat:
         if self is OutputFormatChoice.Columns:
             return ColumnsFormat(output_desc)
         elif self is OutputFormatChoice.Json:
             return JsonFormat(output_desc)
-        elif self is OutputFormatChoice.CycloneDx:
-            return CycloneDxFormat()
+        elif self is OutputFormatChoice.CycloneDxJson:
+            return CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Json)
+        elif self is OutputFormatChoice.CycloneDxXml:
+            return CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Xml)
         else:
             assert_never(self)
 
@@ -84,7 +87,7 @@ class VulnerabilityDescriptionChoice(str, enum.Enum):
         elif self is VulnerabilityDescriptionChoice.Off:
             return False
         elif self is VulnerabilityDescriptionChoice.Auto:
-            return bool(format_.value == OutputFormatChoice.Json)
+            return bool(format_.value is OutputFormatChoice.Json)
         else:
             assert_never(self)
 
@@ -160,7 +163,8 @@ def audit():
         choices=VulnerabilityDescriptionChoice,
         default=VulnerabilityDescriptionChoice.Auto,
         help="include a description for each vulnerability; "
-        "`auto` only includes a description for the `json` format",
+        "`auto` defaults to `on` for the `json` format. This flag has no "
+        "effect on the `cyclonedx-json` or `cyclonedx-xml` formats.",
     )
     parser.add_argument(
         "--cache-dir",
