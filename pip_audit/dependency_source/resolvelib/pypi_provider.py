@@ -62,6 +62,9 @@ class Candidate:
         self._dependencies: Optional[List[Requirement]] = None
 
     def __repr__(self):  # pragma: no cover
+        """
+        A string representation for `Candidate`.
+        """
         if not self.extras:
             return f"<{self.name}=={self.version}>"
         return f"<{self.name}[{','.join(self.extras)}]=={self.version}>"
@@ -219,6 +222,11 @@ class PyPIProvider(AbstractProvider):
     """
 
     def __init__(self, state: Optional[AuditState] = None):
+        """
+        Creates a new `PyPIProvider`.
+
+        `state` is an optional `AuditState` to use for state callbacks.
+        """
         self.state = state
 
     def identify(self, requirement_or_candidate):

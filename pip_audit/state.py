@@ -87,7 +87,7 @@ class AuditSpinner(AuditState, BaseSpinner):  # pragma: no cover
         """
         Update the state message for the progress spinner.
 
-        This method is overriden from `AuditState` to update the spinner with feedback from the UI
+        This method is overriden from `AuditState` to update the spinner with feedback from the API
         and should not be called directly.
         """
         self.message = message
