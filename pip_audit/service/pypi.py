@@ -44,7 +44,7 @@ class _SafeFileCache(FileCache):
                 self._logged_warning = True
             return None
 
-    def set(self, key: str, value: bytes) -> None:
+    def set(self, key: str, value: bytes, expires: Optional[Any] = None) -> None:
         try:
             self._set_impl(key, value)
         except Exception as e:  # pragma: no cover
