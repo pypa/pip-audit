@@ -31,7 +31,7 @@ setup(
         "pip-api>=0.0.23",
         "packaging>=21.0.0",
         # TODO: Remove this once 3.7 is our minimally supported version.
-        "dataclasses>=0.6",
+        "dataclasses>=0.6; python_version < '3.7'",
         "progress>=1.6",
         "resolvelib>=0.8.0",
         "html5lib>=1.1",
