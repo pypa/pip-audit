@@ -1,3 +1,7 @@
+"""
+Functionality for using the [OSV](https://osv.dev/) API as a `VulnerabilityService`.
+"""
+
 import json
 from typing import List
 
@@ -8,8 +12,18 @@ from .interface import Dependency, ServiceError, VulnerabilityResult, Vulnerabil
 
 
 class OsvService(VulnerabilityService):
+    """
+    An implementation of `VulnerabilityService` that uses OSV to provide Python
+    package vulnerability information.
+    """
+
     def query(self, spec: Dependency) -> List[VulnerabilityResult]:
-        # Query OSV's REST API for the given package/version
+        """
+        Queries OSV for the given `Dependency` specification.
+
+        See `VulnerabilityService.query`.
+        """
+
         url = "https://api.osv.dev/v1/query"
         query = {
             "package": {"name": spec.canonical_name, "ecosystem": "PyPI"},

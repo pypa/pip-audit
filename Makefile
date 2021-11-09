@@ -45,6 +45,7 @@ lint:
 		isort $(ALL_PY_SRCS) && \
 		flake8 $(ALL_PY_SRCS) && \
 		mypy $(PY_MODULE) && \
+		interrogate -c pyproject.toml . && \
 		git diff --exit-code
 
 .PHONY: test

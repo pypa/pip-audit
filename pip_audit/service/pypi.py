@@ -1,3 +1,8 @@
+"""
+Functionality for using the [PyPI](https://warehouse.pypa.io/api-reference/json.html)
+API as a `VulnerabilityService`.
+"""
+
 import logging
 import os
 import subprocess
@@ -23,7 +28,7 @@ _MINIMUM_PIP_VERSION = Version("20.1")
 _PIP_VERSION = Version(str(pip_api.PIP_VERSION))
 
 
-class SafeFileCache(FileCache):
+class _SafeFileCache(FileCache):
     def __init__(self, directory):
         self._logged_warning = False
         super().__init__(directory)
@@ -113,14 +118,33 @@ def _get_cache_dir(custom_cache_dir: Optional[Path]) -> str:
 
 
 def _get_cached_session(cache_dir: Optional[Path]):
-    return CacheControl(requests.Session(), cache=SafeFileCache(_get_cache_dir(cache_dir)))
+    return CacheControl(requests.Session(), cache=_SafeFileCache(_get_cache_dir(cache_dir)))
 
 
 class PyPIService(VulnerabilityService):
-    def __init__(self, cache_dir: Optional[Path] = None):
+    """
+    An implementation of `VulnerabilityService` that uses PyPI to provide Python
+    package vulnerability information.
+    """
+
+    def __init__(self, cache_dir: Optional[Path] = None) -> None:
+        """
+        Create a new `PyPIService`.
+
+        `cache_dir` is an optional cache directory to use, for caching and
+        reusing PyPI API requests. If `None`, `pip-audit` will attempt to
+        use `pip`'s cache directory before falling back on its own default
+        cache directory.
+        """
         self.session = _get_cached_session(cache_dir)
 
     def query(self, spec: Dependency) -> List[VulnerabilityResult]:
+        """
+        Queries PyPI for the given `Dependency` specification.
+
+        See `VulnerabilityService.query`.
+        """
+
         url = f"https://pypi.org/pypi/{spec.canonical_name}/{str(spec.version)}/json"
         response: requests.Response = self.session.get(url=url)
         try:

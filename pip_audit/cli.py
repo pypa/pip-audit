@@ -11,13 +11,13 @@ from contextlib import ExitStack
 from pathlib import Path
 from typing import List, Optional
 
+from pip_audit import __version__
 from pip_audit.audit import AuditOptions, Auditor
 from pip_audit.dependency_source import PipSource, RequirementSource, ResolveLibResolver
 from pip_audit.format import ColumnsFormat, JsonFormat, VulnerabilityFormat
 from pip_audit.service import OsvService, PyPIService, VulnerabilityService
 from pip_audit.state import AuditSpinner
 from pip_audit.util import assert_never
-from pip_audit.version import __version__
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PIP_AUDIT_LOGLEVEL", "INFO").upper())

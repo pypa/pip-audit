@@ -1,3 +1,7 @@
+"""
+Collect dependencies from one or more `requirements.txt`-formatted files.
+"""
+
 from pathlib import Path
 from typing import Iterator, List, Optional, Set
 
@@ -16,17 +20,35 @@ from pip_audit.state import AuditState
 
 
 class RequirementSource(DependencySource):
+    """
+    Wraps `requirements.txt` dependency resolution as a dependency source.
+    """
+
     def __init__(
         self,
         filenames: List[Path],
         resolver: DependencyResolver,
         state: Optional[AuditState] = None,
-    ):
+    ) -> None:
+        """
+        Create a new `RequirementSource`.
+
+        `filenames` provides the list of filepaths to parse.
+
+        `resolver` is the `DependencyResolver` instance to use.
+
+        `state` is an optional `AuditState` to use for state callbacks.
+        """
         self.filenames = filenames
         self.resolver = resolver
         self.state = state
 
     def collect(self) -> Iterator[Dependency]:
+        """
+        Collect all of the dependencies discovered by this `RequirementSource`.
+
+        Raises a `RequirementSourceError` on any errors.
+        """
         collected: Set[Dependency] = set()
         for filename in self.filenames:
             try:
@@ -53,4 +75,6 @@ class RequirementSource(DependencySource):
 
 
 class RequirementSourceError(DependencySourceError):
+    """A requirements-parsing specific `DependencySourceError`."""
+
     pass

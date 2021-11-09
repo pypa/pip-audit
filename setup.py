@@ -3,7 +3,7 @@
 from setuptools import find_packages, setup
 
 version = {}
-with open("./pip_audit/version.py") as f:
+with open("./pip_audit/_version.py") as f:
     exec(f.read(), version)
 
 with open("./README.md") as f:
@@ -48,7 +48,7 @@ setup(
             "pytest-cov",
             "pretend",
             "coverage[toml]",
-            "twine",
+            "interrogate",
             # NOTE: pdoc3 does not support Python 3.6. Re-enable this once 3.7 is
             # our minimally supported version.
             # "pdoc3",

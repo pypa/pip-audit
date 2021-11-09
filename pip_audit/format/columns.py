@@ -1,3 +1,7 @@
+"""
+Functionality for formatting vulnerability results as a set of human-readable columns.
+"""
+
 from itertools import zip_longest
 from typing import Any, Dict, Iterable, List, Tuple
 
@@ -21,10 +25,27 @@ def tabulate(rows: Iterable[Iterable[Any]]) -> Tuple[List[str], List[int]]:
 
 
 class ColumnsFormat(VulnerabilityFormat):
+    """
+    An implementation of `VulnerabilityFormat` that formats vulnerability results as a set of
+    columns.
+    """
+
     def __init__(self, output_desc: bool):
+        """
+        Create a new `ColumnFormat`.
+
+        `output_desc` is a flag to determine whether descriptions for each vulnerability should be
+        included in the output as they can be quite long and make the output difficult to read.
+        """
         self.output_desc = output_desc
 
     def format(self, result: Dict[service.Dependency, List[service.VulnerabilityResult]]) -> str:
+        """
+        Returns a column formatted string for a given mapping of dependencies to vulnerability
+        results.
+
+        See `VulnerabilityFormat.format`.
+        """
         vuln_data: List[List[Any]] = []
         header = ["Name", "Version", "ID", "Fix Versions"]
         if self.output_desc:
