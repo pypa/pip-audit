@@ -16,3 +16,4 @@ omit = ["pip_audit/cli.py"]
 # environment, or the CLI (which is documented separately).
 exclude = ["setup.py", "env", "test", "pip_audit/cli.py", "pip_audit/_version.py"]
 ignore-semiprivate = true
+fail-under = 100
