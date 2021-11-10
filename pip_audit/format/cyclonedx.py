@@ -32,12 +32,6 @@ class _PipAuditResultParser(BaseParser):
                 c.add_vulnerability(
                     Vulnerability(
                         id=vuln.id,
-                        # NOTE(ww): Regression in cyclonedx-python-lib 0.0.11.
-                        # See: https://github.com/CycloneDX/cyclonedx-python-lib/pull/61
-                        source_name=None,
-                        source_url=None,
-                        ratings=None,
-                        cwes=None,
                         description=vuln.description,
                         advisories=[f"Upgrade: {v}" for v in vuln.fix_versions],
                         recommendations=["Upgrade"],
