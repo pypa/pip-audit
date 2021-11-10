@@ -60,8 +60,7 @@ setup(
         ]
     },
     classifiers=[
-        # TODO(ww): Upgrade this status once we're out of alpha development.
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 4 - Beta",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
         "Intended Audience :: Developers",
