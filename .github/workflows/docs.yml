@@ -1,0 +1,31 @@
+name: docs-deploy
+
+on:
+  push:
+    branches:
+      - main
+      - ww/ci-doc-builds
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - uses: actions/setup-python@v2
+
+      - name: deps
+        run: make dev
+
+      - name: docs
+        run: make doc
+
+      - name: deploy
+        uses: peaceiris/actions-gh-pages@v3.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./html/blight
+          publish_branch: gh-pages
+          force_orphan: true
