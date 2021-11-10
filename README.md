@@ -153,10 +153,6 @@ Found 2 known vulnerabilities in 1 packages
 ]
 ```
 
-## Contributing
-
-See [the contributing docs](CONTRIBUTING.md) for details.
-
 ## Licensing
 
 `pip-audit` is licensed under the Apache 2.0 License.
@@ -164,3 +160,11 @@ See [the contributing docs](CONTRIBUTING.md) for details.
 `pip-audit` reuses and modifies examples from
 [`resolvelib`](https://github.com/sarugaku/resolvelib), which is licensed under
 the ISC license.
+
+## Contributing
+
+See [the contributing docs](CONTRIBUTING.md) for details.
+
+## Code of Conduct
+Everyone interacting with this project is expected to follow the
+[PSF Code of Conduct](https://github.com/pypa/.github/blob/main/CODE_OF_CONDUCT.md).
