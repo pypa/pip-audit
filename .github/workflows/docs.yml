@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - ww/ci-doc-builds
 
 jobs:
   docs:
