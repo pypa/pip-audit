@@ -107,10 +107,12 @@ pytest --cov=pip_audit test/
 python -m coverage report -m --fail-under 100
 ```
 
-### Documentation builds
+### Documentation
 
 `pip-audit` uses [`pdoc3`](https://github.com/pdoc3/pdoc) to generate HTML documentation for
 the public Python APIs.
+
+Live documentation for the `main` branch is hosted [here](https://trailofbits.github.io/pip-audit/).
 
 If you're running Python 3.7 or newer, you can run the documentation build locally:
 
