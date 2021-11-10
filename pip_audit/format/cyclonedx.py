@@ -5,11 +5,11 @@ Functionality for formatting vulnerability results using the CycloneDX SBOM form
 import enum
 from typing import Dict, List
 
-from cyclonedx import output  # type: ignore
-from cyclonedx.model.bom import Bom  # type: ignore
-from cyclonedx.model.component import Component  # type: ignore
-from cyclonedx.model.vulnerability import Vulnerability  # type: ignore
-from cyclonedx.parser import BaseParser  # type: ignore
+from cyclonedx import output
+from cyclonedx.model.bom import Bom
+from cyclonedx.model.component import Component
+from cyclonedx.model.vulnerability import Vulnerability
+from cyclonedx.parser import BaseParser
 
 import pip_audit.service as service
 
@@ -32,14 +32,15 @@ class _PipAuditResultParser(BaseParser):
                 c.add_vulnerability(
                     Vulnerability(
                         id=vuln.id,
+                        # NOTE(ww): Regression in cyclonedx-python-lib 0.0.11.
+                        # See: https://github.com/CycloneDX/cyclonedx-python-lib/pull/61
+                        source_name=None,
+                        source_url=None,
+                        ratings=None,
+                        cwes=None,
                         description=vuln.description,
                         advisories=[f"Upgrade: {v}" for v in vuln.fix_versions],
                         recommendations=["Upgrade"],
-                        # NOTE(ww): These need to be explicitly set to prevent a serialization
-                        # failure with XML due to a bug in CycloneDX.
-                        # See: https://github.com/CycloneDX/cyclonedx-python-lib/pull/61
-                        ratings=[],
-                        cwes=[],
                     )
                 )
 
@@ -82,4 +83,4 @@ class CycloneDxFormat(VulnerabilityFormat):
 
         formatter = output.get_instance(bom=bom, output_format=self._inner_format.value)
 
-        return formatter.output_as_string()  # type: ignore
+        return formatter.output_as_string()
