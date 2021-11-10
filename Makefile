@@ -54,12 +54,11 @@ test:
 		pytest --cov=pip_audit test/ $(TEST_ARGS) && \
 		python -m coverage report -m $(COV_ARGS)
 
-# NOTE(ww): pdoc3 does not support Python 3.6. Re-enable this once 3.7 is
-# our minimally supported version.
-# .PHONY: doc
-# doc:
-# 	. env/bin/activate && \
-# 		PYTHONWARNINGS='error::UserWarning' pdoc --force --html pip_audit
+.PHONY: doc
+doc:
+	. env/bin/activate && \
+		command -v pdoc3 && \
+		PYTHONWARNINGS='error::UserWarning' pdoc --force --html pip_audit
 
 .PHONY: package
 package:

@@ -1,6 +1,6 @@
 """
 Resolve a list of dependencies via the `resolvelib` API as well as a custom
-`resolvelib.Provider` that uses PyPI as an information source.
+`Resolver` that uses PyPI as an information source.
 """
 
 from typing import List, Optional

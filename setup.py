@@ -50,12 +50,11 @@ setup(
             "pretend",
             "coverage[toml]",
             "interrogate",
-            # NOTE: pdoc3 does not support Python 3.6. Re-enable this once 3.7 is
-            # our minimally supported version.
-            # "pdoc3",
+            # TODO: Remove this environment marker once 3.7 is our minimal version.
+            "pdoc3; python_version >= '3.7'",
             "mypy",
             # TODO: Remove this once 3.7 is our minimally supported version.
-            "types-dataclasses",
+            "types-dataclasses; python_version < '3.7'",
             "types-requests",
             "types-html5lib",
         ]
