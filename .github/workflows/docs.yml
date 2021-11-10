@@ -24,6 +24,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3.8.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./html/blight
+          publish_dir: ./html/pip_audit
           publish_branch: gh-pages
           force_orphan: true
