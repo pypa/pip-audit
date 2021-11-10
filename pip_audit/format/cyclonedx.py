@@ -22,13 +22,7 @@ class _PipAuditResultParser(BaseParser):
 
         for (dep, vulns) in result.items():
             c = Component(name=dep.name, version=str(dep.version))
-
-            # TODO(ww): Figure out if/how we want to include other dependency
-            # metadata in the BOM, such as author, license, etc.
-
             for vuln in vulns:
-                # TODO(ww): Figure out if/how we want to include other vulnerability
-                # metadata in the BOM, such as source (OSV/PyPI/etc), URL, etc.
                 c.add_vulnerability(
                     Vulnerability(
                         id=vuln.id,
