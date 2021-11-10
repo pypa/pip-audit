@@ -26,7 +26,8 @@ python -m pip install pip-audit
 
 <!-- @begin-pip-audit-help@ -->
 ```
-usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f {columns,json}]
+usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS]
+                 [-f {columns,json,cyclonedx-json,cyclonedx-xml}]
                  [-s {osv,pypi}] [-d] [--desc {on,off,auto}]
                  [--cache-dir CACHE_DIR] [--progress-spinner {on,off}]
 
@@ -40,7 +41,7 @@ optional arguments:
   -r REQUIREMENTS, --requirement REQUIREMENTS
                         audit the given requirements file; this option can be
                         used multiple times (default: None)
-  -f {columns,json}, --format {columns,json}
+  -f {columns,json,cyclonedx-json,cyclonedx-xml}, --format {columns,json,cyclonedx-json,cyclonedx-xml}
                         the format to emit audit results in (default: columns)
   -s {osv,pypi}, --vulnerability-service {osv,pypi}
                         the vulnerability service to audit dependencies
@@ -48,8 +49,9 @@ optional arguments:
   -d, --dry-run         collect all dependencies but do not perform the
                         auditing step (default: False)
   --desc {on,off,auto}  include a description for each vulnerability; `auto`
-                        only includes a description for the `json` format
-                        (default: auto)
+                        defaults to `on` for the `json` format. This flag has
+                        no effect on the `cyclonedx-json` or `cyclonedx-xml`
+                        formats. (default: auto)
   --cache-dir CACHE_DIR
                         the directory to use as an HTTP cache for PyPI; uses
                         the `pip` HTTP cache by default (default: None)

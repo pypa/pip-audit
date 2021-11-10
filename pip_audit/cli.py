@@ -19,7 +19,7 @@ from pip_audit.dependency_source import (
     RequirementSource,
     ResolveLibResolver,
 )
-from pip_audit.format import ColumnsFormat, JsonFormat, VulnerabilityFormat
+from pip_audit.format import ColumnsFormat, CycloneDxFormat, JsonFormat, VulnerabilityFormat
 from pip_audit.service import OsvService, PyPIService, VulnerabilityService
 from pip_audit.state import AuditSpinner
 from pip_audit.util import assert_never
@@ -36,12 +36,18 @@ class OutputFormatChoice(str, enum.Enum):
 
     Columns = "columns"
     Json = "json"
+    CycloneDxJson = "cyclonedx-json"
+    CycloneDxXml = "cyclonedx-xml"
 
     def to_format(self, output_desc: bool) -> VulnerabilityFormat:
         if self is OutputFormatChoice.Columns:
             return ColumnsFormat(output_desc)
         elif self is OutputFormatChoice.Json:
             return JsonFormat(output_desc)
+        elif self is OutputFormatChoice.CycloneDxJson:
+            return CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Json)
+        elif self is OutputFormatChoice.CycloneDxXml:
+            return CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Xml)
         else:
             assert_never(self)
 
@@ -86,7 +92,7 @@ class VulnerabilityDescriptionChoice(str, enum.Enum):
         elif self is VulnerabilityDescriptionChoice.Off:
             return False
         elif self is VulnerabilityDescriptionChoice.Auto:
-            return bool(format_.value == OutputFormatChoice.Json)
+            return bool(format_.value is OutputFormatChoice.Json)
         else:
             assert_never(self)
 
@@ -162,7 +168,8 @@ def audit() -> None:
         choices=VulnerabilityDescriptionChoice,
         default=VulnerabilityDescriptionChoice.Auto,
         help="include a description for each vulnerability; "
-        "`auto` only includes a description for the `json` format",
+        "`auto` defaults to `on` for the `json` format. This flag has no "
+        "effect on the `cyclonedx-json` or `cyclonedx-xml` formats.",
     )
     parser.add_argument(
         "--cache-dir",
@@ -207,6 +214,8 @@ def audit() -> None:
                 pkg_count += 1
                 vuln_count += len(vulns)
 
+    # TODO(ww): Refine this: we should always output if our output format is an SBOM
+    # or other manifest format (like the default JSON format).
     if vuln_count > 0:
         print(f"Found {vuln_count} known vulnerabilities in {pkg_count} packages", file=sys.stderr)
         print(formatter.format(result))
