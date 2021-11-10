@@ -152,7 +152,7 @@ class PyPIService(VulnerabilityService):
         except requests.HTTPError as http_error:
             if response.status_code == 404:
                 logger.warning(
-                    "Warning: Dependency not found on PyPI and could not be"
+                    "Warning: Dependency not found on PyPI and could not be "
                     f"audited: {spec.canonical_name} ({spec.version})"
                 )
                 return []
