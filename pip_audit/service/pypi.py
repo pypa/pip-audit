@@ -8,6 +8,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from subprocess import run
 from tempfile import NamedTemporaryFile
 from typing import Any, List, Optional
 
@@ -92,7 +93,7 @@ def _get_pip_cache() -> str:
     # the `pip` HTTP cache
     cmd = [sys.executable, "-m", "pip", "cache", "dir"]
     try:
-        process = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        process = run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError as cpe:  # pragma: no cover
         raise ServiceError(f"Failed to query the `pip` HTTP cache directory: {cmd}") from cpe
     cache_dir = process.stdout.decode("utf-8").strip("\n")
