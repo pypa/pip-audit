@@ -105,7 +105,7 @@ def _get_cache_dir(custom_cache_dir: Optional[Path]) -> str:
         _get_pip_cache() if _PIP_VERSION >= _MINIMUM_PIP_VERSION else None
     )
     if custom_cache_dir is not None:
-        return custom_cache_dir.name
+        return str(custom_cache_dir)
     elif pip_cache_dir is not None:  # pragma: no cover
         return pip_cache_dir
     else:
