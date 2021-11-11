@@ -64,11 +64,11 @@ class VulnerabilityServiceChoice(str, enum.Enum):
     Osv = "osv"
     Pypi = "pypi"
 
-    def to_service(self, cache_dir: Optional[Path]) -> VulnerabilityService:
+    def to_service(self, timeout: int, cache_dir: Optional[Path]) -> VulnerabilityService:
         if self is VulnerabilityServiceChoice.Osv:
-            return OsvService()
+            return OsvService(timeout)
         elif self is VulnerabilityServiceChoice.Pypi:
-            return PyPIService(cache_dir)
+            return PyPIService(cache_dir, timeout)
         else:
             assert_never(self)
 
@@ -183,11 +183,14 @@ def audit() -> None:
         default=ProgressSpinnerChoice.On,
         help="display a progress spinner",
     )
+    parser.add_argument(
+        "--timeout", type=int, default=15, help="set the socker timeout"  # Match the `pip` default
+    )
 
     args = parser.parse_args()
     logger.debug(f"parsed arguments: {args}")
 
-    service = args.vulnerability_service.to_service(args.cache_dir)
+    service = args.vulnerability_service.to_service(args.timeout, args.cache_dir)
     output_desc = args.desc.to_bool(args.format)
     formatter = args.format.to_format(output_desc)
 
@@ -197,7 +200,7 @@ def audit() -> None:
         source: DependencySource
         if args.requirements is not None:
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
-            source = RequirementSource(req_files, ResolveLibResolver(state), state)
+            source = RequirementSource(req_files, ResolveLibResolver(args.timeout, state), state)
         else:
             source = PipSource(local=args.local)
 

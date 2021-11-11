@@ -45,6 +45,7 @@ class Candidate:
         url: str,
         extras: Set[str],
         is_wheel: bool = True,
+        timeout: Optional[int] = None,
         state: Optional[AuditState] = None,
     ) -> None:
         """
@@ -56,6 +57,7 @@ class Candidate:
         self.url = url
         self.extras = extras
         self.is_wheel = is_wheel
+        self.timeout = timeout
         self.state = state
 
         self._metadata: Optional[EmailMessage] = None
@@ -114,7 +116,7 @@ class Candidate:
         """
         Extracts the metadata for this candidate, if it's a wheel.
         """
-        data = requests.get(self.url).content
+        data = requests.get(self.url, timeout=self.timeout).content
 
         if self.state is not None:
             self.state.update_state(
@@ -136,7 +138,7 @@ class Candidate:
         """
         Extracts the metadata for this candidate, if it's a source distribution.
         """
-        response: requests.Response = requests.get(self.url)
+        response: requests.Response = requests.get(self.url, timeout=self.timeout)
         response.raise_for_status()
         data = response.content
         metadata = EmailMessage()
@@ -179,10 +181,10 @@ class Candidate:
         return metadata
 
 
-def get_project_from_pypi(project, extras, state: Optional[AuditState]):
+def get_project_from_pypi(project, extras, timeout: Optional[int], state: Optional[AuditState]):
     """Return candidates created from the project name and extras."""
     url = "https://pypi.org/simple/{}".format(project)
-    response: requests.Response = requests.get(url)
+    response: requests.Response = requests.get(url, timeout=timeout)
     response.raise_for_status()
     data = response.content
     doc = html5lib.parse(data, namespaceHTMLElements=False)
@@ -214,7 +216,9 @@ def get_project_from_pypi(project, extras, state: Optional[AuditState]):
 
         # TODO: Handle compatibility tags?
 
-        yield Candidate(name, version, url=url, extras=extras, is_wheel=is_wheel, state=state)
+        yield Candidate(
+            name, version, url=url, extras=extras, is_wheel=is_wheel, timeout=timeout, state=state
+        )
 
 
 class PyPIProvider(AbstractProvider):
@@ -223,12 +227,15 @@ class PyPIProvider(AbstractProvider):
     the official Python Package Index.
     """
 
-    def __init__(self, state: Optional[AuditState] = None):
+    def __init__(self, timeout: Optional[int] = None, state: Optional[AuditState] = None):
         """
         Create a new `PyPIProvider`.
 
+        `timeout` is an optional argument to control how many seconds the component should wait for
+        responses to network requests.
         `state` is an optional `AuditState` to use for state callbacks.
         """
+        self.timeout = timeout
         self.state = state
 
     def identify(self, requirement_or_candidate):
@@ -264,7 +271,7 @@ class PyPIProvider(AbstractProvider):
         # treat candidates as immutable once created.
         candidates = (
             candidate
-            for candidate in get_project_from_pypi(identifier, extras, self.state)
+            for candidate in get_project_from_pypi(identifier, extras, self.timeout, self.state)
             if candidate.version not in bad_versions
             and all(candidate.version in r.specifier for r in requirements)
         )
