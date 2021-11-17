@@ -3,7 +3,7 @@ Functionality for using the [OSV](https://osv.dev/) API as a `VulnerabilityServi
 """
 
 import json
-from typing import List
+from typing import List, Optional
 
 import requests
 from packaging.version import Version
@@ -16,6 +16,15 @@ class OsvService(VulnerabilityService):
     An implementation of `VulnerabilityService` that uses OSV to provide Python
     package vulnerability information.
     """
+
+    def __init__(self, timeout: Optional[int] = None):
+        """
+        Create a new `OsvService`.
+
+        `timeout` is an optional argument to control how many seconds the component should wait for
+        responses to network requests.
+        """
+        self.timeout = timeout
 
     def query(self, spec: Dependency) -> List[VulnerabilityResult]:
         """
@@ -32,6 +41,7 @@ class OsvService(VulnerabilityService):
         response: requests.Response = requests.post(
             url=url,
             data=json.dumps(query),
+            timeout=self.timeout,
         )
 
         results: List[VulnerabilityResult] = []

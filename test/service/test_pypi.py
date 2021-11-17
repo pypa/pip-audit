@@ -26,7 +26,7 @@ def get_mock_session(func):
         def __init__(self, create_response):
             self.create_response = create_response
 
-        def get(self, url):
+        def get(self, url, **kwargs):
             return self.create_response()
 
     return MockSession(func)

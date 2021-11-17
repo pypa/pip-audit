@@ -128,16 +128,18 @@ class PyPIService(VulnerabilityService):
     package vulnerability information.
     """
 
-    def __init__(self, cache_dir: Optional[Path] = None) -> None:
+    def __init__(self, cache_dir: Optional[Path] = None, timeout: Optional[int] = None) -> None:
         """
         Create a new `PyPIService`.
 
-        `cache_dir` is an optional cache directory to use, for caching and
-        reusing PyPI API requests. If `None`, `pip-audit` will attempt to
-        use `pip`'s cache directory before falling back on its own default
-        cache directory.
+        `cache_dir` is an optional cache directory to use, for caching and reusing PyPI API
+        requests. If `None`, `pip-audit` will attempt to use `pip`'s cache directory before falling
+        back on its own default cache directory.
+        `timeout` is an optional argument to control how many seconds the component should wait for
+        responses to network requests.
         """
         self.session = _get_cached_session(cache_dir)
+        self.timeout = timeout
 
     def query(self, spec: Dependency) -> List[VulnerabilityResult]:
         """
@@ -147,7 +149,7 @@ class PyPIService(VulnerabilityService):
         """
 
         url = f"https://pypi.org/pypi/{spec.canonical_name}/{str(spec.version)}/json"
-        response: requests.Response = self.session.get(url=url)
+        response: requests.Response = self.session.get(url=url, timeout=self.timeout)
         try:
             response.raise_for_status()
         except requests.HTTPError as http_error:
