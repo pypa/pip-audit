@@ -30,6 +30,7 @@ usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS]
                  [-f {columns,json,cyclonedx-json,cyclonedx-xml}]
                  [-s {osv,pypi}] [-d] [--desc {on,off,auto}]
                  [--cache-dir CACHE_DIR] [--progress-spinner {on,off}]
+                 [--timeout TIMEOUT]
 
 audit the Python environment for dependencies with known vulnerabilities
 
@@ -57,6 +58,7 @@ optional arguments:
                         the `pip` HTTP cache by default (default: None)
   --progress-spinner {on,off}
                         display a progress spinner (default: on)
+  --timeout TIMEOUT     set the socker timeout (default: 15)
 ```
 <!-- @end-pip-audit-help@ -->
 
