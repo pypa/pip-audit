@@ -7,6 +7,7 @@ import requests
 from packaging.version import Version
 
 import pip_audit.service as service
+from pip_audit.service.pypi import _get_cache_dir
 
 cache_dir: Optional[tempfile.TemporaryDirectory] = None
 
@@ -25,7 +26,7 @@ def get_mock_session(func):
         def __init__(self, create_response):
             self.create_response = create_response
 
-        def get(self, url):
+        def get(self, url, **kwargs):
             return self.create_response()
 
     return MockSession(func)
@@ -207,3 +208,44 @@ def test_pypi_warns_about_old_pip(monkeypatch):
     # have an old `pip`, then we should expect a warning to be logged
     service.PyPIService()
     assert len(logger.warning.calls) == 1
+
+
+def test_pypi_cache_dir(monkeypatch):
+    # When we supply a cache directory, always use that
+    cache_dir: str = _get_cache_dir("/tmp/foo/cache_dir")
+    assert cache_dir == "/tmp/foo/cache_dir"
+
+    def run_mock(args, **kwargs):
+        class MockProcess:
+            def __init__(self, stdout_str: str):
+                self.stdout: bytes = stdout_str.encode("utf-8")
+
+        return MockProcess("/Users/foo/Library/Caches/pip")
+
+    # Without a cache dir, query `pip` for its HTTP cache and then append `http` at the end
+    monkeypatch.setattr(service.pypi, "run", run_mock)
+
+    cache_dir = _get_cache_dir(None)
+    assert cache_dir == "/Users/foo/Library/Caches/pip/http"
+
+
+def test_pypi_cache_dir_old_pip(monkeypatch):
+    # Check the case where we have an old `pip`
+    monkeypatch.setattr(service.pypi, "_PIP_VERSION", Version("1.0.0"))
+
+    # When we supply a cache directory, always use that
+    cache_dir: str = _get_cache_dir("/tmp/foo/cache_dir")
+    assert cache_dir == "/tmp/foo/cache_dir"
+
+    # Mock out home since this is going to be different across systems
+    class MockPath:
+        @staticmethod
+        def home():
+            return "/Users/foo"
+
+    # In this case, we can't query `pip` to figure out where its HTTP cache is
+    # Instead, we use `~/.pip-audit-cache`
+    monkeypatch.setattr(service.pypi, "Path", MockPath)
+
+    cache_dir = _get_cache_dir(None)
+    assert cache_dir == "/Users/foo/.pip-audit-cache"
