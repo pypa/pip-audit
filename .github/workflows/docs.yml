@@ -26,7 +26,7 @@ jobs:
         run: |
           git config --global user.name 'woodruffw'
           git config --global user.email 'woodruffw@users.noreply.github.com'
-          git checkout gh-pages
+          git checkout -b gh-pages
           mv /tmp/pip_audit ./docs
           git add -A ./docs
           git commit --amend -m "[docs] deploy: ${GITHUB_SHA}"
