@@ -8,7 +8,7 @@ from typing import Iterator, List, Tuple
 
 from packaging.requirements import Requirement
 
-from pip_audit.service import Dependency
+from pip_audit._service import Dependency
 
 
 class DependencySource(ABC):

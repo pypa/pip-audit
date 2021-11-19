@@ -9,9 +9,9 @@ from typing import Iterator, Optional
 import pip_api
 from packaging.version import Version
 
+from pip_audit._dependency_source import DependencySource, DependencySourceError
+from pip_audit._service import Dependency
 from pip_audit._state import AuditState
-from pip_audit.dependency_source import DependencySource, DependencySourceError
-from pip_audit.service import Dependency
 
 logger = logging.getLogger(__name__)
 

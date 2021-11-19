@@ -6,8 +6,8 @@ import pytest
 import requests
 from packaging.version import Version
 
-import pip_audit.service as service
-from pip_audit.service.pypi import _get_cache_dir
+import pip_audit._service as service
+from pip_audit._service.pypi import _get_cache_dir
 
 cache_dir: Optional[tempfile.TemporaryDirectory] = None
 

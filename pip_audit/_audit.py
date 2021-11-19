@@ -6,8 +6,8 @@ import logging
 from dataclasses import dataclass
 from typing import Iterator, List, Tuple
 
-from pip_audit.dependency_source import DependencySource
-from pip_audit.service import Dependency, VulnerabilityResult, VulnerabilityService
+from pip_audit._dependency_source import DependencySource
+from pip_audit._service import Dependency, VulnerabilityResult, VulnerabilityService
 
 logger = logging.getLogger(__name__)
 

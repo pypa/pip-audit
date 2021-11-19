@@ -7,7 +7,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 from packaging.version import Version
 
-import pip_audit.service as service
+import pip_audit._service as service
 
 from .interface import VulnerabilityFormat
 

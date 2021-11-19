@@ -5,7 +5,7 @@ from unittest import mock
 from packaging.version import Version
 from requests.exceptions import HTTPError
 
-import pip_audit.service as service
+import pip_audit._service as service
 
 
 class OsvServiceTest(unittest.TestCase):
@@ -74,7 +74,7 @@ class OsvServiceTest(unittest.TestCase):
 
         return MockResponse()
 
-    @mock.patch("pip_audit.service.osv.requests.post", side_effect=get_error_response)
+    @mock.patch("pip_audit._service.osv.requests.post", side_effect=get_error_response)
     def test_osv_error_response(self, mock_post):
         osv = service.OsvService()
         dep = service.Dependency("jinja2", Version("2.4.1"))

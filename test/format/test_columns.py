@@ -1,4 +1,4 @@
-import pip_audit.format as format
+import pip_audit._format as format
 
 
 def test_columns(vuln_data):

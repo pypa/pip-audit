@@ -11,7 +11,7 @@ from cyclonedx.model.component import Component
 from cyclonedx.model.vulnerability import Vulnerability
 from cyclonedx.parser import BaseParser
 
-import pip_audit.service as service
+import pip_audit._service as service
 
 from .interface import VulnerabilityFormat
 

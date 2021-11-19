@@ -3,7 +3,7 @@ from typing import Dict, List
 import pytest
 from packaging.version import Version
 
-import pip_audit.service as service
+import pip_audit._service as service
 
 _TEST_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
     service.Dependency(name="foo", version="1.0"): [

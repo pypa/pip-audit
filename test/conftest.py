@@ -1,8 +1,8 @@
 import pytest
 from packaging.version import Version
 
-from pip_audit.dependency_source.interface import DependencySource
-from pip_audit.service.interface import Dependency, VulnerabilityResult, VulnerabilityService
+from pip_audit._dependency_source.interface import DependencySource
+from pip_audit._service.interface import Dependency, VulnerabilityResult, VulnerabilityService
 
 
 @pytest.fixture(autouse=True)
