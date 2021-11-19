@@ -30,7 +30,7 @@ jobs:
           git checkout --orphan gh-pages
 
           # Clear out all repo state, copy in the docs built in the previous step.
-          rm -rf *
+          git rm -rf .
           mv /tmp/pip_audit ./docs
 
           # Check in the docs, push.
