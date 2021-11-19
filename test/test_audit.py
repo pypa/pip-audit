@@ -2,8 +2,8 @@ import pretend
 import pytest
 from packaging.version import Version
 
-from pip_audit import audit
-from pip_audit.audit import AuditOptions, Auditor
+from pip_audit import _audit as audit
+from pip_audit._audit import AuditOptions, Auditor
 from pip_audit.service.interface import VulnerabilityResult
 
 

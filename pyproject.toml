@@ -9,11 +9,11 @@ line-length = 100
 
 [tool.coverage.run]
 # don't attempt code coverage for the CLI entrypoints
-omit = ["pip_audit/cli.py"]
+omit = ["pip_audit/_cli.py"]
 
 [tool.interrogate]
 # don't enforce documentation coverage for packaging, testing, the virtual
 # environment, or the CLI (which is documented separately).
-exclude = ["setup.py", "env", "test", "pip_audit/cli.py", "pip_audit/_version.py"]
+exclude = ["setup.py", "env", "test", "pip_audit/_cli.py", "pip_audit/_version.py"]
 ignore-semiprivate = true
 fail-under = 100

@@ -9,7 +9,7 @@ from typing import Iterator, List, Optional, Tuple
 
 from packaging.version import Version
 
-from .state import AuditState
+from ._state import AuditState
 
 
 class VirtualEnv(venv.EnvBuilder):

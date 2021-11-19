@@ -9,9 +9,9 @@ from packaging.requirements import Requirement
 from requests.exceptions import HTTPError
 from resolvelib import BaseReporter, Resolver
 
+from pip_audit._state import AuditState
 from pip_audit.dependency_source import DependencyResolver, DependencyResolverError
 from pip_audit.service.interface import Dependency
-from pip_audit.state import AuditState
 
 from .pypi_provider import PyPIProvider
 
