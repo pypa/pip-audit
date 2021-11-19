@@ -34,6 +34,6 @@ jobs:
           mv /tmp/pip_audit ./docs
 
           # Check in the docs, push.
-          git add ./docs
+          git add --all .
           git commit -m "[docs] deploy: ${GITHUB_SHA}"
           git push --force origin gh-pages
