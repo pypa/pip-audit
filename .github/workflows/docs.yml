@@ -24,19 +24,16 @@ jobs:
 
       - name: deploy
         run: |
+          # Configure git, checkout a new orphan branch for the docs.
           git config --global user.name 'woodruffw'
           git config --global user.email 'woodruffw@users.noreply.github.com'
           git checkout --orphan gh-pages
-          rm -rf .
+
+          # Clear out all repo state, copy in the docs built in the previous step.
+          rm -rf *
           mv /tmp/pip_audit ./docs
+
+          # Check in the docs, push.
           git add ./docs
           git commit -m "[docs] deploy: ${GITHUB_SHA}"
           git push --force origin gh-pages
-
-      # - name: deploy
-      #   uses: peaceiris/actions-gh-pages@v3.8.0
-      #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      #     publish_dir: ./html/pip_audit
-      #     publish_branch: gh-pages
-      #     force_orphan: true
