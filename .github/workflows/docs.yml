@@ -26,10 +26,11 @@ jobs:
         run: |
           git config --global user.name 'woodruffw'
           git config --global user.email 'woodruffw@users.noreply.github.com'
-          git checkout -b gh-pages
+          git checkout --orphan gh-pages
+          rm -rf .
           mv /tmp/pip_audit ./docs
           git add ./docs
-          git commit --amend -m "[docs] deploy: ${GITHUB_SHA}"
+          git commit -m "[docs] deploy: ${GITHUB_SHA}"
           git push --force origin gh-pages
 
       # - name: deploy
