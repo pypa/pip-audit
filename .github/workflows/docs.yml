@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - ww/ci-doc-builds
 
 jobs:
   docs:
@@ -17,12 +18,24 @@ jobs:
         run: make dev
 
       - name: docs
-        run: make doc
+        run: |
+          make doc
+          mv ./html/pip_audit /tmp/pip_audit
 
       - name: deploy
-        uses: peaceiris/actions-gh-pages@v3.8.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./html/pip_audit
-          publish_branch: gh-pages
-          force_orphan: true
+        run: |
+          git config --global user.name 'woodruffw'
+          git config --global user.email 'woodruffw@users.noreply.github.com'
+          git checkout gh-pages
+          mv /tmp/pip_audit ./docs
+          git add -A ./docs
+          git commit --amend -m "[docs] deploy: ${GITHUB_SHA}"
+          git push --force origin gh-pages
+
+      # - name: deploy
+      #   uses: peaceiris/actions-gh-pages@v3.8.0
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: ./html/pip_audit
+      #     publish_branch: gh-pages
+      #     force_orphan: true
