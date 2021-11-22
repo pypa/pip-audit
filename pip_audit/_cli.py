@@ -184,7 +184,7 @@ def audit() -> None:
         help="display a progress spinner",
     )
     parser.add_argument(
-        "--timeout", type=int, default=15, help="set the socker timeout"  # Match the `pip` default
+        "--timeout", type=int, default=15, help="set the socket timeout"  # Match the `pip` default
     )
 
     args = parser.parse_args()
