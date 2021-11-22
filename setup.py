@@ -22,7 +22,7 @@ setup(
     packages=find_packages(),
     entry_points={
         "console_scripts": [
-            "pip-audit = pip_audit.cli:audit",
+            "pip-audit = pip_audit._cli:audit",
         ]
     },
     platforms="any",

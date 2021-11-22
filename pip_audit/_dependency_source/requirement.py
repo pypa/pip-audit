@@ -9,14 +9,14 @@ from packaging.requirements import Requirement
 from pip_api import parse_requirements
 from pip_api.exceptions import PipError
 
-from pip_audit.dependency_source import (
+from pip_audit._dependency_source import (
     DependencyResolver,
     DependencyResolverError,
     DependencySource,
     DependencySourceError,
 )
-from pip_audit.service import Dependency
-from pip_audit.state import AuditState
+from pip_audit._service import Dependency
+from pip_audit._state import AuditState
 
 
 class RequirementSource(DependencySource):

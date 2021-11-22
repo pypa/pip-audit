@@ -1,7 +1,7 @@
 import json
 import xml.etree.ElementTree as ET
 
-from pip_audit.format import CycloneDxFormat
+from pip_audit._format import CycloneDxFormat
 
 
 def test_cyclonedx_inner_json(vuln_data):

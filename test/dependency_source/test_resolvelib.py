@@ -8,9 +8,9 @@ from packaging.version import Version
 from requests.exceptions import HTTPError
 from resolvelib.resolvers import InconsistentCandidate, ResolutionImpossible
 
-from pip_audit.dependency_source import resolvelib
-from pip_audit.dependency_source.resolvelib import pypi_provider
-from pip_audit.service.interface import Dependency
+from pip_audit._dependency_source import resolvelib
+from pip_audit._dependency_source.resolvelib import pypi_provider
+from pip_audit._service.interface import Dependency
 
 
 def get_package_mock(data):

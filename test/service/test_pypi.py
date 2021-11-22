@@ -1,24 +1,12 @@
-import tempfile
-from typing import List, Optional
+from typing import List
 
 import pretend
 import pytest
 import requests
 from packaging.version import Version
 
-import pip_audit.service as service
-from pip_audit.service.pypi import _get_cache_dir
-
-cache_dir: Optional[tempfile.TemporaryDirectory] = None
-
-
-def setup_function(function):
-    global cache_dir
-    cache_dir = tempfile.TemporaryDirectory()
-
-
-def teardown_function(function):
-    cache_dir.cleanup()
+import pip_audit._service as service
+from pip_audit._service.pypi import _get_cache_dir
 
 
 def get_mock_session(func):
@@ -32,7 +20,7 @@ def get_mock_session(func):
     return MockSession(func)
 
 
-def test_pypi():
+def test_pypi(cache_dir):
     pypi = service.PyPIService(cache_dir)
     dep = service.Dependency("jinja2", Version("2.4.1"))
     results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
@@ -42,7 +30,7 @@ def test_pypi():
     assert len(vulns) > 0
 
 
-def test_pypi_multiple_pkg():
+def test_pypi_multiple_pkg(cache_dir):
     pypi = service.PyPIService(cache_dir)
     deps: List[service.Dependency] = [
         service.Dependency("jinja2", Version("2.4.1")),
@@ -55,7 +43,7 @@ def test_pypi_multiple_pkg():
     assert len(results[deps[1]]) > 0
 
 
-def test_pypi_http_notfound(monkeypatch):
+def test_pypi_http_notfound(monkeypatch, cache_dir):
     # If we get a "not found" response, that means that we're querying a package or version that
     # isn't known to PyPI. If that's the case, we should just log a warning and continue on with
     # the audit.
@@ -84,7 +72,7 @@ def test_pypi_http_notfound(monkeypatch):
     assert len(logger.warning.calls) == 1
 
 
-def test_pypi_http_error(monkeypatch):
+def test_pypi_http_error(monkeypatch, cache_dir):
     # Any error response other than "not found" should raise an error.
     def get_error_response():
         class MockResponse:
@@ -106,7 +94,7 @@ def test_pypi_http_error(monkeypatch):
         dict(pypi.query_all([dep]))
 
 
-def test_pypi_mocked_response(monkeypatch):
+def test_pypi_mocked_response(monkeypatch, cache_dir):
     def get_mock_response():
         class MockResponse:
             def raise_for_status(self):
@@ -142,7 +130,7 @@ def test_pypi_mocked_response(monkeypatch):
     )
 
 
-def test_pypi_no_vuln_key(monkeypatch):
+def test_pypi_no_vuln_key(monkeypatch, cache_dir):
     def get_mock_response():
         class MockResponse:
             def raise_for_status(self):
@@ -165,7 +153,7 @@ def test_pypi_no_vuln_key(monkeypatch):
     assert not results[dep]
 
 
-def test_pypi_invalid_version(monkeypatch):
+def test_pypi_invalid_version(monkeypatch, cache_dir):
     def get_mock_response():
         class MockResponse:
             def raise_for_status(self):
@@ -194,7 +182,7 @@ def test_pypi_invalid_version(monkeypatch):
         dict(pypi.query_all([dep]))
 
 
-def test_pypi_warns_about_old_pip(monkeypatch):
+def test_pypi_warns_about_old_pip(monkeypatch, cache_dir):
     monkeypatch.setattr(service.pypi, "_PIP_VERSION", Version("1.0.0"))
     logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(service.pypi, "logger", logger)

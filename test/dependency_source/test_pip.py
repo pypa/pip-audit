@@ -4,8 +4,8 @@ import pytest
 from packaging.version import Version
 
 import pip_audit
-from pip_audit.dependency_source import pip
-from pip_audit.service.interface import Dependency
+from pip_audit._dependency_source import pip
+from pip_audit._service.interface import Dependency
 
 
 def test_pip_source():

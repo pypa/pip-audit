@@ -12,17 +12,17 @@ from pathlib import Path
 from typing import List, Optional
 
 from pip_audit import __version__
-from pip_audit.audit import AuditOptions, Auditor
-from pip_audit.dependency_source import (
+from pip_audit._audit import AuditOptions, Auditor
+from pip_audit._dependency_source import (
     DependencySource,
     PipSource,
     RequirementSource,
     ResolveLibResolver,
 )
-from pip_audit.format import ColumnsFormat, CycloneDxFormat, JsonFormat, VulnerabilityFormat
-from pip_audit.service import OsvService, PyPIService, VulnerabilityService
-from pip_audit.state import AuditSpinner
-from pip_audit.util import assert_never
+from pip_audit._format import ColumnsFormat, CycloneDxFormat, JsonFormat, VulnerabilityFormat
+from pip_audit._service import OsvService, PyPIService, VulnerabilityService
+from pip_audit._state import AuditSpinner
+from pip_audit._util import assert_never
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PIP_AUDIT_LOGLEVEL", "INFO").upper())

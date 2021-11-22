@@ -5,7 +5,7 @@ Functionality for formatting vulnerability results as an array of JSON objects.
 import json
 from typing import Any, Dict, List
 
-import pip_audit.service as service
+import pip_audit._service as service
 
 from .interface import VulnerabilityFormat
 

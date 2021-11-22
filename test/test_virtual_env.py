@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 import pytest
 from packaging.version import Version
 
-from pip_audit.virtual_env import VirtualEnv, VirtualEnvError
+from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
 
 
 def test_virtual_env():

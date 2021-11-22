@@ -6,14 +6,14 @@ from packaging.requirements import Requirement
 from packaging.version import Version
 from pip_api import _parse_requirements
 
-from pip_audit.dependency_source import (
+from pip_audit._dependency_source import (
     DependencyResolver,
     DependencyResolverError,
     DependencySourceError,
     ResolveLibResolver,
     requirement,
 )
-from pip_audit.service import Dependency
+from pip_audit._service import Dependency
 
 
 def test_requirement_source(monkeypatch):

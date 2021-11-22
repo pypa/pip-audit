@@ -25,8 +25,8 @@ from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel
 from packaging.version import Version
 from resolvelib.providers import AbstractProvider
 
-from pip_audit.state import AuditState
-from pip_audit.virtual_env import VirtualEnv
+from pip_audit._state import AuditState
+from pip_audit._virtual_env import VirtualEnv
 
 PYTHON_VERSION = Version(python_version())
 

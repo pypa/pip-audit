@@ -1,0 +1,38 @@
+name: docs-deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+
+      - name: deps
+        run: make dev
+
+      - name: docs
+        run: |
+          make doc
+          mv ./html/pip_audit /tmp/pip_audit
+
+      - name: deploy
+        run: |
+          # Configure git, checkout a new orphan branch for the docs.
+          git config --global user.name 'github.actions'
+          git config --global user.email 'github-actions@github.com'
+          git checkout --orphan gh-pages
+
+          # Clear out all repo state, copy in the docs built in the previous step.
+          git rm -rf . && git clean -fd
+          mv /tmp/pip_audit ./docs
+
+          # Check in the docs, push.
+          git add --all .
+          git commit -m "[docs] deploy: ${GITHUB_SHA}"
+          git push --force origin gh-pages

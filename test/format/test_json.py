@@ -1,6 +1,6 @@
 import json
 
-import pip_audit.format as format
+import pip_audit._format as format
 
 
 def test_json(vuln_data):

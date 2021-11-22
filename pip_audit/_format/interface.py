@@ -4,7 +4,7 @@ Interfaces for formatting vulnerability results into a string representation.
 from abc import ABC
 from typing import Dict, List
 
-import pip_audit.service as service
+import pip_audit._service as service
 
 
 class VulnerabilityFormat(ABC):
