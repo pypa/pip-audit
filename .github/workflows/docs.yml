@@ -24,8 +24,8 @@ jobs:
       - name: deploy
         run: |
           # Configure git, checkout a new orphan branch for the docs.
-          git config --global user.name 'woodruffw'
-          git config --global user.email 'woodruffw@users.noreply.github.com'
+          git config --global user.name 'github.actions'
+          git config --global user.email 'github-actions@github.com'
           git checkout --orphan gh-pages
 
           # Clear out all repo state, copy in the docs built in the previous step.
