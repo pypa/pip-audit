@@ -58,7 +58,7 @@ optional arguments:
                         the `pip` HTTP cache by default (default: None)
   --progress-spinner {on,off}
                         display a progress spinner (default: on)
-  --timeout TIMEOUT     set the socker timeout (default: 15)
+  --timeout TIMEOUT     set the socket timeout (default: 15)
 ```
 <!-- @end-pip-audit-help@ -->
 
