@@ -3,6 +3,7 @@ Interfaces for for propagating feedback from the API to provide responsive progr
 well as a progress spinner implementation for use with CLI applications.
 """
 
+import os
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
@@ -72,6 +73,23 @@ class AuditSpinner(AuditState, BaseSpinner):  # pragma: no cover
 
         super().__init__(message=message, **kwargs)
 
+    def _writeln_truncated(self, line: str):
+        """
+        Wraps `BaseSpinner.writeln`, providing reasonable truncation behavior
+        when a line would otherwise overflow its terminal row and cause the progress
+        bar to break.
+        """
+        if not (self.file and self.is_tty()):
+            return
+
+        columns, _ = os.get_terminal_size(self.file.fileno())
+        if columns > 4 and len(line) >= columns:
+            line = f"{line[0:columns - 4]} ..."
+        else:
+            line = line[0:columns]
+
+        self.writeln(line)
+
     def update(self) -> None:
         """
         Update the progress spinner.
@@ -81,7 +99,7 @@ class AuditSpinner(AuditState, BaseSpinner):  # pragma: no cover
         """
         i = self.index % len(self.phases)
         line = f"{self.phases[i]} {self.message}"
-        self.writeln(line)
+        self._writeln_truncated(line)
 
     def update_state(self, message: str) -> None:
         """
