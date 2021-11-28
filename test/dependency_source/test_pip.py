@@ -1,10 +1,10 @@
+from dataclasses import dataclass
 from typing import Dict
 
 import pip_api
 import pretend
 import pytest
 from packaging.version import Version
-from pip_api._installed_distributions import Distribution
 
 import pip_audit
 from pip_audit._dependency_source import pip
@@ -54,11 +54,18 @@ def test_pip_source_invalid_version(monkeypatch):
 
     source = pip.PipSource()
 
-    def mock_installed_distributions(local: bool) -> Dict[str, Distribution]:
+    @dataclass(frozen=True)
+    class MockDistribution:
+        name: str
+        version: str
+
+    # Return a distribution with a version that doesn't conform to PEP 440.
+    # We should log a warning and skip it.
+    def mock_installed_distributions(local: bool) -> Dict[str, MockDistribution]:
         return {
-            "pytest": Distribution("pytest", "0.1"),
-            "pip-audit": Distribution("pip-audit", "1.0-ubuntu0.21.04.1"),
-            "pip-api": Distribution("pip-api", "1.0"),
+            "pytest": MockDistribution("pytest", "0.1"),
+            "pip-audit": MockDistribution("pip-audit", "1.0-ubuntu0.21.04.1"),
+            "pip-api": MockDistribution("pip-api", "1.0"),
         }
 
     monkeypatch.setattr(pip_api, "installed_distributions", mock_installed_distributions)
