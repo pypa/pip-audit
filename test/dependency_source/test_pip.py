@@ -1,7 +1,10 @@
+from typing import Dict
+
 import pip_api
 import pretend
 import pytest
 from packaging.version import Version
+from pip_api._installed_distributions import Distribution
 
 import pip_audit
 from pip_audit._dependency_source import pip
@@ -43,3 +46,25 @@ def test_pip_source_pip_api_failure(monkeypatch):
 
     with pytest.raises(pip.PipSourceError):
         list(source.collect())
+
+
+def test_pip_source_invalid_version(monkeypatch):
+    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    monkeypatch.setattr(pip, "logger", logger)
+
+    source = pip.PipSource()
+
+    def mock_installed_distributions(local: bool) -> Dict[str, Distribution]:
+        return {
+            "pytest": Distribution("pytest", "0.1"),
+            "pip-audit": Distribution("pip-audit", "1.0-ubuntu0.21.04.1"),
+            "pip-api": Distribution("pip-api", "1.0"),
+        }
+
+    monkeypatch.setattr(pip_api, "installed_distributions", mock_installed_distributions)
+
+    specs = list(source.collect())
+    assert len(logger.warning.calls) == 1
+    assert len(specs) == 2
+    assert Dependency(name="pytest", version=Version("0.1")) in specs
+    assert Dependency(name="pip-api", version=Version("1.0")) in specs
