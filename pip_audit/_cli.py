@@ -11,6 +11,8 @@ from contextlib import ExitStack
 from pathlib import Path
 from typing import List, Optional
 
+import shtab  # type: ignore
+
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
 from pip_audit._dependency_source import (
@@ -186,9 +188,19 @@ def audit() -> None:
     parser.add_argument(
         "--timeout", type=int, default=15, help="set the socket timeout"  # Match the `pip` default
     )
+    parser.add_argument(
+        "--completions",
+        type=str,
+        choices=shtab.SUPPORTED_SHELLS,
+        help="generate tab completion for the given shell",
+    )
 
     args = parser.parse_args()
     logger.debug(f"parsed arguments: {args}")
+
+    if args.completions is not None:
+        print(shtab.complete(parser, shell=args.completions))
+        return
 
     service = args.vulnerability_service.to_service(args.timeout, args.cache_dir)
     output_desc = args.desc.to_bool(args.format)

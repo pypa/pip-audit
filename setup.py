@@ -38,6 +38,7 @@ setup(
         "CacheControl>=0.12.10",
         "lockfile>=0.12.2",
         "cyclonedx-python-lib>=0.11.1",
+        "shtab>=1.5.1",
     ],
     extras_require={
         "dev": [
