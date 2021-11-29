@@ -40,30 +40,28 @@ optional arguments:
   -l, --local           show only results for dependencies in the local
                         environment (default: False)
   -r REQUIREMENTS, --requirement REQUIREMENTS
-                        audit the given requirements file; this option can
-                        be used multiple times (default: None)
+                        audit the given requirements file; this option can be
+                        used multiple times (default: None)
   -f {columns,json,cyclonedx-json,cyclonedx-xml}, --format {columns,json,cyclonedx-json,cyclonedx-xml}
-                        the format to emit audit results in (default:
-                        columns)
+                        the format to emit audit results in (default: columns)
   -s {osv,pypi}, --vulnerability-service {osv,pypi}
                         the vulnerability service to audit dependencies
                         against (default: pypi)
   -d, --dry-run         collect all dependencies but do not perform the
                         auditing step (default: False)
-  --desc {on,off,auto}  include a description for each vulnerability;
-                        `auto` defaults to `on` for the `json` format. This
-                        flag has no effect on the `cyclonedx-json` or
-                        `cyclonedx-xml` formats. (default: auto)
+  --desc {on,off,auto}  include a description for each vulnerability; `auto`
+                        defaults to `on` for the `json` format. This flag has
+                        no effect on the `cyclonedx-json` or `cyclonedx-xml`
+                        formats. (default: auto)
   --cache-dir CACHE_DIR
-                        the directory to use as an HTTP cache for PyPI;
-                        uses the `pip` HTTP cache by default (default:
-                        None)
+                        the directory to use as an HTTP cache for PyPI; uses
+                        the `pip` HTTP cache by default (default: None)
   --progress-spinner {on,off}
                         display a progress spinner (default: on)
   --timeout TIMEOUT     set the socket timeout (default: 15)
   --completions {bash,zsh,tcsh}
-                        generate tab completion for the given shell
-                        (default: None)
+                        generate tab completion for the given shell (default:
+                        None)
 ```
 <!-- @end-pip-audit-help@ -->
 
