@@ -61,7 +61,6 @@ optional arguments:
   --progress-spinner {on,off}
                         display a progress spinner (default: on)
   --timeout TIMEOUT     set the socket timeout (default: 15)
-
 ```
 <!-- @end-pip-audit-help@ -->
 
