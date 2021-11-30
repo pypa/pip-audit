@@ -121,7 +121,9 @@ def _fatal(msg: str) -> NoReturn:
     """
     Log a fatal error to the standard error stream and exit.
     """
-    print(f"Fatal: {msg}", file=sys.stderr)
+    # NOTE: We buffer the logger when the progress spinner is active,
+    # ensuring that the fatal message is formatted on its own line.
+    logger.error(f"Fatal: {msg}", file=sys.stderr)
     sys.exit(1)
 
 
