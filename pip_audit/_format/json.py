@@ -3,7 +3,7 @@ Functionality for formatting vulnerability results as an array of JSON objects.
 """
 
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 import pip_audit._service as service
 
@@ -40,6 +40,14 @@ class JsonFormat(VulnerabilityFormat):
     def _format_dep(
         self, dep: service.Dependency, vulns: List[service.VulnerabilityResult]
     ) -> Dict[str, Any]:
+        if dep.is_skipped():
+            dep = cast(service.SkippedDependency, dep)
+            return {
+                "name": dep.canonical_name,
+                "skip_reason": dep.skip_reason,
+            }
+
+        dep = cast(service.ResolvedDependency, dep)
         return {
             "name": dep.canonical_name,
             "version": str(dep.version),
