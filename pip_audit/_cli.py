@@ -123,7 +123,7 @@ def _fatal(msg: str) -> NoReturn:
     """
     # NOTE: We buffer the logger when the progress spinner is active,
     # ensuring that the fatal message is formatted on its own line.
-    logger.error(f"Fatal: {msg}", file=sys.stderr)
+    logger.error(f"Fatal: {msg}")
     sys.exit(1)
 
 
