@@ -28,7 +28,7 @@ python -m pip install pip-audit
 ```
 usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS]
                  [-f {columns,json,cyclonedx-json,cyclonedx-xml}]
-                 [-s {osv,pypi}] [-d] [--desc {on,off,auto}]
+                 [-s {osv,pypi}] [-d] [-S] [--desc {on,off,auto}]
                  [--cache-dir CACHE_DIR] [--progress-spinner {on,off}]
                  [--timeout TIMEOUT]
 
@@ -49,6 +49,8 @@ optional arguments:
                         against (default: pypi)
   -d, --dry-run         collect all dependencies but do not perform the
                         auditing step (default: False)
+  -S, --strict          fail the entire audit if dependency collection on any
+                        dependency (default: False)
   --desc {on,off,auto}  include a description for each vulnerability; `auto`
                         defaults to `on` for the `json` format. This flag has
                         no effect on the `cyclonedx-json` or `cyclonedx-xml`
@@ -59,6 +61,7 @@ optional arguments:
   --progress-spinner {on,off}
                         display a progress spinner (default: on)
   --timeout TIMEOUT     set the socket timeout (default: 15)
+
 ```
 <!-- @end-pip-audit-help@ -->
 

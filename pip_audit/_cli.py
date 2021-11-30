@@ -9,7 +9,7 @@ import os
 import sys
 from contextlib import ExitStack
 from pathlib import Path
-from typing import List, Optional, cast
+from typing import List, NoReturn, Optional, cast
 
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
@@ -117,6 +117,14 @@ class ProgressSpinnerChoice(str, enum.Enum):
         return self.value
 
 
+def _fatal(msg: str) -> NoReturn:
+    """
+    Log a fatal error to the standard error stream and exit.
+    """
+    print(f"Fatal: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
 def audit() -> None:
     """
     The primary entrypoint for `pip-audit`.
@@ -162,6 +170,12 @@ def audit() -> None:
         "--dry-run",
         action="store_true",
         help="collect all dependencies but do not perform the auditing step",
+    )
+    parser.add_argument(
+        "-S",
+        "--strict",
+        action="store_true",
+        help="fail the entire audit if dependency collection on any dependency",
     )
     parser.add_argument(
         "--desc",
@@ -214,7 +228,10 @@ def audit() -> None:
             if state is not None:
                 if spec.is_skipped():
                     spec = cast(SkippedDependency, spec)
-                    state.update_state(f"Skipping {spec.name}: {spec.skip_reason}")
+                    if args.strict:
+                        _fatal(f"{spec.name}: {spec.skip_reason}")
+                    else:
+                        state.update_state(f"Skipping {spec.name}: {spec.skip_reason}")
                 else:
                     spec = cast(ResolvedDependency, spec)
                     state.update_state(f"Auditing {spec.name} ({spec.version})")
