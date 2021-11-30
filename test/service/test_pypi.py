@@ -49,8 +49,8 @@ def test_pypi_multiple_pkg(cache_dir):
 
 def test_pypi_http_notfound(monkeypatch, cache_dir):
     # If we get a "not found" response, that means that we're querying a package or version that
-    # isn't known to PyPI. If that's the case, we should just log a warning and continue on with
-    # the audit.
+    # isn't known to PyPI. If that's the case, we should just log a debug message and continue on
+    # with the audit.
     def get_error_response():
         class MockResponse:
             # 404: Not Found
@@ -64,7 +64,7 @@ def test_pypi_http_notfound(monkeypatch, cache_dir):
     monkeypatch.setattr(
         service.pypi, "_get_cached_session", lambda _: get_mock_session(get_error_response)
     )
-    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    logger = pretend.stub(debug=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(service.pypi, "logger", logger)
 
     pypi = service.PyPIService(cache_dir)
@@ -80,7 +80,7 @@ def test_pypi_http_notfound(monkeypatch, cache_dir):
     assert skipped_dep in results
     assert dep not in results
     assert len(results[skipped_dep]) == 0
-    assert len(logger.warning.calls) == 1
+    assert len(logger.debug.calls) == 1
 
 
 def test_pypi_http_error(monkeypatch, cache_dir):
