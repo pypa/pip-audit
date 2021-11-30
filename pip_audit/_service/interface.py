@@ -11,11 +11,12 @@ from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 
-# MyPy doesn't like abstract dataclasses so silence the checker here
-@dataclass(frozen=True)  # type: ignore[misc]
-class Dependency(ABC):
+@dataclass(frozen=True)
+class Dependency:
     """
     Represents an abstract Python package.
+
+    This class cannot be constructed directly.
     """
 
     name: str
@@ -25,6 +26,12 @@ class Dependency(ABC):
     Use the `canonicalized_name` property when a canonicalized form is necessary.
     """
 
+    def __init__(self, *_args, **_kwargs) -> None:
+        """
+        A stub constructor that always fails.
+        """
+        raise NotImplementedError
+
     # TODO(ww): Use functools.cached_property when supported Python is 3.8+.
     @property
     def canonical_name(self) -> str:
@@ -33,12 +40,11 @@ class Dependency(ABC):
         """
         return canonicalize_name(self.name)
 
-    @abstractmethod
     def is_skipped(self) -> bool:
         """
         Check whether the `Dependency` was skipped by the audit.
         """
-        raise NotImplementedError  # pragma: no cover
+        return self.__class__ is SkippedDependency
 
 
 @dataclass(frozen=True)
@@ -49,12 +55,6 @@ class ResolvedDependency(Dependency):
 
     version: Version
 
-    def is_skipped(self) -> bool:
-        """
-        Overriden from `Dependency`. Since the dependency hasn't been skipped, return `False`.
-        """
-        return False
-
 
 @dataclass(frozen=True)
 class SkippedDependency(Dependency):
@@ -63,12 +63,6 @@ class SkippedDependency(Dependency):
     """
 
     skip_reason: str
-
-    def is_skipped(self) -> bool:
-        """
-        Overriden from `Dependency`. Since the dependency was skipped, return `True`.
-        """
-        return True
 
 
 @dataclass(frozen=True)

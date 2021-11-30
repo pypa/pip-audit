@@ -1,3 +1,28 @@
+import pytest
+from packaging.version import Version
+
+from pip_audit._service.interface import Dependency, ResolvedDependency, SkippedDependency
+
+
+def test_dependency_typing():
+    # there are only two subclasses of Dependency
+    assert set(Dependency.__subclasses__()) == {ResolvedDependency, SkippedDependency}
+
+    # Dependency itself cannot be initialized
+    with pytest.raises(NotImplementedError):
+        Dependency(name="explodes")
+
+    r = ResolvedDependency(name="foo", version=Version("1.0.0"))
+    assert r.name == "foo"
+    assert r.canonical_name == "foo"
+    assert not r.is_skipped()
+
+    s = SkippedDependency(name="bar", skip_reason="unit test")
+    assert s.name == "bar"
+    assert s.canonical_name == "bar"
+    assert s.is_skipped()
+
+
 def test_vulnerability_service(vuln_service, spec):
     service = vuln_service()
     spec = spec("1.0.1")

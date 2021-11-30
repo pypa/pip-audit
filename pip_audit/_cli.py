@@ -9,7 +9,7 @@ import os
 import sys
 from contextlib import ExitStack
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
@@ -213,10 +213,10 @@ def audit() -> None:
         for (spec, vulns) in auditor.audit(source):
             if state is not None:
                 if spec.is_skipped():
-                    assert isinstance(spec, SkippedDependency)
+                    spec = cast(SkippedDependency, spec)
                     state.update_state(f"Skipping {spec.name}: {spec.skip_reason}")
                 else:
-                    assert isinstance(spec, ResolvedDependency)
+                    spec = cast(ResolvedDependency, spec)
                     state.update_state(f"Auditing {spec.name} ({spec.version})")
             result[spec] = vulns
             if len(vulns) > 0:
