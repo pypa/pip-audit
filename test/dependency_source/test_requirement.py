@@ -13,7 +13,7 @@ from pip_audit._dependency_source import (
     ResolveLibResolver,
     requirement,
 )
-from pip_audit._service import Dependency
+from pip_audit._service import Dependency, ResolvedDependency
 
 
 def test_requirement_source(monkeypatch):
@@ -22,7 +22,7 @@ def test_requirement_source(monkeypatch):
     monkeypatch.setattr(_parse_requirements, "_read_file", lambda _: ["flask==2.0.1"])
 
     specs = list(source.collect())
-    assert Dependency("flask", Version("2.0.1")) in specs
+    assert ResolvedDependency("flask", Version("2.0.1")) in specs
 
 
 def test_requirement_source_multiple_files(monkeypatch):
@@ -48,10 +48,10 @@ def test_requirement_source_multiple_files(monkeypatch):
     monkeypatch.setattr(_parse_requirements, "_read_file", read_file_mock)
 
     specs = list(source.collect())
-    assert Dependency("flask", Version("2.0.1")) in specs
-    assert Dependency("requests", Version("2.8.1")) in specs
-    assert Dependency("pip-api", Version("0.0.22")) in specs
-    assert Dependency("packaging", Version("21.0")) in specs
+    assert ResolvedDependency("flask", Version("2.0.1")) in specs
+    assert ResolvedDependency("requests", Version("2.8.1")) in specs
+    assert ResolvedDependency("pip-api", Version("0.0.22")) in specs
+    assert ResolvedDependency("packaging", Version("21.0")) in specs
 
 
 def test_requirement_source_parse_error(monkeypatch):

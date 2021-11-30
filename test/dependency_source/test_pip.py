@@ -8,7 +8,7 @@ from packaging.version import Version
 
 import pip_audit
 from pip_audit._dependency_source import pip
-from pip_audit._service.interface import Dependency
+from pip_audit._service.interface import ResolvedDependency, SkippedDependency
 
 
 def test_pip_source():
@@ -17,8 +17,8 @@ def test_pip_source():
     # We're running under pytest, so we can safely assume that pytest is in
     # our execution environment. We're also running pip_audit itself, so we
     # can safely test for ourselves.
-    pytest_spec = Dependency(name="pytest", version=Version(pytest.__version__))
-    pip_audit_spec = Dependency(name="pip-audit", version=Version(pip_audit.__version__))
+    pytest_spec = ResolvedDependency(name="pytest", version=Version(pytest.__version__))
+    pip_audit_spec = ResolvedDependency(name="pip-audit", version=Version(pip_audit.__version__))
 
     specs = list(source.collect())
     assert pytest_spec in specs
@@ -72,6 +72,14 @@ def test_pip_source_invalid_version(monkeypatch):
 
     specs = list(source.collect())
     assert len(logger.warning.calls) == 1
-    assert len(specs) == 2
-    assert Dependency(name="pytest", version=Version("0.1")) in specs
-    assert Dependency(name="pip-api", version=Version("1.0")) in specs
+    assert len(specs) == 3
+    assert ResolvedDependency(name="pytest", version=Version("0.1")) in specs
+    assert (
+        SkippedDependency(
+            name="pip-audit",
+            skip_reason="Package has invalid version and could not be audited: "
+            "pip-audit (1.0-ubuntu0.21.04.1)",
+        )
+        in specs
+    )
+    assert ResolvedDependency(name="pip-api", version=Version("1.0")) in specs

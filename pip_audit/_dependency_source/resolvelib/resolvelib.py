@@ -10,7 +10,7 @@ from requests.exceptions import HTTPError
 from resolvelib import BaseReporter, Resolver
 
 from pip_audit._dependency_source import DependencyResolver, DependencyResolverError
-from pip_audit._service.interface import Dependency
+from pip_audit._service.interface import ResolvedDependency
 from pip_audit._state import AuditState
 
 from .pypi_provider import PyPIProvider
@@ -32,17 +32,17 @@ class ResolveLibResolver(DependencyResolver):
         self.reporter = BaseReporter()
         self.resolver: Resolver = Resolver(self.provider, self.reporter)
 
-    def resolve(self, req: Requirement) -> List[Dependency]:
+    def resolve(self, req: Requirement) -> List[ResolvedDependency]:
         """
         Resolve the given `Requirement` into a `Dependency` list.
         """
-        deps: List[Dependency] = []
+        deps: List[ResolvedDependency] = []
         try:
             result = self.resolver.resolve([req])
         except HTTPError as e:
             raise ResolveLibResolverError("failed to resolve dependencies") from e
         for name, candidate in result.mapping.items():
-            deps.append(Dependency(name, candidate.version))
+            deps.append(ResolvedDependency(name, candidate.version))
         return deps
 
 

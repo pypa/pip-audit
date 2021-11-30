@@ -10,7 +10,7 @@ import pip_api
 from packaging.version import InvalidVersion, Version
 
 from pip_audit._dependency_source import DependencySource, DependencySourceError
-from pip_audit._service import Dependency
+from pip_audit._service import Dependency, ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState
 
 logger = logging.getLogger(__name__)
@@ -62,18 +62,21 @@ class PipSource(DependencySource):
         # We collect them all into a single well-defined error.
         try:
             for (_, dist) in pip_api.installed_distributions(local=self._local).items():
+                dep: Dependency
                 try:
-                    dep = Dependency(name=dist.name, version=Version(str(dist.version)))
+                    dep = ResolvedDependency(name=dist.name, version=Version(str(dist.version)))
                     if self.state is not None:
                         self.state.update_state(
                             f"Collecting {dep.name} ({dep.version})"
                         )  # pragma: no cover
-                    yield dep
                 except InvalidVersion:
-                    logger.warning(
-                        "Warning: Package has invalid version and could not be audited: "
+                    skip_reason = (
+                        "Package has invalid version and could not be audited: "
                         f"{dist.name} ({dist.version})"
                     )
+                    logger.warning(f"Warning: {skip_reason}")
+                    dep = SkippedDependency(name=dist.name, skip_reason=skip_reason)
+                yield dep
         except Exception as e:
             raise PipSourceError("failed to list installed distributions") from e
 

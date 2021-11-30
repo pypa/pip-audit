@@ -63,3 +63,27 @@ def test_json_no_desc(vuln_data):
         },
     ]
     assert json_format.format(vuln_data) == json.dumps(expected_json)
+
+
+def test_json_skipped_dep(vuln_data_skipped_dep):
+    json_format = format.JsonFormat(False)
+    expected_json = [
+        {
+            "name": "foo",
+            "version": "1.0",
+            "vulns": [
+                {
+                    "id": "VULN-0",
+                    "fix_versions": [
+                        "1.1",
+                        "1.4",
+                    ],
+                },
+            ],
+        },
+        {
+            "name": "bar",
+            "skip_reason": "skip-reason",
+        },
+    ]
+    assert json_format.format(vuln_data_skipped_dep) == json.dumps(expected_json)
