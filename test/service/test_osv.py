@@ -11,7 +11,7 @@ import pip_audit._service as service
 class OsvServiceTest(unittest.TestCase):
     def test_osv(self):
         osv = service.OsvService()
-        dep = service.Dependency("jinja2", Version("2.4.1"))
+        dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
         results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
             osv.query_all([dep])
         )
@@ -24,7 +24,7 @@ class OsvServiceTest(unittest.TestCase):
         # OSV's API only recognizes canonicalized package names, so make sure
         # that our adapter is canonicalizing any dependencies passed into it.
         osv = service.OsvService()
-        dep = service.Dependency("PyYAML", Version("5.3"))
+        dep = service.ResolvedDependency("PyYAML", Version("5.3"))
         results: List[service.VulnerabilityResult] = osv.query(dep)
 
         self.assertGreater(len(results), 0)
@@ -33,7 +33,7 @@ class OsvServiceTest(unittest.TestCase):
         # Try a package with vulnerabilities that have an explicitly stated introduced and fixed
         # version
         osv = service.OsvService()
-        dep = service.Dependency("ansible", Version("2.8.0"))
+        dep = service.ResolvedDependency("ansible", Version("2.8.0"))
         results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
             osv.query_all([dep])
         )
@@ -45,8 +45,8 @@ class OsvServiceTest(unittest.TestCase):
     def test_osv_multiple_pkg(self):
         osv = service.OsvService()
         deps: List[service.Dependency] = [
-            service.Dependency("jinja2", Version("2.4.1")),
-            service.Dependency("flask", Version("0.5")),
+            service.ResolvedDependency("jinja2", Version("2.4.1")),
+            service.ResolvedDependency("flask", Version("0.5")),
         ]
         results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
             osv.query_all(deps)
@@ -58,7 +58,7 @@ class OsvServiceTest(unittest.TestCase):
 
     def test_osv_no_vuln(self):
         osv = service.OsvService()
-        dep = service.Dependency("foo", Version("1.0.0"))
+        dep = service.ResolvedDependency("foo", Version("1.0.0"))
         results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
             osv.query_all([dep])
         )
@@ -77,5 +77,16 @@ class OsvServiceTest(unittest.TestCase):
     @mock.patch("pip_audit._service.osv.requests.post", side_effect=get_error_response)
     def test_osv_error_response(self, mock_post):
         osv = service.OsvService()
-        dep = service.Dependency("jinja2", Version("2.4.1"))
+        dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
         self.assertRaises(service.ServiceError, lambda: dict(osv.query_all([dep])))
+
+    def test_osv_skipped_dep(self):
+        osv = service.OsvService()
+        dep = service.SkippedDependency(name="foo", skip_reason="skip-reason")
+        results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+            osv.query_all([dep])
+        )
+        self.assertEqual(len(results), 1)
+        self.assertTrue(dep in results)
+        vulns = results[dep]
+        self.assertEqual(len(vulns), 0)

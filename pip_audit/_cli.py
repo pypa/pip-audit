@@ -9,7 +9,7 @@ import os
 import sys
 from contextlib import ExitStack
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import shtab  # type: ignore
 
@@ -23,6 +23,7 @@ from pip_audit._dependency_source import (
 )
 from pip_audit._format import ColumnsFormat, CycloneDxFormat, JsonFormat, VulnerabilityFormat
 from pip_audit._service import OsvService, PyPIService, VulnerabilityService
+from pip_audit._service.interface import ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditSpinner
 from pip_audit._util import assert_never
 
@@ -223,7 +224,12 @@ def audit() -> None:
         vuln_count = 0
         for (spec, vulns) in auditor.audit(source):
             if state is not None:
-                state.update_state(f"Auditing {spec.name} ({spec.version})")
+                if spec.is_skipped():
+                    spec = cast(SkippedDependency, spec)
+                    state.update_state(f"Skipping {spec.name}: {spec.skip_reason}")
+                else:
+                    spec = cast(ResolvedDependency, spec)
+                    state.update_state(f"Auditing {spec.name} ({spec.version})")
             result[spec] = vulns
             if len(vulns) > 0:
                 pkg_count += 1

@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from subprocess import run
 from tempfile import NamedTemporaryFile
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple, cast
 
 import pip_api
 import requests
@@ -18,7 +18,14 @@ from cachecontrol import CacheControl  # type: ignore
 from cachecontrol.caches import FileCache  # type: ignore
 from packaging.version import InvalidVersion, Version
 
-from .interface import Dependency, ServiceError, VulnerabilityResult, VulnerabilityService
+from .interface import (
+    Dependency,
+    ResolvedDependency,
+    ServiceError,
+    SkippedDependency,
+    VulnerabilityResult,
+    VulnerabilityService,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -141,12 +148,15 @@ class PyPIService(VulnerabilityService):
         self.session = _get_cached_session(cache_dir)
         self.timeout = timeout
 
-    def query(self, spec: Dependency) -> List[VulnerabilityResult]:
+    def query(self, spec: Dependency) -> Tuple[Dependency, List[VulnerabilityResult]]:
         """
         Queries PyPI for the given `Dependency` specification.
 
         See `VulnerabilityService.query`.
         """
+        if spec.is_skipped():
+            return spec, []
+        spec = cast(ResolvedDependency, spec)
 
         url = f"https://pypi.org/pypi/{spec.canonical_name}/{str(spec.version)}/json"
         response: requests.Response = self.session.get(url=url, timeout=self.timeout)
@@ -154,11 +164,12 @@ class PyPIService(VulnerabilityService):
             response.raise_for_status()
         except requests.HTTPError as http_error:
             if response.status_code == 404:
-                logger.warning(
-                    "Warning: Dependency not found on PyPI and could not be "
-                    f"audited: {spec.canonical_name} ({spec.version})"
+                skip_reason = (
+                    "Dependency not found on PyPI and could not be audited: "
+                    f"{spec.canonical_name} ({spec.version})"
                 )
-                return []
+                logger.warning(f"Warning: {skip_reason}")
+                return SkippedDependency(name=spec.name, skip_reason=skip_reason), []
             raise ServiceError from http_error
 
         response_json = response.json()
@@ -168,7 +179,7 @@ class PyPIService(VulnerabilityService):
 
         # No `vulnerabilities` key means that there are no vulnerabilities for any version
         if vulns is None:
-            return results
+            return spec, results
 
         for v in vulns:
             # Put together the fix versions list
@@ -182,4 +193,4 @@ class PyPIService(VulnerabilityService):
 
             results.append(VulnerabilityResult(v["id"], v["details"], fix_versions))
 
-        return results
+        return spec, results

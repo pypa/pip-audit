@@ -3,7 +3,7 @@ Functionality for formatting vulnerability results as a set of human-readable co
 """
 
 from itertools import zip_longest
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple, cast
 
 from packaging.version import Version
 
@@ -52,6 +52,9 @@ class ColumnsFormat(VulnerabilityFormat):
             header.append("Description")
         vuln_data.append(header)
         for dep, vulns in result.items():
+            if dep.is_skipped():
+                continue
+            dep = cast(service.ResolvedDependency, dep)
             for vuln in vulns:
                 vuln_data.append(self._format_vuln(dep, vuln))
 
@@ -67,9 +70,34 @@ class ColumnsFormat(VulnerabilityFormat):
                 columns_string += "\n"
             columns_string += row
 
+        # Now display the skipped dependencies
+        skip_data: List[List[Any]] = []
+        skip_header = ["Name", "Skip Reason"]
+
+        skip_data.append(skip_header)
+        for dep, _ in result.items():
+            if dep.is_skipped():
+                dep = cast(service.SkippedDependency, dep)
+                skip_data.append(self._format_skipped_dep(dep))
+
+        # If we only have the header, that means that we haven't skipped any dependencies
+        # In that case, don't bother printing the header
+        if len(skip_data) <= 1:
+            return columns_string
+
+        skip_strings, sizes = tabulate(skip_data)
+
+        # Create separator for skipped dependencies columns
+        skip_strings.insert(1, " ".join(map(lambda x: "-" * x, sizes)))
+
+        for row in skip_strings:
+            columns_string += "\n" + row
+
         return columns_string
 
-    def _format_vuln(self, dep: service.Dependency, vuln: service.VulnerabilityResult) -> List[Any]:
+    def _format_vuln(
+        self, dep: service.ResolvedDependency, vuln: service.VulnerabilityResult
+    ) -> List[Any]:
         vuln_data = [
             dep.canonical_name,
             dep.version,
@@ -82,3 +110,9 @@ class ColumnsFormat(VulnerabilityFormat):
 
     def _format_fix_versions(self, fix_versions: List[Version]) -> str:
         return ",".join([str(version) for version in fix_versions])
+
+    def _format_skipped_dep(self, dep: service.SkippedDependency) -> List[Any]:
+        return [
+            dep.canonical_name,
+            dep.skip_reason,
+        ]

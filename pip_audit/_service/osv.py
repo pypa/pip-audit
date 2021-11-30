@@ -3,12 +3,18 @@ Functionality for using the [OSV](https://osv.dev/) API as a `VulnerabilityServi
 """
 
 import json
-from typing import List, Optional
+from typing import List, Optional, Tuple, cast
 
 import requests
 from packaging.version import Version
 
-from .interface import Dependency, ServiceError, VulnerabilityResult, VulnerabilityService
+from .interface import (
+    Dependency,
+    ResolvedDependency,
+    ServiceError,
+    VulnerabilityResult,
+    VulnerabilityService,
+)
 
 
 class OsvService(VulnerabilityService):
@@ -26,12 +32,15 @@ class OsvService(VulnerabilityService):
         """
         self.timeout = timeout
 
-    def query(self, spec: Dependency) -> List[VulnerabilityResult]:
+    def query(self, spec: Dependency) -> Tuple[Dependency, List[VulnerabilityResult]]:
         """
         Queries OSV for the given `Dependency` specification.
 
         See `VulnerabilityService.query`.
         """
+        if spec.is_skipped():
+            return spec, []
+        spec = cast(ResolvedDependency, spec)
 
         url = "https://api.osv.dev/v1/query"
         query = {
@@ -58,7 +67,7 @@ class OsvService(VulnerabilityService):
         # In that case, return an empty list
         response_json = response.json()
         if not response_json:
-            return results
+            return spec, results
 
         for vuln in response_json["vulns"]:
             id = vuln["id"]
@@ -87,4 +96,4 @@ class OsvService(VulnerabilityService):
 
             results.append(VulnerabilityResult(id, description, fix_versions))
 
-        return results
+        return spec, results

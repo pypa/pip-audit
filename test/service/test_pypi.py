@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 import pretend
 import pytest
@@ -22,8 +22,10 @@ def get_mock_session(func):
 
 def test_pypi(cache_dir):
     pypi = service.PyPIService(cache_dir)
-    dep = service.Dependency("jinja2", Version("2.4.1"))
-    results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
+    dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all([dep])
+    )
     assert len(results) == 1
     assert dep in results
     vulns = results[dep]
@@ -33,10 +35,12 @@ def test_pypi(cache_dir):
 def test_pypi_multiple_pkg(cache_dir):
     pypi = service.PyPIService(cache_dir)
     deps: List[service.Dependency] = [
-        service.Dependency("jinja2", Version("2.4.1")),
-        service.Dependency("flask", Version("0.5")),
+        service.ResolvedDependency("jinja2", Version("2.4.1")),
+        service.ResolvedDependency("flask", Version("0.5")),
     ]
-    results: List[service.VulnerabilityResult] = dict(pypi.query_all(deps))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all(deps)
+    )
     assert len(results) == 2
     assert deps[0] in results and deps[1] in results
     assert len(results[deps[0]]) > 0
@@ -64,11 +68,18 @@ def test_pypi_http_notfound(monkeypatch, cache_dir):
     monkeypatch.setattr(service.pypi, "logger", logger)
 
     pypi = service.PyPIService(cache_dir)
-    dep = service.Dependency("jinja2", Version("2.4.1"))
-    results = dict(pypi.query_all([dep]))
+    dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all([dep])
+    )
     assert len(results) == 1
-    assert dep in results
-    assert len(results[dep]) == 0
+    skipped_dep = service.SkippedDependency(
+        name="jinja2",
+        skip_reason="Dependency not found on PyPI and could not be audited: jinja2 (2.4.1)",
+    )
+    assert skipped_dep in results
+    assert dep not in results
+    assert len(results[skipped_dep]) == 0
     assert len(logger.warning.calls) == 1
 
 
@@ -89,7 +100,7 @@ def test_pypi_http_error(monkeypatch, cache_dir):
     )
 
     pypi = service.PyPIService(cache_dir)
-    dep = service.Dependency("jinja2", Version("2.4.1"))
+    dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
     with pytest.raises(service.ServiceError):
         dict(pypi.query_all([dep]))
 
@@ -118,8 +129,10 @@ def test_pypi_mocked_response(monkeypatch, cache_dir):
     )
 
     pypi = service.PyPIService(cache_dir)
-    dep = service.Dependency("foo", Version("1.0"))
-    results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
+    dep = service.ResolvedDependency("foo", Version("1.0"))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all([dep])
+    )
     assert len(results) == 1
     assert dep in results
     assert len(results[dep]) == 1
@@ -146,8 +159,10 @@ def test_pypi_no_vuln_key(monkeypatch, cache_dir):
     )
 
     pypi = service.PyPIService(cache_dir)
-    dep = service.Dependency("foo", Version("1.0"))
-    results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
+    dep = service.ResolvedDependency("foo", Version("1.0"))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all([dep])
+    )
     assert len(results) == 1
     assert dep in results
     assert not results[dep]
@@ -177,7 +192,7 @@ def test_pypi_invalid_version(monkeypatch, cache_dir):
     )
 
     pypi = service.PyPIService(cache_dir)
-    dep = service.Dependency("foo", Version("1.0"))
+    dep = service.ResolvedDependency("foo", Version("1.0"))
     with pytest.raises(service.ServiceError):
         dict(pypi.query_all([dep]))
 
@@ -237,3 +252,15 @@ def test_pypi_cache_dir_old_pip(monkeypatch):
 
     cache_dir = _get_cache_dir(None)
     assert cache_dir == "/Users/foo/.pip-audit-cache"
+
+
+def test_pypi_skipped_dep(cache_dir):
+    pypi = service.PyPIService(cache_dir)
+    dep = service.SkippedDependency(name="foo", skip_reason="skip-reason")
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all([dep])
+    )
+    assert len(results) == 1
+    assert dep in results
+    vulns = results[dep]
+    assert len(vulns) == 0

@@ -2,13 +2,17 @@ import pytest
 from packaging.version import Version
 
 from pip_audit._dependency_source.interface import DependencySource
-from pip_audit._service.interface import Dependency, VulnerabilityResult, VulnerabilityService
+from pip_audit._service.interface import (
+    ResolvedDependency,
+    VulnerabilityResult,
+    VulnerabilityService,
+)
 
 
 @pytest.fixture(autouse=True)
 def spec():
     def _spec(version):
-        return Dependency(name="foo", version=Version(version))
+        return ResolvedDependency(name="foo", version=Version(version))
 
     return _spec
 
@@ -23,7 +27,7 @@ def vuln_service():
             fixed = Version("1.1.0")
 
             if spec.name == "foo" and (introduced <= spec.version < fixed):
-                return [
+                return spec, [
                     VulnerabilityResult(
                         id="fake-id",
                         description="this is not a real result",
@@ -31,7 +35,7 @@ def vuln_service():
                     )
                 ]
 
-            return []
+            return spec, []
 
     return Service
 
