@@ -9,7 +9,7 @@ import os
 import sys
 from contextlib import ExitStack
 from pathlib import Path
-from typing import List, NoReturn, Optional, cast
+from typing import List, NoReturn, Optional, Type, cast
 
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
@@ -117,6 +117,13 @@ class ProgressSpinnerChoice(str, enum.Enum):
         return self.value
 
 
+def _enum_help(msg: str, e: Type[enum.Enum]) -> str:
+    """
+    Render a `--help`-style string for the given enumeration.
+    """
+    return f"{msg} (choices: {', '.join(str(v) for v in e)})"
+
+
 def _fatal(msg: str) -> NoReturn:
     """
     Log a fatal error to the standard error stream and exit.
@@ -157,7 +164,8 @@ def audit() -> None:
         type=OutputFormatChoice,
         choices=OutputFormatChoice,
         default=OutputFormatChoice.Columns,
-        help="the format to emit audit results in",
+        metavar="FORMAT",
+        help=_enum_help("the format to emit audit results in", OutputFormatChoice),
     )
     parser.add_argument(
         "-s",
@@ -165,7 +173,10 @@ def audit() -> None:
         type=VulnerabilityServiceChoice,
         choices=VulnerabilityServiceChoice,
         default=VulnerabilityServiceChoice.Pypi,
-        help="the vulnerability service to audit dependencies against",
+        metavar="SERVICE",
+        help=_enum_help(
+            "the vulnerability service to audit dependencies against", VulnerabilityServiceChoice
+        ),
     )
     parser.add_argument(
         "-d",
