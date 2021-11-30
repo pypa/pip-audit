@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 import pretend
 import pytest
@@ -23,7 +23,9 @@ def get_mock_session(func):
 def test_pypi(cache_dir):
     pypi = service.PyPIService(cache_dir)
     dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
-    results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all([dep])
+    )
     assert len(results) == 1
     assert dep in results
     vulns = results[dep]
@@ -36,7 +38,9 @@ def test_pypi_multiple_pkg(cache_dir):
         service.ResolvedDependency("jinja2", Version("2.4.1")),
         service.ResolvedDependency("flask", Version("0.5")),
     ]
-    results: List[service.VulnerabilityResult] = dict(pypi.query_all(deps))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all(deps)
+    )
     assert len(results) == 2
     assert deps[0] in results and deps[1] in results
     assert len(results[deps[0]]) > 0
@@ -65,7 +69,9 @@ def test_pypi_http_notfound(monkeypatch, cache_dir):
 
     pypi = service.PyPIService(cache_dir)
     dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
-    results = dict(pypi.query_all([dep]))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all([dep])
+    )
     assert len(results) == 1
     skipped_dep = service.SkippedDependency(
         name="jinja2",
@@ -124,7 +130,9 @@ def test_pypi_mocked_response(monkeypatch, cache_dir):
 
     pypi = service.PyPIService(cache_dir)
     dep = service.ResolvedDependency("foo", Version("1.0"))
-    results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all([dep])
+    )
     assert len(results) == 1
     assert dep in results
     assert len(results[dep]) == 1
@@ -152,7 +160,9 @@ def test_pypi_no_vuln_key(monkeypatch, cache_dir):
 
     pypi = service.PyPIService(cache_dir)
     dep = service.ResolvedDependency("foo", Version("1.0"))
-    results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all([dep])
+    )
     assert len(results) == 1
     assert dep in results
     assert not results[dep]
@@ -247,7 +257,9 @@ def test_pypi_cache_dir_old_pip(monkeypatch):
 def test_pypi_skipped_dep(cache_dir):
     pypi = service.PyPIService(cache_dir)
     dep = service.SkippedDependency(name="foo", skip_reason="skip-reason")
-    results: List[service.VulnerabilityResult] = dict(pypi.query_all([dep]))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all([dep])
+    )
     assert len(results) == 1
     assert dep in results
     vulns = results[dep]
