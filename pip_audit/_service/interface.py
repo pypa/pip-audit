@@ -11,6 +11,7 @@ from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 
+# MyPy doesn't like abstract dataclasses so silence the checker here
 @dataclass(frozen=True)  # type: ignore[misc]
 class Dependency(ABC):
     """
