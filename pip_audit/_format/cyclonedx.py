@@ -3,7 +3,7 @@ Functionality for formatting vulnerability results using the CycloneDX SBOM form
 """
 
 import enum
-from typing import Dict, List
+from typing import Dict, List, cast
 
 from cyclonedx import output
 from cyclonedx.model.bom import Bom
@@ -25,7 +25,8 @@ class _PipAuditResultParser(BaseParser):
             # the CycloneDX format?
             if dep.is_skipped():
                 continue
-            assert isinstance(dep, service.ResolvedDependency)
+            dep = cast(service.ResolvedDependency, dep)
+
             c = Component(name=dep.name, version=str(dep.version))
             for vuln in vulns:
                 c.add_vulnerability(

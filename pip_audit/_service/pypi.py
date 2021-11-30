@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from subprocess import run
 from tempfile import NamedTemporaryFile
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, cast
 
 import pip_api
 import requests
@@ -156,7 +156,7 @@ class PyPIService(VulnerabilityService):
         """
         if spec.is_skipped():
             return spec, []
-        assert isinstance(spec, ResolvedDependency)
+        spec = cast(ResolvedDependency, spec)
 
         url = f"https://pypi.org/pypi/{spec.canonical_name}/{str(spec.version)}/json"
         response: requests.Response = self.session.get(url=url, timeout=self.timeout)

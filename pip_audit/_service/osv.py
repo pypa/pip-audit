@@ -3,7 +3,7 @@ Functionality for using the [OSV](https://osv.dev/) API as a `VulnerabilityServi
 """
 
 import json
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 import requests
 from packaging.version import Version
@@ -40,7 +40,7 @@ class OsvService(VulnerabilityService):
         """
         if spec.is_skipped():
             return spec, []
-        assert isinstance(spec, ResolvedDependency)
+        spec = cast(ResolvedDependency, spec)
 
         url = "https://api.osv.dev/v1/query"
         query = {

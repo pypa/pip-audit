@@ -3,7 +3,7 @@ Functionality for formatting vulnerability results as a set of human-readable co
 """
 
 from itertools import zip_longest
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple, cast
 
 from packaging.version import Version
 
@@ -54,7 +54,7 @@ class ColumnsFormat(VulnerabilityFormat):
         for dep, vulns in result.items():
             if dep.is_skipped():
                 continue
-            assert isinstance(dep, service.ResolvedDependency)
+            dep = cast(service.ResolvedDependency, dep)
             for vuln in vulns:
                 vuln_data.append(self._format_vuln(dep, vuln))
 
@@ -77,7 +77,7 @@ class ColumnsFormat(VulnerabilityFormat):
         skip_data.append(skip_header)
         for dep, _ in result.items():
             if dep.is_skipped():
-                assert isinstance(dep, service.SkippedDependency)
+                dep = cast(service.SkippedDependency, dep)
                 skip_data.append(self._format_skipped_dep(dep))
 
         # If we only have the header, that means that we haven't skipped any dependencies
