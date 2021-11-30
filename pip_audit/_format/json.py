@@ -40,6 +40,13 @@ class JsonFormat(VulnerabilityFormat):
     def _format_dep(
         self, dep: service.Dependency, vulns: List[service.VulnerabilityResult]
     ) -> Dict[str, Any]:
+        if dep.is_skipped():
+            assert isinstance(dep, service.SkippedDependency)
+            return {
+                "name": dep.canonical_name,
+                "skip_reason": dep.skip_reason,
+            }
+        assert isinstance(dep, service.ResolvedDependency)
         return {
             "name": dep.canonical_name,
             "version": str(dep.version),

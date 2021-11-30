@@ -4,7 +4,9 @@ Vulnerability service interfaces and implementations for `pip-audit`.
 
 from .interface import (  # noqa: F401
     Dependency,
+    ResolvedDependency,
     ServiceError,
+    SkippedDependency,
     VulnerabilityResult,
     VulnerabilityService,
 )

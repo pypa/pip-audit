@@ -8,7 +8,7 @@ from typing import Iterator, List, Tuple
 
 from packaging.requirements import Requirement
 
-from pip_audit._service import Dependency
+from pip_audit._service import Dependency, ResolvedDependency
 
 
 class DependencySource(ABC):
@@ -48,7 +48,7 @@ class DependencyResolver(ABC):
     """
 
     @abstractmethod
-    def resolve(self, req: Requirement) -> List[Dependency]:  # pragma: no cover
+    def resolve(self, req: Requirement) -> List[ResolvedDependency]:  # pragma: no cover
         """
         Resolve a single `Requirement` into a list of concrete `Dependency` instances.
         """
@@ -56,7 +56,7 @@ class DependencyResolver(ABC):
 
     def resolve_all(
         self, reqs: Iterator[Requirement]
-    ) -> Iterator[Tuple[Requirement, List[Dependency]]]:
+    ) -> Iterator[Tuple[Requirement, List[ResolvedDependency]]]:
         """
         Resolve a collection of `Requirement`s into their respective `Dependency` sets.
 

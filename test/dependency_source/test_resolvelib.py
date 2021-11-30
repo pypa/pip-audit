@@ -10,7 +10,7 @@ from resolvelib.resolvers import InconsistentCandidate, ResolutionImpossible
 
 from pip_audit._dependency_source import resolvelib
 from pip_audit._dependency_source.resolvelib import pypi_provider
-from pip_audit._service.interface import Dependency
+from pip_audit._service.interface import Dependency, ResolvedDependency
 
 
 def get_package_mock(data):
@@ -52,12 +52,12 @@ def test_resolvelib():
     resolved_deps = dict(resolver.resolve_all([req]))
     assert len(resolved_deps) == 1
     expected_deps = [
-        Dependency("flask", Version("2.0.1")),
-        Dependency("werkzeug", Version("2.0.1")),
-        Dependency("jinja2", Version("3.0.1")),
-        Dependency("itsdangerous", Version("2.0.1")),
-        Dependency("click", Version("8.0.1")),
-        Dependency("markupsafe", Version("2.0.1")),
+        ResolvedDependency("flask", Version("2.0.1")),
+        ResolvedDependency("werkzeug", Version("2.0.1")),
+        ResolvedDependency("jinja2", Version("3.0.1")),
+        ResolvedDependency("itsdangerous", Version("2.0.1")),
+        ResolvedDependency("click", Version("8.0.1")),
+        ResolvedDependency("markupsafe", Version("2.0.1")),
     ]
     assert req in resolved_deps
     # Earlier Python versions have some extra dependencies. To avoid conditionals here, let's just
@@ -73,11 +73,11 @@ def test_resolvelib_extras():
     resolved_deps = dict(resolver.resolve_all([req]))
     assert len(resolved_deps) == 1
     expected_deps = [
-        Dependency("requests", Version("2.26.0")),
-        Dependency("charset-normalizer", Version("2.0.6")),
-        Dependency("idna", Version("3.2")),
-        Dependency("certifi", Version("2021.5.30")),
-        Dependency("urllib3", Version("1.26.7")),
+        ResolvedDependency("requests", Version("2.26.0")),
+        ResolvedDependency("charset-normalizer", Version("2.0.6")),
+        ResolvedDependency("idna", Version("3.2")),
+        ResolvedDependency("certifi", Version("2021.5.30")),
+        ResolvedDependency("urllib3", Version("1.26.7")),
     ]
     assert req in resolved_deps
     check_deps(resolved_deps[req], expected_deps)
@@ -87,7 +87,10 @@ def test_resolvelib_extras():
     resolved_deps = dict(resolver.resolve_all([req]))
     assert len(resolved_deps) == 1
     expected_deps.extend(
-        [Dependency("chardet", Version("4.0.0")), Dependency("pysocks", Version("1.7.1"))]
+        [
+            ResolvedDependency("chardet", Version("4.0.0")),
+            ResolvedDependency("pysocks", Version("1.7.1")),
+        ]
     )
     assert req in resolved_deps
     check_deps(resolved_deps[req], expected_deps)
@@ -99,16 +102,16 @@ def test_resolvelib_sdist():
     resolved_deps = dict(resolver.resolve_all([req]))
     assert len(resolved_deps) == 1
     expected_deps = [
-        Dependency("ansible-core", Version("2.11.5")),
-        Dependency("pyparsing", Version("2.4.7")),
-        Dependency("jinja2", Version("3.0.1")),
-        Dependency("pycparser", Version("2.20")),
-        Dependency("pyyaml", Version("5.4.1")),
-        Dependency("cffi", Version("1.14.6")),
-        Dependency("resolvelib", Version("0.5.4")),
-        Dependency("packaging", Version("21.0")),
-        Dependency("cryptography", Version("35.0.0")),
-        Dependency("markupsafe", Version("2.0.1")),
+        ResolvedDependency("ansible-core", Version("2.11.5")),
+        ResolvedDependency("pyparsing", Version("2.4.7")),
+        ResolvedDependency("jinja2", Version("3.0.1")),
+        ResolvedDependency("pycparser", Version("2.20")),
+        ResolvedDependency("pyyaml", Version("5.4.1")),
+        ResolvedDependency("cffi", Version("1.14.6")),
+        ResolvedDependency("resolvelib", Version("0.5.4")),
+        ResolvedDependency("packaging", Version("21.0")),
+        ResolvedDependency("cryptography", Version("35.0.0")),
+        ResolvedDependency("markupsafe", Version("2.0.1")),
     ]
     assert req in resolved_deps
     check_deps(resolved_deps[req], expected_deps)
@@ -134,7 +137,7 @@ def test_resolvelib_wheel_patched(monkeypatch):
     req = Requirement("flask==2.0.1")
     resolved_deps = dict(resolver.resolve_all([req]))
     assert req in resolved_deps
-    assert resolved_deps[req] == [Dependency("flask", Version("2.0.1"))]
+    assert resolved_deps[req] == [ResolvedDependency("flask", Version("2.0.1"))]
 
 
 # Source distributions can be either zipped or tarballed.
@@ -154,7 +157,7 @@ def test_resolvelib_sdist_patched(monkeypatch, suffix):
     req = Requirement("flask==2.0.1")
     resolved_deps = dict(resolver.resolve_all([req]))
     assert req in resolved_deps
-    assert resolved_deps[req] == [Dependency("flask", Version("2.0.1"))]
+    assert resolved_deps[req] == [ResolvedDependency("flask", Version("2.0.1"))]
 
 
 def test_resolvelib_wheel_python_version(monkeypatch):

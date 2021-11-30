@@ -21,6 +21,7 @@ from pip_audit._dependency_source import (
 )
 from pip_audit._format import ColumnsFormat, CycloneDxFormat, JsonFormat, VulnerabilityFormat
 from pip_audit._service import OsvService, PyPIService, VulnerabilityService
+from pip_audit._service.interface import ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditSpinner
 from pip_audit._util import assert_never
 
@@ -211,7 +212,12 @@ def audit() -> None:
         vuln_count = 0
         for (spec, vulns) in auditor.audit(source):
             if state is not None:
-                state.update_state(f"Auditing {spec.name} ({spec.version})")
+                if spec.is_skipped():
+                    assert isinstance(spec, SkippedDependency)
+                    state.update_state(f"Skipping {spec.name}: {spec.skip_reason}")
+                else:
+                    assert isinstance(spec, ResolvedDependency)
+                    state.update_state(f"Auditing {spec.name} ({spec.version})")
             result[spec] = vulns
             if len(vulns) > 0:
                 pkg_count += 1

@@ -11,10 +11,10 @@ from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 
-@dataclass(frozen=True)
-class Dependency:
+@dataclass(frozen=True)  # type: ignore[misc]
+class Dependency(ABC):
     """
-    Represents a fully resolved Python package.
+    Represents an abstract Python package.
     """
 
     name: str
@@ -23,7 +23,6 @@ class Dependency:
 
     Use the `canonicalized_name` property when a canonicalized form is necessary.
     """
-    version: Version
 
     # TODO(ww): Use functools.cached_property when supported Python is 3.8+.
     @property
@@ -32,6 +31,43 @@ class Dependency:
         The `Dependency`'s PEP-503 canonicalized name.
         """
         return canonicalize_name(self.name)
+
+    @abstractmethod
+    def is_skipped(self) -> bool:
+        """
+        Check whether the `Dependency` was skipped by the audit.
+        """
+        raise NotImplementedError  # pragma: no cover
+
+
+@dataclass(frozen=True)
+class ResolvedDependency(Dependency):
+    """
+    Represents a fully resolved Python package.
+    """
+
+    version: Version
+
+    def is_skipped(self) -> bool:
+        """
+        Overriden from `Dependency`. Since the dependency hasn't been skipped, return `False`.
+        """
+        return False
+
+
+@dataclass(frozen=True)
+class SkippedDependency(Dependency):
+    """
+    Represents a Python package that was unable to be audited and therefore, skipped.
+    """
+
+    skip_reason: str
+
+    def is_skipped(self) -> bool:
+        """
+        Overriden from `Dependency`. Since the dependency was skipped, return `True`.
+        """
+        return True
 
 
 @dataclass(frozen=True)
@@ -63,7 +99,9 @@ class VulnerabilityService(ABC):
     """
 
     @abstractmethod
-    def query(self, spec: Dependency) -> List[VulnerabilityResult]:  # pragma: no cover
+    def query(
+        self, spec: Dependency
+    ) -> Tuple[Dependency, List[VulnerabilityResult]]:  # pragma: no cover
         """
         Query the `VulnerabilityService` for information about the given `Dependency`,
         returning a list of `VulnerabilityResult`.
@@ -80,7 +118,7 @@ class VulnerabilityService(ABC):
         a more optimized one, if they support batched or bulk requests.
         """
         for spec in specs:
-            yield (spec, self.query(spec))
+            yield self.query(spec)
 
 
 class ServiceError(Exception):

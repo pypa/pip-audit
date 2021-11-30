@@ -21,6 +21,11 @@ class _PipAuditResultParser(BaseParser):
         super().__init__()
 
         for (dep, vulns) in result.items():
+            # TODO(alex): Is there anything interesting we can do with skipped dependencies in
+            # the CycloneDX format?
+            if dep.is_skipped():
+                continue
+            assert isinstance(dep, service.ResolvedDependency)
             c = Component(name=dep.name, version=str(dep.version))
             for vuln in vulns:
                 c.add_vulnerability(

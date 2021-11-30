@@ -6,7 +6,7 @@ from packaging.version import Version
 import pip_audit._service as service
 
 _TEST_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
-    service.Dependency(name="foo", version="1.0"): [
+    service.ResolvedDependency(name="foo", version="1.0"): [
         service.VulnerabilityResult(
             id="VULN-0",
             description="The first vulnerability",
@@ -21,7 +21,7 @@ _TEST_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
             fix_versions=[Version("1.0")],
         ),
     ],
-    service.Dependency(name="bar", version="0.1"): [
+    service.ResolvedDependency(name="bar", version="0.1"): [
         service.VulnerabilityResult(
             id="VULN-2",
             description="The third vulnerability",
@@ -30,7 +30,26 @@ _TEST_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
     ],
 }
 
+_TEST_VULN_DATA_SKIPPED_DEP: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
+    service.ResolvedDependency(name="foo", version="1.0"): [
+        service.VulnerabilityResult(
+            id="VULN-0",
+            description="The first vulnerability",
+            fix_versions=[
+                Version("1.1"),
+                Version("1.4"),
+            ],
+        ),
+    ],
+    service.SkippedDependency(name="bar", skip_reason="skip-reason"): [],
+}
+
 
 @pytest.fixture(autouse=True)
 def vuln_data():
     return _TEST_VULN_DATA
+
+
+@pytest.fixture(autouse=True)
+def vuln_data_skipped_dep():
+    return _TEST_VULN_DATA_SKIPPED_DEP
