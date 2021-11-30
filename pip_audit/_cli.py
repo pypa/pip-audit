@@ -177,7 +177,7 @@ def audit() -> None:
         "-S",
         "--strict",
         action="store_true",
-        help="fail the entire audit if dependency collection on any dependency",
+        help="fail the entire audit if dependency collection fails on any dependency",
     )
     parser.add_argument(
         "--desc",

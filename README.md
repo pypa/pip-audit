@@ -34,7 +34,7 @@ usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS]
 
 audit the Python environment for dependencies with known vulnerabilities
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -V, --version         show program's version number and exit
   -l, --local           show only results for dependencies in the local
@@ -49,8 +49,8 @@ optional arguments:
                         against (default: pypi)
   -d, --dry-run         collect all dependencies but do not perform the
                         auditing step (default: False)
-  -S, --strict          fail the entire audit if dependency collection on any
-                        dependency (default: False)
+  -S, --strict          fail the entire audit if dependency collection fails
+                        on any dependency (default: False)
   --desc {on,off,auto}  include a description for each vulnerability; `auto`
                         defaults to `on` for the `json` format. This flag has
                         no effect on the `cyclonedx-json` or `cyclonedx-xml`
