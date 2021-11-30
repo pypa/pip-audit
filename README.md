@@ -32,7 +32,7 @@ usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
 
 audit the Python environment for dependencies with known vulnerabilities
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   -V, --version         show program's version number and exit
   -l, --local           show only results for dependencies in the local
