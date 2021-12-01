@@ -214,6 +214,14 @@ def audit() -> None:
     parser.add_argument(
         "--timeout", type=int, default=15, help="set the socket timeout"  # Match the `pip` default
     )
+    parser.add_argument(
+        "--path",
+        type=Path,
+        action="append",
+        dest="paths",
+        help="restrict to the specified installation path for auditing packages; "
+        "this option can be used multiple times",
+    )
 
     args = parser.parse_args()
     logger.debug(f"parsed arguments: {args}")
@@ -227,10 +235,13 @@ def audit() -> None:
 
         source: DependencySource
         if args.requirements is not None:
+            if args.paths is not None:
+                print("--requirement (-r) and --path arguments cannot be used together")
+                sys.exit(1)
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
             source = RequirementSource(req_files, ResolveLibResolver(args.timeout, state), state)
         else:
-            source = PipSource(local=args.local)
+            source = PipSource(local=args.local, paths=args.paths if args.path is not None else [])
 
         auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run))
 

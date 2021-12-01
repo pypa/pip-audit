@@ -4,7 +4,8 @@ by `pip-api`.
 """
 
 import logging
-from typing import Iterator, Optional
+from pathlib import Path
+from typing import Iterator, List, Optional
 
 import pip_api
 from packaging.version import InvalidVersion, Version
@@ -32,7 +33,9 @@ class PipSource(DependencySource):
     Wraps `pip` (specifically `pip list`) as a dependency source.
     """
 
-    def __init__(self, *, local: bool = False, state: Optional[AuditState] = None) -> None:
+    def __init__(
+        self, *, local: bool = False, paths: List[Path], state: Optional[AuditState] = None
+    ) -> None:
         """
         Create a new `PipSource`.
 
@@ -42,6 +45,7 @@ class PipSource(DependencySource):
         `state` is an optional `AuditState` to use for state callbacks.
         """
         self._local = local
+        self._paths: List[str] = [str(path) for path in paths]
         self.state = state
 
         if _PIP_VERSION < _MINIMUM_RELIABLE_PIP_VERSION:
@@ -61,7 +65,9 @@ class PipSource(DependencySource):
         # The `pip list` call that underlies `pip_api` could fail for myriad reasons.
         # We collect them all into a single well-defined error.
         try:
-            for (_, dist) in pip_api.installed_distributions(local=self._local).items():
+            for (_, dist) in pip_api.installed_distributions(
+                local=self._local, paths=self._paths
+            ).items():
                 dep: Dependency
                 try:
                     dep = ResolvedDependency(name=dist.name, version=Version(str(dist.version)))
