@@ -27,7 +27,7 @@ python -m pip install pip-audit
 <!-- @begin-pip-audit-help@ -->
 ```
 usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
-                 [-d] [-S] [--desc {on,off,auto}] [--cache-dir CACHE_DIR]
+                 [-d] [-S] [--desc [{on,off,auto}]] [--cache-dir CACHE_DIR]
                  [--progress-spinner {on,off}] [--timeout TIMEOUT]
 
 audit the Python environment for dependencies with known vulnerabilities
@@ -51,7 +51,8 @@ optional arguments:
                         auditing step (default: False)
   -S, --strict          fail the entire audit if dependency collection fails
                         on any dependency (default: False)
-  --desc {on,off,auto}  include a description for each vulnerability; `auto`
+  --desc [{on,off,auto}]
+                        include a description for each vulnerability; `auto`
                         defaults to `on` for the `json` format. This flag has
                         no effect on the `cyclonedx-json` or `cyclonedx-xml`
                         formats. (default: auto)
@@ -96,7 +97,7 @@ Flask 0.5     PYSEC-2018-66  0.12.3
 
 Audit dependencies including descriptions:
 ```
-$ pip-audit --desc on
+$ pip-audit --desc
 Found 2 known vulnerabilities in 1 packages
 Name  Version ID             Fix Versions Description
 ----  ------- -------------- ------------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
