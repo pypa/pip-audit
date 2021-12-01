@@ -168,7 +168,7 @@ class PyPIService(VulnerabilityService):
                     "Dependency not found on PyPI and could not be audited: "
                     f"{spec.canonical_name} ({spec.version})"
                 )
-                logger.warning(f"Warning: {skip_reason}")
+                logger.debug(skip_reason)
                 return SkippedDependency(name=spec.name, skip_reason=skip_reason), []
             raise ServiceError from http_error
 

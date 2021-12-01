@@ -74,7 +74,7 @@ class PipSource(DependencySource):
                         "Package has invalid version and could not be audited: "
                         f"{dist.name} ({dist.version})"
                     )
-                    logger.warning(f"Warning: {skip_reason}")
+                    logger.debug(skip_reason)
                     dep = SkippedDependency(name=dist.name, skip_reason=skip_reason)
                 yield dep
         except Exception as e:
