@@ -45,7 +45,7 @@ class PipSource(DependencySource):
         `state` is an optional `AuditState` to use for state callbacks.
         """
         self._local = local
-        self._paths: List[str] = [str(path) for path in paths]
+        self._paths = paths
         self.state = state
 
         if _PIP_VERSION < _MINIMUM_RELIABLE_PIP_VERSION:
