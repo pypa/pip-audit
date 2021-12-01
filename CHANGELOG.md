@@ -16,6 +16,14 @@ All versions prior to 0.0.9 are untracked.
 
 ### Removed
 
+## [1.0.0] - 2021-12-1
+
+### Added
+
+* This is the first stable release of `pip-audit`! The CLI is considered
+  stable from this point on, and all changes will comply with
+  [Semantic Versioning](https://semver.org/)
+
 ## [0.0.9] - 2021-12-1
 
 ### Added
@@ -30,4 +38,5 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/trailofbits/pip-audit/compare/v0.0.9...HEAD
-[0.0.9]: https://github.com/trailofbits/pip-audit/compare/v0.0.8...HEAD
+[1.0.0]: https://github.com/trailofbits/pip-audit/compare/v0.0.9...v1.0.0
+[0.0.9]: https://github.com/trailofbits/pip-audit/compare/v0.0.8...v0.0.9
