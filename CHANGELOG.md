@@ -14,6 +14,10 @@ All versions prior to 0.0.9 are untracked.
 
 ### Fixed
 
+* CLI: The `--desc` flag no longer requires a following argument. If passed
+  as a bare option, `--desc` is equivalent to `--desc on`
+  ([#153](https://github.com/trailofbits/pip-audit/pull/153))
+
 ### Removed
 
 ## [1.0.0] - 2021-12-1
