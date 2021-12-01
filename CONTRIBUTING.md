@@ -75,6 +75,10 @@ has the same functionality (e.g., HTTP timeout control) and use the same short a
 `logger.debug` early and often -- users who experience errors can submit better
 bug reports when their debug logs include helpful context!
 
+* *Update the [CHANGELOG](./CHANGELOG.md)*. If your changes are public or result
+in changes to `pip-audit`'s CLI, please record them under the "Unreleased" section,
+with an entry in an appropriate subsection ("Added", "Changed", "Removed", or "Fixed").
+
 ### Linting
 
 `pip-audit` is automatically linted and formatted with a collection of tools:
