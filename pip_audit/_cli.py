@@ -9,7 +9,7 @@ import os
 import sys
 from contextlib import ExitStack
 from pathlib import Path
-from typing import List, Optional, cast
+from typing import List, NoReturn, Optional, Type, cast
 
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
@@ -117,6 +117,23 @@ class ProgressSpinnerChoice(str, enum.Enum):
         return self.value
 
 
+def _enum_help(msg: str, e: Type[enum.Enum]) -> str:
+    """
+    Render a `--help`-style string for the given enumeration.
+    """
+    return f"{msg} (choices: {', '.join(str(v) for v in e)})"
+
+
+def _fatal(msg: str) -> NoReturn:
+    """
+    Log a fatal error to the standard error stream and exit.
+    """
+    # NOTE: We buffer the logger when the progress spinner is active,
+    # ensuring that the fatal message is formatted on its own line.
+    logger.error(msg)
+    sys.exit(1)
+
+
 def audit() -> None:
     """
     The primary entrypoint for `pip-audit`.
@@ -147,7 +164,8 @@ def audit() -> None:
         type=OutputFormatChoice,
         choices=OutputFormatChoice,
         default=OutputFormatChoice.Columns,
-        help="the format to emit audit results in",
+        metavar="FORMAT",
+        help=_enum_help("the format to emit audit results in", OutputFormatChoice),
     )
     parser.add_argument(
         "-s",
@@ -155,13 +173,22 @@ def audit() -> None:
         type=VulnerabilityServiceChoice,
         choices=VulnerabilityServiceChoice,
         default=VulnerabilityServiceChoice.Pypi,
-        help="the vulnerability service to audit dependencies against",
+        metavar="SERVICE",
+        help=_enum_help(
+            "the vulnerability service to audit dependencies against", VulnerabilityServiceChoice
+        ),
     )
     parser.add_argument(
         "-d",
         "--dry-run",
         action="store_true",
         help="collect all dependencies but do not perform the auditing step",
+    )
+    parser.add_argument(
+        "-S",
+        "--strict",
+        action="store_true",
+        help="fail the entire audit if dependency collection fails on any dependency",
     )
     parser.add_argument(
         "--desc",
@@ -214,7 +241,10 @@ def audit() -> None:
             if state is not None:
                 if spec.is_skipped():
                     spec = cast(SkippedDependency, spec)
-                    state.update_state(f"Skipping {spec.name}: {spec.skip_reason}")
+                    if args.strict:
+                        _fatal(f"{spec.name}: {spec.skip_reason}")
+                    else:
+                        state.update_state(f"Skipping {spec.name}: {spec.skip_reason}")
                 else:
                     spec = cast(ResolvedDependency, spec)
                     state.update_state(f"Auditing {spec.name} ({spec.version})")

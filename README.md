@@ -26,11 +26,9 @@ python -m pip install pip-audit
 
 <!-- @begin-pip-audit-help@ -->
 ```
-usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS]
-                 [-f {columns,json,cyclonedx-json,cyclonedx-xml}]
-                 [-s {osv,pypi}] [-d] [--desc {on,off,auto}]
-                 [--cache-dir CACHE_DIR] [--progress-spinner {on,off}]
-                 [--timeout TIMEOUT]
+usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
+                 [-d] [-S] [--desc {on,off,auto}] [--cache-dir CACHE_DIR]
+                 [--progress-spinner {on,off}] [--timeout TIMEOUT]
 
 audit the Python environment for dependencies with known vulnerabilities
 
@@ -42,13 +40,17 @@ optional arguments:
   -r REQUIREMENTS, --requirement REQUIREMENTS
                         audit the given requirements file; this option can be
                         used multiple times (default: None)
-  -f {columns,json,cyclonedx-json,cyclonedx-xml}, --format {columns,json,cyclonedx-json,cyclonedx-xml}
-                        the format to emit audit results in (default: columns)
-  -s {osv,pypi}, --vulnerability-service {osv,pypi}
+  -f FORMAT, --format FORMAT
+                        the format to emit audit results in (choices: columns,
+                        json, cyclonedx-json, cyclonedx-xml) (default:
+                        columns)
+  -s SERVICE, --vulnerability-service SERVICE
                         the vulnerability service to audit dependencies
-                        against (default: pypi)
+                        against (choices: osv, pypi) (default: pypi)
   -d, --dry-run         collect all dependencies but do not perform the
                         auditing step (default: False)
+  -S, --strict          fail the entire audit if dependency collection fails
+                        on any dependency (default: False)
   --desc {on,off,auto}  include a description for each vulnerability; `auto`
                         defaults to `on` for the `json` format. This flag has
                         no effect on the `cyclonedx-json` or `cyclonedx-xml`

@@ -49,7 +49,7 @@ def test_pip_source_pip_api_failure(monkeypatch):
 
 
 def test_pip_source_invalid_version(monkeypatch):
-    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    logger = pretend.stub(debug=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(pip, "logger", logger)
 
     source = pip.PipSource()
@@ -60,7 +60,7 @@ def test_pip_source_invalid_version(monkeypatch):
         version: str
 
     # Return a distribution with a version that doesn't conform to PEP 440.
-    # We should log a warning and skip it.
+    # We should log a debug message and skip it.
     def mock_installed_distributions(local: bool) -> Dict[str, MockDistribution]:
         return {
             "pytest": MockDistribution("pytest", "0.1"),
@@ -71,7 +71,7 @@ def test_pip_source_invalid_version(monkeypatch):
     monkeypatch.setattr(pip_api, "installed_distributions", mock_installed_distributions)
 
     specs = list(source.collect())
-    assert len(logger.warning.calls) == 1
+    assert len(logger.debug.calls) == 1
     assert len(specs) == 3
     assert ResolvedDependency(name="pytest", version=Version("0.1")) in specs
     assert (
