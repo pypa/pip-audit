@@ -219,6 +219,7 @@ def audit() -> None:
         type=Path,
         action="append",
         dest="paths",
+        default=[],
         help="restrict to the specified installation path for auditing packages; "
         "this option can be used multiple times",
     )
@@ -235,13 +236,13 @@ def audit() -> None:
 
         source: DependencySource
         if args.requirements is not None:
-            if args.paths is not None:
+            if args.paths:
                 print("--requirement (-r) and --path arguments cannot be used together")
                 sys.exit(1)
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
             source = RequirementSource(req_files, ResolveLibResolver(args.timeout, state), state)
         else:
-            source = PipSource(local=args.local, paths=args.paths if args.path is not None else [])
+            source = PipSource(local=args.local, paths=args.paths)
 
         auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run))
 
