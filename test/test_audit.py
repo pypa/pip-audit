@@ -1,4 +1,4 @@
-import pretend
+import pretend  # type: ignore
 import pytest
 from packaging.version import Version
 

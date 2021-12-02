@@ -13,7 +13,7 @@ class OsvServiceTest(unittest.TestCase):
         osv = service.OsvService()
         dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
         results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
-            osv.query_all([dep])
+            osv.query_all(iter([dep]))
         )
         self.assertEqual(len(results), 1)
         self.assertTrue(dep in results)
@@ -25,7 +25,7 @@ class OsvServiceTest(unittest.TestCase):
         # that our adapter is canonicalizing any dependencies passed into it.
         osv = service.OsvService()
         dep = service.ResolvedDependency("PyYAML", Version("5.3"))
-        results: List[service.VulnerabilityResult] = osv.query(dep)
+        _, results = osv.query(dep)
 
         self.assertGreater(len(results), 0)
 
@@ -35,7 +35,7 @@ class OsvServiceTest(unittest.TestCase):
         osv = service.OsvService()
         dep = service.ResolvedDependency("ansible", Version("2.8.0"))
         results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
-            osv.query_all([dep])
+            osv.query_all(iter([dep]))
         )
         self.assertEqual(len(results), 1)
         self.assertTrue(dep in results)
@@ -49,7 +49,7 @@ class OsvServiceTest(unittest.TestCase):
             service.ResolvedDependency("flask", Version("0.5")),
         ]
         results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
-            osv.query_all(deps)
+            osv.query_all(iter(deps))
         )
         self.assertEqual(len(results), 2)
         self.assertTrue(deps[0] in results and deps[1] in results)
@@ -60,7 +60,7 @@ class OsvServiceTest(unittest.TestCase):
         osv = service.OsvService()
         dep = service.ResolvedDependency("foo", Version("1.0.0"))
         results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
-            osv.query_all([dep])
+            osv.query_all(iter([dep]))
         )
         self.assertEqual(len(results), 1)
         self.assertTrue(dep in results)
@@ -78,13 +78,13 @@ class OsvServiceTest(unittest.TestCase):
     def test_osv_error_response(self, mock_post):
         osv = service.OsvService()
         dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
-        self.assertRaises(service.ServiceError, lambda: dict(osv.query_all([dep])))
+        self.assertRaises(service.ServiceError, lambda: dict(osv.query_all(iter([dep]))))
 
     def test_osv_skipped_dep(self):
         osv = service.OsvService()
         dep = service.SkippedDependency(name="foo", skip_reason="skip-reason")
         results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
-            osv.query_all([dep])
+            osv.query_all(iter([dep]))
         )
         self.assertEqual(len(results), 1)
         self.assertTrue(dep in results)
