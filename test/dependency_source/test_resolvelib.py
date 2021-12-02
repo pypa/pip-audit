@@ -256,7 +256,6 @@ def test_resolvelib_http_error(monkeypatch):
         dict(resolver.resolve_all(iter([req])))
 
 
-
 def test_resolvelib_http_notfound(monkeypatch):
     def get_http_not_found_mock():
         class Doc:
@@ -276,4 +275,3 @@ def test_resolvelib_http_notfound(monkeypatch):
     ]
     assert req in resolved_deps
     assert resolved_deps[req] == expected_deps
-    
