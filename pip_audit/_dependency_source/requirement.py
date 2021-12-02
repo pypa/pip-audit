@@ -65,15 +65,13 @@ class RequirementSource(DependencySource):
                         # Don't allow duplicate dependencies to be returned
                         if dep in collected:
                             continue
-                        if self.state is not None:
+                        if self.state is not None:  # pragma: no cover
                             if dep.is_skipped():
                                 dep = cast(SkippedDependency, dep)
                                 self.state.update_state(f"Skipping {dep.name}: {dep.skip_reason}")
                             else:
                                 dep = cast(ResolvedDependency, dep)
-                                self.state.update_state(
-                                    f"Collecting {dep.name} ({dep.version})"
-                                )  # pragma: no cover
+                                self.state.update_state(f"Collecting {dep.name} ({dep.version})")
                         collected.add(dep)
                         yield dep
             except DependencyResolverError as dre:

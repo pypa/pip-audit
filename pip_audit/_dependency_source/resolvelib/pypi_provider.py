@@ -186,7 +186,7 @@ def get_project_from_pypi(project, extras, timeout: Optional[int], state: Option
     url = "https://pypi.org/simple/{}".format(project)
     response: requests.Response = requests.get(url, timeout=timeout)
     if response.status_code == 404:
-        raise PyPINotFoundError(f"Could not find project {project} on PyPI")
+        raise PyPINotFoundError(f'Could not find project "{project}" on PyPI')
     response.raise_for_status()
     data = response.content
     doc = html5lib.parse(data, namespaceHTMLElements=False)
