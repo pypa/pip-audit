@@ -5,6 +5,7 @@ Closely adapted from `resolvelib`'s examples, which are copyrighted by the `reso
 authors under the ISC license.
 """
 
+import itertools
 from email.message import EmailMessage
 from email.parser import BytesParser
 from io import BytesIO
@@ -269,15 +270,30 @@ class PyPIProvider(AbstractProvider):
         # Need to pass the extras to the search, so they
         # are added to the candidate at creation - we
         # treat candidates as immutable once created.
-        candidates = (
-            candidate
-            for candidate in get_project_from_pypi(identifier, extras, self.timeout, self.state)
-            if candidate.version not in bad_versions
-            and all(candidate.version in r.specifier for r in requirements)
+        candidates = sorted(
+            [
+                candidate
+                for candidate in get_project_from_pypi(identifier, extras, self.timeout, self.state)
+                if candidate.version not in bad_versions
+                and all(candidate.version in r.specifier for r in requirements)
+            ],
+            key=attrgetter("version", "is_wheel"),
+            reverse=True,
         )
 
-        # We want to prefer more recent versions and prioritize wheels
-        return sorted(candidates, key=attrgetter("version", "is_wheel"), reverse=True)
+        # If we have multiple candidates for a single version and some are wheels,
+        # yield only the wheels. This keeps us from wasting a large amount of
+        # dependency search time when comparing wheels against source distributions.
+        for _, candidates in itertools.groupby(candidates, key=attrgetter("version")):
+            candidate = next(candidates)
+            yield candidate
+            if candidate.is_wheel:
+                yield from (c for c in candidates if c.is_wheel)
+            else:
+                yield from candidates
+
+        # # We want to prefer more recent versions and prioritize wheels
+        # return sorted(candidates, key=attrgetter("version", "is_wheel"), reverse=True)
 
     def is_satisfied_by(self, requirement, candidate):
         """
