@@ -115,7 +115,9 @@ class VirtualEnv(venv.EnvBuilder):
                 capture_output=True,
             )
 
-            logger.debug(f"completed: {package_install_cmd=}, {process.stdout=}, {process.stderr=}")
+            logger.debug(
+                f"ran: {package_install_cmd}, stdout={process.stdout!r}, stderr={process.stderr!r}"
+            )
         except subprocess.CalledProcessError as cpe:
             raise VirtualEnvError(f"Failed to install packages: {package_install_cmd}") from cpe
 
