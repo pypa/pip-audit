@@ -143,6 +143,7 @@ def audit() -> None:
         description="audit the Python environment for dependencies with known vulnerabilities",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    req_source_args = parser.add_mutually_exclusive_group()
     parser.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument(
         "-l",
@@ -150,7 +151,7 @@ def audit() -> None:
         action="store_true",
         help="show only results for dependencies in the local environment",
     )
-    parser.add_argument(
+    req_source_args.add_argument(
         "-r",
         "--requirement",
         type=argparse.FileType("r"),
@@ -214,7 +215,7 @@ def audit() -> None:
     parser.add_argument(
         "--timeout", type=int, default=15, help="set the socket timeout"  # Match the `pip` default
     )
-    parser.add_argument(
+    req_source_args.add_argument(
         "--path",
         type=Path,
         action="append",
@@ -236,9 +237,6 @@ def audit() -> None:
 
         source: DependencySource
         if args.requirements is not None:
-            if args.paths:
-                print("--requirement (-r) and --path arguments cannot be used together")
-                sys.exit(1)
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
             source = RequirementSource(req_files, ResolveLibResolver(args.timeout, state), state)
         else:
