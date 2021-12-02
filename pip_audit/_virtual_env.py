@@ -82,7 +82,6 @@ class VirtualEnv(venv.EnvBuilder):
             "-m",
             "pip",
             "install",
-            "--no-cache-dir",
             "--upgrade",
             "pip",
             "wheel",
@@ -105,7 +104,6 @@ class VirtualEnv(venv.EnvBuilder):
             "-m",
             "pip",
             "install",
-            "--no-cache-dir",
             *self._install_args,
         ]
         try:
