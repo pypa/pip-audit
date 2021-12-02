@@ -44,7 +44,7 @@ lint:
 		black $(ALL_PY_SRCS) && \
 		isort $(ALL_PY_SRCS) && \
 		flake8 $(ALL_PY_SRCS) && \
-		mypy $(PY_MODULE) && \
+		mypy --show-error-codes $(PY_MODULE) test/ && \
 		interrogate -c pyproject.toml . && \
 		git diff --exit-code
 
