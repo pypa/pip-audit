@@ -109,12 +109,11 @@ def _get_pip_cache() -> str:
 
 
 def _get_cache_dir(custom_cache_dir: Optional[Path]) -> str:
-    pip_cache_dir: Optional[str] = (
-        _get_pip_cache() if _PIP_VERSION >= _MINIMUM_PIP_VERSION else None
-    )
     if custom_cache_dir is not None:
         return str(custom_cache_dir)
-    elif pip_cache_dir is not None:  # pragma: no cover
+    elif (
+        pip_cache_dir := _get_pip_cache() if _PIP_VERSION >= _MINIMUM_PIP_VERSION else None
+    ) is not None:  # pragma: no cover
         return pip_cache_dir
     else:
         fallback_path = os.path.join(Path.home(), ".pip-audit-cache")
