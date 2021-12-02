@@ -63,7 +63,7 @@ def test_resolvelib():
     assert req in resolved_deps
     # Earlier Python versions have some extra dependencies. To avoid conditionals here, let's just
     # check that the dependencies we specify are a subset.
-    check_deps(resolved_deps[req], expected_deps)
+    check_deps(resolved_deps[req], expected_deps)  # type: ignore
 
 
 def test_resolvelib_extras():
@@ -81,7 +81,7 @@ def test_resolvelib_extras():
         ResolvedDependency("urllib3", Version("1.26.7")),
     ]
     assert req in resolved_deps
-    check_deps(resolved_deps[req], expected_deps)
+    check_deps(resolved_deps[req], expected_deps)  # type: ignore
 
     # Check that using the `socks` and `use_chardet_on_py3` extras pulls in additional dependencies
     req = Requirement("requests[socks,use_chardet_on_py3]>=2.8.1")
@@ -94,7 +94,7 @@ def test_resolvelib_extras():
         ]
     )
     assert req in resolved_deps
-    check_deps(resolved_deps[req], expected_deps)
+    check_deps(resolved_deps[req], expected_deps)  # type: ignore
 
 
 def test_resolvelib_sdist():
@@ -115,7 +115,7 @@ def test_resolvelib_sdist():
         ResolvedDependency("markupsafe", Version("2.0.1")),
     ]
     assert req in resolved_deps
-    check_deps(resolved_deps[req], expected_deps)
+    check_deps(resolved_deps[req], expected_deps)  # type: ignore
 
 
 def test_resolvelib_wheel_patched(monkeypatch):
@@ -268,7 +268,7 @@ def test_resolvelib_http_notfound(monkeypatch):
 
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
-    resolved_deps = dict(resolver.resolve_all([req]))
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert len(resolved_deps) == 1
     expected_deps = [
         SkippedDependency(name="flask", skip_reason='Could not find project "flask" on PyPI')

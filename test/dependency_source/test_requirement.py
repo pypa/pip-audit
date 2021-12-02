@@ -13,7 +13,7 @@ from pip_audit._dependency_source import (
     ResolveLibResolver,
     requirement,
 )
-from pip_audit._service import ResolvedDependency
+from pip_audit._service import Dependency, ResolvedDependency
 
 
 def test_requirement_source(monkeypatch):
@@ -70,7 +70,7 @@ def test_requirement_source_parse_error(monkeypatch):
 def test_requirement_source_resolver_error(monkeypatch):
     # Pass the requirement source a resolver that automatically raises errors
     class MockResolver(DependencyResolver):
-        def resolve(self, req: Requirement) -> List[ResolvedDependency]:
+        def resolve(self, req: Requirement) -> List[Dependency]:
             raise DependencyResolverError
 
     source = requirement.RequirementSource([Path("requirements.txt")], MockResolver())
