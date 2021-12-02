@@ -50,7 +50,7 @@ class DependencyResolver(ABC):
     @abstractmethod
     def resolve(self, req: Requirement) -> List[Dependency]:  # pragma: no cover
         """
-        Resolve a single `Requirement` into a list of concrete `Dependency` instances.
+        Resolve a single `Requirement` into a list of `Dependency` instances.
         """
         raise NotImplementedError
 
