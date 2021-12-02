@@ -292,9 +292,6 @@ class PyPIProvider(AbstractProvider):
             else:
                 yield from candidates
 
-        # # We want to prefer more recent versions and prioritize wheels
-        # return sorted(candidates, key=attrgetter("version", "is_wheel"), reverse=True)
-
     def is_satisfied_by(self, requirement, candidate):
         """
         See `resolvelib.providers.AbstractProvider.is_satisfied_by`.
