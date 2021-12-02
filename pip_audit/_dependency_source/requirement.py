@@ -3,7 +3,7 @@ Collect dependencies from one or more `requirements.txt`-formatted files.
 """
 
 from pathlib import Path
-from typing import Iterator, List, Optional, Set
+from typing import Iterator, List, Optional, Set, cast
 
 from packaging.requirements import Requirement
 from pip_api import parse_requirements
@@ -16,6 +16,7 @@ from pip_audit._dependency_source import (
     DependencySourceError,
 )
 from pip_audit._service import Dependency
+from pip_audit._service.interface import ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState
 
 
@@ -64,10 +65,13 @@ class RequirementSource(DependencySource):
                         # Don't allow duplicate dependencies to be returned
                         if dep in collected:
                             continue
-                        if self.state is not None:
-                            self.state.update_state(
-                                f"Collecting {dep.name} ({dep.version})"
-                            )  # pragma: no cover
+                        if self.state is not None:  # pragma: no cover
+                            if dep.is_skipped():
+                                dep = cast(SkippedDependency, dep)
+                                self.state.update_state(f"Skipping {dep.name}: {dep.skip_reason}")
+                            else:
+                                dep = cast(ResolvedDependency, dep)
+                                self.state.update_state(f"Collecting {dep.name} ({dep.version})")
                         collected.add(dep)
                         yield dep
             except DependencyResolverError as dre:

@@ -14,13 +14,31 @@ All versions prior to 0.0.9 are untracked.
 
 ### Fixed
 
+### Removed
+
+## [1.0.1] - 2021-12-02
+
+### Fixed
+
 * CLI: The `--desc` flag no longer requires a following argument. If passed
   as a bare option, `--desc` is equivalent to `--desc on`
   ([#153](https://github.com/trailofbits/pip-audit/pull/153))
 
-### Removed
+* Dependency resolution: The PyPI-based dependency resolver no longer throws
+  an uncaught exception on package resolution errors; instead, the package
+  is marked as skipped and an appropriate warning or fatal error (in
+  `--strict` mode) is produced
+  ([#162](https://github.com/trailofbits/pip-audit/pull/162))
 
-## [1.0.0] - 2021-12-1
+* CLI: When providing the `--cache-dir` flag, the command to read the pip cache
+  directory is no longer executed. Previously this was always executed and
+  could result into failure when the command fails. In CI environments, the
+  default `~/.cache` directory is typically not writable by the build user and
+  this meant that the `python -m pip cache dir` would fail before this fix,
+  even if the `--cache-dir` flag was provided.
+  ([#161](https://github.com/trailofbits/pip-audit/pull/161))
+
+## [1.0.0] - 2021-12-01
 
 ### Added
 
@@ -28,7 +46,7 @@ All versions prior to 0.0.9 are untracked.
   stable from this point on, and all changes will comply with
   [Semantic Versioning](https://semver.org/)
 
-## [0.0.9] - 2021-12-1
+## [0.0.9] - 2021-12-01
 
 ### Added
 
@@ -42,5 +60,6 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/trailofbits/pip-audit/compare/v0.0.9...HEAD
+[1.0.1]: https://github.com/trailofbits/pip-audit/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/trailofbits/pip-audit/compare/v0.0.9...v1.0.0
 [0.0.9]: https://github.com/trailofbits/pip-audit/compare/v0.0.8...v0.0.9
