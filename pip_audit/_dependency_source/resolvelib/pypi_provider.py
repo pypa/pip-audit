@@ -9,8 +9,9 @@ from email.message import EmailMessage
 from email.parser import BytesParser
 from io import BytesIO
 from operator import attrgetter
+from pathlib import Path
 from platform import python_version
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import TemporaryDirectory
 from typing import BinaryIO, Iterator, List, Optional, Set, cast
 from urllib.parse import urlparse
 from zipfile import ZipFile
@@ -39,7 +40,7 @@ class Candidate:
     def __init__(
         self,
         name: str,
-        filename: str,
+        filename: Path,
         version: Version,
         url: str,
         extras: Set[str],
@@ -139,20 +140,14 @@ class Candidate:
         Extracts the metadata for this candidate, if it's a source distribution.
         """
 
-        # NOTE: The presence of at least one of these suffixes is guaranteed by
-        # `parse_sdist_filename`, so we don't need an error case here.
-        if self.filename.endswith(".tar.gz"):
-            suffix = ".tar.gz"
-        else:
-            suffix = ".zip"
-
         response: requests.Response = requests.get(self.url, timeout=self.timeout)
         response.raise_for_status()
         sdist_data = response.content
         metadata = EmailMessage()
 
-        with NamedTemporaryFile(suffix=suffix) as sdist:
-            sdist.write(sdist_data)
+        with TemporaryDirectory() as pkg_dir:
+            sdist = Path(pkg_dir) / self.filename.name
+            sdist.write_bytes(sdist_data)
 
             if self.state is not None:
                 self.state.update_state(
@@ -161,7 +156,7 @@ class Candidate:
                 )  # pragma: no cover
 
             with TemporaryDirectory() as ve_dir:
-                ve = VirtualEnv([sdist.name], self.state)
+                ve = VirtualEnv([str(sdist)], self.state)
                 ve.create(ve_dir)
 
                 if self.state is not None:
@@ -214,7 +209,7 @@ def get_project_from_pypi(
             # TODO: Handle compatibility tags?
             yield Candidate(
                 name,
-                filename,
+                Path(filename),
                 version,
                 url=url,
                 extras=extras,
