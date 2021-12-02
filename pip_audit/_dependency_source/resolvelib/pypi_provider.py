@@ -5,15 +5,13 @@ Closely adapted from `resolvelib`'s examples, which are copyrighted by the `reso
 authors under the ISC license.
 """
 
-import os
 from email.message import EmailMessage
 from email.parser import BytesParser
 from io import BytesIO
 from operator import attrgetter
 from platform import python_version
-from tarfile import TarFile
-from tempfile import TemporaryDirectory
-from typing import BinaryIO, List, Optional, Set, cast
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+from typing import BinaryIO, Iterator, List, Optional, Set, cast
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -41,6 +39,7 @@ class Candidate:
     def __init__(
         self,
         name: str,
+        filename: str,
         version: Version,
         url: str,
         extras: Set[str],
@@ -53,6 +52,7 @@ class Candidate:
         """
 
         self.name = canonicalize_name(name)
+        self.filename = filename
         self.version = version
         self.url = url
         self.extras = extras
@@ -68,8 +68,8 @@ class Candidate:
         A string representation for `Candidate`.
         """
         if not self.extras:
-            return f"<{self.name}=={self.version}>"
-        return f"<{self.name}[{','.join(self.extras)}]=={self.version}>"
+            return f"<{self.name}=={self.version} wheel={self.is_wheel}>"
+        return f"<{self.name}[{','.join(self.extras)}]=={self.version} wheel={self.is_wheel}>"
 
     @property
     def metadata(self) -> EmailMessage:
@@ -138,23 +138,21 @@ class Candidate:
         """
         Extracts the metadata for this candidate, if it's a source distribution.
         """
+
+        # NOTE: The presence of at least one of these suffixes is guaranteed by
+        # `parse_sdist_filename`, so we don't need an error case here.
+        if self.filename.endswith(".tar.gz"):
+            suffix = ".tar.gz"
+        else:
+            suffix = ".zip"
+
         response: requests.Response = requests.get(self.url, timeout=self.timeout)
         response.raise_for_status()
-        data = response.content
+        sdist_data = response.content
         metadata = EmailMessage()
 
-        with TemporaryDirectory() as pkg_dir:
-            if self.state is not None:
-                self.state.update_state(
-                    f"Extracting source distribution for {self.name} ({self.version})"
-                )  # pragma: no cover
-
-            # Extract archive onto the disk
-            with TarFile.open(fileobj=BytesIO(data), mode="r:gz") as t:
-                # The directory is the first member in a tarball
-                names = t.getnames()
-                pkg_name = names[0]
-                t.extractall(pkg_dir)
+        with NamedTemporaryFile(suffix=suffix) as sdist:
+            sdist.write(sdist_data)
 
             if self.state is not None:
                 self.state.update_state(
@@ -162,11 +160,8 @@ class Candidate:
                     f"({self.version})"
                 )  # pragma: no cover
 
-            # Put together a full path of where the source distribution is
-            pkg_path = os.path.join(pkg_dir, pkg_name)
-
             with TemporaryDirectory() as ve_dir:
-                ve = VirtualEnv(["-e", pkg_path], self.state)
+                ve = VirtualEnv([sdist.name], self.state)
                 ve.create(ve_dir)
 
                 if self.state is not None:
@@ -181,7 +176,9 @@ class Candidate:
         return metadata
 
 
-def get_project_from_pypi(project, extras, timeout: Optional[int], state: Optional[AuditState]):
+def get_project_from_pypi(
+    project, extras, timeout: Optional[int], state: Optional[AuditState]
+) -> Iterator[Candidate]:
     """Return candidates created from the project name and extras."""
     url = "https://pypi.org/simple/{}".format(project)
     response: requests.Response = requests.get(url, timeout=timeout)
@@ -213,14 +210,20 @@ def get_project_from_pypi(project, extras, timeout: Optional[int], state: Option
                 # which we'll then skip via the exception handler.
                 (name, version) = parse_sdist_filename(filename)
                 is_wheel = False
+
+            # TODO: Handle compatibility tags?
+            yield Candidate(
+                name,
+                filename,
+                version,
+                url=url,
+                extras=extras,
+                is_wheel=is_wheel,
+                timeout=timeout,
+                state=state,
+            )
         except Exception:
             continue
-
-        # TODO: Handle compatibility tags?
-
-        yield Candidate(
-            name, version, url=url, extras=extras, is_wheel=is_wheel, timeout=timeout, state=state
-        )
 
 
 class PyPIProvider(AbstractProvider):
@@ -277,6 +280,7 @@ class PyPIProvider(AbstractProvider):
             if candidate.version not in bad_versions
             and all(candidate.version in r.specifier for r in requirements)
         )
+
         # We want to prefer more recent versions and prioritize wheels
         return sorted(candidates, key=attrgetter("version", "is_wheel"), reverse=True)
 
