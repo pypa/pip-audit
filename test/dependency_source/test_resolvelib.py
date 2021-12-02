@@ -10,13 +10,14 @@ from resolvelib.resolvers import InconsistentCandidate, ResolutionImpossible
 
 from pip_audit._dependency_source import resolvelib
 from pip_audit._dependency_source.resolvelib import pypi_provider
-from pip_audit._service.interface import Dependency, ResolvedDependency
+from pip_audit._service.interface import Dependency, ResolvedDependency, SkippedDependency
 
 
 def get_package_mock(data):
     class Doc:
         def __init__(self, content):
             self.content = content
+            self.status_code = 200
 
         def raise_for_status(self):
             pass
@@ -239,6 +240,9 @@ def test_resolvelib_sdist_invalid_suffix(monkeypatch):
 def test_resolvelib_http_error(monkeypatch):
     def get_http_error_mock():
         class Doc:
+            def __init__(self):
+                self.status_code = 400
+
             def raise_for_status(self):
                 raise HTTPError
 
@@ -250,3 +254,24 @@ def test_resolvelib_http_error(monkeypatch):
     req = Requirement("flask==2.0.1")
     with pytest.raises(resolvelib.ResolveLibResolverError):
         dict(resolver.resolve_all([req]))
+
+
+def test_resolvelib_http_notfound(monkeypatch):
+    def get_http_not_found_mock():
+        class Doc:
+            def __init__(self):
+                self.status_code = 404
+
+        return Doc()
+
+    monkeypatch.setattr(requests, "get", lambda _url, **kwargs: get_http_not_found_mock())
+
+    resolver = resolvelib.ResolveLibResolver()
+    req = Requirement("flask==2.0.1")
+    resolved_deps = dict(resolver.resolve_all([req]))
+    assert len(resolved_deps) == 1
+    expected_deps = [
+        SkippedDependency(name="flask", skip_reason='Could not find project "flask" on PyPI')
+    ]
+    assert req in resolved_deps
+    assert resolved_deps[req] == expected_deps

@@ -3,6 +3,7 @@ Resolve a list of dependencies via the `resolvelib` API as well as a custom
 `Resolver` that uses PyPI as an information source.
 """
 
+import logging
 from typing import List, Optional
 
 from packaging.requirements import Requirement
@@ -10,10 +11,12 @@ from requests.exceptions import HTTPError
 from resolvelib import BaseReporter, Resolver
 
 from pip_audit._dependency_source import DependencyResolver, DependencyResolverError
-from pip_audit._service.interface import ResolvedDependency
+from pip_audit._service.interface import Dependency, ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState
 
-from .pypi_provider import PyPIProvider
+from .pypi_provider import PyPINotFoundError, PyPIProvider
+
+logger = logging.getLogger(__name__)
 
 
 class ResolveLibResolver(DependencyResolver):
@@ -32,13 +35,17 @@ class ResolveLibResolver(DependencyResolver):
         self.reporter = BaseReporter()
         self.resolver: Resolver = Resolver(self.provider, self.reporter)
 
-    def resolve(self, req: Requirement) -> List[ResolvedDependency]:
+    def resolve(self, req: Requirement) -> List[Dependency]:
         """
         Resolve the given `Requirement` into a `Dependency` list.
         """
-        deps: List[ResolvedDependency] = []
+        deps: List[Dependency] = []
         try:
             result = self.resolver.resolve([req])
+        except PyPINotFoundError as e:
+            skip_reason = str(e)
+            logger.debug(skip_reason)
+            return [SkippedDependency(name=req.name, skip_reason=skip_reason)]
         except HTTPError as e:
             raise ResolveLibResolverError("failed to resolve dependencies") from e
         for name, candidate in result.mapping.items():

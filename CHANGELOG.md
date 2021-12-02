@@ -18,6 +18,12 @@ All versions prior to 0.0.9 are untracked.
   as a bare option, `--desc` is equivalent to `--desc on`
   ([#153](https://github.com/trailofbits/pip-audit/pull/153))
 
+* Dependency resolution: The PyPI-based dependency resolver no longer throws
+  an uncaught exception on package resolution errors; instead, the package
+  is marked as skipped and an appropriate warning or fatal error (in
+  `--strict` mode) is produced
+  ([#162](https://github.com/trailofbits/pip-audit/pull/162))
+
 ### Removed
 
 ## [1.0.0] - 2021-12-1

@@ -185,6 +185,8 @@ def get_project_from_pypi(project, extras, timeout: Optional[int], state: Option
     """Return candidates created from the project name and extras."""
     url = "https://pypi.org/simple/{}".format(project)
     response: requests.Response = requests.get(url, timeout=timeout)
+    if response.status_code == 404:
+        raise PyPINotFoundError(f'Could not find project "{project}" on PyPI')
     response.raise_for_status()
     data = response.content
     doc = html5lib.parse(data, namespaceHTMLElements=False)
@@ -291,3 +293,11 @@ class PyPIProvider(AbstractProvider):
         See `resolvelib.providers.AbstractProvider.get_dependencies`.
         """
         return candidate.dependencies
+
+
+class PyPINotFoundError(Exception):
+    """
+    An error to signify that the provider could not find the requested project on PyPI.
+    """
+
+    pass
