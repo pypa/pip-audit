@@ -10,7 +10,7 @@ from resolvelib.resolvers import InconsistentCandidate, ResolutionImpossible
 
 from pip_audit._dependency_source import resolvelib
 from pip_audit._dependency_source.resolvelib import pypi_provider
-from pip_audit._service.interface import Dependency, ResolvedDependency, SkippedDependency
+from pip_audit._service.interface import ResolvedDependency, SkippedDependency
 
 
 def get_package_mock(data):
