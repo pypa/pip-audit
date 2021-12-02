@@ -24,6 +24,14 @@ All versions prior to 0.0.9 are untracked.
   `--strict` mode) is produced
   ([#162](https://github.com/trailofbits/pip-audit/pull/162))
 
+* CLI: When providing the `--cache-dir` flag, the command to read the pip cache
+  directory is no longer executed. Previously this was always executed and
+  could result into failure when the command fails. In CI environments, the
+  default `~/.cache` directory is typically not writable by the build user and
+  this meant that the `python -m pip cache dir` would fail before this fix,
+  even if the `--cache-dir` flag was provided.
+  ([#161](https://github.com/trailofbits/pip-audit/pull/161))
+
 ### Removed
 
 ## [1.0.0] - 2021-12-1
