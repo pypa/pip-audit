@@ -10,10 +10,9 @@ from email.message import EmailMessage
 from email.parser import BytesParser
 from io import BytesIO
 from operator import attrgetter
-from platform import python_version
 from tarfile import TarFile
 from tempfile import TemporaryDirectory
-from typing import BinaryIO, List, Optional, Set, cast
+from typing import BinaryIO, Final, List, Optional, Set, cast
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -26,9 +25,10 @@ from packaging.version import Version
 from resolvelib.providers import AbstractProvider
 
 from pip_audit._state import AuditState
+from pip_audit._util import python_version
 from pip_audit._virtual_env import VirtualEnv
 
-PYTHON_VERSION = Version(python_version())
+PYTHON_VERSION: Final[Version] = python_version()
 
 
 class Candidate:
