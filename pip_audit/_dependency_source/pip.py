@@ -5,7 +5,7 @@ by `pip-api`.
 
 import logging
 from pathlib import Path
-from typing import Iterator, List, Optional
+from typing import Iterator, Optional, Sequence
 
 import pip_api
 from packaging.version import InvalidVersion, Version
@@ -34,7 +34,7 @@ class PipSource(DependencySource):
     """
 
     def __init__(
-        self, *, local: bool = False, paths: List[Path], state: Optional[AuditState] = None
+        self, *, local: bool = False, paths: Sequence[Path] = [], state: Optional[AuditState] = None
     ) -> None:
         """
         Create a new `PipSource`.
@@ -66,7 +66,7 @@ class PipSource(DependencySource):
         # We collect them all into a single well-defined error.
         try:
             for (_, dist) in pip_api.installed_distributions(
-                local=self._local, paths=self._paths
+                local=self._local, paths=list(self._paths)
             ).items():
                 dep: Dependency
                 try:

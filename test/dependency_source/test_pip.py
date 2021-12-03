@@ -1,5 +1,6 @@
+import os
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, List
 
 import pip_api
 import pretend  # type: ignore
@@ -61,7 +62,9 @@ def test_pip_source_invalid_version(monkeypatch):
 
     # Return a distribution with a version that doesn't conform to PEP 440.
     # We should log a debug message and skip it.
-    def mock_installed_distributions(local: bool) -> Dict[str, MockDistribution]:
+    def mock_installed_distributions(
+        local: bool, paths: List[os.PathLike]
+    ) -> Dict[str, MockDistribution]:
         return {
             "pytest": MockDistribution("pytest", "0.1"),
             "pip-audit": MockDistribution("pip-audit", "1.0-ubuntu0.21.04.1"),
