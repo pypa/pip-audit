@@ -4,7 +4,8 @@ by `pip-api`.
 """
 
 import logging
-from typing import Iterator, Optional
+from pathlib import Path
+from typing import Iterator, Optional, Sequence
 
 import pip_api
 from packaging.version import InvalidVersion, Version
@@ -32,16 +33,23 @@ class PipSource(DependencySource):
     Wraps `pip` (specifically `pip list`) as a dependency source.
     """
 
-    def __init__(self, *, local: bool = False, state: Optional[AuditState] = None) -> None:
+    def __init__(
+        self, *, local: bool = False, paths: Sequence[Path] = [], state: Optional[AuditState] = None
+    ) -> None:
         """
         Create a new `PipSource`.
 
         `local` determines whether to do a "local-only" list. If `True`, the
         `DependencySource` does not expose globally installed packages.
 
+        `paths` is a list of locations to look for installed packages. If the
+        list is empty, the `DependencySource` will query the current Python
+        environment.
+
         `state` is an optional `AuditState` to use for state callbacks.
         """
         self._local = local
+        self._paths = paths
         self.state = state
 
         if _PIP_VERSION < _MINIMUM_RELIABLE_PIP_VERSION:
@@ -61,7 +69,9 @@ class PipSource(DependencySource):
         # The `pip list` call that underlies `pip_api` could fail for myriad reasons.
         # We collect them all into a single well-defined error.
         try:
-            for (_, dist) in pip_api.installed_distributions(local=self._local).items():
+            for (_, dist) in pip_api.installed_distributions(
+                local=self._local, paths=list(self._paths)
+            ).items():
                 dep: Dependency
                 try:
                     dep = ResolvedDependency(name=dist.name, version=Version(str(dist.version)))

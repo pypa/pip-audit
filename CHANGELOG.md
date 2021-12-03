@@ -10,6 +10,11 @@ All versions prior to 0.0.9 are untracked.
 
 ### Added
 
+* CLI: The `--path <PATH>` flag has been added, allowing users to limit
+  dependency discovery to one or more paths (specified separately)
+  when `pip-audit` is invoked in environment mode
+  ([#148](https://github.com/trailofbits/pip-audit/pull/148))
+
 ### Changed
 
 ### Fixed
