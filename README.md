@@ -4,7 +4,7 @@ pip-audit
 ![CI](https://github.com/trailofbits/pip-audit/workflows/CI/badge.svg)
 [![PyPI version](https://badge.fury.io/py/pip-audit.svg)](https://badge.fury.io/py/pip-audit)
 
-`pip-audit` is a prototype tool for scanning Python environments for packages
+`pip-audit` is a tool for scanning Python environments for packages
 with known vulnerabilities. It uses the Python Packaging Advisory Database
 (https://github.com/pypa/advisory-db) via the
 [PyPI JSON API](https://warehouse.pypa.io/api-reference/json.html) as a source
@@ -27,7 +27,7 @@ python -m pip install pip-audit
 <!-- @begin-pip-audit-help@ -->
 ```
 usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
-                 [-d] [-S] [--desc {on,off,auto}] [--cache-dir CACHE_DIR]
+                 [-d] [-S] [--desc [{on,off,auto}]] [--cache-dir CACHE_DIR]
                  [--progress-spinner {on,off}] [--timeout TIMEOUT]
 
 audit the Python environment for dependencies with known vulnerabilities
@@ -51,7 +51,8 @@ optional arguments:
                         auditing step (default: False)
   -S, --strict          fail the entire audit if dependency collection fails
                         on any dependency (default: False)
-  --desc {on,off,auto}  include a description for each vulnerability; `auto`
+  --desc [{on,off,auto}]
+                        include a description for each vulnerability; `auto`
                         defaults to `on` for the `json` format. This flag has
                         no effect on the `cyclonedx-json` or `cyclonedx-xml`
                         formats. (default: auto)

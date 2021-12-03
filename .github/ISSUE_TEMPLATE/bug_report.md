@@ -28,9 +28,16 @@ A step-by-step list of actions to reproduce the behavior.
 
 A clear and concise description of what you expected to happen.
 
-## Screenshots
+## Screenshots and logs
 
 If applicable, add screenshots to help explain your problem.
+
+Similarly, if applicable and possible, re-run the command with `PIP_AUDIT_LOGLEVEL=debug` exported,
+and paste the logs in the code block below:
+
+```
+Paste logs here, or remove me if not applicable!
+```
 
 ## Platform information
 

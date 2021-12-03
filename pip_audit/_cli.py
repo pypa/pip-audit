@@ -195,6 +195,8 @@ def audit() -> None:
         "--desc",
         type=VulnerabilityDescriptionChoice,
         choices=VulnerabilityDescriptionChoice,
+        nargs="?",
+        const=VulnerabilityDescriptionChoice.On,
         default=VulnerabilityDescriptionChoice.Auto,
         help="include a description for each vulnerability; "
         "`auto` defaults to `on` for the `json` format. This flag has no "

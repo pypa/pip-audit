@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Dict
 
 import pip_api
-import pretend
+import pretend  # type: ignore
 import pytest
 from packaging.version import Version
 

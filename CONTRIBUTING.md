@@ -52,9 +52,32 @@ which you can confirm from the command line:
 pip-audit --version
 ```
 
-If you see something like `pip-audit 0.0.2`, then you're all done! Any changes
+If you see something like `pip-audit X.Y.Z`, then you're all done! Any changes
 you make to the `pip_audit` source tree will take effect immediately in your
 local environment.
+
+### Development practices
+
+Here are some guidelines to follow if you're working on a new feature or changes to
+`pip-audit`'s internal APIs:
+
+* *Keep the `pip-audit` APIs as private as possible*. Nearly all of `pip-audit`'s
+APIs should be private and treated as unstable and unsuitable for public use.
+If you're adding a new module to the source tree, prefix the filename with an underscore to
+emphasize that it's an internal (e.g., `pip_audit/_foo.py` instead of `pip_audit/foo.py`).
+
+* *Keep the CLI consistent with `pip`*. `pip-audit`'s CLI should *roughly* mirror that
+of `pip`. If you're adding a new flag or option to the CLI, check whether `pip` already
+has the same functionality (e.g., HTTP timeout control) and use the same short and long mnemonics.
+
+* *Perform judicious debug logging.* `pip-audit` uses the standard Python
+[`logging`](https://docs.python.org/3/library/logging.html) module. Use
+`logger.debug` early and often -- users who experience errors can submit better
+bug reports when their debug logs include helpful context!
+
+* *Update the [CHANGELOG](./CHANGELOG.md)*. If your changes are public or result
+in changes to `pip-audit`'s CLI, please record them under the "Unreleased" section,
+with an entry in an appropriate subsection ("Added", "Changed", "Removed", or "Fixed").
 
 ### Linting
 
