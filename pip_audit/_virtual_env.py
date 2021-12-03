@@ -107,15 +107,7 @@ class VirtualEnv(venv.EnvBuilder):
             *self._install_args,
         ]
         try:
-            process = subprocess.run(
-                package_install_cmd,
-                check=True,
-                capture_output=True,
-            )
-
-            logger.debug(
-                f"ran: {package_install_cmd}, stdout={process.stdout!r}, stderr={process.stderr!r}"
-            )
+            subprocess.run(package_install_cmd, check=True)
         except subprocess.CalledProcessError as cpe:
             raise VirtualEnvError(f"Failed to install packages: {package_install_cmd}") from cpe
 
