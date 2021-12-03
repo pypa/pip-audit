@@ -28,6 +28,10 @@ All versions prior to 0.0.9 are untracked.
 
 ### Fixed
 
+* Dependency sources: a crash caused by `platform.python_version` returning
+  an version string that couldn't be parsed as a PEP-440 version was fixed
+  ([#175](https://github.com/trailofbits/pip-audit/pull/175))
+
 ### Removed
 
 ## [1.0.1] - 2021-12-02
