@@ -10,7 +10,31 @@ All versions prior to 0.0.9 are untracked.
 
 ### Added
 
+* CLI: The `--path <PATH>` flag has been added, allowing users to limit
+  dependency discovery to one or more paths (specified separately)
+  when `pip-audit` is invoked in environment mode
+  ([#148](https://github.com/trailofbits/pip-audit/pull/148))
+
+* CLI: The `pip-audit` CLI can now be accessed through `python -m pip_audit`.
+  All functionality is identical to the functionality provided by the
+  `pip-audit` entrypoint
+  ([#173](https://github.com/trailofbits/pip-audit/pull/173))
+
 ### Changed
+
+* CLI: `pip-audit` now clears its spinner bar from the terminal upon
+  completion, preventing visual confusion
+  ([#174](https://github.com/trailofbits/pip-audit/pull/174))
+
+### Fixed
+
+* Dependency sources: a crash caused by `platform.python_version` returning
+  an version string that couldn't be parsed as a PEP-440 version was fixed
+  ([#175](https://github.com/trailofbits/pip-audit/pull/175))
+
+### Removed
+
+## [1.0.1] - 2021-12-02
 
 ### Fixed
 
@@ -32,9 +56,7 @@ All versions prior to 0.0.9 are untracked.
   even if the `--cache-dir` flag was provided.
   ([#161](https://github.com/trailofbits/pip-audit/pull/161))
 
-### Removed
-
-## [1.0.0] - 2021-12-1
+## [1.0.0] - 2021-12-01
 
 ### Added
 
@@ -42,7 +64,7 @@ All versions prior to 0.0.9 are untracked.
   stable from this point on, and all changes will comply with
   [Semantic Versioning](https://semver.org/)
 
-## [0.0.9] - 2021-12-1
+## [0.0.9] - 2021-12-01
 
 ### Added
 
@@ -56,5 +78,6 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/trailofbits/pip-audit/compare/v0.0.9...HEAD
+[1.0.1]: https://github.com/trailofbits/pip-audit/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/trailofbits/pip-audit/compare/v0.0.9...v1.0.0
 [0.0.9]: https://github.com/trailofbits/pip-audit/compare/v0.0.8...v0.0.9

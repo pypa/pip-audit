@@ -10,7 +10,7 @@ from resolvelib.resolvers import InconsistentCandidate, ResolutionImpossible
 
 from pip_audit._dependency_source import resolvelib
 from pip_audit._dependency_source.resolvelib import pypi_provider
-from pip_audit._service.interface import Dependency, ResolvedDependency, SkippedDependency
+from pip_audit._service.interface import ResolvedDependency, SkippedDependency
 
 
 def get_package_mock(data):
@@ -29,7 +29,7 @@ def get_metadata_mock():
     return EmailMessage()
 
 
-def check_deps(resolved_deps: List[Dependency], expected_deps: List[Dependency]):
+def check_deps(resolved_deps: List[ResolvedDependency], expected_deps: List[ResolvedDependency]):
     # We don't want to just check that the two lists are equal because:
     # - Some packages install additional dependencies for specific versions of Python. It's only
     #   practical to check that the resolved dependencies contain all the expected ones (but there
@@ -50,7 +50,7 @@ def check_deps(resolved_deps: List[Dependency], expected_deps: List[Dependency])
 def test_resolvelib():
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
-    resolved_deps = dict(resolver.resolve_all([req]))
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert len(resolved_deps) == 1
     expected_deps = [
         ResolvedDependency("flask", Version("2.0.1")),
@@ -63,7 +63,7 @@ def test_resolvelib():
     assert req in resolved_deps
     # Earlier Python versions have some extra dependencies. To avoid conditionals here, let's just
     # check that the dependencies we specify are a subset.
-    check_deps(resolved_deps[req], expected_deps)
+    check_deps(resolved_deps[req], expected_deps)  # type: ignore
 
 
 def test_resolvelib_extras():
@@ -71,7 +71,7 @@ def test_resolvelib_extras():
 
     # First check the dependencies without extras and as a basis for comparison
     req = Requirement("requests>=2.8.1")
-    resolved_deps = dict(resolver.resolve_all([req]))
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert len(resolved_deps) == 1
     expected_deps = [
         ResolvedDependency("requests", Version("2.26.0")),
@@ -81,11 +81,11 @@ def test_resolvelib_extras():
         ResolvedDependency("urllib3", Version("1.26.7")),
     ]
     assert req in resolved_deps
-    check_deps(resolved_deps[req], expected_deps)
+    check_deps(resolved_deps[req], expected_deps)  # type: ignore
 
     # Check that using the `socks` and `use_chardet_on_py3` extras pulls in additional dependencies
     req = Requirement("requests[socks,use_chardet_on_py3]>=2.8.1")
-    resolved_deps = dict(resolver.resolve_all([req]))
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert len(resolved_deps) == 1
     expected_deps.extend(
         [
@@ -94,13 +94,13 @@ def test_resolvelib_extras():
         ]
     )
     assert req in resolved_deps
-    check_deps(resolved_deps[req], expected_deps)
+    check_deps(resolved_deps[req], expected_deps)  # type: ignore
 
 
 def test_resolvelib_sdist():
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("ansible-core==2.11.5")
-    resolved_deps = dict(resolver.resolve_all([req]))
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert len(resolved_deps) == 1
     expected_deps = [
         ResolvedDependency("ansible-core", Version("2.11.5")),
@@ -115,7 +115,7 @@ def test_resolvelib_sdist():
         ResolvedDependency("markupsafe", Version("2.0.1")),
     ]
     assert req in resolved_deps
-    check_deps(resolved_deps[req], expected_deps)
+    check_deps(resolved_deps[req], expected_deps)  # type: ignore
 
 
 def test_resolvelib_wheel_patched(monkeypatch):
@@ -136,7 +136,7 @@ def test_resolvelib_wheel_patched(monkeypatch):
 
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
-    resolved_deps = dict(resolver.resolve_all([req]))
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert req in resolved_deps
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("2.0.1"))]
 
@@ -156,7 +156,7 @@ def test_resolvelib_sdist_patched(monkeypatch, suffix):
 
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
-    resolved_deps = dict(resolver.resolve_all([req]))
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert req in resolved_deps
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("2.0.1"))]
 
@@ -177,7 +177,7 @@ def test_resolvelib_wheel_python_version(monkeypatch):
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
     with pytest.raises(ResolutionImpossible):
-        dict(resolver.resolve_all([req]))
+        dict(resolver.resolve_all(iter([req])))
 
 
 def test_resolvelib_wheel_canonical_name_mismatch(monkeypatch):
@@ -198,7 +198,7 @@ def test_resolvelib_wheel_canonical_name_mismatch(monkeypatch):
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
     with pytest.raises(InconsistentCandidate):
-        dict(resolver.resolve_all([req]))
+        dict(resolver.resolve_all(iter([req])))
 
 
 def test_resolvelib_wheel_invalid_version(monkeypatch):
@@ -219,7 +219,7 @@ def test_resolvelib_wheel_invalid_version(monkeypatch):
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
     with pytest.raises(ResolutionImpossible):
-        dict(resolver.resolve_all([req]))
+        dict(resolver.resolve_all(iter([req])))
 
 
 def test_resolvelib_sdist_invalid_suffix(monkeypatch):
@@ -234,7 +234,7 @@ def test_resolvelib_sdist_invalid_suffix(monkeypatch):
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
     with pytest.raises(ResolutionImpossible):
-        dict(resolver.resolve_all([req]))
+        dict(resolver.resolve_all(iter([req])))
 
 
 def test_resolvelib_http_error(monkeypatch):
@@ -253,7 +253,7 @@ def test_resolvelib_http_error(monkeypatch):
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
     with pytest.raises(resolvelib.ResolveLibResolverError):
-        dict(resolver.resolve_all([req]))
+        dict(resolver.resolve_all(iter([req])))
 
 
 def test_resolvelib_http_notfound(monkeypatch):
@@ -268,7 +268,7 @@ def test_resolvelib_http_notfound(monkeypatch):
 
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
-    resolved_deps = dict(resolver.resolve_all([req]))
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert len(resolved_deps) == 1
     expected_deps = [
         SkippedDependency(name="flask", skip_reason='Could not find project "flask" on PyPI')

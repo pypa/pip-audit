@@ -24,11 +24,19 @@ python -m pip install pip-audit
 
 ## Usage
 
+You can run `pip-audit` as a standalone program, or via `python -m`:
+
+```bash
+pip-audit --help
+python -m pip_audit --help
+```
+
 <!-- @begin-pip-audit-help@ -->
 ```
 usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
                  [-d] [-S] [--desc [{on,off,auto}]] [--cache-dir CACHE_DIR]
                  [--progress-spinner {on,off}] [--timeout TIMEOUT]
+                 [--path PATHS]
 
 audit the Python environment for dependencies with known vulnerabilities
 
@@ -62,6 +70,9 @@ optional arguments:
   --progress-spinner {on,off}
                         display a progress spinner (default: on)
   --timeout TIMEOUT     set the socket timeout (default: 15)
+  --path PATHS          restrict to the specified installation path for
+                        auditing packages; this option can be used multiple
+                        times (default: [])
 ```
 <!-- @end-pip-audit-help@ -->
 

@@ -11,7 +11,6 @@ from email.parser import BytesParser
 from io import BytesIO
 from operator import attrgetter
 from pathlib import Path
-from platform import python_version
 from tempfile import TemporaryDirectory
 from typing import BinaryIO, Iterator, List, Optional, Set, cast
 from urllib.parse import urlparse
@@ -26,9 +25,11 @@ from packaging.version import Version
 from resolvelib.providers import AbstractProvider
 
 from pip_audit._state import AuditState
+from pip_audit._util import python_version
 from pip_audit._virtual_env import VirtualEnv
 
-PYTHON_VERSION = Version(python_version())
+# TODO: Final[Version] when our minimal Python is 3.8.
+PYTHON_VERSION: Version = python_version()
 
 
 class Candidate:
