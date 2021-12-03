@@ -143,7 +143,7 @@ def audit() -> None:
         description="audit the Python environment for dependencies with known vulnerabilities",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    req_source_args = parser.add_mutually_exclusive_group()
+    dep_source_args = parser.add_mutually_exclusive_group()
     parser.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument(
         "-l",
@@ -151,7 +151,7 @@ def audit() -> None:
         action="store_true",
         help="show only results for dependencies in the local environment",
     )
-    req_source_args.add_argument(
+    dep_source_args.add_argument(
         "-r",
         "--requirement",
         type=argparse.FileType("r"),
@@ -217,7 +217,7 @@ def audit() -> None:
     parser.add_argument(
         "--timeout", type=int, default=15, help="set the socket timeout"  # Match the `pip` default
     )
-    req_source_args.add_argument(
+    dep_source_args.add_argument(
         "--path",
         type=Path,
         action="append",
