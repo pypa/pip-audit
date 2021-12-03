@@ -42,6 +42,10 @@ class PipSource(DependencySource):
         `local` determines whether to do a "local-only" list. If `True`, the
         `DependencySource` does not expose globally installed packages.
 
+        `paths` is a list of locations to look for installed packages. If the
+        list is empty, the `DependencySource` will query the current Python
+        environment.
+
         `state` is an optional `AuditState` to use for state callbacks.
         """
         self._local = local
