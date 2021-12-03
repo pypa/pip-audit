@@ -15,6 +15,11 @@ All versions prior to 0.0.9 are untracked.
   when `pip-audit` is invoked in environment mode
   ([#148](https://github.com/trailofbits/pip-audit/pull/148))
 
+* CLI: The `pip-audit` CLI can now be accessed through `python -m pip_audit`.
+  All functionality is identical to the functionality provided by the
+  `pip-audit` entrypoint
+  ([#173](https://github.com/trailofbits/pip-audit/pull/173))
+
 ### Changed
 
 ### Fixed

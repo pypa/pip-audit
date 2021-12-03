@@ -24,6 +24,13 @@ python -m pip install pip-audit
 
 ## Usage
 
+You can run `pip-audit` as a standalone program, or via `python -m`:
+
+```bash
+pip-audit --help
+python -m pip_audit --help
+```
+
 <!-- @begin-pip-audit-help@ -->
 ```
 usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
