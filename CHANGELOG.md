@@ -22,6 +22,10 @@ All versions prior to 0.0.9 are untracked.
 
 ### Changed
 
+* CLI: `pip-audit` now clears its spinner bar from the terminal upon
+  completion, preventing visual confusion
+  ([#174](https://github.com/trailofbits/pip-audit/pull/174))
+
 ### Fixed
 
 ### Removed

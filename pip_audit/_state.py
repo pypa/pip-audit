@@ -121,6 +121,19 @@ class AuditSpinner(AuditState, BaseSpinner):  # pragma: no cover
         line = f"{self.phases[i]} {self.message}"
         self._writeln_truncated(line)
 
+    def finish(self) -> None:
+        """
+        Finish the progress spinner.
+
+        This method is overridden from `BaseSpinner` to customize the spinner's termination
+        behavior: instead of finishing by printing a newline and leaving the last spinner state
+        on the terminal, we clear the spinner entirely and reset the line's state, leaving
+        no trace of the spinner at all.
+        """
+        self.writeln("")
+        self.file.write("\r")
+        self.file.flush()
+
     def update_state(self, message: str) -> None:
         """
         Update the state message for the progress spinner.
