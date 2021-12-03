@@ -7,6 +7,7 @@ import logging
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 from subprocess import run
 from tempfile import NamedTemporaryFile
@@ -82,7 +83,29 @@ class _SafeFileCache(FileCache):
             io.flush()
             os.fsync(io.fileno())
 
-            os.replace(io.name, name)
+            # NOTE(ww): On Windows, our attempt to atomically rename the cached item
+            # can fail if Windows Defender (or another AV) races against the `fsync`
+            # above and opens the file before we get to it.
+            # Ideally, we would accommodate this by opening the file with some Windows-specific
+            # flags for shared access, but Python's file and tempfile APIs don't expose
+            # control over those flags. Instead, we give ourselves three retries,
+            # with a bit of time in between each, in hopes of shaking the AV off.
+            for attempt in range(3):
+                try:
+                    os.replace(io.name, name)
+                except Exception as e:
+                    logger.debug(f"atomic replace (try={attempt}) failed: {e}")
+                    # NOTE: We sleep in the exception handler rather than the `try` body
+                    # to avoid punishing users whose OSes have reasonable rename semantics.
+                    time.sleep(0.05)
+                    continue
+                else:
+                    break
+            else:
+                logger.debug("exhausted all attempts to update cache")
+                raise Exception(
+                    "could not atomically rename cache key (is another process interfering?)"
+                )
 
     def delete(self, key: str) -> None:  # pragma: no cover
         try:
