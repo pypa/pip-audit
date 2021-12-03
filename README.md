@@ -13,6 +13,14 @@ of vulnerability reports.
 This project is developed by [Trail of Bits](https://www.trailofbits.com/) with
 support from Google. This is not an official Google product.
 
+- [Installation](#installation)
+- [Usage](#usage)
+- [Examples](#examples)
+- [Security Model](#security-model)
+- [Licensing](#licensing)
+- [Contributing](#contributing)
+- [Code of Conduct](#code-of-conduct)
+
 ## Installation
 
 `pip-audit` requires Python 3.6 or newer, and can be installed directly via
@@ -168,6 +176,43 @@ Found 2 known vulnerabilities in 1 packages
   }
 ]
 ```
+
+## Security Model
+
+This section exists to describe the security assumptions you **can** and **must not**
+make when using `pip-audit`.
+
+TL;DR: **If you wouldn't `pip install` it, you should not `pip audit` it.**
+
+`pip-audit` is a tool for auditing Python environments for packages with
+*known vulnerabilities*. A "known vulnerability" is a flaw in a package that,
+if uncorrected, *might* allow a malicious actor to perform unintended actions.
+
+For example: `somepackage==1.2.3` might have a *known vulnerability* in the form
+of a deserialization bug. An attacker *might* be able to exploit that
+vulnerability, depending on how your code (or your other dependencies) use
+`somepackage`.
+
+`pip-audit` **can** protect you against known vulnerabilities by telling
+you when you have them, and how you should upgrade them. For example,
+if you have `somepackage==1.2.3` in your environment, `pip-audit` **can** tell
+you that it needs to be upgraded to `1.2.4`.
+
+You **can** assume that `pip-audit` will make a best effort to *fully resolve*
+all of your Python dependencies and *either* fully audit each *or* explicitly
+state which ones it has skipped, as well as why it has skipped them.
+
+`pip-audit` is **not** a static code analyzer. It analyzes dependency trees,
+not code, and it it **cannot** guarantee that arbitrary dependency resolutions
+occur statically. To understand why this is, refer to Dustin Ingram's
+[excellent post on dependency resolution in Python](https://dustingram.com/articles/2018/03/05/why-pypi-doesnt-know-dependencies/).
+
+As such: you **must not** assume that `pip-audit` will **defend** you against
+malicious packages. In particular, it is **incorrect** to treat
+`pip-audit -r INPUT` as a "more secure" variant of `pip-audit`. For all extents
+and purposes, `pip-audit -r INPUT` is functionally equivalent to
+`pip install -r INPUT`, with a small amount of **non-security isolation** to
+conflicts with any of your local environments.
 
 ## Licensing
 
