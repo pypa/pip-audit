@@ -188,11 +188,6 @@ TL;DR: **If you wouldn't `pip install` it, you should not `pip audit` it.**
 *known vulnerabilities*. A "known vulnerability" is a flaw in a package that,
 if uncorrected, *might* allow a malicious actor to perform unintended actions.
 
-For example: `somepackage==1.2.3` might have a *known vulnerability* in the form
-of a deserialization bug. An attacker *might* be able to exploit that
-vulnerability, depending on how your code (or your other dependencies) use
-`somepackage`.
-
 `pip-audit` **can** protect you against known vulnerabilities by telling
 you when you have them, and how you should upgrade them. For example,
 if you have `somepackage==1.2.3` in your environment, `pip-audit` **can** tell
