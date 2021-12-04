@@ -209,7 +209,7 @@ occur statically. To understand why this is, refer to Dustin Ingram's
 
 As such: you **must not** assume that `pip-audit` will **defend** you against
 malicious packages. In particular, it is **incorrect** to treat
-`pip-audit -r INPUT` as a "more secure" variant of `pip-audit`. For all extents
+`pip-audit -r INPUT` as a "more secure" variant of `pip-audit`. For all intents
 and purposes, `pip-audit -r INPUT` is functionally equivalent to
 `pip install -r INPUT`, with a small amount of **non-security isolation** to
 conflicts with any of your local environments.
