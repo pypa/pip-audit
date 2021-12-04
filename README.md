@@ -212,7 +212,7 @@ malicious packages. In particular, it is **incorrect** to treat
 `pip-audit -r INPUT` as a "more secure" variant of `pip-audit`. For all intents
 and purposes, `pip-audit -r INPUT` is functionally equivalent to
 `pip install -r INPUT`, with a small amount of **non-security isolation** to
-conflicts with any of your local environments.
+avoid conflicts with any of your local environments.
 
 ## Licensing
 
