@@ -198,7 +198,7 @@ all of your Python dependencies and *either* fully audit each *or* explicitly
 state which ones it has skipped, as well as why it has skipped them.
 
 `pip-audit` is **not** a static code analyzer. It analyzes dependency trees,
-not code, and it it **cannot** guarantee that arbitrary dependency resolutions
+not code, and it **cannot** guarantee that arbitrary dependency resolutions
 occur statically. To understand why this is, refer to Dustin Ingram's
 [excellent post on dependency resolution in Python](https://dustingram.com/articles/2018/03/05/why-pypi-doesnt-know-dependencies/).
 
