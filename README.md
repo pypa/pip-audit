@@ -13,14 +13,6 @@ of vulnerability reports.
 This project is developed by [Trail of Bits](https://www.trailofbits.com/) with
 support from Google. This is not an official Google product.
 
-- [Installation](#installation)
-- [Usage](#usage)
-- [Examples](#examples)
-- [Security Model](#security-model)
-- [Licensing](#licensing)
-- [Contributing](#contributing)
-- [Code of Conduct](#code-of-conduct)
-
 ## Installation
 
 `pip-audit` requires Python 3.6 or newer, and can be installed directly via
