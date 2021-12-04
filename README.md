@@ -185,8 +185,9 @@ make when using `pip-audit`.
 TL;DR: **If you wouldn't `pip install` it, you should not `pip audit` it.**
 
 `pip-audit` is a tool for auditing Python environments for packages with
-*known vulnerabilities*. A "known vulnerability" is a flaw in a package that,
-if uncorrected, *might* allow a malicious actor to perform unintended actions.
+*known vulnerabilities*. A "known vulnerability" is a publicly reported flaw in
+a package that, if uncorrected, *might* allow a malicious actor to perform
+unintended actions.
 
 `pip-audit` **can** protect you against known vulnerabilities by telling
 you when you have them, and how you should upgrade them. For example,
