@@ -20,6 +20,12 @@ All versions prior to 0.0.9 are untracked.
   `pip-audit` entrypoint
   ([#173](https://github.com/trailofbits/pip-audit/pull/173))
 
+* CLI: The `--verbose` flag has been added, allowing users to receive more
+  more verbose output from `pip-audit`. Supplying the `--verbose` flag
+  overrides the `PIP_AUDIT_LOGLEVEL` environment variable and is equivalent to
+  setting it to `debug`
+  ([#185](https://github.com/trailofbits/pip-audit/pull/185))
+
 ### Changed
 
 * CLI: `pip-audit` now clears its spinner bar from the terminal upon
