@@ -77,6 +77,7 @@ class VirtualEnv(venv.EnvBuilder):
             )  # pragma: no cover
 
         # Firstly, upgrade our `pip` versions since `ensurepip` can leave us with an old version
+        # and install `wheel` in case our package dependencies are offered as wheels
         pip_upgrade_cmd = [
             context.env_exe,
             "-m",
