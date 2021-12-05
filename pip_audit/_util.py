@@ -1,5 +1,5 @@
 """
-Utilities functions for `pip-audit`.
+Utility functions for `pip-audit`.
 """
 
 import sys

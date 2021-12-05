@@ -32,6 +32,10 @@ All versions prior to 0.0.9 are untracked.
   an version string that couldn't be parsed as a PEP-440 version was fixed
   ([#175](https://github.com/trailofbits/pip-audit/pull/175))
 
+* Dependency sources: a crash caused by incorrect assumptions about
+  the structure of source distributions was fixed
+  ([#166](https://github.com/trailofbits/pip-audit/pull/166))
+
 ### Removed
 
 ## [1.0.1] - 2021-12-02
