@@ -2,7 +2,14 @@
 Output format interfaces and implementations for `pip-audit`.
 """
 
-from .columns import ColumnsFormat  # noqa: F401
-from .cyclonedx import CycloneDxFormat  # noqa: F401
-from .interface import VulnerabilityFormat  # noqa: F401
-from .json import JsonFormat  # noqa: F401
+from .columns import ColumnsFormat
+from .cyclonedx import CycloneDxFormat
+from .interface import VulnerabilityFormat
+from .json import JsonFormat
+
+__all__ = [
+    "ColumnsFormat",
+    "CycloneDxFormat",
+    "VulnerabilityFormat",
+    "JsonFormat",
+]
