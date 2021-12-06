@@ -5,7 +5,7 @@ by `pip-api`.
 
 import logging
 from pathlib import Path
-from typing import Iterator, Optional, Sequence
+from typing import Iterator, Sequence
 
 import pip_api
 from packaging.version import InvalidVersion, Version
@@ -34,7 +34,7 @@ class PipSource(DependencySource):
     """
 
     def __init__(
-        self, *, local: bool = False, paths: Sequence[Path] = [], state: Optional[AuditState] = None
+        self, *, local: bool = False, paths: Sequence[Path] = [], state: AuditState = AuditState()
     ) -> None:
         """
         Create a new `PipSource`.
@@ -46,7 +46,7 @@ class PipSource(DependencySource):
         list is empty, the `DependencySource` will query the current Python
         environment.
 
-        `state` is an optional `AuditState` to use for state callbacks.
+        `state` is an `AuditState` to use for state callbacks.
         """
         self._local = local
         self._paths = paths
@@ -75,10 +75,7 @@ class PipSource(DependencySource):
                 dep: Dependency
                 try:
                     dep = ResolvedDependency(name=dist.name, version=Version(str(dist.version)))
-                    if self.state is not None:
-                        self.state.update_state(
-                            f"Collecting {dep.name} ({dep.version})"
-                        )  # pragma: no cover
+                    self.state.update_state(f"Collecting {dep.name} ({dep.version})")
                 except InvalidVersion:
                     skip_reason = (
                         "Package has invalid version and could not be audited: "

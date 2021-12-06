@@ -84,7 +84,7 @@ class _StateActor(ABC):
         override this to do nothing if their state management requires no
         initialization step.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
     def finalize(self) -> None:
@@ -93,7 +93,7 @@ class _StateActor(ABC):
         state is done changing. Implementors should override this to do nothing
         if their state management requires no finalization step.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class AuditSpinner(_StateActor, BaseSpinner):  # pragma: no cover
