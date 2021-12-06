@@ -30,13 +30,12 @@ class OsvService(VulnerabilityService):
         Create a new `OsvService`.
 
         `cache_dir` is an optional cache directory to use, for caching and reusing OSV API
-        requests. If `None`, `pip-audit` will attempt to use `pip`'s cache directory before falling
-        back on its own default cache directory.
+        requests. If `None`, `pip-audit` will use its own internal caching directory.
 
         `timeout` is an optional argument to control how many seconds the component should wait for
         responses to network requests.
         """
-        self.session = caching_session(cache_dir)
+        self.session = caching_session(cache_dir, use_pip=False)
         self.timeout = timeout
 
     def query(self, spec: Dependency) -> Tuple[Dependency, List[VulnerabilityResult]]:

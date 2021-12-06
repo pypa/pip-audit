@@ -26,6 +26,8 @@ _MINIMUM_PIP_VERSION = Version("20.1")
 
 _PIP_VERSION = Version(str(pip_api.PIP_VERSION))
 
+_PIP_AUDIT_INTERNAL_CACHE = Path.home() / ".pip-audit-cache"
+
 
 def _get_pip_cache() -> Path:
     # Unless the cache directory is specifically set by the `--cache-dir` option, we try to share
@@ -40,20 +42,29 @@ def _get_pip_cache() -> Path:
     return http_cache_dir
 
 
-def _get_cache_dir(custom_cache_dir: Optional[Path]) -> Path:
+def _get_cache_dir(custom_cache_dir: Optional[Path], *, use_pip: bool = True) -> Path:
+    """
+    Returns a directory path suitable for HTTP caching.
+
+    The directory is **not** guaranteed to exist.
+    """
+
+    # If the user has explicitly requested a directory, pass it through unscathed.
     if custom_cache_dir is not None:
         return custom_cache_dir
 
-    pip_cache_dir = _get_pip_cache() if _PIP_VERSION >= _MINIMUM_PIP_VERSION else None
-    if pip_cache_dir is not None:  # pragma: no cover
-        return pip_cache_dir
+    if use_pip:
+        pip_cache_dir = _get_pip_cache() if _PIP_VERSION >= _MINIMUM_PIP_VERSION else None
+        if pip_cache_dir is not None:
+            return pip_cache_dir
+        else:
+            logger.warning(
+                f"Warning: pip {_PIP_VERSION} doesn't support the `cache dir` subcommand, "
+                f"using {_PIP_AUDIT_INTERNAL_CACHE} instead"
+            )
+            return _PIP_AUDIT_INTERNAL_CACHE
     else:
-        fallback_path = Path.home() / ".pip-audit-cache"
-        logger.warning(
-            f"Warning: pip {_PIP_VERSION} doesn't support the `cache dir` subcommand, unable to "
-            f'reuse the `pip` HTTP cache and using "{fallback_path}" instead'
-        )
-        return fallback_path
+        return _PIP_AUDIT_INTERNAL_CACHE
 
 
 class _SafeFileCache(FileCache):
@@ -123,10 +134,18 @@ class _SafeFileCache(FileCache):
                 self._logged_warning = True
 
 
-def caching_session(cache_dir: Optional[Path]) -> CacheControl:
+def caching_session(cache_dir: Optional[Path], *, use_pip=False) -> CacheControl:
     """
     Return a `requests` style session, with suitable caching middleware.
 
     Uses the given `cache_dir` for the HTTP cache.
+
+    `use_pip` determines how the fallback cache directory is determined, if `cache_dir` is None.
+    When `use_pip` is `False`, `caching_session` will use a `pip-audit` internal cache directory.
+    When `use_pip` is `True`, `caching_session` will attempt to discover `pip`'s cache
+    directory, falling back on the internal `pip-audit` cache directory if the user's
+    version of `pip` is too old.
     """
-    return CacheControl(requests.Session(), cache=_SafeFileCache(_get_cache_dir(cache_dir)))
+    return CacheControl(
+        requests.Session(), cache=_SafeFileCache(_get_cache_dir(cache_dir, use_pip=use_pip))
+    )

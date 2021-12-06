@@ -4,7 +4,7 @@ import pretend  # type: ignore
 from packaging.version import Version
 
 import pip_audit._cache as cache
-from pip_audit._cache import _get_cache_dir
+from pip_audit._cache import _get_cache_dir, _get_pip_cache
 
 
 def test_get_cache_dir(monkeypatch):
@@ -15,8 +15,21 @@ def test_get_cache_dir(monkeypatch):
     get_pip_cache = pretend.call_recorder(lambda: "/fake/pip/cache/dir")
     monkeypatch.setattr(cache, "_get_pip_cache", get_pip_cache)
 
-    cache_dir = _get_cache_dir(None)
+    # When `pip cache dir` works, we use it. In this case, it's mocked.
+    cache_dir = _get_cache_dir(None, use_pip=True)
     assert str(cache_dir) == "/fake/pip/cache/dir"
+
+
+def test_get_pip_cache():
+    # Actually running `pip cache dir` gets us some path that ends with "http"
+    cache_dir = _get_pip_cache()
+    assert cache_dir.stem == "http"
+
+
+def test_get_cache_dir_do_not_use_pip():
+    # Even with None, we never use the pip cache if we're told not to.
+    cache_dir = _get_cache_dir(None, use_pip=False)
+    assert cache_dir == Path.home() / ".pip-audit-cache"
 
 
 def test_get_cache_dir_old_pip(monkeypatch):
@@ -27,18 +40,10 @@ def test_get_cache_dir_old_pip(monkeypatch):
     cache_dir = _get_cache_dir(Path("/tmp/foo/cache_dir"))
     assert str(cache_dir) == "/tmp/foo/cache_dir"
 
-    # Mock out home since this is going to be different across systems
-    class MockPath:
-        @staticmethod
-        def home():
-            return Path("/Users/foo")
-
     # In this case, we can't query `pip` to figure out where its HTTP cache is
     # Instead, we use `~/.pip-audit-cache`
-    monkeypatch.setattr(cache, "Path", MockPath)
-
     cache_dir = _get_cache_dir(None)
-    assert str(cache_dir) == "/Users/foo/.pip-audit-cache"
+    assert cache_dir == Path.home() / ".pip-audit-cache"
 
 
 def test_cache_warns_about_old_pip(monkeypatch, cache_dir):
