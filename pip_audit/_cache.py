@@ -108,7 +108,9 @@ class _SafeFileCache(FileCache):
             io.flush()
             os.fsync(io.fileno())
 
-            os.replace(io.name, name)
+        # NOTE(ww): Windows won't let us rename the temporary file until it's closed,
+        # which is why we call `os.replace()` here rather than in the `with` block above.
+        os.replace(io.name, name)
 
     def delete(self, key: str) -> None:  # pragma: no cover
         try:
