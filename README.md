@@ -16,8 +16,9 @@ support from Google. This is not an official Google product.
 ## Features
 
 * Support for auditing both local environments and requirements-style files
-* Human and machine-readable output formats (columnar, JSON)
 * Support for multiple vulnerability services (PyPI, OSV)
+* Support for emitting SBOMs as CycloneDX XML or JSON
+* Human and machine-readable output formats (columnar, JSON)
 * "Strict" and "dry-run" modes for high assurance and evaluation
 * Seamlessly reuses your local `pip` caches
 
