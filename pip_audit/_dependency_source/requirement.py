@@ -66,7 +66,7 @@ class RequirementSource(DependencySource):
                         if dep in collected:
                             continue
 
-                        if dep.is_skipped():
+                        if dep.is_skipped():  # pragma: no cover
                             dep = cast(SkippedDependency, dep)
                             self.state.update_state(f"Skipping {dep.name}: {dep.skip_reason}")
                         else:
