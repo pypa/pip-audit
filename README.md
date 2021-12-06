@@ -13,6 +13,14 @@ of vulnerability reports.
 This project is developed by [Trail of Bits](https://www.trailofbits.com/) with
 support from Google. This is not an official Google product.
 
+## Features
+
+* Support for auditing both local environments and requirements-style files
+* Human and machine-readable output formats (columnar, JSON)
+* Support for multiple vulnerability services (PyPI, OSV)
+* "Strict" and "dry-run" modes for high assurance and evaluation
+* Seamlessly reuses your local `pip` caches
+
 ## Installation
 
 `pip-audit` requires Python 3.6 or newer, and can be installed directly via
