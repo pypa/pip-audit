@@ -42,6 +42,9 @@ All versions prior to 0.0.9 are untracked.
   the structure of source distributions was fixed
   ([#166](https://github.com/trailofbits/pip-audit/pull/166))
 
+* Vulnerability sources: a performance issue on Windows caused by cache failures
+  was fixed ([#178](https://github.com/trailofbits/pip-audit/pull/178))
+
 ### Removed
 
 ## [1.0.1] - 2021-12-02

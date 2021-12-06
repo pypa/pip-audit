@@ -71,7 +71,7 @@ class _SafeFileCache(FileCache):
         except (IOError, OSError):  # pragma: no cover
             pass
 
-        # We don't want to use lock files since `pip` isn't going to recognise those. We should
+        # We don't want to use lock files since `pip` isn't going to recognize those. We should
         # write to the cache in a similar way to how `pip` does it. We create a temporary file,
         # then atomically replace the actual cache key's filename with it. This ensures
         # that other concurrent `pip` or `pip-audit` instances don't read partial data.
@@ -82,7 +82,9 @@ class _SafeFileCache(FileCache):
             io.flush()
             os.fsync(io.fileno())
 
-            os.replace(io.name, name)
+        # NOTE(ww): Windows won't let us rename the temporary file until it's closed,
+        # which is why we call `os.replace()` here rather than in the `with` block above.
+        os.replace(io.name, name)
 
     def delete(self, key: str) -> None:  # pragma: no cover
         try:
