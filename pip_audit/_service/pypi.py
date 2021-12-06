@@ -7,7 +7,6 @@ import logging
 import os
 import subprocess
 import sys
-import time
 from pathlib import Path
 from subprocess import run
 from tempfile import NamedTemporaryFile
@@ -72,7 +71,7 @@ class _SafeFileCache(FileCache):
         except (IOError, OSError):  # pragma: no cover
             pass
 
-        # We don't want to use lock files since `pip` isn't going to recognise those. We should
+        # We don't want to use lock files since `pip` isn't going to recognize those. We should
         # write to the cache in a similar way to how `pip` does it. We create a temporary file,
         # then atomically replace the actual cache key's filename with it. This ensures
         # that other concurrent `pip` or `pip-audit` instances don't read partial data.
@@ -83,29 +82,9 @@ class _SafeFileCache(FileCache):
             io.flush()
             os.fsync(io.fileno())
 
-            # NOTE(ww): On Windows, our attempt to atomically rename the cached item
-            # can fail if Windows Defender (or another AV) races against the `fsync`
-            # above and opens the file before we get to it.
-            # Ideally, we would accommodate this by opening the file with some Windows-specific
-            # flags for shared access, but Python's file and tempfile APIs don't expose
-            # control over those flags. Instead, we give ourselves three retries,
-            # with a bit of time in between each, in hopes of shaking the AV off.
-            for attempt in range(3):
-                try:
-                    os.replace(io.name, name)
-                except Exception as e:
-                    logger.debug(f"atomic replace (try={attempt}) failed: {e}")
-                    # NOTE: We sleep in the exception handler rather than the `try` body
-                    # to avoid punishing users whose OSes have reasonable rename semantics.
-                    time.sleep(0.05)
-                    continue
-                else:
-                    break
-            else:
-                logger.debug("exhausted all attempts to update cache")
-                raise Exception(
-                    "could not atomically rename cache key (is another process interfering?)"
-                )
+        # NOTE(ww): Windows won't let us rename the temporary file until it's closed,
+        # which is why we call `os.replace()` here rather than in the `with` block above.
+        os.replace(io.name, name)
 
     def delete(self, key: str) -> None:  # pragma: no cover
         try:
