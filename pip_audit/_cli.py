@@ -226,8 +226,19 @@ def audit() -> None:
         help="restrict to the specified installation path for auditing packages; "
         "this option can be used multiple times",
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help="give more output; this setting overrides the `PIP_AUDIT_LOGLEVEL` variable and is "
+        "equivalent to setting it to `debug`",
+    )
 
     args = parser.parse_args()
+    if args.verbose:
+        logging.root.setLevel("DEBUG")
+
     logger.debug(f"parsed arguments: {args}")
 
     service = args.vulnerability_service.to_service(args.timeout, args.cache_dir)
