@@ -3,6 +3,7 @@ Create virtual environments with a custom set of packages and inspect their depe
 """
 
 import json
+import logging
 import subprocess
 import venv
 from typing import Iterator, List, Optional, Tuple
@@ -10,6 +11,8 @@ from typing import Iterator, List, Optional, Tuple
 from packaging.version import Version
 
 from ._state import AuditState
+
+logger = logging.getLogger(__name__)
 
 
 class VirtualEnv(venv.EnvBuilder):
@@ -61,6 +64,9 @@ class VirtualEnv(venv.EnvBuilder):
         We do a few things in our custom post-setup:
         - Upgrade the `pip` version. We'll be using `pip list` with the `--format json` option which
           requires a non-ancient version for `pip`.
+        - Install `wheel`. When our packages install their own dependencies, they might be able
+          to do so through wheels, which are much faster and don't require us to run
+          setup scripts.
         - Execute the custom install command.
         - Call `pip list`, and parse the output into a list of packages to be returned from when the
           `installed_packages` property is queried.
@@ -71,7 +77,16 @@ class VirtualEnv(venv.EnvBuilder):
             )  # pragma: no cover
 
         # Firstly, upgrade our `pip` versions since `ensurepip` can leave us with an old version
-        pip_upgrade_cmd = [context.env_exe, "-m", "pip", "install", "--upgrade", "pip"]
+        # and install `wheel` in case our package dependencies are offered as wheels
+        pip_upgrade_cmd = [
+            context.env_exe,
+            "-m",
+            "pip",
+            "install",
+            "--upgrade",
+            "pip",
+            "wheel",
+        ]
         try:
             subprocess.run(
                 pip_upgrade_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
@@ -85,14 +100,15 @@ class VirtualEnv(venv.EnvBuilder):
             )  # pragma: no cover
 
         # Install our packages
-        package_install_cmd = [context.env_exe, "-m", "pip", "install", *self._install_args]
+        package_install_cmd = [
+            context.env_exe,
+            "-m",
+            "pip",
+            "install",
+            *self._install_args,
+        ]
         try:
-            subprocess.run(
-                package_install_cmd,
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+            subprocess.run(package_install_cmd, check=True)
         except subprocess.CalledProcessError as cpe:
             raise VirtualEnvError(f"Failed to install packages: {package_install_cmd}") from cpe
 

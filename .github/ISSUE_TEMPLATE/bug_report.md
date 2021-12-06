@@ -32,7 +32,7 @@ A clear and concise description of what you expected to happen.
 
 If applicable, add screenshots to help explain your problem.
 
-Similarly, if applicable and possible, re-run the command with `PIP_AUDIT_LOGLEVEL=debug` exported,
+Similarly, if applicable and possible, re-run the command with `--verbose`,
 and paste the logs in the code block below:
 
 ```

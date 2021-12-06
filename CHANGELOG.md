@@ -20,6 +20,12 @@ All versions prior to 0.0.9 are untracked.
   `pip-audit` entrypoint
   ([#173](https://github.com/trailofbits/pip-audit/pull/173))
 
+* CLI: The `--verbose` flag has been added, allowing users to receive more
+  more verbose output from `pip-audit`. Supplying the `--verbose` flag
+  overrides the `PIP_AUDIT_LOGLEVEL` environment variable and is equivalent to
+  setting it to `debug`
+  ([#185](https://github.com/trailofbits/pip-audit/pull/185))
+
 ### Changed
 
 * CLI: `pip-audit` now clears its spinner bar from the terminal upon
@@ -31,6 +37,10 @@ All versions prior to 0.0.9 are untracked.
 * Dependency sources: a crash caused by `platform.python_version` returning
   an version string that couldn't be parsed as a PEP-440 version was fixed
   ([#175](https://github.com/trailofbits/pip-audit/pull/175))
+
+* Dependency sources: a crash caused by incorrect assumptions about
+  the structure of source distributions was fixed
+  ([#166](https://github.com/trailofbits/pip-audit/pull/166))
 
 ### Removed
 
