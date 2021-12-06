@@ -17,10 +17,9 @@ support from Google. This is not an official Google product.
 
 * Support for auditing both local environments and requirements-style files
 * Support for multiple vulnerability services ([PyPI](https://warehouse.pypa.io/api-reference/json.html#known-vulnerabilities), [OSV](https://osv.dev/docs/))
-* Support for emitting SBOMs as CycloneDX XML or JSON
+* Support for emitting [SBOMs](https://en.wikipedia.org/wiki/Software_bill_of_materials) as CycloneDX XML or JSON
 * Human and machine-readable output formats (columnar, JSON)
-* "Strict" and "dry-run" modes for high assurance and evaluation
-* Seamlessly reuses your local `pip` caches
+* Seamlessly reuses your existing local `pip` caches
 
 ## Installation
 
