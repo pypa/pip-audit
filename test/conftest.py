@@ -1,3 +1,5 @@
+import tempfile
+
 import pytest
 from packaging.version import Version
 
@@ -47,3 +49,10 @@ def dep_source(spec):
             yield spec("1.0.1")
 
     return Source
+
+
+@pytest.fixture(scope="session")
+def cache_dir():
+    cache = tempfile.TemporaryDirectory()
+    yield cache.name
+    cache.cleanup()

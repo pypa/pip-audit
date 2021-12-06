@@ -3,12 +3,14 @@ Functionality for using the [OSV](https://osv.dev/) API as a `VulnerabilityServi
 """
 
 import json
+from pathlib import Path
 from typing import List, Optional, Tuple, cast
 
 import requests
 from packaging.version import Version
 
-from .interface import (
+from pip_audit._cache import caching_session
+from pip_audit._service.interface import (
     Dependency,
     ResolvedDependency,
     ServiceError,
@@ -23,13 +25,17 @@ class OsvService(VulnerabilityService):
     package vulnerability information.
     """
 
-    def __init__(self, timeout: Optional[int] = None):
+    def __init__(self, cache_dir: Optional[Path] = None, timeout: Optional[int] = None):
         """
         Create a new `OsvService`.
+
+        `cache_dir` is an optional cache directory to use, for caching and reusing OSV API
+        requests. If `None`, `pip-audit` will use its own internal caching directory.
 
         `timeout` is an optional argument to control how many seconds the component should wait for
         responses to network requests.
         """
+        self.session = caching_session(cache_dir, use_pip=False)
         self.timeout = timeout
 
     def query(self, spec: Dependency) -> Tuple[Dependency, List[VulnerabilityResult]]:
@@ -47,7 +53,7 @@ class OsvService(VulnerabilityService):
             "package": {"name": spec.canonical_name, "ecosystem": "PyPI"},
             "version": str(spec.version),
         }
-        response: requests.Response = requests.post(
+        response: requests.Response = self.session.post(
             url=url,
             data=json.dumps(query),
             timeout=self.timeout,
