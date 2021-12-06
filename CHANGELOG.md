@@ -10,6 +10,16 @@ All versions prior to 0.0.9 are untracked.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+## [1.1.0] - 2021-12-06
+
+### Added
+
 * CLI: The `--path <PATH>` flag has been added, allowing users to limit
   dependency discovery to one or more paths (specified separately)
   when `pip-audit` is invoked in environment mode
@@ -44,8 +54,6 @@ All versions prior to 0.0.9 are untracked.
 
 * Vulnerability sources: a performance issue on Windows caused by cache failures
   was fixed ([#178](https://github.com/trailofbits/pip-audit/pull/178))
-
-### Removed
 
 ## [1.0.1] - 2021-12-02
 
@@ -91,6 +99,7 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/trailofbits/pip-audit/compare/v0.0.9...HEAD
+[1.1.0]: https://github.com/trailofbits/pip-audit/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/trailofbits/pip-audit/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/trailofbits/pip-audit/compare/v0.0.9...v1.0.0
 [0.0.9]: https://github.com/trailofbits/pip-audit/compare/v0.0.8...v0.0.9
