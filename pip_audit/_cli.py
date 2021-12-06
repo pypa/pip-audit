@@ -67,7 +67,7 @@ class VulnerabilityServiceChoice(str, enum.Enum):
 
     def to_service(self, timeout: int, cache_dir: Optional[Path]) -> VulnerabilityService:
         if self is VulnerabilityServiceChoice.Osv:
-            return OsvService(timeout)
+            return OsvService(cache_dir, timeout)
         elif self is VulnerabilityServiceChoice.Pypi:
             return PyPIService(cache_dir, timeout)
         else:

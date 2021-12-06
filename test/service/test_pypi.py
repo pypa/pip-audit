@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Dict, List
 
 import pretend  # type: ignore
@@ -7,7 +6,6 @@ import requests
 from packaging.version import Version
 
 import pip_audit._service as service
-from pip_audit._service.pypi import _get_cache_dir
 
 
 def get_mock_session(func):
@@ -63,7 +61,7 @@ def test_pypi_http_notfound(monkeypatch, cache_dir):
         return MockResponse()
 
     monkeypatch.setattr(
-        service.pypi, "_get_cached_session", lambda _: get_mock_session(get_error_response)
+        service.pypi, "caching_session", lambda _: get_mock_session(get_error_response)
     )
     logger = pretend.stub(debug=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(service.pypi, "logger", logger)
@@ -97,7 +95,7 @@ def test_pypi_http_error(monkeypatch, cache_dir):
         return MockResponse()
 
     monkeypatch.setattr(
-        service.pypi, "_get_cached_session", lambda _: get_mock_session(get_error_response)
+        service.pypi, "caching_session", lambda _: get_mock_session(get_error_response)
     )
 
     pypi = service.PyPIService(cache_dir)
@@ -126,7 +124,7 @@ def test_pypi_mocked_response(monkeypatch, cache_dir):
         return MockResponse()
 
     monkeypatch.setattr(
-        service.pypi, "_get_cached_session", lambda _: get_mock_session(get_mock_response)
+        service.pypi, "caching_session", lambda _: get_mock_session(get_mock_response)
     )
 
     pypi = service.PyPIService(cache_dir)
@@ -156,7 +154,7 @@ def test_pypi_no_vuln_key(monkeypatch, cache_dir):
         return MockResponse()
 
     monkeypatch.setattr(
-        service.pypi, "_get_cached_session", lambda _: get_mock_session(get_mock_response)
+        service.pypi, "caching_session", lambda _: get_mock_session(get_mock_response)
     )
 
     pypi = service.PyPIService(cache_dir)
@@ -189,70 +187,13 @@ def test_pypi_invalid_version(monkeypatch, cache_dir):
         return MockResponse()
 
     monkeypatch.setattr(
-        service.pypi, "_get_cached_session", lambda _: get_mock_session(get_mock_response)
+        service.pypi, "caching_session", lambda _: get_mock_session(get_mock_response)
     )
 
     pypi = service.PyPIService(cache_dir)
     dep = service.ResolvedDependency("foo", Version("1.0"))
     with pytest.raises(service.ServiceError):
         dict(pypi.query_all(iter([dep])))
-
-
-def test_pypi_warns_about_old_pip(monkeypatch, cache_dir):
-    monkeypatch.setattr(service.pypi, "_PIP_VERSION", Version("1.0.0"))
-    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
-    monkeypatch.setattr(service.pypi, "logger", logger)
-
-    # If we supply a cache directory, we're not relying on finding the `pip` cache so no need to log
-    # a warning
-    service.PyPIService(cache_dir)
-    assert len(logger.warning.calls) == 0
-
-    # However, if we're not specifying a cache directory, we'll try to call `pip cache dir`. If we
-    # have an old `pip`, then we should expect a warning to be logged
-    service.PyPIService()
-    assert len(logger.warning.calls) == 1
-
-
-def test_pypi_cache_dir(monkeypatch):
-    # When we supply a cache directory, always use that
-    cache_dir: str = _get_cache_dir(Path("/tmp/foo/cache_dir"))
-    assert cache_dir == "/tmp/foo/cache_dir"
-
-    def run_mock(args, **kwargs):
-        class MockProcess:
-            def __init__(self, stdout_str: str):
-                self.stdout: bytes = stdout_str.encode("utf-8")
-
-        return MockProcess("/Users/foo/Library/Caches/pip")
-
-    # Without a cache dir, query `pip` for its HTTP cache and then append `http` at the end
-    monkeypatch.setattr(service.pypi, "run", run_mock)
-
-    cache_dir = _get_cache_dir(None)
-    assert cache_dir == "/Users/foo/Library/Caches/pip/http"
-
-
-def test_pypi_cache_dir_old_pip(monkeypatch):
-    # Check the case where we have an old `pip`
-    monkeypatch.setattr(service.pypi, "_PIP_VERSION", Version("1.0.0"))
-
-    # When we supply a cache directory, always use that
-    cache_dir: str = _get_cache_dir(Path("/tmp/foo/cache_dir"))
-    assert cache_dir == "/tmp/foo/cache_dir"
-
-    # Mock out home since this is going to be different across systems
-    class MockPath:
-        @staticmethod
-        def home():
-            return "/Users/foo"
-
-    # In this case, we can't query `pip` to figure out where its HTTP cache is
-    # Instead, we use `~/.pip-audit-cache`
-    monkeypatch.setattr(service.pypi, "Path", MockPath)
-
-    cache_dir = _get_cache_dir(None)
-    assert cache_dir == "/Users/foo/.pip-audit-cache"
 
 
 def test_pypi_skipped_dep(cache_dir):
