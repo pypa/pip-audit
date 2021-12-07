@@ -28,7 +28,7 @@ setup(
     platforms="any",
     python_requires=">=3.6",
     install_requires=[
-        "pip-api>=0.0.25",
+        "pip-api>=0.0.26",
         "packaging>=21.0.0",
         # TODO: Remove this once 3.7 is our minimally supported version.
         "dataclasses>=0.6; python_version < '3.7'",
