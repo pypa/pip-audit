@@ -254,7 +254,9 @@ def audit() -> None:
         source: DependencySource
         if args.requirements is not None:
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
-            source = RequirementSource(req_files, ResolveLibResolver(args.timeout, state), state)
+            source = RequirementSource(
+                req_files, ResolveLibResolver(args.timeout, args.cache_dir, state), state
+            )
         else:
             source = PipSource(local=args.local, paths=args.paths)
 

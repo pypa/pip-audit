@@ -18,12 +18,14 @@ from zipfile import ZipFile
 
 import html5lib
 import requests
+from cachecontrol import CacheControl  # type: ignore
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel_filename
 from packaging.version import Version
 from resolvelib.providers import AbstractProvider
 
+from pip_audit._cache import caching_session
 from pip_audit._state import AuditState
 from pip_audit._util import python_version
 from pip_audit._virtual_env import VirtualEnv
@@ -48,6 +50,7 @@ class Candidate:
         url: str,
         extras: Set[str],
         is_wheel: bool,
+        session: CacheControl,
         timeout: Optional[int] = None,
         state: AuditState = AuditState(),
     ) -> None:
@@ -61,8 +64,9 @@ class Candidate:
         self.url = url
         self.extras = extras
         self.is_wheel = is_wheel
-        self.timeout = timeout
-        self.state = state
+        self._session = session
+        self._timeout = timeout
+        self._state = state
 
         self._metadata: Optional[EmailMessage] = None
         self._dependencies: Optional[List[Requirement]] = None
@@ -82,7 +86,7 @@ class Candidate:
         """
 
         if self._metadata is None:
-            self.state.update_state(f"Fetching metadata for {self.name} ({self.version})")
+            self._state.update_state(f"Fetching metadata for {self.name} ({self.version})")
 
             if self.is_wheel:
                 self._metadata = self._get_metadata_for_wheel()
@@ -119,9 +123,9 @@ class Candidate:
         """
         Extracts the metadata for this candidate, if it's a wheel.
         """
-        data = requests.get(self.url, timeout=self.timeout).content
+        data = self._session.get(self.url, timeout=self._timeout).content
 
-        self.state.update_state(f"Extracting wheel for {self.name} ({self.version})")
+        self._state.update_state(f"Extracting wheel for {self.name} ({self.version})")
 
         with ZipFile(BytesIO(data)) as z:
             for n in z.namelist():
@@ -139,7 +143,7 @@ class Candidate:
         Extracts the metadata for this candidate, if it's a source distribution.
         """
 
-        response: requests.Response = requests.get(self.url, timeout=self.timeout)
+        response: requests.Response = self._session.get(self.url, timeout=self._timeout)
         response.raise_for_status()
         sdist_data = response.content
         metadata = EmailMessage()
@@ -148,16 +152,16 @@ class Candidate:
             sdist = Path(pkg_dir) / self.filename.name
             sdist.write_bytes(sdist_data)
 
-            self.state.update_state(
+            self._state.update_state(
                 f"Installing source distribution in isolated environment for {self.name} "
                 f"({self.version})"
             )
 
             with TemporaryDirectory() as ve_dir:
-                ve = VirtualEnv([str(sdist)], self.state)
+                ve = VirtualEnv([str(sdist)], self._state)
                 ve.create(ve_dir)
 
-                self.state.update_state(
+                self._state.update_state(
                     f"Querying installed packages for {self.name} ({self.version})"
                 )
 
@@ -169,11 +173,11 @@ class Candidate:
 
 
 def get_project_from_pypi(
-    project, extras, timeout: Optional[int], state: AuditState
+    session, project, extras, timeout: Optional[int], state: AuditState
 ) -> Iterator[Candidate]:
     """Return candidates created from the project name and extras."""
     url = "https://pypi.org/simple/{}".format(project)
-    response: requests.Response = requests.get(url, timeout=timeout)
+    response: requests.Response = session.get(url, timeout=timeout)
     if response.status_code == 404:
         raise PyPINotFoundError(f'Could not find project "{project}" on PyPI')
     response.raise_for_status()
@@ -213,6 +217,7 @@ def get_project_from_pypi(
                 is_wheel=is_wheel,
                 timeout=timeout,
                 state=state,
+                session=session,
             )
         except Exception:
             continue
@@ -224,16 +229,25 @@ class PyPIProvider(AbstractProvider):
     the official Python Package Index.
     """
 
-    def __init__(self, timeout: Optional[int] = None, state: AuditState = AuditState()):
+    def __init__(
+        self,
+        timeout: Optional[int] = None,
+        cache_dir: Optional[Path] = None,
+        state: AuditState = AuditState(),
+    ):
         """
         Create a new `PyPIProvider`.
 
         `timeout` is an optional argument to control how many seconds the component should wait for
         responses to network requests.
+
+        `cache_dir` is an optional argument to override the default HTTP caching directory.
+
         `state` is an `AuditState` to use for state callbacks.
         """
         self.timeout = timeout
-        self.state = state
+        self.session = caching_session(cache_dir, use_pip=True)
+        self._state = state
 
     def identify(self, requirement_or_candidate):
         """
@@ -251,7 +265,7 @@ class PyPIProvider(AbstractProvider):
         """
         See `resolvelib.providers.AbstractProvider.find_matches`.
         """
-        self.state.update_state(f"Resolving {identifier}")
+        self._state.update_state(f"Resolving {identifier}")
 
         requirements = list(requirements[identifier])
 
@@ -268,7 +282,9 @@ class PyPIProvider(AbstractProvider):
         candidates = sorted(
             [
                 candidate
-                for candidate in get_project_from_pypi(identifier, extras, self.timeout, self.state)
+                for candidate in get_project_from_pypi(
+                    self.session, identifier, extras, self.timeout, self._state
+                )
                 if candidate.version not in bad_versions
                 and all(candidate.version in r.specifier for r in requirements)
             ],
