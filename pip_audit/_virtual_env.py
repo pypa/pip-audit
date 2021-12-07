@@ -36,7 +36,7 @@ class VirtualEnv(venv.EnvBuilder):
     ```
     """
 
-    def __init__(self, install_args: List[str], state: Optional[AuditState] = None):
+    def __init__(self, install_args: List[str], state: AuditState = AuditState()):
         """
         Create a new `VirtualEnv`.
 
@@ -47,7 +47,7 @@ class VirtualEnv(venv.EnvBuilder):
         ve = VirtualEnv(["-e", "/tmp/my_pkg"])
         ```
 
-        `state` is an optional `AuditState` to use for state callbacks.
+        `state` is an `AuditState` to use for state callbacks.
         """
         super().__init__(with_pip=True)
         self._install_args = install_args
@@ -71,10 +71,7 @@ class VirtualEnv(venv.EnvBuilder):
         - Call `pip list`, and parse the output into a list of packages to be returned from when the
           `installed_packages` property is queried.
         """
-        if self._state is not None:
-            self._state.update_state(
-                "Updating pip installation in isolated environment"
-            )  # pragma: no cover
+        self._state.update_state("Updating pip installation in isolated environment")
 
         # Firstly, upgrade our `pip` versions since `ensurepip` can leave us with an old version
         # and install `wheel` in case our package dependencies are offered as wheels
@@ -94,10 +91,7 @@ class VirtualEnv(venv.EnvBuilder):
         except subprocess.CalledProcessError as cpe:
             raise VirtualEnvError(f"Failed to upgrade `pip`: {pip_upgrade_cmd}") from cpe
 
-        if self._state is not None:
-            self._state.update_state(
-                "Installing package in isolated environment"
-            )  # pragma: no cover
+        self._state.update_state("Installing package in isolated environment")
 
         # Install our packages
         package_install_cmd = [
@@ -112,10 +106,7 @@ class VirtualEnv(venv.EnvBuilder):
         except subprocess.CalledProcessError as cpe:
             raise VirtualEnvError(f"Failed to install packages: {package_install_cmd}") from cpe
 
-        if self._state is not None:
-            self._state.update_state(
-                "Processing package list from isolated environment"
-            )  # pragma: no cover
+        self._state.update_state("Processing package list from isolated environment")
 
         # Now parse the `pip list` output to figure out what packages our
         # environment contains

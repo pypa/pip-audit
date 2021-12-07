@@ -25,11 +25,11 @@ class ResolveLibResolver(DependencyResolver):
     backend dependency resolution strategy.
     """
 
-    def __init__(self, timeout: Optional[int] = None, state: Optional[AuditState] = None) -> None:
+    def __init__(self, timeout: Optional[int] = None, state: AuditState = AuditState()) -> None:
         """
         Create a new `ResolveLibResolver`.
 
-        `state` is an optional `AuditState` to use for state callbacks.
+        `state` is an `AuditState` to use for state callbacks.
         """
         self.provider = PyPIProvider(timeout, state)
         self.reporter = BaseReporter()

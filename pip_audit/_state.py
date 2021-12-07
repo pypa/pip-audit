@@ -7,48 +7,54 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from logging.handlers import MemoryHandler
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Sequence
 
 from progress.spinner import Spinner as BaseSpinner  # type: ignore
 
 
-class AuditState(ABC):
+class AuditState:
     """
-    A state-bearing object that gets passed throughout the `pip_audit` dependency
-    collection and auditing APIs.
+    An object that handles abstract "updates" to `pip-audit`'s state.
 
-    Non-UI consumers of `pip_audit` should have no need for subclasses of `AuditState`:
-    its primary use is in giving the UI enough state to provide responsive
-    progress indicators during user requests.
+    Non-UI consumers of `pip-audit` (via `pip_audit`) should have no need for
+    this class, and can leave it as a default construction in whatever signatures
+    it appears in. Its primary use is internal and UI-specific: it exists solely
+    to give the CLI enough state for a responsive progress indicator during
+    user requests.
     """
 
-    @abstractmethod
-    def update_state(self, message: str) -> None:
+    def __init__(self, *, members: Sequence["_StateActor"] = []):
+        """
+        Create a new `AuditState` with the given member list.
+        """
+
+        self._members = members
+
+    def update_state(self, message: str):
         """
         Called whenever `pip_audit`'s internal state changes in a way that's meaningful to
         expose to a user.
 
         `message` is the message to present to the user.
         """
-        raise NotImplementedError  # pragma: no cover
 
-    @abstractmethod
+        for member in self._members:
+            member.update_state(message)
+
     def initialize(self) -> None:
         """
-        Called when `pip-audit`'s state is initializing. Implementors should override this to do
-        nothing if their state management requires no initialization step outside of the
-        constructor.
+        Called when `pip-audit`'s state is initializing.
         """
-        raise NotImplementedError  # pragma: no cover
 
-    @abstractmethod
+        for member in self._members:
+            member.initialize()
+
     def finalize(self) -> None:
         """
-        Called when `pip_audit`'s state is "done" changing. Implementors should
-        override this to do nothing if their state management requires no
-        cleanup or finalization step.
+        Called when `pip_audit`'s state is "done" changing.
         """
-        raise NotImplementedError  # pragma: no cover
+        for member in self._members:
+            member.finalize()
 
     def __enter__(self) -> "AuditState":  # pragma: no cover
         """
@@ -66,12 +72,35 @@ class AuditState(ABC):
         self.finalize()
 
 
-class AuditSpinner(AuditState, BaseSpinner):  # pragma: no cover
-    """
-    A progress spinner for the `pip-audit` CLI.
+class _StateActor(ABC):
+    @abstractmethod
+    def update_state(self, message: str) -> None:
+        raise NotImplementedError  # pragma: no cover
 
-    The `pip-audit` API takes objects of type `AuditState` in various places. Users can supply an
-    instance of `AuditSpinner` to get basic feedback via a progress spinner.
+    @abstractmethod
+    def initialize(self) -> None:
+        """
+        Called when `pip-audit`'s state is initializing. Implementors should
+        override this to do nothing if their state management requires no
+        initialization step.
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    @abstractmethod
+    def finalize(self) -> None:
+        """
+        Called when the overlaying `AuditState` is "done," i.e. `pip-audit`'s
+        state is done changing. Implementors should override this to do nothing
+        if their state management requires no finalization step.
+        """
+        raise NotImplementedError  # pragma: no cover
+
+
+class AuditSpinner(_StateActor, BaseSpinner):  # pragma: no cover
+    """
+    A progress spinner for the `pip-audit` CLI, specialized from `BaseSpinner`.
+
+    This spinner is also written as a `AuditState` actor.
     """
 
     def __init__(self, message: str = "", **kwargs: Dict[str, Any]):

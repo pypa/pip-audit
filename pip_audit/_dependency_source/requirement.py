@@ -3,7 +3,7 @@ Collect dependencies from one or more `requirements.txt`-formatted files.
 """
 
 from pathlib import Path
-from typing import Iterator, List, Optional, Set, cast
+from typing import Iterator, List, Set, cast
 
 from packaging.requirements import Requirement
 from pip_api import parse_requirements
@@ -29,7 +29,7 @@ class RequirementSource(DependencySource):
         self,
         filenames: List[Path],
         resolver: DependencyResolver,
-        state: Optional[AuditState] = None,
+        state: AuditState = AuditState(),
     ) -> None:
         """
         Create a new `RequirementSource`.
@@ -38,7 +38,7 @@ class RequirementSource(DependencySource):
 
         `resolver` is the `DependencyResolver` instance to use.
 
-        `state` is an optional `AuditState` to use for state callbacks.
+        `state` is an `AuditState` to use for state callbacks.
         """
         self.filenames = filenames
         self.resolver = resolver
@@ -65,13 +65,14 @@ class RequirementSource(DependencySource):
                         # Don't allow duplicate dependencies to be returned
                         if dep in collected:
                             continue
-                        if self.state is not None:  # pragma: no cover
-                            if dep.is_skipped():
-                                dep = cast(SkippedDependency, dep)
-                                self.state.update_state(f"Skipping {dep.name}: {dep.skip_reason}")
-                            else:
-                                dep = cast(ResolvedDependency, dep)
-                                self.state.update_state(f"Collecting {dep.name} ({dep.version})")
+
+                        if dep.is_skipped():  # pragma: no cover
+                            dep = cast(SkippedDependency, dep)
+                            self.state.update_state(f"Skipping {dep.name}: {dep.skip_reason}")
+                        else:
+                            dep = cast(ResolvedDependency, dep)
+                            self.state.update_state(f"Collecting {dep.name} ({dep.version})")
+
                         collected.add(dep)
                         yield dep
             except DependencyResolverError as dre:

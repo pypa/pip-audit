@@ -44,11 +44,12 @@ class Candidate:
         name: str,
         filename: Path,
         version: Version,
+        *,
         url: str,
         extras: Set[str],
-        is_wheel: bool = True,
+        is_wheel: bool,
         timeout: Optional[int] = None,
-        state: Optional[AuditState] = None,
+        state: AuditState = AuditState(),
     ) -> None:
         """
         Create a new `Candidate`.
@@ -81,8 +82,7 @@ class Candidate:
         """
 
         if self._metadata is None:
-            if self.state is not None:  # pragma: no cover
-                self.state.update_state(f"Fetching metadata for {self.name} ({self.version})")
+            self.state.update_state(f"Fetching metadata for {self.name} ({self.version})")
 
             if self.is_wheel:
                 self._metadata = self._get_metadata_for_wheel()
@@ -121,10 +121,7 @@ class Candidate:
         """
         data = requests.get(self.url, timeout=self.timeout).content
 
-        if self.state is not None:
-            self.state.update_state(
-                f"Extracting wheel for {self.name} ({self.version})"
-            )  # pragma: no cover
+        self.state.update_state(f"Extracting wheel for {self.name} ({self.version})")
 
         with ZipFile(BytesIO(data)) as z:
             for n in z.namelist():
@@ -151,20 +148,18 @@ class Candidate:
             sdist = Path(pkg_dir) / self.filename.name
             sdist.write_bytes(sdist_data)
 
-            if self.state is not None:
-                self.state.update_state(
-                    f"Installing source distribution in isolated environment for {self.name} "
-                    f"({self.version})"
-                )  # pragma: no cover
+            self.state.update_state(
+                f"Installing source distribution in isolated environment for {self.name} "
+                f"({self.version})"
+            )
 
             with TemporaryDirectory() as ve_dir:
                 ve = VirtualEnv([str(sdist)], self.state)
                 ve.create(ve_dir)
 
-                if self.state is not None:
-                    self.state.update_state(
-                        f"Querying installed packages for {self.name} ({self.version})"
-                    )  # pragma: no cover
+                self.state.update_state(
+                    f"Querying installed packages for {self.name} ({self.version})"
+                )
 
                 installed_packages = ve.installed_packages
                 for name, version in installed_packages:
@@ -174,7 +169,7 @@ class Candidate:
 
 
 def get_project_from_pypi(
-    project, extras, timeout: Optional[int], state: Optional[AuditState]
+    project, extras, timeout: Optional[int], state: AuditState
 ) -> Iterator[Candidate]:
     """Return candidates created from the project name and extras."""
     url = "https://pypi.org/simple/{}".format(project)
@@ -229,13 +224,13 @@ class PyPIProvider(AbstractProvider):
     the official Python Package Index.
     """
 
-    def __init__(self, timeout: Optional[int] = None, state: Optional[AuditState] = None):
+    def __init__(self, timeout: Optional[int] = None, state: AuditState = AuditState()):
         """
         Create a new `PyPIProvider`.
 
         `timeout` is an optional argument to control how many seconds the component should wait for
         responses to network requests.
-        `state` is an optional `AuditState` to use for state callbacks.
+        `state` is an `AuditState` to use for state callbacks.
         """
         self.timeout = timeout
         self.state = state
@@ -256,8 +251,7 @@ class PyPIProvider(AbstractProvider):
         """
         See `resolvelib.providers.AbstractProvider.find_matches`.
         """
-        if self.state is not None:
-            self.state.update_state(f"Resolving {identifier}")  # pragma: no cover
+        self.state.update_state(f"Resolving {identifier}")
 
         requirements = list(requirements[identifier])
 

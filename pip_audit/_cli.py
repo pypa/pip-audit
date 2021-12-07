@@ -22,7 +22,7 @@ from pip_audit._dependency_source import (
 from pip_audit._format import ColumnsFormat, CycloneDxFormat, JsonFormat, VulnerabilityFormat
 from pip_audit._service import OsvService, PyPIService, VulnerabilityService
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency
-from pip_audit._state import AuditSpinner
+from pip_audit._state import AuditSpinner, AuditState
 from pip_audit._util import assert_never
 
 logger = logging.getLogger(__name__)
@@ -246,7 +246,10 @@ def audit() -> None:
     formatter = args.format.to_format(output_desc)
 
     with ExitStack() as stack:
-        state = stack.enter_context(AuditSpinner()) if args.progress_spinner else None
+        actors = []
+        if args.progress_spinner:
+            actors.append(AuditSpinner())
+        state = stack.enter_context(AuditState(members=actors))
 
         source: DependencySource
         if args.requirements is not None:
@@ -261,16 +264,15 @@ def audit() -> None:
         pkg_count = 0
         vuln_count = 0
         for (spec, vulns) in auditor.audit(source):
-            if state is not None:
-                if spec.is_skipped():
-                    spec = cast(SkippedDependency, spec)
-                    if args.strict:
-                        _fatal(f"{spec.name}: {spec.skip_reason}")
-                    else:
-                        state.update_state(f"Skipping {spec.name}: {spec.skip_reason}")
+            if spec.is_skipped():
+                spec = cast(SkippedDependency, spec)
+                if args.strict:
+                    _fatal(f"{spec.name}: {spec.skip_reason}")
                 else:
-                    spec = cast(ResolvedDependency, spec)
-                    state.update_state(f"Auditing {spec.name} ({spec.version})")
+                    state.update_state(f"Skipping {spec.name}: {spec.skip_reason}")
+            else:
+                spec = cast(ResolvedDependency, spec)
+                state.update_state(f"Auditing {spec.name} ({spec.version})")
             result[spec] = vulns
             if len(vulns) > 0:
                 pkg_count += 1
