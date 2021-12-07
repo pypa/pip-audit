@@ -14,6 +14,10 @@ All versions prior to 0.0.9 are untracked.
 
 ### Fixed
 
+* Dependency sources: a crash caused by unexpected logging statements in `pip`'s
+  JSON output was fixed
+  ([#196](https://github.com/trailofbits/pip-audit/pull/196))
+
 ### Removed
 
 ## [1.1.0] - 2021-12-06
