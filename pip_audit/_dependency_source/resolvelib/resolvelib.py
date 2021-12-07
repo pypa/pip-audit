@@ -4,6 +4,7 @@ Resolve a list of dependencies via the `resolvelib` API as well as a custom
 """
 
 import logging
+from pathlib import Path
 from typing import List, Optional
 
 from packaging.requirements import Requirement
@@ -25,13 +26,21 @@ class ResolveLibResolver(DependencyResolver):
     backend dependency resolution strategy.
     """
 
-    def __init__(self, timeout: Optional[int] = None, state: AuditState = AuditState()) -> None:
+    def __init__(
+        self,
+        timeout: Optional[int] = None,
+        cache_dir: Optional[Path] = None,
+        state: AuditState = AuditState(),
+    ) -> None:
         """
         Create a new `ResolveLibResolver`.
 
+        `timeout` and `cache_dir` are optional arguments for HTTP timeouts
+        and caching, respectively.
+
         `state` is an `AuditState` to use for state callbacks.
         """
-        self.provider = PyPIProvider(timeout, state)
+        self.provider = PyPIProvider(timeout, cache_dir, state)
         self.reporter = BaseReporter()
         self.resolver: Resolver = Resolver(self.provider, self.reporter)
 

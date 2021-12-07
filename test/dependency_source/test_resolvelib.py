@@ -129,12 +129,16 @@ def test_resolvelib_wheel_patched(monkeypatch):
         "Flask-2.0.1-py3-none-any.whl</a><br/>"
     )
 
-    monkeypatch.setattr(requests, "get", lambda _url, **kwargs: get_package_mock(data))
+    # monkeypatch.setattr(requests, "get", lambda _url, **kwargs: get_package_mock(data))
     monkeypatch.setattr(
         pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
+    )
+
     req = Requirement("flask==2.0.1")
     resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert req in resolved_deps
@@ -149,12 +153,15 @@ def test_resolvelib_sdist_patched(monkeypatch, suffix):
     # everything works end-to-end.
     data = f'<a href="https://example.com/Flask-2.0.1.{suffix}">Flask-2.0.1.{suffix}</a><br/>'
 
-    monkeypatch.setattr(requests, "get", lambda _url, **kwargs: get_package_mock(data))
     monkeypatch.setattr(
         pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
+    )
+
     req = Requirement("flask==2.0.1")
     resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert req in resolved_deps
@@ -172,9 +179,11 @@ def test_resolvelib_wheel_python_version(monkeypatch):
         'data-requires-python="&lt;=2.7">Flask-2.0.1-py3-none-any.whl</a><br/>'
     )
 
-    monkeypatch.setattr(requests, "get", lambda _url, **kwargs: get_package_mock(data))
-
     resolver = resolvelib.ResolveLibResolver()
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
+    )
+
     req = Requirement("flask==2.0.1")
     with pytest.raises(ResolutionImpossible):
         dict(resolver.resolve_all(iter([req])))
@@ -190,12 +199,15 @@ def test_resolvelib_wheel_canonical_name_mismatch(monkeypatch):
         "Mask-2.0.1-py3-none-any.whl</a><br/>"
     )
 
-    monkeypatch.setattr(requests, "get", lambda _url, **kwargs: get_package_mock(data))
     monkeypatch.setattr(
         pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
+    )
+
     req = Requirement("flask==2.0.1")
     with pytest.raises(InconsistentCandidate):
         dict(resolver.resolve_all(iter([req])))
@@ -211,12 +223,15 @@ def test_resolvelib_wheel_invalid_version(monkeypatch):
         "Flask-INVALID.VERSION-py3-none-any.whl</a><br/>"
     )
 
-    monkeypatch.setattr(requests, "get", lambda _url, **kwargs: get_package_mock(data))
     monkeypatch.setattr(
         pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
+    )
+
     req = Requirement("flask==2.0.1")
     with pytest.raises(ResolutionImpossible):
         dict(resolver.resolve_all(iter([req])))
@@ -226,12 +241,15 @@ def test_resolvelib_sdist_invalid_suffix(monkeypatch):
     # Give the sdist an invalid suffix like ".foo" and insure that it gets skipped.
     data = '<a href="https://example.com/Flask-2.0.1.foo">Flask-2.0.1.foo</a><br/>'
 
-    monkeypatch.setattr(requests, "get", lambda _url, **kwargs: get_package_mock(data))
     monkeypatch.setattr(
         pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
+    )
+
     req = Requirement("flask==2.0.1")
     with pytest.raises(ResolutionImpossible):
         dict(resolver.resolve_all(iter([req])))
@@ -251,6 +269,10 @@ def test_resolvelib_http_error(monkeypatch):
     monkeypatch.setattr(requests, "get", lambda _url, **kwargs: get_http_error_mock())
 
     resolver = resolvelib.ResolveLibResolver()
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda _url, **kwargs: get_http_error_mock()
+    )
+
     req = Requirement("flask==2.0.1")
     with pytest.raises(resolvelib.ResolveLibResolverError):
         dict(resolver.resolve_all(iter([req])))
@@ -264,9 +286,11 @@ def test_resolvelib_http_notfound(monkeypatch):
 
         return Doc()
 
-    monkeypatch.setattr(requests, "get", lambda _url, **kwargs: get_http_not_found_mock())
-
     resolver = resolvelib.ResolveLibResolver()
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda _url, **kwargs: get_http_not_found_mock()
+    )
+
     req = Requirement("flask==2.0.1")
     resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert len(resolved_deps) == 1
