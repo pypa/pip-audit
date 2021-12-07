@@ -14,11 +14,15 @@ All versions prior to 0.0.9 are untracked.
 
 ### Fixed
 
+### Removed
+
+## [1.1.1] - 2021-12-07
+
+### Fixed
+
 * Dependency sources: a crash caused by unexpected logging statements in `pip`'s
   JSON output was fixed
   ([#196](https://github.com/trailofbits/pip-audit/pull/196))
-
-### Removed
 
 ## [1.1.0] - 2021-12-06
 
@@ -103,6 +107,7 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/trailofbits/pip-audit/compare/v0.0.9...HEAD
+[1.1.1]: https://github.com/trailofbits/pip-audit/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/trailofbits/pip-audit/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/trailofbits/pip-audit/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/trailofbits/pip-audit/compare/v0.0.9...v1.0.0
