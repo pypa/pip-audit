@@ -37,10 +37,13 @@ python -m pip install pip-audit
 
 ### Third-party packages
 
-In addition to installation via `pip`, the following matrix lists **third-party**
-packages for `pip-audit`. These are community-maintained.
+There are multiple **third-party** packages for `pip-audit`. The matrices below
+list some of them:
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/python:pip-audit.svg)](https://repology.org/project/python:pip-audit/versions)
+[![Packaging status](https://repology.org/badge/vertical-allrepos/pip-audit.svg)](https://repology.org/project/pip-audit/versions)
+
+Third-party packages are **not** directly supported by this project.
 
 ## Usage
 
