@@ -48,7 +48,7 @@ python -m pip_audit --help
 usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
                  [-d] [-S] [--desc [{on,off,auto}]] [--cache-dir CACHE_DIR]
                  [--progress-spinner {on,off}] [--timeout TIMEOUT]
-                 [--path PATHS] [-v]
+                 [--path PATHS] [-x] [-v]
 
 audit the Python environment for dependencies with known vulnerabilities
 
@@ -85,11 +85,25 @@ optional arguments:
   --path PATHS          restrict to the specified installation path for
                         auditing packages; this option can be used multiple
                         times (default: [])
+  -x, --suppress-exit-code
+                        suppress any non-zero exit codes; does not affect
+                        output (default: False)
   -v, --verbose         give more output; this setting overrides the
                         `PIP_AUDIT_LOGLEVEL` variable and is equivalent to
                         setting it to `debug` (default: False)
 ```
 <!-- @end-pip-audit-help@ -->
+
+### Exit codes
+
+On completion, `pip-audit` will exit with a code indicating its status.
+
+The current codes are:
+
+* `0`: No known vulnerabilities were detected.
+* `1`: One or more known vulnerabilities were found.
+
+Exit codes can be suppressed entirely with the `--suppress-exit-code` flag.
 
 ## Examples
 

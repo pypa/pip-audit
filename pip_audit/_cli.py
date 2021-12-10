@@ -227,6 +227,12 @@ def audit() -> None:
         "this option can be used multiple times",
     )
     parser.add_argument(
+        "-x",
+        "--suppress-exit-code",
+        action="store_true",
+        help="suppress any non-zero exit codes; does not affect output",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         dest="verbose",
@@ -285,6 +291,7 @@ def audit() -> None:
     if vuln_count > 0:
         print(f"Found {vuln_count} known vulnerabilities in {pkg_count} packages", file=sys.stderr)
         print(formatter.format(result))
-        sys.exit(1)
+        if not args.suppress_exit_code:
+            sys.exit(1)
     else:
         print("No known vulnerabilities found", file=sys.stderr)
