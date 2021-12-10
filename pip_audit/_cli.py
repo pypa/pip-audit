@@ -9,7 +9,7 @@ import os
 import sys
 from contextlib import ExitStack
 from pathlib import Path
-from typing import List, NoReturn, Optional, Type, cast
+from typing import List, Optional, Type, cast
 
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
@@ -122,16 +122,6 @@ def _enum_help(msg: str, e: Type[enum.Enum]) -> str:
     Render a `--help`-style string for the given enumeration.
     """
     return f"{msg} (choices: {', '.join(str(v) for v in e)})"
-
-
-def _fatal(msg: str) -> NoReturn:
-    """
-    Log a fatal error to the standard error stream and exit.
-    """
-    # NOTE: We buffer the logger when the progress spinner is active,
-    # ensuring that the fatal message is formatted on its own line.
-    logger.error(msg)
-    sys.exit(1)
 
 
 def audit() -> None:
@@ -275,7 +265,8 @@ def audit() -> None:
             if spec.is_skipped():
                 spec = cast(SkippedDependency, spec)
                 if args.strict:
-                    _fatal(f"{spec.name}: {spec.skip_reason}")
+                    logger.error(f"{spec.name}: {spec.skip_reason}")
+                    sys.exit(0 if args.suppress_exit_code else 1)
                 else:
                     state.update_state(f"Skipping {spec.name}: {spec.skip_reason}")
             else:
