@@ -10,6 +10,11 @@ All versions prior to 0.0.9 are untracked.
 
 ### Added
 
+* CLI: The `--suppress-exit-code` flag has been added. When used, `pip-audit`
+  will always exit with an exit code of `0`, even when an auditing result
+  has been found or a `--strict` failure occurs
+  ([#201](https://github.com/trailofbits/pip-audit/pull/201))
+
 ### Changed
 
 ### Fixed
