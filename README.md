@@ -114,6 +114,15 @@ optional arguments:
 ```
 <!-- @end-pip-audit-help@ -->
 
+### Exit codes
+
+On completion, `pip-audit` will exit with a code indicating its status.
+
+The current codes are:
+
+* `0`: No known vulnerabilities were detected.
+* `1`: One or more known vulnerabilities were found.
+
 ## Examples
 
 Audit dependencies for the current Python environment:
