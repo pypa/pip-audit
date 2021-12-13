@@ -1,9 +1,11 @@
 pip-audit
 =========
 
+<!--- BADGES: START --->
 ![CI](https://github.com/trailofbits/pip-audit/workflows/CI/badge.svg)
 [![PyPI version](https://badge.fury.io/py/pip-audit.svg)](https://badge.fury.io/py/pip-audit)
 [![Packaging status](https://repology.org/badge/tiny-repos/python:pip-audit.svg)](https://repology.org/project/python:pip-audit/versions)
+<!--- BADGES: END --->
 
 `pip-audit` is a tool for scanning Python environments for packages
 with known vulnerabilities. It uses the Python Packaging Advisory Database
@@ -28,8 +30,7 @@ support from Google. This is not an official Google product.
 
 ## Installation
 
-`pip-audit` requires Python 3.6 or newer, and can be installed directly via
-`pip`:
+`pip-audit` requires Python 3.6 or newer, and can be installed directly via `pip`:
 
 ```bash
 python -m pip install pip-audit
@@ -37,13 +38,23 @@ python -m pip install pip-audit
 
 ### Third-party packages
 
-There are multiple **third-party** packages for `pip-audit`. The matrices below
+There are multiple **third-party** packages for `pip-audit`. The matrices and badges below
 list some of them:
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/python:pip-audit.svg)](https://repology.org/project/python:pip-audit/versions)
 [![Packaging status](https://repology.org/badge/vertical-allrepos/pip-audit.svg)](https://repology.org/project/pip-audit/versions)
+[![Conda - Platform](https://img.shields.io/conda/pn/conda-forge/pip-audit?logo=anaconda&style=flat)][#conda-forge-package]
+[![Conda (channel only)](https://img.shields.io/conda/vn/conda-forge/pip-audit?logo=anaconda&style=flat&color=orange)][#conda-forge-package]
+[#conda-forge-package]: https://anaconda.org/conda-forge/pip-audit
 
-Third-party packages are **not** directly supported by this project.
+In particular, `pip-audit` can be installed via `conda`:
+
+```bash
+conda install -c conda-forge pip-audit
+```
+
+Third-party packages are **not** directly supported by this project. Please consult your package manager's
+documentation for more detailed installation guidance.
 
 ## Usage
 
