@@ -3,6 +3,7 @@ pip-audit
 
 ![CI](https://github.com/trailofbits/pip-audit/workflows/CI/badge.svg)
 [![PyPI version](https://badge.fury.io/py/pip-audit.svg)](https://badge.fury.io/py/pip-audit)
+[![Packaging status](https://repology.org/badge/tiny-repos/python:pip-audit.svg)](https://repology.org/project/python:pip-audit/versions)
 
 `pip-audit` is a tool for scanning Python environments for packages
 with known vulnerabilities. It uses the Python Packaging Advisory Database
@@ -33,6 +34,16 @@ support from Google. This is not an official Google product.
 ```bash
 python -m pip install pip-audit
 ```
+
+### Third-party packages
+
+There are multiple **third-party** packages for `pip-audit`. The matrices below
+list some of them:
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/python:pip-audit.svg)](https://repology.org/project/python:pip-audit/versions)
+[![Packaging status](https://repology.org/badge/vertical-allrepos/pip-audit.svg)](https://repology.org/project/pip-audit/versions)
+
+Third-party packages are **not** directly supported by this project.
 
 ## Usage
 
