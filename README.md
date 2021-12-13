@@ -123,8 +123,6 @@ The current codes are:
 * `0`: No known vulnerabilities were detected.
 * `1`: One or more known vulnerabilities were found.
 
-Exit codes can be suppressed entirely with the `--suppress-exit-code` flag.
-
 ## Examples
 
 Audit dependencies for the current Python environment:
