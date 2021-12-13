@@ -35,8 +35,7 @@ setup(
         "progress>=1.6",
         "resolvelib>=0.8.0",
         "html5lib>=1.1",
-        "CacheControl>=0.12.10",
-        "lockfile>=0.12.2",
+        "CacheControl[filecache]>=0.12.10",
         "cyclonedx-python-lib>=0.11.1",
     ],
     extras_require={
