@@ -45,6 +45,7 @@ list some of them:
 [![Packaging status](https://repology.org/badge/vertical-allrepos/pip-audit.svg)](https://repology.org/project/pip-audit/versions)
 [![Conda - Platform](https://img.shields.io/conda/pn/conda-forge/pip-audit?logo=anaconda&style=flat)][#conda-forge-package]
 [![Conda (channel only)](https://img.shields.io/conda/vn/conda-forge/pip-audit?logo=anaconda&style=flat&color=orange)][#conda-forge-package]
+
 [#conda-forge-package]: https://anaconda.org/conda-forge/pip-audit
 
 In particular, `pip-audit` can be installed via `conda`:
