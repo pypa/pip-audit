@@ -9,7 +9,7 @@ import os
 import sys
 from contextlib import ExitStack
 from pathlib import Path
-from typing import List, Optional, Type, cast
+from typing import List, NoReturn, Optional, Type, cast
 
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
@@ -124,6 +124,16 @@ def _enum_help(msg: str, e: Type[enum.Enum]) -> str:
     return f"{msg} (choices: {', '.join(str(v) for v in e)})"
 
 
+def _fatal(msg: str) -> NoReturn:
+    """
+    Log a fatal error to the standard error stream and exit.
+    """
+    # NOTE: We buffer the logger when the progress spinner is active,
+    # ensuring that the fatal message is formatted on its own line.
+    logger.error(msg)
+    sys.exit(1)
+
+
 def audit() -> None:
     """
     The primary entrypoint for `pip-audit`.
@@ -217,12 +227,6 @@ def audit() -> None:
         "this option can be used multiple times",
     )
     parser.add_argument(
-        "-x",
-        "--suppress-exit-code",
-        action="store_true",
-        help="suppress any non-zero exit codes; does not affect output",
-    )
-    parser.add_argument(
         "-v",
         "--verbose",
         dest="verbose",
@@ -265,8 +269,7 @@ def audit() -> None:
             if spec.is_skipped():
                 spec = cast(SkippedDependency, spec)
                 if args.strict:
-                    logger.error(f"{spec.name}: {spec.skip_reason}")
-                    sys.exit(0 if args.suppress_exit_code else 1)
+                    _fatal(f"{spec.name}: {spec.skip_reason}")
                 else:
                     state.update_state(f"Skipping {spec.name}: {spec.skip_reason}")
             else:
@@ -282,7 +285,6 @@ def audit() -> None:
     if vuln_count > 0:
         print(f"Found {vuln_count} known vulnerabilities in {pkg_count} packages", file=sys.stderr)
         print(formatter.format(result))
-        if not args.suppress_exit_code:
-            sys.exit(1)
+        sys.exit(1)
     else:
         print("No known vulnerabilities found", file=sys.stderr)
