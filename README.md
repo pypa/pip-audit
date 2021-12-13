@@ -3,7 +3,7 @@ pip-audit
 
 <!--- BADGES: START --->
 ![CI](https://github.com/trailofbits/pip-audit/workflows/CI/badge.svg)
-[![PyPI version](https://badge.fury.io/py/pip-audit.svg)](https://badge.fury.io/py/pip-audit)
+[![PyPI version](https://badge.fury.io/py/pip-audit.svg)](https://pypi.org/project/pip-audit)
 [![Packaging status](https://repology.org/badge/tiny-repos/python:pip-audit.svg)](https://repology.org/project/python:pip-audit/versions)
 <!--- BADGES: END --->
 
