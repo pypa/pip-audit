@@ -176,7 +176,7 @@ def get_project_from_pypi(
     session, project, extras, timeout: Optional[int], state: AuditState
 ) -> Iterator[Candidate]:
     """Return candidates created from the project name and extras."""
-    url = "https://pypi.org/simple/{}".format(project)
+    url = "https://pypi.org/simple/{}/".format(project)
     response: requests.Response = session.get(url, timeout=timeout)
     if response.status_code == 404:
         raise PyPINotFoundError(f'Could not find project "{project}" on PyPI')
