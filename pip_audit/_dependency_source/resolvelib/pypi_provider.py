@@ -6,6 +6,7 @@ authors under the ISC license.
 """
 
 import itertools
+from datetime import date
 from email.message import EmailMessage
 from email.parser import BytesParser
 from io import BytesIO
@@ -24,6 +25,7 @@ from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel_filename
 from packaging.version import Version
 from resolvelib.providers import AbstractProvider
+from resolvelib.resolvers import ResolutionImpossible
 
 from pip_audit._cache import caching_session
 from pip_audit._state import AuditState
@@ -50,6 +52,7 @@ class Candidate:
         url: str,
         extras: Set[str],
         is_wheel: bool,
+        is_fake: bool,
         session: CacheControl,
         timeout: Optional[int] = None,
         state: AuditState = AuditState(),
@@ -64,6 +67,7 @@ class Candidate:
         self.url = url
         self.extras = extras
         self.is_wheel = is_wheel
+        self.is_fake = is_fake
         self._session = session
         self._timeout = timeout
         self._state = state
@@ -75,9 +79,8 @@ class Candidate:
         """
         A string representation for `Candidate`.
         """
-        if not self.extras:
-            return f"<{self.name}=={self.version} wheel={self.is_wheel}>"
-        return f"<{self.name}[{','.join(self.extras)}]=={self.version} wheel={self.is_wheel}>"
+        extras = f"[{','.join(self.extras)}]" if self.extras else ""
+        return f"<{self.name}{extras}=={self.version} wheel={self.is_wheel} fake={self.is_fake}>"
 
     @property
     def metadata(self) -> EmailMessage:
@@ -88,7 +91,9 @@ class Candidate:
         if self._metadata is None:
             self._state.update_state(f"Fetching metadata for {self.name} ({self.version})")
 
-            if self.is_wheel:
+            if self.is_fake:
+                self._metadata = self._get_metadata_for_fake()
+            elif self.is_wheel:
                 self._metadata = self._get_metadata_for_wheel()
             else:
                 self._metadata = self._get_metadata_for_sdist()
@@ -118,6 +123,15 @@ class Candidate:
         if self._dependencies is None:
             self._dependencies = list(self._get_dependencies())
         return self._dependencies
+
+    def _get_metadata_for_fake(self):
+        """
+        Create fake/empty metadata if the candidate is marked as fake.
+        This is used in cases where we know that the candidate metadata cannot
+        be retrieved, but we ant to avoid a cascading resolution failure in
+        resolvelib.
+        """
+        return EmailMessage()
 
     def _get_metadata_for_wheel(self):
         """
@@ -173,7 +187,7 @@ class Candidate:
 
 
 def get_project_from_pypi(
-    session, project, extras, timeout: Optional[int], state: AuditState
+    session, project, extras, timeout: Optional[int], state: AuditState, skip_empty: bool
 ) -> Iterator[Candidate]:
     """Return candidates created from the project name and extras."""
     url = "https://pypi.org/simple/{}/".format(project)
@@ -183,7 +197,9 @@ def get_project_from_pypi(
     response.raise_for_status()
     data = response.content
     doc = html5lib.parse(data, namespaceHTMLElements=False)
+    no_project_links = True
     for i in doc.findall(".//a"):
+        no_project_links = False
         url = i.attrib["href"]
         py_req = i.attrib.get("data-requires-python")
         # Skip items that need a different Python version
@@ -215,12 +231,38 @@ def get_project_from_pypi(
                 url=url,
                 extras=extras,
                 is_wheel=is_wheel,
+                is_fake=False,
                 timeout=timeout,
                 state=state,
                 session=session,
             )
         except Exception:
             continue
+
+    if no_project_links and skip_empty:
+        # Links page found but contains no links. Yield a fake candidate
+        # to prevent a cascading resolution failure.
+        # We have no generic way to create a version number that matches the
+        # requirement specifier. Instead, we create a PEP440 compliant version,
+        # and add special handling of fakes where needed.
+        version = Version(f"{date.today():%Y.%m}+pip.audit.fake")
+        filename = f"{project}-{version}.tar.gz"
+        yield Candidate(
+            project,
+            Path(filename),
+            version,
+            url="http://www.pypi.org",
+            extras=extras,
+            is_wheel=False,
+            is_fake=True,
+            timeout=timeout,
+            state=state,
+            session=session,
+        )
+    elif no_project_links:
+        raise PyPINoProjectLinksError(
+            f"Resolution of {project} failed because no links were found in {url}."
+        )
 
 
 class PyPIProvider(AbstractProvider):
@@ -234,6 +276,7 @@ class PyPIProvider(AbstractProvider):
         timeout: Optional[int] = None,
         cache_dir: Optional[Path] = None,
         state: AuditState = AuditState(),
+        skip_empty: bool = False,
     ):
         """
         Create a new `PyPIProvider`.
@@ -244,10 +287,13 @@ class PyPIProvider(AbstractProvider):
         `cache_dir` is an optional argument to override the default HTTP caching directory.
 
         `state` is an `AuditState` to use for state callbacks.
+
+        `skip_empty` skips packages with an empty PyPI links page.
         """
         self.timeout = timeout
         self.session = caching_session(cache_dir, use_pip=True)
         self._state = state
+        self.skip_empty = skip_empty
 
     def identify(self, requirement_or_candidate):
         """
@@ -276,18 +322,19 @@ class PyPIProvider(AbstractProvider):
         for r in requirements:
             extras |= r.extras
 
-        # Need to pass the extras to the search, so they
-        # are added to the candidate at creation - we
-        # treat candidates as immutable once created.
+        # Need to pass the extras to the search, so they are added to the
+        # candidate at creation. Candidates are treated as immutable once created.
+        candidates_filter = lambda c: (  # noqa: E731 # allow use of lambda
+            c.version not in bad_versions
+            and (c.is_fake or all(c.version in r.specifier for r in requirements))
+        )
         candidates = sorted(
-            [
-                candidate
-                for candidate in get_project_from_pypi(
-                    self.session, identifier, extras, self.timeout, self._state
-                )
-                if candidate.version not in bad_versions
-                and all(candidate.version in r.specifier for r in requirements)
-            ],
+            filter(
+                candidates_filter,
+                get_project_from_pypi(
+                    self.session, identifier, extras, self.timeout, self._state, self.skip_empty
+                ),
+            ),
             key=attrgetter("version", "is_wheel"),
             reverse=True,
         )
@@ -307,6 +354,8 @@ class PyPIProvider(AbstractProvider):
         """
         See `resolvelib.providers.AbstractProvider.is_satisfied_by`.
         """
+        if candidate.is_fake:
+            return True
         if canonicalize_name(requirement.name) != candidate.name:
             return False
         return candidate.version in requirement.specifier
@@ -321,6 +370,15 @@ class PyPIProvider(AbstractProvider):
 class PyPINotFoundError(Exception):
     """
     An error to signify that the provider could not find the requested project on PyPI.
+    """
+
+    pass
+
+
+class PyPINoProjectLinksError(ResolutionImpossible):
+    """
+    An error to signify that resolution of a dependency was impossible because
+    no links were found in the PyPI links page of the project.
     """
 
     pass

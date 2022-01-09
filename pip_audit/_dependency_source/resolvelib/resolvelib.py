@@ -31,6 +31,7 @@ class ResolveLibResolver(DependencyResolver):
         timeout: Optional[int] = None,
         cache_dir: Optional[Path] = None,
         state: AuditState = AuditState(),
+        skip_empty: bool = False,
     ) -> None:
         """
         Create a new `ResolveLibResolver`.
@@ -39,10 +40,13 @@ class ResolveLibResolver(DependencyResolver):
         and caching, respectively.
 
         `state` is an `AuditState` to use for state callbacks.
+
+        `skip_empty` skips packages with an empty PyPI links page.
         """
-        self.provider = PyPIProvider(timeout, cache_dir, state)
+        self.provider = PyPIProvider(timeout, cache_dir, state, skip_empty)
         self.reporter = BaseReporter()
         self.resolver: Resolver = Resolver(self.provider, self.reporter)
+        self.skip_empty = skip_empty
 
     def resolve(self, req: Requirement) -> List[Dependency]:
         """
@@ -58,7 +62,12 @@ class ResolveLibResolver(DependencyResolver):
         except HTTPError as e:
             raise ResolveLibResolverError("failed to resolve dependencies") from e
         for name, candidate in result.mapping.items():
-            deps.append(ResolvedDependency(name, candidate.version))
+            if candidate.is_fake:
+                deps.append(
+                    SkippedDependency(name, skip_reason=f"Fake version: {candidate.version}.")
+                )
+            else:
+                deps.append(ResolvedDependency(name, candidate.version))
         return deps
 
 

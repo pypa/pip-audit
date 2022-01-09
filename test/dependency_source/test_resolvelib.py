@@ -1,4 +1,5 @@
 from email.message import EmailMessage
+from textwrap import dedent
 from typing import List
 
 import pytest
@@ -10,6 +11,7 @@ from resolvelib.resolvers import InconsistentCandidate, ResolutionImpossible
 
 from pip_audit._dependency_source import resolvelib
 from pip_audit._dependency_source.resolvelib import pypi_provider
+from pip_audit._dependency_source.resolvelib.pypi_provider import PyPINoProjectLinksError
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency
 
 
@@ -25,8 +27,16 @@ def get_package_mock(data):
     return Doc(data)
 
 
-def get_metadata_mock():
-    return EmailMessage()
+def get_metadata_mock(requires=None):
+    metadata = EmailMessage()
+    requires = requires or []
+    for req in requires:
+        metadata["Requires-Dist"] = req
+    return metadata
+
+
+def _dedent(s):
+    return dedent(s.lstrip("\n")).rstrip("\n")
 
 
 def check_deps(resolved_deps: List[ResolvedDependency], expected_deps: List[ResolvedDependency]):
@@ -299,3 +309,93 @@ def test_resolvelib_http_notfound(monkeypatch):
     ]
     assert req in resolved_deps
     assert resolved_deps[req] == expected_deps
+
+
+@pytest.mark.parametrize("skip_empty", [True, False], ids=lambda v: "skip={}".format(v))
+def test_resolvelib_emptylinks(monkeypatch, skip_empty):
+    data = _dedent(
+        """
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta name="pypi:repository-version" content="1.0">
+            <title>Links for pkg-resources</title>
+          </head>
+          <body>
+            <h1>Links for pkg-resources</h1>
+           </body>
+        </html>
+        """
+    )
+    resolver = resolvelib.ResolveLibResolver(skip_empty=skip_empty)
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
+    )
+    req = Requirement("pkg-resources==0.0.0")
+
+    if not skip_empty:
+        with pytest.raises(PyPINoProjectLinksError) as e:
+            _ = dict(resolver.resolve_all(iter([req])))
+        assert e.match(r"no links were found.*pkg-resources")
+    else:
+        resolved_deps = list(resolver.resolve_all(iter([req])))
+        assert len(resolved_deps) == 1
+        rreq, rdep = resolved_deps.pop()
+        assert rreq == req
+        assert len(rdep) == 1
+        assert rdep[0].name == rreq.name
+        assert isinstance(rdep[0], SkippedDependency)
+
+
+@pytest.mark.parametrize("skip_empty", [True, False], ids=lambda v: "skip={}".format(v))
+def test_resolvelib_emptylinks_indirect(monkeypatch, skip_empty):
+    data = {
+        "https://pypi.org/simple/pkg-resources/": _dedent(
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta name="pypi:repository-version" content="1.0">
+                <title>Links for pkg-resources</title>
+            </head>
+            <body>
+                <h1>Links for pkg-resources</h1>
+            </body>
+            </html>
+            """
+        ),
+        "https://pypi.org/simple/flask/": _dedent(
+            """
+            <a href="https://example.com/Flask-2.0.1.tar.gz">Flask-2.0.1.tar.gz</a><br/>
+        """
+        ),
+    }
+    requires = {
+        "pkg-resources": None,
+        "flask": ["pkg-resources==0.0.0"],
+    }
+    resolver = resolvelib.ResolveLibResolver(skip_empty=skip_empty)
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda url, **kwargs: get_package_mock(data[url])
+    )
+    monkeypatch.setattr(
+        pypi_provider.Candidate,
+        "_get_metadata_for_sdist",
+        lambda candidate: get_metadata_mock(requires[candidate.name]),
+    )
+    req = Requirement("flask==2.0.1")
+
+    if not skip_empty:
+        with pytest.raises(PyPINoProjectLinksError) as e:
+            _ = dict(resolver.resolve_all(iter([req])))
+        assert e.match(r"no links were found.*pkg-resources")
+    else:
+        resolved_deps = list(resolver.resolve_all(iter([req])))
+        assert len(resolved_deps) == 1
+        rreq, rdep = resolved_deps.pop()
+        assert rreq == req
+        assert len(rdep) == 2
+        assert rdep[0].name == rreq.name
+        assert isinstance(rdep[0], ResolvedDependency)
+        assert rdep[1].name == "pkg-resources"
+        assert isinstance(rdep[1], SkippedDependency)

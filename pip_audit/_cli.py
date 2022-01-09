@@ -151,6 +151,11 @@ def audit() -> None:
         action="store_true",
         help="show only results for dependencies in the local environment",
     )
+    parser.add_argument(
+        "--skip-empty",
+        action="store_true",
+        help="skip packages with an empty PyPI links page",
+    )
     dep_source_args.add_argument(
         "-r",
         "--requirement",
@@ -255,7 +260,9 @@ def audit() -> None:
         if args.requirements is not None:
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
             source = RequirementSource(
-                req_files, ResolveLibResolver(args.timeout, args.cache_dir, state), state
+                req_files,
+                ResolveLibResolver(args.timeout, args.cache_dir, state, args.skip_empty),
+                state,
             )
         else:
             source = PipSource(local=args.local, paths=args.paths)
