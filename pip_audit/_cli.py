@@ -286,6 +286,12 @@ def audit() -> None:
                 pkg_count += 1
                 vuln_count += len(vulns)
 
+    # If the `--fix` flag has been applied, find a set of suitable fix versions and upgrade the
+    # dependencies at the source
+    if args.fix:
+        fix_versions = resolve_fix_versions(service, result)
+        source.fix_all(fix_versions)
+
     # TODO(ww): Refine this: we should always output if our output format is an SBOM
     # or other manifest format (like the default JSON format).
     if vuln_count > 0:
@@ -294,9 +300,3 @@ def audit() -> None:
         sys.exit(1)
     else:
         print("No known vulnerabilities found", file=sys.stderr)
-
-    # If the `--fix` flag has been applied, find a set of suitable fix versions and upgrade the
-    # dependencies at the source
-    if args.fix:
-        fix_versions = resolve_fix_versions(service, result)
-        source.fix_all(fix_versions)

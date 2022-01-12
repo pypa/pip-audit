@@ -93,7 +93,7 @@ class PipSource(DependencySource):
         """
         Fixes a dependency version in this `PipSource`.
         """
-        fix_cmd = [sys.executable, "-m", "pip", "install", "f{dep.name}=={fix_version}"]
+        fix_cmd = [sys.executable, "-m", "pip", "install", f"{dep.name}=={fix_version}"]
         try:
             subprocess.run(
                 fix_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
