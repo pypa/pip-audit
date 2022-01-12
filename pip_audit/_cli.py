@@ -19,6 +19,7 @@ from pip_audit._dependency_source import (
     RequirementSource,
     ResolveLibResolver,
 )
+from pip_audit._fix import resolve_fix_versions
 from pip_audit._format import ColumnsFormat, CycloneDxFormat, JsonFormat, VulnerabilityFormat
 from pip_audit._service import OsvService, PyPIService, VulnerabilityService
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency
@@ -234,6 +235,11 @@ def audit() -> None:
         help="give more output; this setting overrides the `PIP_AUDIT_LOGLEVEL` variable and is "
         "equivalent to setting it to `debug`",
     )
+    parser.add_argument(
+        "--fix",
+        action="store_true",
+        help="automatically upgrade dependencies with known vulnerabilities",
+    )
 
     args = parser.parse_args()
     if args.verbose:
@@ -288,3 +294,9 @@ def audit() -> None:
         sys.exit(1)
     else:
         print("No known vulnerabilities found", file=sys.stderr)
+
+    # If the `--fix` flag has been applied, find a set of suitable fix versions and upgrade the
+    # dependencies at the source
+    if args.fix:
+        fix_versions = resolve_fix_versions(service, result)
+        source.fix_all(fix_versions)
