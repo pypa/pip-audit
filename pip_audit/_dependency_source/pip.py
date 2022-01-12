@@ -4,6 +4,8 @@ by `pip-api`.
 """
 
 import logging
+import subprocess
+import sys
 from pathlib import Path
 from typing import Iterator, Sequence
 
@@ -86,6 +88,18 @@ class PipSource(DependencySource):
                 yield dep
         except Exception as e:
             raise PipSourceError("failed to list installed distributions") from e
+
+    def fix(self, dep: Dependency, fix_version: Version) -> None:
+        """
+        Fixes a dependency version in this `PipSource`.
+        """
+        fix_cmd = [sys.executable, "-m", "pip", "install", "f{dep.name}=={fix_version}"]
+        try:
+            subprocess.run(
+                fix_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+        except subprocess.CalledProcessError as cpe:
+            raise RuntimeError from cpe
 
 
 class PipSourceError(DependencySourceError):
