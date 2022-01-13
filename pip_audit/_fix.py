@@ -17,31 +17,52 @@ from pip_audit._service import (
 
 @dataclass(frozen=True)
 class FixVersion:
+    """
+    Represents an abstract dependency fix version.
+
+    This class cannot be constructed directly.
+    """
+
     dep: ResolvedDependency
 
     def __init__(self, *_args, **_kwargs) -> None:
+        """
+        A stub constructor that always fails.
+        """
         raise NotImplementedError
 
     def is_skipped(self) -> bool:
         """
-        Check whether the `FixVersion` was skipped
+        Check whether the `FixVersion` was unable to be resolved.
         """
         return self.__class__ is SkippedFixVersion
 
 
 @dataclass(frozen=True)
 class ResolvedFixVersion(FixVersion):
+    """
+    Represents a resolved fix version.
+    """
+
     version: Version
 
 
 @dataclass(frozen=True)
 class SkippedFixVersion(FixVersion):
+    """
+    Represents a fix version that was unable to be resolved and therefore, skipped.
+    """
+
     skip_reason: str
 
 
 def resolve_fix_versions(
     service: VulnerabilityService, result: Dict[Dependency, List[VulnerabilityResult]]
 ) -> Iterator[FixVersion]:
+    """
+    Resolves a mapping of dependencies to known vulnerabilities to a series of fix versions without
+    known vulnerabilties.
+    """
     for (dep, vulns) in result.items():
         if dep.is_skipped():
             continue
