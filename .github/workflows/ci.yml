@@ -38,6 +38,10 @@ jobs:
         # `argparse` between major versions.
         with:
           python-version: "3.6"
+
+      - name: setup
+        run: make
+
       - name: check-readme
         run: |
           diff \
