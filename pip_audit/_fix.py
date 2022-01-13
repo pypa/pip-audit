@@ -25,7 +25,7 @@ class FixVersion:
 
     dep: ResolvedDependency
 
-    def __init__(self, *_args, **_kwargs) -> None:
+    def __init__(self, *_args, **_kwargs) -> None:  # pragma: no cover
         """
         A stub constructor that always fails.
         """
@@ -93,14 +93,12 @@ def _resolve_fix_version(
                 if fix_version > current_version:
                     return fix_version
             raise FixResolutionImpossible(
-                f"failed to fix dependency {dep.name}, unable to find fix version for "
-                f"vulnerability {v.id}"
+                f"failed to fix dependency {dep.name} ({dep.version}), unable to find fix version "
+                f"for vulnerability {v.id}"
             )
 
         # We want to retrieve a version that potentially fixes all vulnerabilities
-        current_version = max(
-            [get_earliest_fix_version(dep, v) for v in current_vulns if v.fix_versions]
-        )
+        current_version = max([get_earliest_fix_version(dep, v) for v in current_vulns])
         _, current_vulns = service.query(ResolvedDependency(dep.name, current_version))
     return current_version
 
