@@ -307,12 +307,12 @@ def audit() -> None:
     # TODO(ww): Refine this: we should always output if our output format is an SBOM
     # or other manifest format (like the default JSON format).
     if vuln_count > 0:
-        print(f"Found {vuln_count} known vulnerabilities in {pkg_count} packages", file=sys.stderr)
+        summary_msg = f"Found {vuln_count} known vulnerabilities in {pkg_count} packages"
         if args.fix:
-            print(
-                f" and fixed {fixed_vuln_count} vulnerabilities in {fixed_pkg_count} packages",
-                file=sys.stderr,
+            summary_msg += (
+                f" and fixed {fixed_vuln_count} vulnerabilities in {fixed_pkg_count} packages"
             )
+        print(summary_msg, file=sys.stderr)
         print(formatter.format(result))
         if pkg_count != fixed_pkg_count:
             sys.exit(1)
