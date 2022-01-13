@@ -16,6 +16,13 @@ All versions prior to 0.0.9 are untracked.
 
 ### Removed
 
+## [1.1.2] - 2022-01-13
+
+### Fixed
+
+* A pin on one of `pip-audit`'s dependencies was fixed
+  ([#213](https://github.com/trailofbits/pip-audit/pull/213))
+
 ## [1.1.1] - 2021-12-07
 
 ### Fixed
