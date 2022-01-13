@@ -33,8 +33,7 @@ class _PipAuditResultParser(BaseParser):
                     Vulnerability(
                         id=vuln.id,
                         description=vuln.description,
-                        advisories=[f"Upgrade: {v}" for v in vuln.fix_versions],
-                        recommendations=["Upgrade"],
+                        recommendation="Upgrade",
                     )
                 )
 
@@ -75,6 +74,10 @@ class CycloneDxFormat(VulnerabilityFormat):
         parser = _PipAuditResultParser(result)
         bom = Bom.from_parser(parser)
 
-        formatter = output.get_instance(bom=bom, output_format=self._inner_format.value)
+        formatter = output.get_instance(
+            bom=bom,
+            output_format=self._inner_format.value,
+            schema_version=output.SchemaVersion.V1_4,
+        )
 
         return formatter.output_as_string()

@@ -16,6 +16,11 @@ All versions prior to 0.0.9 are untracked.
 
 ### Changed
 
+* Output formats: The SBOM output formats (`--format=cyclonedx-xml` and
+  `--format=cyclonedx-json`) now use CycloneDX
+  [Schema 1.4](https://cyclonedx.org/docs/1.4/xml/)
+  ([#216](https://github.com/trailofbits/pip-audit/pull/216))
+
 ### Fixed
 
 ### Removed
