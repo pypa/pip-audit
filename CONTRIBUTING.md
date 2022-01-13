@@ -58,10 +58,16 @@ You can run the tests locally with:
 make test
 ```
 
-You can also filter by a pattern (uses `pytest -k`)
+You can also filter by a pattern (uses `pytest -k`):
 
 ```bash
 make test TESTS=test_audit_dry_run
+```
+
+To test a specific file:
+
+```bash
+make test T=path/to/file.py
 ```
 
 `pip-audit` has a [`pytest`](https://docs.pytest.org/)-based unit test suite,

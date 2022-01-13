@@ -47,10 +47,10 @@ lint: env/pyvenv.cfg
 		interrogate -c pyproject.toml . && \
 		git diff --exit-code
 
-.PHONY: test
-test: env/pyvenv.cfg
+.PHONY: test tests
+test tests: env/pyvenv.cfg
 	. env/bin/activate && \
-		pytest --cov=pip_audit test/ $(TEST_ARGS) && \
+		pytest --cov=pip_audit $(T) $(TEST_ARGS) && \
 		python -m coverage report -m $(COV_ARGS)
 
 .PHONY: doc
