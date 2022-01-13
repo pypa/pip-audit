@@ -13,9 +13,6 @@ jobs:
 
       - uses: actions/setup-python@v2
 
-      - name: deps
-        run: make dev
-
       - name: docs
         run: |
           make doc
