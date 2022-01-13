@@ -28,7 +28,7 @@ class DependencySource(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def fix(self, fix_version: ResolvedFixVersion) -> None:
+    def fix(self, fix_version: ResolvedFixVersion) -> None:  # pragma: no cover
         """
         Upgrade a dependency to the given fix version.
         """

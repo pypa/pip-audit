@@ -79,7 +79,7 @@ class RequirementSource(DependencySource):
             except DependencyResolverError as dre:
                 raise RequirementSourceError("dependency resolver raised an error") from dre
 
-    def fix(self, fix_version: ResolvedFixVersion) -> None:
+    def fix(self, fix_version: ResolvedFixVersion) -> None:  # pragma: no cover
         """
         Fixes a dependency version for this `RequirementSource`.
         """

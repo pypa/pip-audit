@@ -99,7 +99,7 @@ class PipSource(DependencySource):
             "-m",
             "pip",
             "install",
-            f"{fix_version.dep.name}=={fix_version.version}",
+            f"{fix_version.dep.canonical_name}=={fix_version.version}",
         ]
         try:
             subprocess.run(
