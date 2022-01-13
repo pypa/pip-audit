@@ -43,7 +43,7 @@ def _resolve_fix_version(
                 if fix_version > current_version:
                     return fix_version
             raise FixResolutionImpossible(
-                f"Failed to fix dependency {dep.name}, unable to find fix version for "
+                f"failed to fix dependency {dep.name}, unable to find fix version for "
                 f"vulnerability {v.id}"
             )
 
