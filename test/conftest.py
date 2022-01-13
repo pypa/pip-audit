@@ -48,6 +48,9 @@ def dep_source(spec):
         def collect(self):
             yield spec("1.0.1")
 
+        def fix(self, _) -> None:
+            raise NotImplementedError
+
     return Source
 
 

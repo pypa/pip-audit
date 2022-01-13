@@ -1,4 +1,6 @@
 import os
+import subprocess
+import sys
 from dataclasses import dataclass
 from typing import Dict, List
 
@@ -8,6 +10,7 @@ import pytest
 from packaging.version import Version
 
 from pip_audit._dependency_source import pip
+from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency
 
 
@@ -82,3 +85,35 @@ def test_pip_source_invalid_version(monkeypatch):
         in specs
     )
     assert ResolvedDependency(name="pip-api", version=Version("1.0")) in specs
+
+
+def test_pip_source_fix(monkeypatch):
+    source = pip.PipSource()
+
+    fix_version = ResolvedFixVersion(
+        dep=ResolvedDependency(name="pip-api", version=Version("1.0")), version=Version("1.5")
+    )
+
+    def run_mock(args, **kwargs):
+        assert " ".join(args) == f"{sys.executable} -m pip install pip-api==1.5"
+
+    monkeypatch.setattr(subprocess, "run", run_mock)
+
+    source.fix(fix_version)
+
+
+def test_pip_source_fix_failure(monkeypatch):
+    source = pip.PipSource()
+
+    fix_version = ResolvedFixVersion(
+        dep=ResolvedDependency(name="pip-api", version=Version("1.0")), version=Version("1.5")
+    )
+
+    def run_mock(args, **kwargs):
+        assert " ".join(args) == f"{sys.executable} -m pip install pip-api==1.5"
+        raise subprocess.CalledProcessError(-1, str())
+
+    monkeypatch.setattr(subprocess, "run", run_mock)
+
+    with pytest.raises(pip.PipFixError):
+        source.fix(fix_version)

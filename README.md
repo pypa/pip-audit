@@ -71,7 +71,7 @@ python -m pip_audit --help
 usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
                  [-d] [-S] [--desc [{on,off,auto}]] [--cache-dir CACHE_DIR]
                  [--progress-spinner {on,off}] [--timeout TIMEOUT]
-                 [--path PATHS] [-v]
+                 [--path PATHS] [-v] [--fix]
 
 audit the Python environment for dependencies with known vulnerabilities
 
@@ -111,6 +111,8 @@ optional arguments:
   -v, --verbose         give more output; this setting overrides the
                         `PIP_AUDIT_LOGLEVEL` variable and is equivalent to
                         setting it to `debug` (default: False)
+  --fix                 automatically upgrade dependencies with known
+                        vulnerabilities (default: False)
 ```
 <!-- @end-pip-audit-help@ -->
 
@@ -214,6 +216,16 @@ Found 2 known vulnerabilities in 1 packages
     "vulns": []
   }
 ]
+```
+
+Audit and attempt to automatically upgrade vulnerable dependencies:
+```
+$ pip-audit --fix
+Found 2 known vulnerabilities in 1 packages and fixed 2 vulnerabilities in 1 packages
+Name  Version ID             Fix Versions
+----- ------- -------------- ------------
+Flask 0.5     PYSEC-2019-179 1.0
+Flask 0.5     PYSEC-2018-66  0.12.3
 ```
 
 ## Security Model

@@ -15,6 +15,7 @@ from pip_audit._dependency_source import (
     DependencySource,
     DependencySourceError,
 )
+from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState
@@ -77,6 +78,12 @@ class RequirementSource(DependencySource):
                         yield dep
             except DependencyResolverError as dre:
                 raise RequirementSourceError("dependency resolver raised an error") from dre
+
+    def fix(self, fix_version: ResolvedFixVersion) -> None:  # pragma: no cover
+        """
+        Fixes a dependency version for this `RequirementSource`.
+        """
+        raise NotImplementedError
 
 
 class RequirementSourceError(DependencySourceError):

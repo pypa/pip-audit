@@ -8,6 +8,7 @@ from typing import Iterator, List, Tuple
 
 from packaging.requirements import Requirement
 
+from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
 
 
@@ -26,6 +27,13 @@ class DependencySource(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def fix(self, fix_version: ResolvedFixVersion) -> None:  # pragma: no cover
+        """
+        Upgrade a dependency to the given fix version.
+        """
+        raise NotImplementedError
+
 
 class DependencySourceError(Exception):
     """
@@ -33,6 +41,18 @@ class DependencySourceError(Exception):
 
     Concrete implementations are expected to subclass this exception to
     provide more context.
+    """
+
+    pass
+
+
+class DependencyFixError(Exception):
+    """
+    Raised when a `DependencySource` fails to perform a "fix" operation, i.e.
+    fails to upgrade a package to a different version.
+
+    Concrete implementations are expected to subclass this exception to provide
+    more context.
     """
 
     pass
