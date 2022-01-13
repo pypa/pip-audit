@@ -71,7 +71,7 @@ python -m pip_audit --help
 usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
                  [-d] [-S] [--desc [{on,off,auto}]] [--cache-dir CACHE_DIR]
                  [--progress-spinner {on,off}] [--timeout TIMEOUT]
-                 [--path PATHS] [-v]
+                 [--path PATHS] [-v] [--fix]
 
 audit the Python environment for dependencies with known vulnerabilities
 
@@ -111,6 +111,8 @@ optional arguments:
   -v, --verbose         give more output; this setting overrides the
                         `PIP_AUDIT_LOGLEVEL` variable and is equivalent to
                         setting it to `debug` (default: False)
+  --fix                 automatically upgrade dependencies with known
+                        vulnerabilities (default: False)
 ```
 <!-- @end-pip-audit-help@ -->
 
