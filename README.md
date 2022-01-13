@@ -218,6 +218,16 @@ Found 2 known vulnerabilities in 1 packages
 ]
 ```
 
+Audit and attempt to automatically upgrade vulnerable dependencies:
+```
+$ pip-audit --fix
+Found 2 known vulnerabilities in 1 packages and fixed 2 vulnerabilities in 1 packages
+Name  Version ID             Fix Versions
+----- ------- -------------- ------------
+Flask 0.5     PYSEC-2019-179 1.0
+Flask 0.5     PYSEC-2018-66  0.12.3
+```
+
 ## Security Model
 
 This section exists to describe the security assumptions you **can** and **must not**
