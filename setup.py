@@ -36,7 +36,7 @@ setup(
         "resolvelib>=0.8.0",
         "html5lib>=1.1",
         "CacheControl[filecache]>=0.12.10",
-        "cyclonedx-python-lib>=0.11.1",
+        "cyclonedx-python-lib>=0.11.1,<1.0.0",
     ],
     extras_require={
         "dev": [
