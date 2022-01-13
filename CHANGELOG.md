@@ -114,6 +114,7 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/trailofbits/pip-audit/compare/v0.0.9...HEAD
+[1.1.2]: https://github.com/trailofbits/pip-audit/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/trailofbits/pip-audit/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/trailofbits/pip-audit/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/trailofbits/pip-audit/compare/v1.0.0...v1.0.1
