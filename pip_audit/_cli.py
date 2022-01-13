@@ -19,7 +19,8 @@ from pip_audit._dependency_source import (
     RequirementSource,
     ResolveLibResolver,
 )
-from pip_audit._fix import resolve_fix_versions
+from pip_audit._dependency_source.interface import DependencySourceError
+from pip_audit._fix import ResolvedFixVersion, SkippedFixVersion, resolve_fix_versions
 from pip_audit._format import ColumnsFormat, CycloneDxFormat, JsonFormat, VulnerabilityFormat
 from pip_audit._service import OsvService, PyPIService, VulnerabilityService
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency
@@ -288,15 +289,32 @@ def audit() -> None:
 
     # If the `--fix` flag has been applied, find a set of suitable fix versions and upgrade the
     # dependencies at the source
+    fixes = list()
+    fixed_pkg_count = 0
+    fixed_vuln_count = 0
     if args.fix:
-        fix_versions = resolve_fix_versions(service, result)
-        source.fix_all(fix_versions)
+        for fix_version in resolve_fix_versions(service, result):
+            if not fix_version.is_skipped():
+                fix_version = cast(ResolvedFixVersion, fix_version)
+                try:
+                    source.fix(fix_version)
+                    fixed_pkg_count += 1
+                    fixed_vuln_count += len(result[fix_version.dep])
+                except DependencySourceError as dse:
+                    fix_version = SkippedFixVersion(fix_version.dep, str(dse))
+            fixes.append(fix_version)
 
     # TODO(ww): Refine this: we should always output if our output format is an SBOM
     # or other manifest format (like the default JSON format).
     if vuln_count > 0:
         print(f"Found {vuln_count} known vulnerabilities in {pkg_count} packages", file=sys.stderr)
+        if args.fix:
+            print(
+                f" and fixed {fixed_vuln_count} vulnerabilities in {fixed_pkg_count} packages",
+                file=sys.stderr,
+            )
         print(formatter.format(result))
-        sys.exit(1)
+        if pkg_count != fixed_pkg_count:
+            sys.exit(1)
     else:
         print("No known vulnerabilities found", file=sys.stderr)

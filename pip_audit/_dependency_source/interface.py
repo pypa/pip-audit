@@ -7,8 +7,8 @@ from abc import ABC, abstractmethod
 from typing import Iterator, List, Tuple
 
 from packaging.requirements import Requirement
-from packaging.version import Version
 
+from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
 
 
@@ -28,18 +28,11 @@ class DependencySource(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def fix(self, dep: Dependency, fix_version: Version) -> None:
+    def fix(self, fix_version: ResolvedFixVersion) -> None:
         """
         Upgrade a dependency to the given fix version.
         """
         raise NotImplementedError
-
-    def fix_all(self, fix_req: Iterator[Tuple[Dependency, Version]]) -> None:
-        """
-        Upgrade a collection of dependencies to their associated fix versions.
-        """
-        for (dep, fix_version) in fix_req:
-            self.fix(dep, fix_version)
 
 
 class DependencySourceError(Exception):

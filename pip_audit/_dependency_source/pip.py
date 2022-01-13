@@ -13,6 +13,7 @@ import pip_api
 from packaging.version import InvalidVersion, Version
 
 from pip_audit._dependency_source import DependencySource, DependencySourceError
+from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState
 
@@ -89,18 +90,25 @@ class PipSource(DependencySource):
         except Exception as e:
             raise PipSourceError("failed to list installed distributions") from e
 
-    def fix(self, dep: Dependency, fix_version: Version) -> None:
+    def fix(self, fix_version: ResolvedFixVersion) -> None:
         """
         Fixes a dependency version in this `PipSource`.
         """
-        fix_cmd = [sys.executable, "-m", "pip", "install", f"{dep.name}=={fix_version}"]
+        fix_cmd = [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            f"{fix_version.dep.name}=={fix_version.version}",
+        ]
         try:
             subprocess.run(
                 fix_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )
         except subprocess.CalledProcessError as cpe:
             raise PipSourceError(
-                f"failed to upgrade dependency {dep.name} to fix version {fix_version}"
+                f"failed to upgrade dependency {fix_version.dep.name} to fix version "
+                f"{fix_version.version}"
             ) from cpe
 
 

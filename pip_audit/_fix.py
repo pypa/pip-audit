@@ -2,7 +2,8 @@
 Resolving fix versions.
 """
 
-from typing import Dict, Iterator, List, Tuple, cast
+from dataclasses import dataclass
+from typing import Dict, Iterator, List, cast
 
 from packaging.version import Version
 
@@ -14,16 +15,44 @@ from pip_audit._service import (
 )
 
 
+@dataclass(frozen=True)
+class FixVersion:
+    dep: ResolvedDependency
+
+    def __init__(self, *_args, **_kwargs) -> None:
+        raise NotImplementedError
+
+    def is_skipped(self) -> bool:
+        """
+        Check whether the `FixVersion` was skipped
+        """
+        return self.__class__ is SkippedFixVersion
+
+
+@dataclass(frozen=True)
+class ResolvedFixVersion(FixVersion):
+    version: Version
+
+
+@dataclass(frozen=True)
+class SkippedFixVersion(FixVersion):
+    skip_reason: str
+
+
 def resolve_fix_versions(
     service: VulnerabilityService, result: Dict[Dependency, List[VulnerabilityResult]]
-) -> Iterator[Tuple[ResolvedDependency, Version]]:
+) -> Iterator[FixVersion]:
     for (dep, vulns) in result.items():
         if dep.is_skipped():
             continue
         if not vulns:
             continue
         dep = cast(ResolvedDependency, dep)
-        yield (dep, _resolve_fix_version(service, dep, vulns))
+        try:
+            version = _resolve_fix_version(service, dep, vulns)
+            yield ResolvedFixVersion(dep, version)
+        except FixResolutionImpossible as fri:
+            yield SkippedFixVersion(dep, str(fri))
 
 
 def _resolve_fix_version(
