@@ -14,8 +14,8 @@ but Windows and other supported platforms that are supported by Python
 should also work.
 
 If you're on a system that has GNU Make, you can use the convenience targets
-included in the `Makefile` that comes in the `pip-audit` repository. But this
-isn't required; all steps can be done without Make.
+included in the `Makefile` that comes in the `pip-audit` repository detailed
+below. But this isn't required; all steps can be done without Make.
 
 ## Development steps
 
@@ -26,60 +26,20 @@ git clone https://github.com/trailofbits/pip-audit
 cd pip-audit
 ```
 
-Then, set up the local development virtual environment.
+Then, use one of the `Makefile` targets to run a task. The first time this is
+run, this will also set up the local development virtual environment, and will
+install `pip-audit` as an editable package into this environment.
 
-If you have Make:
-
-```bash
-make dev
-source env/bin/active
-```
-
-Or, manually:
-
-```bash
-# assumes that `python` is Python 3; use `python3` if not
-python -m venv env
-source env/bin/activate
-pip install --upgrade pip
-pip install -e .[dev]
-```
-
-This will install `pip-audit` as an editable package into your local environment,
-which you can confirm from the command line:
-
-```bash
-pip-audit --version
-```
-
-If you see something like `pip-audit X.Y.Z`, then you're all done! Any changes
-you make to the `pip_audit` source tree will take effect immediately in your
-local environment.
-
-### Development practices
-
-Here are some guidelines to follow if you're working on a new feature or changes to
-`pip-audit`'s internal APIs:
-
-* *Keep the `pip-audit` APIs as private as possible*. Nearly all of `pip-audit`'s
-APIs should be private and treated as unstable and unsuitable for public use.
-If you're adding a new module to the source tree, prefix the filename with an underscore to
-emphasize that it's an internal (e.g., `pip_audit/_foo.py` instead of `pip_audit/foo.py`).
-
-* *Keep the CLI consistent with `pip`*. `pip-audit`'s CLI should *roughly* mirror that
-of `pip`. If you're adding a new flag or option to the CLI, check whether `pip` already
-has the same functionality (e.g., HTTP timeout control) and use the same short and long mnemonics.
-
-* *Perform judicious debug logging.* `pip-audit` uses the standard Python
-[`logging`](https://docs.python.org/3/library/logging.html) module. Use
-`logger.debug` early and often -- users who experience errors can submit better
-bug reports when their debug logs include helpful context!
-
-* *Update the [CHANGELOG](./CHANGELOG.md)*. If your changes are public or result
-in changes to `pip-audit`'s CLI, please record them under the "Unreleased" section,
-with an entry in an appropriate subsection ("Added", "Changed", "Removed", or "Fixed").
+Any changes you make to the `pip_audit` source tree will take effect
+immediately in the virtual environment.
 
 ### Linting
+
+You can lint locally with:
+
+```bash
+make lint
+```
 
 `pip-audit` is automatically linted and formatted with a collection of tools:
 
@@ -89,55 +49,25 @@ with an entry in an appropriate subsection ("Added", "Changed", "Removed", or "F
 * [`mypy`](https://mypy.readthedocs.io/en/stable/): Static type checking
 * [`interrogate`](https://interrogate.readthedocs.io/en/latest/): Documentation coverage
 
-You can run all of the tools locally, either with Make:
-
-```bash
-make lint
-```
-
-...or manually:
-
-```bash
-# assumes that your virtual environment is active
-black pip_audit/ test/
-isort pip_audit/ test/
-flake8 pip_audit/ test/
-mypy pip_audit
-interrogate -c pyproject.toml .
-```
 
 ### Testing
+
+You can run the tests locally with:
+
+```bash
+make test
+```
+
+You can also filter by a pattern (uses `pytest -k`)
+
+```bash
+make test TESTS=test_audit_dry_run
+```
 
 `pip-audit` has a [`pytest`](https://docs.pytest.org/)-based unit test suite,
 including code coverage with [`coverage.py`](https://coverage.readthedocs.io/).
 
-You can run the tests locally, either with Make:
-
-```bash
-make test
-
-# filter by pattern (uses `pytest -k`)
-make test TESTS=test_audit_dry_run
-```
-
-...or manually:
-
-```bash
-# assumes that your virtual environment is active
-pytest --cov=pip_audit test/
-
-# optionally: fail if test coverage is not 100%
-python -m coverage report -m --fail-under 100
-```
-
 ### Documentation
-
-`pip-audit` uses [`pdoc3`](https://github.com/pdoc3/pdoc) to generate HTML documentation for
-the public Python APIs.
-
-Live documentation for the `main` branch is hosted
-[here](https://trailofbits.github.io/pip-audit/). Only the public APIs are
-documented, all undocumented APIs are **intentionally private and unstable.**
 
 If you're running Python 3.7 or newer, you can run the documentation build locally:
 
@@ -145,11 +75,12 @@ If you're running Python 3.7 or newer, you can run the documentation build local
 make doc
 ```
 
-...or manually:
+`pip-audit` uses [`pdoc3`](https://github.com/pdoc3/pdoc) to generate HTML documentation for
+the public Python APIs.
 
-```bash
-pdoc3 --force --html pip_audit
-```
+Live documentation for the `main` branch is hosted
+[here](https://trailofbits.github.io/pip-audit/). Only the public APIs are
+documented, all undocumented APIs are **intentionally private and unstable.**
 
 ### Releasing
 
@@ -180,3 +111,26 @@ RUN ME MANUALLY: git push origin main && git push origin vX.Y.Z
 ```
 
 Run that last command sequence to complete the release.
+
+## Development practices
+
+Here are some guidelines to follow if you're working on a new feature or changes to
+`pip-audit`'s internal APIs:
+
+* *Keep the `pip-audit` APIs as private as possible*. Nearly all of `pip-audit`'s
+APIs should be private and treated as unstable and unsuitable for public use.
+If you're adding a new module to the source tree, prefix the filename with an underscore to
+emphasize that it's an internal (e.g., `pip_audit/_foo.py` instead of `pip_audit/foo.py`).
+
+* *Keep the CLI consistent with `pip`*. `pip-audit`'s CLI should *roughly* mirror that
+of `pip`. If you're adding a new flag or option to the CLI, check whether `pip` already
+has the same functionality (e.g., HTTP timeout control) and use the same short and long mnemonics.
+
+* *Perform judicious debug logging.* `pip-audit` uses the standard Python
+[`logging`](https://docs.python.org/3/library/logging.html) module. Use
+`logger.debug` early and often -- users who experience errors can submit better
+bug reports when their debug logs include helpful context!
+
+* *Update the [CHANGELOG](./CHANGELOG.md)*. If your changes are public or result
+in changes to `pip-audit`'s CLI, please record them under the "Unreleased" section,
+with an entry in an appropriate subsection ("Added", "Changed", "Removed", or "Fixed").
