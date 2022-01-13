@@ -12,7 +12,7 @@ from typing import Iterator, Sequence
 import pip_api
 from packaging.version import InvalidVersion, Version
 
-from pip_audit._dependency_source import DependencySource, DependencySourceError
+from pip_audit._dependency_source import DependencyFixError, DependencySource, DependencySourceError
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState
@@ -106,7 +106,7 @@ class PipSource(DependencySource):
                 fix_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )
         except subprocess.CalledProcessError as cpe:
-            raise PipSourceError(
+            raise PipFixError(
                 f"failed to upgrade dependency {fix_version.dep.name} to fix version "
                 f"{fix_version.version}"
             ) from cpe
@@ -114,5 +114,11 @@ class PipSource(DependencySource):
 
 class PipSourceError(DependencySourceError):
     """A `pip` specific `DependencySourceError`."""
+
+    pass
+
+
+class PipFixError(DependencyFixError):
+    """A `pip` specific `DependencyFixError`."""
 
     pass

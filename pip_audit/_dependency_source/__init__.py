@@ -3,6 +3,7 @@ Dependency source interfaces and implementations for `pip-audit`.
 """
 
 from .interface import (
+    DependencyFixError,
     DependencyResolver,
     DependencyResolverError,
     DependencySource,
@@ -13,6 +14,7 @@ from .requirement import RequirementSource
 from .resolvelib import ResolveLibResolver
 
 __all__ = [
+    "DependencyFixError",
     "DependencyResolver",
     "DependencyResolverError",
     "DependencySource",

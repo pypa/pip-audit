@@ -46,6 +46,18 @@ class DependencySourceError(Exception):
     pass
 
 
+class DependencyFixError(Exception):
+    """
+    Raised when a `DependencySource` fails to perform a "fix" operation, i.e.
+    fails to upgrade a package to a different version.
+
+    Concrete implementations are expected to subclass this exception to provide
+    more context.
+    """
+
+    pass
+
+
 class DependencyResolver(ABC):
     """
     Represents an abstract resolver of Python dependencies that takes a single

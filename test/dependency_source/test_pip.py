@@ -115,5 +115,5 @@ def test_pip_source_fix_failure(monkeypatch):
 
     monkeypatch.setattr(subprocess, "run", run_mock)
 
-    with pytest.raises(pip.PipSourceError):
+    with pytest.raises(pip.PipFixError):
         source.fix(fix_version)

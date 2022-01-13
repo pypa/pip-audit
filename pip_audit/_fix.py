@@ -1,5 +1,5 @@
 """
-Resolving fix versions.
+Functionality for resolving fixed versions of dependencies.
 """
 
 from dataclasses import dataclass
