@@ -24,10 +24,15 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
-      - name: lint
-        run: make lint
       - name: test
         run: make test
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - name: lint
+        run: make lint
   check-readme:
     runs-on: ubuntu-latest
     steps:
