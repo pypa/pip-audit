@@ -24,8 +24,6 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
-      - name: deps
-        run: make dev
       - name: lint
         run: make lint
       - name: test
@@ -40,8 +38,6 @@ jobs:
         # `argparse` between major versions.
         with:
           python-version: "3.6"
-      - name: deps
-        run: make dev
       - name: check-readme
         run: |
           diff \

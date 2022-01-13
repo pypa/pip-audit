@@ -22,24 +22,23 @@ else
 	COV_ARGS := --fail-under 100
 endif
 
+env/pyvenv.cfg:
+	# Create our Python 3 virtual environment
+	rm -rf env
+	python3 -m venv env
+	./env/bin/python -m pip install --upgrade pip
+	./env/bin/python -m pip install -e .[dev]
+
 .PHONY: all
 all:
 	@echo "Run my targets individually!"
 
-.PHONY: dev
-dev:
-	test -d env || python3 -m venv env
-	. env/bin/activate && \
-		pip install --upgrade pip && \
-		pip install -e .[dev]
-
-
 .PHONY: run
-run:
+run: env/pyvenv.cfg
 	@. env/bin/activate && pip-audit $(ARGS)
 
 .PHONY: lint
-lint:
+lint: env/pyvenv.cfg
 	. env/bin/activate && \
 		black $(ALL_PY_SRCS) && \
 		isort $(ALL_PY_SRCS) && \
@@ -49,24 +48,24 @@ lint:
 		git diff --exit-code
 
 .PHONY: test
-test:
+test: env/pyvenv.cfg
 	. env/bin/activate && \
 		pytest --cov=pip_audit test/ $(TEST_ARGS) && \
 		python -m coverage report -m $(COV_ARGS)
 
 .PHONY: doc
-doc:
+doc: env/pyvenv.cfg
 	. env/bin/activate && \
 		command -v pdoc3 && \
 		PYTHONWARNINGS='error::UserWarning' pdoc --force --html pip_audit
 
 .PHONY: package
-package:
+package: env/pyvenv.cfg
 	. env/bin/activate && \
 		python3 -m build
 
 .PHONY: release
-release:
+release: env/pyvenv.cfg
 	@. env/bin/activate && \
 		NEXT_VERSION=$$(bump $(BUMP_ARGS)) && \
 		git add pip_audit/_version.py && git diff --quiet --exit-code && \
