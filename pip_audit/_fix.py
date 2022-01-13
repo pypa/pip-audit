@@ -38,15 +38,26 @@ def _resolve_fix_version(
     current_vulns = vulns
     while current_vulns:
 
-        def get_earliest_fix_version(fix_versions: List[Version]) -> Version:
-            for v in fix_versions:
-                if v > current_version:
-                    return v
-            raise RuntimeError
+        def get_earliest_fix_version(d: ResolvedDependency, v: VulnerabilityResult) -> Version:
+            for fix_version in v.fix_versions:
+                if fix_version > current_version:
+                    return fix_version
+            raise FixResolutionImpossible(
+                f"Failed to fix dependency {dep.name}, unable to find fix version for "
+                f"vulnerability {v.id}"
+            )
 
         # We want to retrieve a version that potentially fixes all vulnerabilities
         current_version = max(
-            [get_earliest_fix_version(v.fix_versions) for v in current_vulns if v.fix_versions]
+            [get_earliest_fix_version(dep, v) for v in current_vulns if v.fix_versions]
         )
         _, current_vulns = service.query(ResolvedDependency(dep.name, current_version))
     return current_version
+
+
+class FixResolutionImpossible(Exception):
+    """
+    Raised when `resolve_fix_versions` fails to find a fix version without known vulnerabilities
+    """
+
+    pass

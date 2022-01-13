@@ -99,7 +99,9 @@ class PipSource(DependencySource):
                 fix_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )
         except subprocess.CalledProcessError as cpe:
-            raise RuntimeError from cpe
+            raise PipSourceError(
+                f"failed to upgrade dependency {dep.name} to fix version {fix_version}"
+            ) from cpe
 
 
 class PipSourceError(DependencySourceError):

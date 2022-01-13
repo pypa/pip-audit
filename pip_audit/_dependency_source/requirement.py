@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Iterator, List, Set, cast
 
 from packaging.requirements import Requirement
+from packaging.version import Version
 from pip_api import parse_requirements
 from pip_api.exceptions import PipError
 
@@ -77,6 +78,12 @@ class RequirementSource(DependencySource):
                         yield dep
             except DependencyResolverError as dre:
                 raise RequirementSourceError("dependency resolver raised an error") from dre
+
+    def fix(self, dep: Dependency, fix_version: Version) -> None:
+        """
+        Fixes a dependency version for this `RequirementSource`.
+        """
+        raise NotImplementedError
 
 
 class RequirementSourceError(DependencySourceError):
