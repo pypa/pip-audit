@@ -38,7 +38,9 @@ def test_plurals(capsys, monkeypatch, args, vuln_count, pkg_count, expected):
     auditor = pretend.stub(audit=lambda a: result)
     monkeypatch.setattr(pip_audit._cli, "Auditor", lambda *a, **kw: auditor)
 
-    resolve_fix_versions = [pretend.stub(is_skipped=lambda: False, dep=spec) for spec, _ in result]
+    resolve_fix_versions = [
+        pretend.stub(is_skipped=lambda: False, dep=spec, version=2) for spec, _ in result
+    ]
     monkeypatch.setattr(pip_audit._cli, "resolve_fix_versions", lambda *a: resolve_fix_versions)
 
     try:

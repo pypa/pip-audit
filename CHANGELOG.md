@@ -12,7 +12,8 @@ All versions prior to 0.0.9 are untracked.
 
 * CLI: The `--fix` flag has been added, allowing users to attempt to
   automatically upgrade any vulnerable dependencies to the first safe version
-  available (#[212](https://github.com/trailofbits/pip-audit/pull/212))
+  available ([#212](https://github.com/trailofbits/pip-audit/pull/212),
+  [#222](https://github.com/trailofbits/pip-audit/pull/222))
 
 ### Changed
 
