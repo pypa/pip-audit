@@ -148,7 +148,7 @@ No known vulnerabilities found
 Audit dependencies when there are vulnerabilities present:
 ```
 $ pip-audit
-Found 2 known vulnerabilities in 1 packages
+Found 2 known vulnerabilities in 1 package
 Name  Version ID             Fix Versions
 ----  ------- -------------- ------------
 Flask 0.5     PYSEC-2019-179 1.0
@@ -158,7 +158,7 @@ Flask 0.5     PYSEC-2018-66  0.12.3
 Audit dependencies including descriptions:
 ```
 $ pip-audit --desc
-Found 2 known vulnerabilities in 1 packages
+Found 2 known vulnerabilities in 1 package
 Name  Version ID             Fix Versions Description
 ----  ------- -------------- ------------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Flask 0.5     PYSEC-2019-179 1.0          The Pallets Project Flask before 1.0 is affected by: unexpected memory usage. The impact is: denial of service. The attack vector is: crafted encoded JSON data. The fixed version is: 1. NOTE: this may overlap CVE-2018-1000656.
@@ -168,7 +168,7 @@ Flask 0.5     PYSEC-2018-66  0.12.3       The Pallets Project flask version Befo
 Audit dependencies in JSON format:
 ```
 $ pip-audit -f json | jq
-Found 2 known vulnerabilities in 1 packages
+Found 2 known vulnerabilities in 1 package
 [
   {
     "name": "flask",
@@ -221,11 +221,11 @@ Found 2 known vulnerabilities in 1 packages
 Audit and attempt to automatically upgrade vulnerable dependencies:
 ```
 $ pip-audit --fix
-Found 2 known vulnerabilities in 1 packages and fixed 2 vulnerabilities in 1 packages
-Name  Version ID             Fix Versions
------ ------- -------------- ------------
-Flask 0.5     PYSEC-2019-179 1.0
-Flask 0.5     PYSEC-2018-66  0.12.3
+Found 2 known vulnerabilities in 1 package and fixed 2 vulnerabilities in 1 package
+Name  Version ID             Fix Versions Applied Fix
+----- ------- -------------- ------------ ----------------------------------------
+flask 0.5     PYSEC-2019-179 1.0          Successfully upgraded flask (0.5 => 1.0)
+flask 0.5     PYSEC-2018-66  0.12.3       Successfully upgraded flask (0.5 => 1.0)
 ```
 
 ## Security Model
