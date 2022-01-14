@@ -15,6 +15,10 @@ All versions prior to 0.0.9 are untracked.
   available ([#212](https://github.com/trailofbits/pip-audit/pull/212),
   [#222](https://github.com/trailofbits/pip-audit/pull/222))
 
+* CLI: The combination of `--fix` and `--dry-run` is now supported, causing
+  `pip-audit` to perform the auditing step but not any resulting fix steps
+  ([#223](https://github.com/trailofbits/pip-audit/pull/223))
+
 ### Changed
 
 * CLI: The default output format is now correctly pluralized
