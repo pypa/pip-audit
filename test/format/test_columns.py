@@ -30,3 +30,23 @@ Name Skip Reason
 ---- -----------
 bar  skip-reason"""
     assert columns_format.format(vuln_data_skipped_dep, list()) == expected_columns
+
+
+def test_columns_fix(vuln_data, fix_data):
+    columns_format = format.ColumnsFormat(False)
+    expected_columns = """Name Version ID     Fix Versions Applied Fix
+---- ------- ------ ------------ --------------------------------------
+foo  1.0     VULN-0 1.1,1.4      Successfully upgraded foo (1.0 => 1.8)
+foo  1.0     VULN-1 1.0          Successfully upgraded foo (1.0 => 1.8)
+bar  0.1     VULN-2              Successfully upgraded bar (0.1 => 0.3)"""
+    assert columns_format.format(vuln_data, fix_data) == expected_columns
+
+
+def test_columns_skipped_fix(vuln_data, skipped_fix_data):
+    columns_format = format.ColumnsFormat(False)
+    expected_columns = """Name Version ID     Fix Versions Applied Fix
+---- ------- ------ ------------ --------------------------------------
+foo  1.0     VULN-0 1.1,1.4      Successfully upgraded foo (1.0 => 1.8)
+foo  1.0     VULN-1 1.0          Successfully upgraded foo (1.0 => 1.8)
+bar  0.1     VULN-2              Failed to fix bar (0.1): skip-reason"""
+    assert columns_format.format(vuln_data, skipped_fix_data) == expected_columns
