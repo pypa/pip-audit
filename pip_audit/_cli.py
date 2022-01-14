@@ -136,10 +136,7 @@ def _fatal(msg: str) -> NoReturn:
     sys.exit(1)
 
 
-def audit() -> None:
-    """
-    The primary entrypoint for `pip-audit`.
-    """
+def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pip-audit",
         description="audit the Python environment for dependencies with known vulnerabilities",
@@ -241,8 +238,20 @@ def audit() -> None:
         action="store_true",
         help="automatically upgrade dependencies with known vulnerabilities",
     )
+    return parser
 
-    args = parser.parse_args()
+
+def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
+    return parser.parse_args()
+
+
+def audit() -> None:
+    """
+    The primary entrypoint for `pip-audit`.
+    """
+    parser = _parser()
+    args = _parse_args(parser)
+
     if args.verbose:
         logging.root.setLevel("DEBUG")
 
@@ -307,10 +316,17 @@ def audit() -> None:
     # TODO(ww): Refine this: we should always output if our output format is an SBOM
     # or other manifest format (like the default JSON format).
     if vuln_count > 0:
-        summary_msg = f"Found {vuln_count} known vulnerabilities in {pkg_count} packages"
+        summary_msg = (
+            f"Found {vuln_count} known "
+            f"{'vulnerability' if vuln_count == 1 else 'vulnerabilities'} "
+            f"in {pkg_count} {'package' if pkg_count == 1 else 'packages'}"
+        )
         if args.fix:
             summary_msg += (
-                f" and fixed {fixed_vuln_count} vulnerabilities in {fixed_pkg_count} packages"
+                f" and fixed {fixed_vuln_count} "
+                f"{'vulnerability' if fixed_vuln_count == 1 else 'vulnerabilities'} "
+                f"in {fixed_pkg_count} "
+                f"{'package' if fixed_pkg_count == 1 else 'packages'}"
             )
         print(summary_msg, file=sys.stderr)
         print(formatter.format(result))
