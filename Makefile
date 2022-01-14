@@ -50,14 +50,14 @@ lint: env/pyvenv.cfg
 .PHONY: test tests
 test tests: env/pyvenv.cfg
 	. env/bin/activate && \
-		pytest --cov=pip_audit $(T) $(TEST_ARGS) && \
+		pytest --cov=$(PY_MODULE) $(T) $(TEST_ARGS) && \
 		python -m coverage report -m $(COV_ARGS)
 
 .PHONY: doc
 doc: env/pyvenv.cfg
 	. env/bin/activate && \
 		command -v pdoc3 && \
-		PYTHONWARNINGS='error::UserWarning' pdoc --force --html pip_audit
+		PYTHONWARNINGS='error::UserWarning' pdoc --force --html $(PY_MODULE)
 
 .PHONY: package
 package: env/pyvenv.cfg
@@ -68,7 +68,7 @@ package: env/pyvenv.cfg
 release: env/pyvenv.cfg
 	@. env/bin/activate && \
 		NEXT_VERSION=$$(bump $(BUMP_ARGS)) && \
-		git add pip_audit/_version.py && git diff --quiet --exit-code && \
+		git add $(PY_MODULE)/_version.py && git diff --quiet --exit-code && \
 		git commit -m "version: v$${NEXT_VERSION}" && \
 		git tag v$${NEXT_VERSION} && \
 		echo "RUN ME MANUALLY: git push origin main && git push origin v$${NEXT_VERSION}"
