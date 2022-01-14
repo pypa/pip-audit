@@ -37,9 +37,15 @@ class JsonFormat(VulnerabilityFormat):
 
         See `VulnerabilityFormat.format`.
         """
-        output_json = []
+        output_json = {}
+        dep_json = []
         for dep, vulns in result.items():
-            output_json.append(self._format_dep(dep, vulns))
+            dep_json.append(self._format_dep(dep, vulns))
+        output_json["dependencies"] = dep_json
+        fix_json = []
+        for f in fixes:
+            fix_json.append(self._format_fix(f))
+        output_json["fixes"] = fix_json
         return json.dumps(output_json)
 
     def _format_dep(
@@ -67,3 +73,18 @@ class JsonFormat(VulnerabilityFormat):
         if self.output_desc:
             vuln_json["description"] = vuln.description
         return vuln_json
+
+    def _format_fix(self, fix_version: fix.FixVersion) -> Dict[str, Any]:
+        if fix_version.is_skipped():
+            fix_version = cast(fix.SkippedFixVersion, fix_version)
+            return {
+                "name": fix_version.dep.canonical_name,
+                "version": str(fix_version.dep.version),
+                "skip_reason": fix_version.skip_reason,
+            }
+        fix_version = cast(fix.ResolvedFixVersion, fix_version)
+        return {
+            "name": fix_version.dep.canonical_name,
+            "old_version": str(fix_version.dep.version),
+            "new_version": str(fix_version.version),
+        }
