@@ -3,7 +3,7 @@ Functionality for formatting vulnerability results as a set of human-readable co
 """
 
 from itertools import zip_longest
-from typing import Any, Dict, Iterable, List, Tuple, cast
+from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 
 from packaging.version import Version
 
@@ -55,13 +55,16 @@ class ColumnsFormat(VulnerabilityFormat):
         header = ["Name", "Version", "ID", "Fix Versions"]
         if self.output_desc:
             header.append("Description")
+        if fixes:
+            header.append("Applied Fix")
         vuln_data.append(header)
         for dep, vulns in result.items():
             if dep.is_skipped():
                 continue
             dep = cast(service.ResolvedDependency, dep)
+            applied_fix = next((f for f in fixes if f.dep == dep), None)
             for vuln in vulns:
-                vuln_data.append(self._format_vuln(dep, vuln))
+                vuln_data.append(self._format_vuln(dep, vuln, applied_fix))
 
         vuln_strings, sizes = tabulate(vuln_data)
 
@@ -101,7 +104,10 @@ class ColumnsFormat(VulnerabilityFormat):
         return columns_string
 
     def _format_vuln(
-        self, dep: service.ResolvedDependency, vuln: service.VulnerabilityResult
+        self,
+        dep: service.ResolvedDependency,
+        vuln: service.VulnerabilityResult,
+        applied_fix: Optional[fix.FixVersion],
     ) -> List[Any]:
         vuln_data = [
             dep.canonical_name,
@@ -111,6 +117,8 @@ class ColumnsFormat(VulnerabilityFormat):
         ]
         if self.output_desc:
             vuln_data.append(vuln.description)
+        if applied_fix is not None:
+            vuln_data.append(self._format_applied_fix(applied_fix))
         return vuln_data
 
     def _format_fix_versions(self, fix_versions: List[Version]) -> str:
@@ -121,3 +129,16 @@ class ColumnsFormat(VulnerabilityFormat):
             dep.canonical_name,
             dep.skip_reason,
         ]
+
+    def _format_applied_fix(self, applied_fix: fix.FixVersion) -> str:
+        if applied_fix.is_skipped():
+            applied_fix = cast(fix.SkippedFixVersion, applied_fix)
+            return (
+                f"Failed to fix {applied_fix.dep.canonical_name} ({applied_fix.dep.version}): "
+                f"{applied_fix.skip_reason}"
+            )
+        applied_fix = cast(fix.ResolvedFixVersion, applied_fix)
+        return (
+            f"Successfully upgraded {applied_fix.dep.canonical_name} ({applied_fix.dep.version} "
+            f"=> {applied_fix.version})"
+        )
