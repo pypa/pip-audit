@@ -1,6 +1,8 @@
 import json
 import xml.etree.ElementTree as ET
 
+import pretend  # type: ignore
+
 from pip_audit._format import CycloneDxFormat
 
 
@@ -25,3 +27,16 @@ def test_cyclonedx_skipped_dep(vuln_data_skipped_dep):
 
     # Just test that a skipped dependency doesn't cause the formatter to blow up
     assert json.loads(formatter.format(vuln_data_skipped_dep, list())) is not None
+
+
+def test_cyclonedx_fix(monkeypatch, vuln_data, fix_data):
+    import pip_audit._format.cyclonedx as cyclonedx
+
+    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    monkeypatch.setattr(cyclonedx, "logger", logger)
+
+    formatter = CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Json)
+    assert json.loads(formatter.format(vuln_data, fix_data)) is not None
+
+    # The CycloneDX format doesn't support fixes so we expect to log a warning
+    assert len(logger.warning.calls) == 1

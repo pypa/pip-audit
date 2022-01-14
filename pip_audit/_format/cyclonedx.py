@@ -80,7 +80,7 @@ class CycloneDxFormat(VulnerabilityFormat):
         See `VulnerabilityFormat.format`.
         """
         if fixes:
-            logger.warn("--fix output is unsupported by CycloneDX formats")
+            logger.warning("--fix output is unsupported by CycloneDX formats")
 
         parser = _PipAuditResultParser(result)
         bom = Bom.from_parser(parser)
