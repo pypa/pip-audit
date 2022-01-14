@@ -53,10 +53,10 @@ class ColumnsFormat(VulnerabilityFormat):
         """
         vuln_data: List[List[Any]] = []
         header = ["Name", "Version", "ID", "Fix Versions"]
-        if self.output_desc:
-            header.append("Description")
         if fixes:
             header.append("Applied Fix")
+        if self.output_desc:
+            header.append("Description")
         vuln_data.append(header)
         for dep, vulns in result.items():
             if dep.is_skipped():
@@ -115,10 +115,10 @@ class ColumnsFormat(VulnerabilityFormat):
             vuln.id,
             self._format_fix_versions(vuln.fix_versions),
         ]
-        if self.output_desc:
-            vuln_data.append(vuln.description)
         if applied_fix is not None:
             vuln_data.append(self._format_applied_fix(applied_fix))
+        if self.output_desc:
+            vuln_data.append(vuln.description)
         return vuln_data
 
     def _format_fix_versions(self, fix_versions: List[Version]) -> str:
