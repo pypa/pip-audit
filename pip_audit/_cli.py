@@ -313,7 +313,7 @@ def audit() -> None:
                 f" and fixed {fixed_vuln_count} vulnerabilities in {fixed_pkg_count} packages"
             )
         print(summary_msg, file=sys.stderr)
-        print(formatter.format(result))
+        print(formatter.format(result, fixes))
         if pkg_count != fixed_pkg_count:
             sys.exit(1)
     else:

@@ -5,6 +5,7 @@ Functionality for formatting vulnerability results as an array of JSON objects.
 import json
 from typing import Any, Dict, List, cast
 
+import pip_audit._fix as fix
 import pip_audit._service as service
 
 from .interface import VulnerabilityFormat
@@ -25,7 +26,11 @@ class JsonFormat(VulnerabilityFormat):
         """
         self.output_desc = output_desc
 
-    def format(self, result: Dict[service.Dependency, List[service.VulnerabilityResult]]) -> str:
+    def format(
+        self,
+        result: Dict[service.Dependency, List[service.VulnerabilityResult]],
+        fixes: List[fix.FixVersion],
+    ) -> str:
         """
         Returns a JSON formatted string for a given mapping of dependencies to vulnerability
         results.

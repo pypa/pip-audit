@@ -7,6 +7,7 @@ from typing import Any, Dict, Iterable, List, Tuple, cast
 
 from packaging.version import Version
 
+import pip_audit._fix as fix
 import pip_audit._service as service
 
 from .interface import VulnerabilityFormat
@@ -39,7 +40,11 @@ class ColumnsFormat(VulnerabilityFormat):
         """
         self.output_desc = output_desc
 
-    def format(self, result: Dict[service.Dependency, List[service.VulnerabilityResult]]) -> str:
+    def format(
+        self,
+        result: Dict[service.Dependency, List[service.VulnerabilityResult]],
+        fixes: List[fix.FixVersion],
+    ) -> str:
         """
         Returns a column formatted string for a given mapping of dependencies to vulnerability
         results.
