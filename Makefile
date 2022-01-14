@@ -44,8 +44,7 @@ lint: env/pyvenv.cfg
 		isort $(ALL_PY_SRCS) && \
 		flake8 $(ALL_PY_SRCS) && \
 		mypy $(PY_MODULE) test/ && \
-		interrogate -c pyproject.toml . && \
-		git diff --exit-code
+		interrogate -c pyproject.toml .
 
 .PHONY: test tests
 test tests: env/pyvenv.cfg
