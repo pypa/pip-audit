@@ -136,10 +136,7 @@ def _fatal(msg: str) -> NoReturn:
     sys.exit(1)
 
 
-def audit() -> None:
-    """
-    The primary entrypoint for `pip-audit`.
-    """
+def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pip-audit",
         description="audit the Python environment for dependencies with known vulnerabilities",
@@ -241,8 +238,20 @@ def audit() -> None:
         action="store_true",
         help="automatically upgrade dependencies with known vulnerabilities",
     )
+    return parser
 
-    args = parser.parse_args()
+
+def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
+    return parser.parse_args()
+
+
+def audit() -> None:
+    """
+    The primary entrypoint for `pip-audit`.
+    """
+    parser = _parser()
+    args = _parse_args(parser)
+
     if args.verbose:
         logging.root.setLevel("DEBUG")
 
