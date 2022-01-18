@@ -90,8 +90,10 @@ optional arguments:
   -s SERVICE, --vulnerability-service SERVICE
                         the vulnerability service to audit dependencies
                         against (choices: osv, pypi) (default: pypi)
-  -d, --dry-run         collect all dependencies but do not perform the
-                        auditing step (default: False)
+  -d, --dry-run         without `--fix`: collect all dependencies but do not
+                        perform the auditing step; with `--fix`: perform the
+                        auditing step but do not perform any fixes (default:
+                        False)
   -S, --strict          fail the entire audit if dependency collection fails
                         on any dependency (default: False)
   --desc [{on,off,auto}]
@@ -125,6 +127,17 @@ The current codes are:
 * `0`: No known vulnerabilities were detected.
 * `1`: One or more known vulnerabilities were found.
 
+### Dry runs
+
+`pip-audit` supports the `--dry-run` flag, which can be used to control whether
+an audit (or fix) step is actually performed.
+
+* On its own, `pip-audit --dry-run` skips the auditing step and prints
+  the number of dependencies that *would have been* audited.
+* In fix mode, `pip-audit --fix --dry-run` performs the auditing step and prints
+  out the fix behavior (i.e., which dependencies would be upgraded or skipped)
+  that *would have been performed*.
+
 ## Examples
 
 Audit dependencies for the current Python environment:
@@ -139,7 +152,7 @@ $ pip-audit -r ./requirements.txt
 No known vulnerabilities found
 ```
 
-Audit dependencies for the current Python environment excluding system packages:
+Audit dependencies for a requirements file, excluding system packages:
 ```
 $ pip-audit -r ./requirements.txt -l
 No known vulnerabilities found

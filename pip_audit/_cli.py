@@ -182,7 +182,8 @@ def _parser() -> argparse.ArgumentParser:
         "-d",
         "--dry-run",
         action="store_true",
-        help="collect all dependencies but do not perform the auditing step",
+        help="without `--fix`: collect all dependencies but do not perform the auditing step; "
+        "with `--fix`: perform the auditing step but do not perform any fixes",
     )
     parser.add_argument(
         "-S",
@@ -276,7 +277,10 @@ def audit() -> None:
         else:
             source = PipSource(local=args.local, paths=args.paths)
 
-        auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run))
+        # `--dry-run` only affects the auditor if `--fix` is also not supplied,
+        # since the combination of `--dry-run` and `--fix` implies that the user
+        # wants to dry-run the "fix" step instead of the "audit" step
+        auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run and not args.fix))
 
         result = {}
         pkg_count = 0
@@ -302,16 +306,28 @@ def audit() -> None:
     fixed_pkg_count = 0
     fixed_vuln_count = 0
     if args.fix:
-        for fix_version in resolve_fix_versions(service, result):
-            if not fix_version.is_skipped():
-                fix_version = cast(ResolvedFixVersion, fix_version)
+        for fix in resolve_fix_versions(service, result):
+            if args.dry_run:
+                if fix.is_skipped():
+                    fix = cast(SkippedFixVersion, fix)
+                    logger.info(
+                        f"Dry run: would have skipped {fix.dep.name} "
+                        f"upgrade because {fix.skip_reason}"
+                    )
+                else:
+                    fix = cast(ResolvedFixVersion, fix)
+                    logger.info(f"Dry run: would have upgraded {fix.dep.name} to " f"{fix.version}")
+                continue
+
+            if not fix.is_skipped():
+                fix = cast(ResolvedFixVersion, fix)
                 try:
-                    source.fix(fix_version)
+                    source.fix(fix)
                     fixed_pkg_count += 1
-                    fixed_vuln_count += len(result[fix_version.dep])
+                    fixed_vuln_count += len(result[fix.dep])
                 except DependencySourceError as dse:
-                    fix_version = SkippedFixVersion(fix_version.dep, str(dse))
-            fixes.append(fix_version)
+                    fix = SkippedFixVersion(fix.dep, str(dse))
+            fixes.append(fix)
 
     # TODO(ww): Refine this: we should always output if our output format is an SBOM
     # or other manifest format (like the default JSON format).
