@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Iterator, List, Set, cast
 
 from packaging.requirements import Requirement
+from packaging.specifiers import SpecifierSet
 from pip_api import parse_requirements
 from pip_api.exceptions import PipError
 
@@ -79,11 +80,33 @@ class RequirementSource(DependencySource):
             except DependencyResolverError as dre:
                 raise RequirementSourceError("dependency resolver raised an error") from dre
 
-    def fix(self, fix_version: ResolvedFixVersion) -> None:  # pragma: no cover
+    def fix(self, fix_version: ResolvedFixVersion) -> None:
         """
         Fixes a dependency version for this `RequirementSource`.
         """
-        raise NotImplementedError
+        for filename in self.filenames:
+            self.state.update_state(
+                f"Fixing dependency {fix_version.dep.name} ({fix_version.dep.version} => "
+                f"{fix_version.version})"
+            )
+            self._fix_file(filename, fix_version)
+
+    def _fix_file(self, filename: Path, fix_version: ResolvedFixVersion) -> None:
+        try:
+            reqs = parse_requirements(filename=filename)
+        except PipError as pe:
+            raise RequirementSourceError("requirement parsing raised an error") from pe
+
+        # Invoke the dependency resolver to turn requirements into dependencies
+        req_values: List[Requirement] = [Requirement(str(req)) for req in reqs.values()]
+
+        with open("fixed.txt", "w+") as f:
+            for req in req_values:
+                if req.name == fix_version.dep.name and req.specifier.contains(
+                    fix_version.dep.version
+                ):
+                    req.specifier = SpecifierSet(f"=={fix_version.version}")
+                f.write(str(req))
 
 
 class RequirementSourceError(DependencySourceError):
