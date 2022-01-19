@@ -3,15 +3,15 @@ Collect dependencies from one or more `requirements.txt`-formatted files.
 """
 
 from pathlib import Path
-from typing import Iterator, List, Set, Union, cast
+from typing import Iterator, List, Set, cast
 
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from pip_api import parse_requirements
-from pip_api._parse_requirements import UnparsedRequirement
 from pip_api.exceptions import PipError
 
 from pip_audit._dependency_source import (
+    DependencyFixError,
     DependencyResolver,
     DependencyResolverError,
     DependencySource,
@@ -85,6 +85,7 @@ class RequirementSource(DependencySource):
         """
         Fixes a dependency version for this `RequirementSource`.
         """
+        # TODO(alex): Should this provide transactional guarantees?
         for filename in self.filenames:
             self.state.update_state(
                 f"Fixing dependency {fix_version.dep.name} ({fix_version.dep.version} => "
@@ -98,26 +99,18 @@ class RequirementSource(DependencySource):
         # Reparse the requirements file. We want to rewrite each line to the new requirements file
         # and only modify the lines that we're fixing.
         try:
-            reqs = parse_requirements(filename=filename, include_invalid=True)
+            reqs = parse_requirements(filename=filename)
         except PipError as pe:
-            raise RequirementSourceError("requirement parsing raised an error") from pe
+            raise RequirementFixError("requirement parsing raised an error") from pe
 
         # Convert requirements types from pip-api's vendored types to our own
-        req_values: List[Union[Requirement, UnparsedRequirement]] = list()
-        for value in reqs.values():
-            if isinstance(value, UnparsedRequirement):
-                req_values.append(value)
-            else:
-                req_values.append(Requirement(str(value)))
+        req_list: List[Requirement] = [Requirement(str(req)) for req in reqs.values()]
 
-        # TODO(alex): Toggle what file to write to
-        #
         # Now write out the new requirements file
-        with open("fixed.txt", "w+") as f:
-            for req in req_values:
+        with open(filename, "w") as f:
+            for req in req_list:
                 if (
-                    isinstance(req, Requirement)
-                    and req.name == fix_version.dep.name
+                    req.name == fix_version.dep.name
                     and req.specifier.contains(fix_version.dep.version)
                     and not req.specifier.contains(fix_version.version)
                     and (req.marker is None or req.marker.evaluate())
@@ -128,5 +121,11 @@ class RequirementSource(DependencySource):
 
 class RequirementSourceError(DependencySourceError):
     """A requirements-parsing specific `DependencySourceError`."""
+
+    pass
+
+
+class RequirementFixError(DependencyFixError):
+    """A requirements-fixing specific `DependencyFixError`."""
 
     pass
