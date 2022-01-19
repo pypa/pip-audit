@@ -13,6 +13,7 @@ from pip_audit._service import (
     VulnerabilityResult,
     VulnerabilityService,
 )
+from pip_audit._state import AuditState
 
 
 @dataclass(frozen=True)
@@ -57,7 +58,9 @@ class SkippedFixVersion(FixVersion):
 
 
 def resolve_fix_versions(
-    service: VulnerabilityService, result: Dict[Dependency, List[VulnerabilityResult]]
+    service: VulnerabilityService,
+    result: Dict[Dependency, List[VulnerabilityResult]],
+    state: AuditState = AuditState(),
 ) -> Iterator[FixVersion]:
     """
     Resolves a mapping of dependencies to known vulnerabilities to a series of fix versions without
@@ -70,14 +73,17 @@ def resolve_fix_versions(
             continue
         dep = cast(ResolvedDependency, dep)
         try:
-            version = _resolve_fix_version(service, dep, vulns)
+            version = _resolve_fix_version(service, dep, vulns, state)
             yield ResolvedFixVersion(dep, version)
         except FixResolutionImpossible as fri:
             yield SkippedFixVersion(dep, str(fri))
 
 
 def _resolve_fix_version(
-    service: VulnerabilityService, dep: ResolvedDependency, vulns: List[VulnerabilityResult]
+    service: VulnerabilityService,
+    dep: ResolvedDependency,
+    vulns: List[VulnerabilityResult],
+    state: AuditState,
 ) -> Version:
     # We need to upgrade to a fix version that satisfies all vulnerability results
     #
@@ -87,6 +93,7 @@ def _resolve_fix_version(
     current_version = dep.version
     current_vulns = vulns
     while current_vulns:
+        state.update_state(f"Resolving fix version for {dep.name}, checking {current_version}")
 
         def get_earliest_fix_version(d: ResolvedDependency, v: VulnerabilityResult) -> Version:
             for fix_version in v.fix_versions:
