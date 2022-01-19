@@ -2,6 +2,7 @@
 Functionality for resolving fixed versions of dependencies.
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Dict, Iterator, List, cast
 
@@ -14,6 +15,8 @@ from pip_audit._service import (
     VulnerabilityService,
 )
 from pip_audit._state import AuditState
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -76,7 +79,9 @@ def resolve_fix_versions(
             version = _resolve_fix_version(service, dep, vulns, state)
             yield ResolvedFixVersion(dep, version)
         except FixResolutionImpossible as fri:
-            yield SkippedFixVersion(dep, str(fri))
+            skip_reason = str(fri)
+            logger.debug(skip_reason)
+            yield SkippedFixVersion(dep, skip_reason)
 
 
 def _resolve_fix_version(

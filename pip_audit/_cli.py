@@ -328,7 +328,9 @@ def audit() -> None:
                         fixed_pkg_count += 1
                         fixed_vuln_count += len(result[fix.dep])
                     except DependencySourceError as dse:
-                        fix = SkippedFixVersion(fix.dep, str(dse))
+                        skip_reason = str(dse)
+                        logger.debug(skip_reason)
+                        fix = SkippedFixVersion(fix.dep, skip_reason)
                 fixes.append(fix)
 
     # TODO(ww): Refine this: we should always output if our output format is an SBOM
