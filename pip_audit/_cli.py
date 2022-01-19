@@ -275,7 +275,7 @@ def audit() -> None:
                 req_files, ResolveLibResolver(args.timeout, args.cache_dir, state), state
             )
         else:
-            source = PipSource(local=args.local, paths=args.paths)
+            source = PipSource(local=args.local, paths=args.paths, state=state)
 
         # `--dry-run` only affects the auditor if `--fix` is also not supplied,
         # since the combination of `--dry-run` and `--fix` implies that the user
@@ -300,34 +300,38 @@ def audit() -> None:
                 pkg_count += 1
                 vuln_count += len(vulns)
 
-    # If the `--fix` flag has been applied, find a set of suitable fix versions and upgrade the
-    # dependencies at the source
-    fixes = list()
-    fixed_pkg_count = 0
-    fixed_vuln_count = 0
-    if args.fix:
-        for fix in resolve_fix_versions(service, result):
-            if args.dry_run:
-                if fix.is_skipped():
-                    fix = cast(SkippedFixVersion, fix)
-                    logger.info(
-                        f"Dry run: would have skipped {fix.dep.name} "
-                        f"upgrade because {fix.skip_reason}"
-                    )
-                else:
-                    fix = cast(ResolvedFixVersion, fix)
-                    logger.info(f"Dry run: would have upgraded {fix.dep.name} to " f"{fix.version}")
-                continue
+        # If the `--fix` flag has been applied, find a set of suitable fix versions and upgrade the
+        # dependencies at the source
+        fixes = list()
+        fixed_pkg_count = 0
+        fixed_vuln_count = 0
+        if args.fix:
+            for fix in resolve_fix_versions(service, result, state):
+                if args.dry_run:
+                    if fix.is_skipped():
+                        fix = cast(SkippedFixVersion, fix)
+                        logger.info(
+                            f"Dry run: would have skipped {fix.dep.name} "
+                            f"upgrade because {fix.skip_reason}"
+                        )
+                    else:
+                        fix = cast(ResolvedFixVersion, fix)
+                        logger.info(
+                            f"Dry run: would have upgraded {fix.dep.name} to " f"{fix.version}"
+                        )
+                    continue
 
-            if not fix.is_skipped():
-                fix = cast(ResolvedFixVersion, fix)
-                try:
-                    source.fix(fix)
-                    fixed_pkg_count += 1
-                    fixed_vuln_count += len(result[fix.dep])
-                except DependencySourceError as dse:
-                    fix = SkippedFixVersion(fix.dep, str(dse))
-            fixes.append(fix)
+                if not fix.is_skipped():
+                    fix = cast(ResolvedFixVersion, fix)
+                    try:
+                        source.fix(fix)
+                        fixed_pkg_count += 1
+                        fixed_vuln_count += len(result[fix.dep])
+                    except DependencySourceError as dse:
+                        skip_reason = str(dse)
+                        logger.debug(skip_reason)
+                        fix = SkippedFixVersion(fix.dep, skip_reason)
+                fixes.append(fix)
 
     # TODO(ww): Refine this: we should always output if our output format is an SBOM
     # or other manifest format (like the default JSON format).

@@ -94,6 +94,9 @@ class PipSource(DependencySource):
         """
         Fixes a dependency version in this `PipSource`.
         """
+        self.state.update_state(
+            f"Fixing {fix_version.dep.name} ({fix_version.dep.version} => {fix_version.version})"
+        )
         fix_cmd = [
             sys.executable,
             "-m",
