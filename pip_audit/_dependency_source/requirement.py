@@ -98,7 +98,7 @@ class RequirementSource(DependencySource):
                 stack.enter_context(TemporaryFile(mode="w")) for _ in self.filenames
             ]
             for (filename, tmp_file) in zip(self.filenames, tmp_files):
-                with open(filename, "r") as f:
+                with filename.open("r") as f:
                     shutil.copyfileobj(f, tmp_file)
 
             try:
@@ -142,7 +142,7 @@ class RequirementSource(DependencySource):
     def _recover_files(self, tmp_files: List[IO[str]]) -> None:
         for (filename, tmp_file) in zip(self.filenames, tmp_files):
             try:
-                with open(filename, "w") as f:
+                with filename.open("w") as f:
                     shutil.copyfileobj(tmp_file, f)
             except Exception as e:
                 # Not much we can do at this point since we're already handling an exception. Just
