@@ -31,6 +31,9 @@ All versions prior to 0.0.9 are untracked.
 
 ### Fixed
 
+* CLI: A regression causing excess output during `pip audit -r`
+  was fixed ([#226](https://github.com/trailofbits/pip-audit/pull/226))
+
 ### Removed
 
 ## [1.1.2] - 2022-01-13
