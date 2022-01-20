@@ -2,8 +2,12 @@
 Collect dependencies from one or more `requirements.txt`-formatted files.
 """
 
+import logging
+import shutil
+from contextlib import ExitStack
 from pathlib import Path
-from typing import Iterator, List, Set, cast
+from tempfile import TemporaryFile
+from typing import IO, Iterator, List, Set, cast
 
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
@@ -21,6 +25,8 @@ from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState
+
+logger = logging.getLogger(__name__)
 
 
 class RequirementSource(DependencySource):
@@ -85,23 +91,38 @@ class RequirementSource(DependencySource):
         """
         Fixes a dependency version for this `RequirementSource`.
         """
-        # TODO(alex): Should this provide transactional guarantees?
-        for filename in self.filenames:
-            self.state.update_state(
-                f"Fixing dependency {fix_version.dep.name} ({fix_version.dep.version} => "
-                f"{fix_version.version})"
-            )
-            self._fix_file(filename, fix_version)
+        with ExitStack() as stack:
+            # Make temporary copies of the existing requirements files. If anything goes wrong, we
+            # want to copy them back into place and undo any partial application of the fix.
+            tmp_files: List[IO[str]] = [
+                stack.enter_context(TemporaryFile(mode="w")) for _ in self.filenames
+            ]
+            for (filename, tmp_file) in zip(self.filenames, tmp_files):
+                with open(filename, "r") as f:
+                    shutil.copyfileobj(f, tmp_file)
+
+            try:
+                # Now fix the files inplace
+                for filename in self.filenames:
+                    self.state.update_state(
+                        f"Fixing dependency {fix_version.dep.name} ({fix_version.dep.version} => "
+                        f"{fix_version.version})"
+                    )
+                    self._fix_file(filename, fix_version)
+            except Exception as e:
+                logger.warning(
+                    f"encountered an exception while applying fixes, recovering original files: {e}"
+                )
+                self._recover_files(tmp_files)
+                raise e
 
     def _fix_file(self, filename: Path, fix_version: ResolvedFixVersion) -> None:
-        # TODO(alex): Preserve comments
-        #
         # Reparse the requirements file. We want to rewrite each line to the new requirements file
         # and only modify the lines that we're fixing.
         try:
             reqs = parse_requirements(filename=filename)
         except PipError as pe:
-            raise RequirementFixError("requirement parsing raised an error") from pe
+            raise RequirementFixError(f"requirement parsing raised an error: {filename}") from pe
 
         # Convert requirements types from pip-api's vendored types to our own
         req_list: List[Requirement] = [Requirement(str(req)) for req in reqs.values()]
@@ -117,6 +138,17 @@ class RequirementSource(DependencySource):
                 ):
                     req.specifier = SpecifierSet(f"=={fix_version.version}")
                 f.write(str(req))
+
+    def _recover_files(self, tmp_files: List[IO[str]]) -> None:
+        for (filename, tmp_file) in zip(self.filenames, tmp_files):
+            try:
+                with open(filename, "w") as f:
+                    shutil.copyfileobj(tmp_file, f)
+            except Exception as e:
+                # Not much we can do at this point since we're already handling an exception. Just
+                # log the error and try to recover the rest of the files.
+                logger.warning(f"encountered an exception during file recovery: {e}")
+                continue
 
 
 class RequirementSourceError(DependencySourceError):
