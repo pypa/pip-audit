@@ -3,10 +3,11 @@ Collect dependencies from one or more `requirements.txt`-formatted files.
 """
 
 import logging
+import os
 import shutil
 from contextlib import ExitStack
 from pathlib import Path
-from tempfile import TemporaryFile
+from tempfile import NamedTemporaryFile
 from typing import IO, Iterator, List, Set, cast
 
 from packaging.requirements import Requirement
@@ -95,7 +96,7 @@ class RequirementSource(DependencySource):
             # Make temporary copies of the existing requirements files. If anything goes wrong, we
             # want to copy them back into place and undo any partial application of the fix.
             tmp_files: List[IO[str]] = [
-                stack.enter_context(TemporaryFile(mode="w")) for _ in self.filenames
+                stack.enter_context(NamedTemporaryFile(mode="w")) for _ in self.filenames
             ]
             for (filename, tmp_file) in zip(self.filenames, tmp_files):
                 with filename.open("r") as f:
@@ -142,8 +143,10 @@ class RequirementSource(DependencySource):
     def _recover_files(self, tmp_files: List[IO[str]]) -> None:
         for (filename, tmp_file) in zip(self.filenames, tmp_files):
             try:
-                with filename.open("w") as f:
-                    shutil.copyfileobj(tmp_file, f)
+                os.replace(tmp_file.name, filename)
+                # We need to tinker with the internals to prevent the file wrapper from attempting
+                # to remove the temporary file like in the regular case.
+                tmp_file._closer.delete = False  # type: ignore[attr-defined]
             except Exception as e:
                 # Not much we can do at this point since we're already handling an exception. Just
                 # log the error and try to recover the rest of the files.
