@@ -129,7 +129,7 @@ class RequirementSource(DependencySource):
         req_list: List[Requirement] = [Requirement(str(req)) for req in reqs.values()]
 
         # Now write out the new requirements file
-        with open(filename, "w") as f:
+        with filename.open("w") as f:
             for req in req_list:
                 if (
                     req.name == fix_version.dep.name
