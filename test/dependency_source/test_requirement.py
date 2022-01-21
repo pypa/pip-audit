@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import List
 
@@ -13,6 +14,7 @@ from pip_audit._dependency_source import (
     ResolveLibResolver,
     requirement,
 )
+from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency
 
 
@@ -94,3 +96,57 @@ def test_requirement_source_duplicate_dependencies(monkeypatch):
     # If the dependency list has duplicates, then converting to a set will reduce the length of the
     # collection
     assert len(specs) == len(set(specs))
+
+
+# The path types have read-only attributes that can't be monkeypatched. Therefore, we'll need to
+# have a custom mock type that looks like a path so that we can deliver our mocked file.
+class MockFile:
+    def __init__(self) -> None:
+        self.contents = str()
+
+    def write(self, line: str) -> None:
+        self.contents += line + "\n"
+
+    def __enter__(self) -> "MockFile":
+        return self
+
+    def __exit__(self, _exc_type, _exc_value, _exc_traceback) -> None:
+        pass
+
+
+class MockPath:
+    def __init__(self, path: str) -> None:
+        self.path = path
+        self.mock_file = MockFile()
+
+    def open(self, *_args, **_kwargs) -> MockFile:
+        return self.mock_file
+
+    def __str__(self) -> str:
+        return self.path
+
+    def __fspath__(self) -> str:
+        return self.path
+
+
+def test_requirement_source_fix(monkeypatch):
+    path = MockPath("requirements.txt")
+    source = requirement.RequirementSource([path], ResolveLibResolver())  # type: ignore[list-item]
+
+    monkeypatch.setattr(_parse_requirements, "_read_file", lambda _: ["flask==0.5"])
+    copy_count = 0
+
+    def count_copies(*_args, **_kwargs) -> None:
+        nonlocal copy_count
+        copy_count += 1
+
+    monkeypatch.setattr(shutil, "copyfileobj", count_copies)
+
+    source.fix(
+        ResolvedFixVersion(
+            dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+        )
+    )
+
+    assert copy_count == 1
+    assert path.mock_file.contents == "flask==1.0\n"
