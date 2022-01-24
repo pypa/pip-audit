@@ -13,7 +13,8 @@ All versions prior to 0.0.9 are untracked.
 * CLI: The `--fix` flag has been added, allowing users to attempt to
   automatically upgrade any vulnerable dependencies to the first safe version
   available ([#212](https://github.com/trailofbits/pip-audit/pull/212),
-  [#222](https://github.com/trailofbits/pip-audit/pull/222))
+  [#222](https://github.com/trailofbits/pip-audit/pull/222),
+  [#225](https://github.com/trailofbits/pip-audit/pull/225))
 
 * CLI: The combination of `--fix` and `--dry-run` is now supported, causing
   `pip-audit` to perform the auditing step but not any resulting fix steps

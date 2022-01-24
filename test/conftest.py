@@ -1,4 +1,5 @@
 import tempfile
+from pathlib import Path
 
 import pytest
 from packaging.version import Version
@@ -59,3 +60,16 @@ def cache_dir():
     cache = tempfile.TemporaryDirectory()
     yield cache.name
     cache.cleanup()
+
+
+@pytest.fixture
+def req_file():
+    def _req_file():
+        req_file = tempfile.NamedTemporaryFile()
+        req_file.close()
+
+        req_path = Path(req_file.name)
+        assert not req_path.exists()
+        return req_path
+
+    return _req_file
