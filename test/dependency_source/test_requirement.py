@@ -276,7 +276,7 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file, other_re
 
     # We couldn't move the original requirements files back so we should expect a partially applied
     # fix. The first requirements file contains the fix, while the second one doesn't since we were
-    # in the process of writing it out and didn't close/flush.
+    # in the process of writing it out and didn't flush.
     expected_reqs = ["flask==1.0\n", "flask==0.5\nrequests==1.0\nflask==0.3\n"]
     for (expected_req, req_path) in zip(expected_reqs, req_paths):
         with open(req_path, "r") as f:
