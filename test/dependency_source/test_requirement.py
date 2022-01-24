@@ -197,6 +197,23 @@ def test_requirement_source_fix_marker(req_file, other_req_file):
     )
 
 
+def test_requirement_source_fix_comments(req_file, other_req_file):
+    # `pip-api` automatically filters out comments
+    _check_fixes(
+        [
+            "# comment here\nflask==0.5\n",
+            "requests==1.0\n# another comment\nflask==0.5",
+        ],
+        ["flask==1.0\n", "requests==1.0\nflask==1.0\n"],
+        [req_file, other_req_file],
+        [
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+            )
+        ],
+    )
+
+
 def test_requirement_source_fix_parse_failure(monkeypatch, req_file, other_req_file):
     logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(requirement, "logger", logger)
