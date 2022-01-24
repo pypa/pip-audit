@@ -109,7 +109,7 @@ def _check_fixes(
     # Populate the requirements files
     for (input_req, req_path) in zip(input_reqs, req_paths):
         with open(req_path, "w") as f:
-            f.write(input_req)
+            print(input_req, file=f)
 
     source = requirement.RequirementSource(req_paths, ResolveLibResolver())
     for fix in fixes:
@@ -118,14 +118,16 @@ def _check_fixes(
     # Check the requirements files
     for (expected_req, req_path) in zip(expected_reqs, req_paths):
         with open(req_path, "r") as f:
-            assert expected_req == f.read()
+            # NOTE: We don't make any guarantees about non-semantic whitespace
+            # preservation, hence the strip.
+            assert expected_req == f.read().strip()
 
 
 def test_requirement_source_fix(req_file):
     _check_fixes(
-        ["flask==0.5\n"],
-        ["flask==1.0\n"],
-        [req_file],
+        ["flask==0.5"],
+        ["flask==1.0"],
+        [req_file()],
         [
             ResolvedFixVersion(
                 dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
@@ -134,11 +136,11 @@ def test_requirement_source_fix(req_file):
     )
 
 
-def test_requirement_source_fix_multiple_files(req_file, other_req_file):
+def test_requirement_source_fix_multiple_files(req_file):
     _check_fixes(
-        ["flask==0.5\n", "requests==1.0\nflask==0.5\n"],
-        ["flask==1.0\n", "requests==1.0\nflask==1.0\n"],
-        [req_file, other_req_file],
+        ["flask==0.5", "requests==1.0\nflask==0.5"],
+        ["flask==1.0", "requests==1.0\nflask==1.0"],
+        [req_file(), req_file()],
         [
             ResolvedFixVersion(
                 dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
@@ -147,11 +149,11 @@ def test_requirement_source_fix_multiple_files(req_file, other_req_file):
     )
 
 
-def test_requirement_source_fix_specifier_match(req_file, other_req_file):
+def test_requirement_source_fix_specifier_match(req_file):
     _check_fixes(
-        ["flask<1.0\n", "requests==1.0\nflask<=0.6\n"],
-        ["flask==1.0\n", "requests==1.0\nflask==1.0\n"],
-        [req_file, other_req_file],
+        ["flask<1.0", "requests==1.0\nflask<=0.6"],
+        ["flask==1.0", "requests==1.0\nflask==1.0"],
+        [req_file(), req_file()],
         [
             ResolvedFixVersion(
                 dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
@@ -160,14 +162,14 @@ def test_requirement_source_fix_specifier_match(req_file, other_req_file):
     )
 
 
-def test_requirement_source_fix_specifier_no_match(req_file, other_req_file):
+def test_requirement_source_fix_specifier_no_match(req_file):
     # In order to make a fix, the specifier must match the current version and NOT the resolved fix
     # version. If the specifier matches both, we don't apply the fix since installing from the given
     # requirements file would already install the fixed version.
     _check_fixes(
-        ["flask>=0.5\n", "requests==1.0\nflask<2.0\n"],
-        ["flask>=0.5\n", "requests==1.0\nflask<2.0\n"],
-        [req_file, other_req_file],
+        ["flask>=0.5", "requests==1.0\nflask<2.0"],
+        ["flask>=0.5", "requests==1.0\nflask<2.0"],
+        [req_file(), req_file()],
         [
             ResolvedFixVersion(
                 dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
@@ -176,19 +178,19 @@ def test_requirement_source_fix_specifier_no_match(req_file, other_req_file):
     )
 
 
-def test_requirement_source_fix_marker(req_file, other_req_file):
+def test_requirement_source_fix_marker(req_file):
     # `pip-api` automatically filters out requirements with markers that don't apply to the current
     # environment
     _check_fixes(
         [
-            'flask<1.0; python_version > "2.7"\n',
-            'requests==1.0\nflask<=0.6; python_version <= "2.7"\n',
+            'flask<1.0; python_version > "2.7"',
+            'requests==1.0\nflask<=0.6; python_version <= "2.7"',
         ],
         [
-            'flask==1.0; python_version > "2.7"\n',
-            "requests==1.0\n",
+            'flask==1.0; python_version > "2.7"',
+            "requests==1.0",
         ],
-        [req_file, other_req_file],
+        [req_file(), req_file()],
         [
             ResolvedFixVersion(
                 dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
@@ -197,15 +199,15 @@ def test_requirement_source_fix_marker(req_file, other_req_file):
     )
 
 
-def test_requirement_source_fix_comments(req_file, other_req_file):
+def test_requirement_source_fix_comments(req_file):
     # `pip-api` automatically filters out comments
     _check_fixes(
         [
-            "# comment here\nflask==0.5\n",
+            "# comment here\nflask==0.5",
             "requests==1.0\n# another comment\nflask==0.5",
         ],
-        ["flask==1.0\n", "requests==1.0\nflask==1.0\n"],
-        [req_file, other_req_file],
+        ["flask==1.0", "requests==1.0\nflask==1.0"],
+        [req_file(), req_file()],
         [
             ResolvedFixVersion(
                 dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
@@ -214,14 +216,14 @@ def test_requirement_source_fix_comments(req_file, other_req_file):
     )
 
 
-def test_requirement_source_fix_parse_failure(monkeypatch, req_file, other_req_file):
+def test_requirement_source_fix_parse_failure(monkeypatch, req_file):
     logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(requirement, "logger", logger)
 
     # If `pip-api` encounters multiple of the same package in the requirements file, it will throw a
     # parsing error
-    input_reqs = ["flask==0.5\n", "flask==0.5\nrequests==1.0\nflask==0.3\n"]
-    req_paths = [req_file, other_req_file]
+    input_reqs = ["flask==0.5", "flask==0.5\nrequests==1.0\nflask==0.3"]
+    req_paths = [req_file(), req_file()]
 
     # Populate the requirements files
     for (input_req, req_path) in zip(input_reqs, req_paths):
@@ -241,17 +243,17 @@ def test_requirement_source_fix_parse_failure(monkeypatch, req_file, other_req_f
     # If we encounter a failure while applying a fix, the fix should be rolled back from all files
     for (expected_req, req_path) in zip(input_reqs, req_paths):
         with open(req_path, "r") as f:
-            assert expected_req == f.read()
+            assert expected_req == f.read().strip()
 
 
-def test_requirement_source_fix_rollback_failure(monkeypatch, req_file, other_req_file):
+def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
     logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(requirement, "logger", logger)
 
     # If `pip-api` encounters multiple of the same package in the requirements file, it will throw a
     # parsing error
-    input_reqs = ["flask==0.5\n", "flask==0.5\nrequests==1.0\nflask==0.3\n"]
-    req_paths = [req_file, other_req_file]
+    input_reqs = ["flask==0.5", "flask==0.5\nrequests==1.0\nflask==0.3"]
+    req_paths = [req_file(), req_file()]
 
     # Populate the requirements files
     for (input_req, req_path) in zip(input_reqs, req_paths):
@@ -277,7 +279,7 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file, other_re
     # We couldn't move the original requirements files back so we should expect a partially applied
     # fix. The first requirements file contains the fix, while the second one doesn't since we were
     # in the process of writing it out and didn't flush.
-    expected_reqs = ["flask==1.0\n", "flask==0.5\nrequests==1.0\nflask==0.3\n"]
+    expected_reqs = ["flask==1.0", "flask==0.5\nrequests==1.0\nflask==0.3"]
     for (expected_req, req_path) in zip(expected_reqs, req_paths):
         with open(req_path, "r") as f:
-            assert expected_req == f.read()
+            assert expected_req == f.read().strip()

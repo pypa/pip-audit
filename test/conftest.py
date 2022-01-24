@@ -1,4 +1,3 @@
-import os
 import tempfile
 from pathlib import Path
 
@@ -65,13 +64,12 @@ def cache_dir():
 
 @pytest.fixture
 def req_file():
-    req_file = tempfile.NamedTemporaryFile(delete=False)
-    yield Path(req_file.name)
-    os.remove(req_file.name)
+    def _req_file():
+        req_file = tempfile.NamedTemporaryFile()
+        req_file.close()
 
+        req_path = Path(req_file.name)
+        assert not req_path.exists()
+        return req_path
 
-@pytest.fixture
-def other_req_file():
-    req_file = tempfile.NamedTemporaryFile(delete=False)
-    yield Path(req_file.name)
-    os.remove(req_file.name)
+    return _req_file
