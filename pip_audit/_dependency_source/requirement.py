@@ -135,10 +135,10 @@ class RequirementSource(DependencySource):
                     req.name == fix_version.dep.name
                     and req.specifier.contains(fix_version.dep.version)
                     and not req.specifier.contains(fix_version.version)
-                    and (req.marker is None or req.marker.evaluate())
                 ):
                     req.specifier = SpecifierSet(f"=={fix_version.version}")
-                f.write(str(req))
+                assert req.marker is None or req.marker.evaluate()
+                f.write(str(req) + os.linesep)
 
     def _recover_files(self, tmp_files: List[IO[str]]) -> None:
         for (filename, tmp_file) in zip(self.filenames, tmp_files):

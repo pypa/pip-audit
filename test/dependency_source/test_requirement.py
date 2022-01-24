@@ -1,13 +1,15 @@
-import shutil
+import os
 from pathlib import Path
 from typing import List
 
+import pretend  # type: ignore
 import pytest
 from packaging.requirements import Requirement
 from packaging.version import Version
 from pip_api import _parse_requirements
 
 from pip_audit._dependency_source import (
+    DependencyFixError,
     DependencyResolver,
     DependencyResolverError,
     DependencySourceError,
@@ -98,55 +100,167 @@ def test_requirement_source_duplicate_dependencies(monkeypatch):
     assert len(specs) == len(set(specs))
 
 
-# The path types have read-only attributes that can't be monkeypatched. Therefore, we'll need to
-# have a custom mock type that looks like a path so that we can deliver our mocked file.
-class MockFile:
-    def __init__(self) -> None:
-        self.contents = str()
+def _check_fixes(
+    input_reqs: List[str],
+    expected_reqs: List[str],
+    req_paths: List[Path],
+    fixes: List[ResolvedFixVersion],
+) -> None:
+    # Populate the requirements files
+    for (input_req, req_path) in zip(input_reqs, req_paths):
+        with open(req_path, "w") as f:
+            f.write(input_req)
 
-    def write(self, line: str) -> None:
-        self.contents += line + "\n"
+    source = requirement.RequirementSource(req_paths, ResolveLibResolver())
+    for fix in fixes:
+        source.fix(fix)
 
-    def __enter__(self) -> "MockFile":
-        return self
-
-    def __exit__(self, _exc_type, _exc_value, _exc_traceback) -> None:
-        pass
-
-
-class MockPath:
-    def __init__(self, path: str) -> None:
-        self.path = path
-        self.mock_file = MockFile()
-
-    def open(self, *_args, **_kwargs) -> MockFile:
-        return self.mock_file
-
-    def __str__(self) -> str:
-        return self.path
-
-    def __fspath__(self) -> str:
-        return self.path
+    # Check the requirements files
+    for (expected_req, req_path) in zip(expected_reqs, req_paths):
+        with open(req_path, "r") as f:
+            assert expected_req == f.read()
 
 
-def test_requirement_source_fix(monkeypatch):
-    path = MockPath("requirements.txt")
-    source = requirement.RequirementSource([path], ResolveLibResolver())  # type: ignore[list-item]
-
-    monkeypatch.setattr(_parse_requirements, "_read_file", lambda _: ["flask==0.5"])
-    copy_count = 0
-
-    def count_copies(*_args, **_kwargs) -> None:
-        nonlocal copy_count
-        copy_count += 1
-
-    monkeypatch.setattr(shutil, "copyfileobj", count_copies)
-
-    source.fix(
-        ResolvedFixVersion(
-            dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
-        )
+def test_requirement_source_fix(req_file):
+    _check_fixes(
+        ["flask==0.5\n"],
+        ["flask==1.0\n"],
+        [req_file],
+        [
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+            )
+        ],
     )
 
-    assert copy_count == 1
-    assert path.mock_file.contents == "flask==1.0\n"
+
+def test_requirement_source_fix_multiple_files(req_file, other_req_file):
+    _check_fixes(
+        ["flask==0.5\n", "requests==1.0\nflask==0.5\n"],
+        ["flask==1.0\n", "requests==1.0\nflask==1.0\n"],
+        [req_file, other_req_file],
+        [
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+            )
+        ],
+    )
+
+
+def test_requirement_source_fix_specifier_match(req_file, other_req_file):
+    _check_fixes(
+        ["flask<1.0\n", "requests==1.0\nflask<=0.6\n"],
+        ["flask==1.0\n", "requests==1.0\nflask==1.0\n"],
+        [req_file, other_req_file],
+        [
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+            )
+        ],
+    )
+
+
+def test_requirement_source_fix_specifier_no_match(req_file, other_req_file):
+    # In order to make a fix, the specifier must match the current version and NOT the resolved fix
+    # version. If the specifier matches both, we don't apply the fix since installing from the given
+    # requirements file would already install the fixed version.
+    _check_fixes(
+        ["flask>=0.5\n", "requests==1.0\nflask<2.0\n"],
+        ["flask>=0.5\n", "requests==1.0\nflask<2.0\n"],
+        [req_file, other_req_file],
+        [
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+            )
+        ],
+    )
+
+
+def test_requirement_source_fix_marker(req_file, other_req_file):
+    # `pip-api` automatically filters out requirements with markers that don't apply to the current
+    # environment
+    _check_fixes(
+        [
+            'flask<1.0; python_version > "2.7"\n',
+            'requests==1.0\nflask<=0.6; python_version <= "2.7"\n',
+        ],
+        [
+            'flask==1.0; python_version > "2.7"\n',
+            "requests==1.0\n",
+        ],
+        [req_file, other_req_file],
+        [
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+            )
+        ],
+    )
+
+
+def test_requirement_source_fix_parse_failure(monkeypatch, req_file, other_req_file):
+    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    monkeypatch.setattr(requirement, "logger", logger)
+
+    # If `pip-api` encounters multiple of the same package in the requirements file, it will throw a
+    # parsing error
+    input_reqs = ["flask==0.5\n", "flask==0.5\nrequests==1.0\nflask==0.3\n"]
+    req_paths = [req_file, other_req_file]
+
+    # Populate the requirements files
+    for (input_req, req_path) in zip(input_reqs, req_paths):
+        with open(req_path, "w") as f:
+            f.write(input_req)
+
+    source = requirement.RequirementSource(req_paths, ResolveLibResolver())
+    with pytest.raises(DependencyFixError):
+        source.fix(
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+            )
+        )
+    assert len(logger.warning.calls) == 1
+
+    # Check that the requirements files remain unchanged
+    # If we encounter a failure while applying a fix, the fix should be rolled back from all files
+    for (expected_req, req_path) in zip(input_reqs, req_paths):
+        with open(req_path, "r") as f:
+            assert expected_req == f.read()
+
+
+def test_requirement_source_fix_rollback_failure(monkeypatch, req_file, other_req_file):
+    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    monkeypatch.setattr(requirement, "logger", logger)
+
+    # If `pip-api` encounters multiple of the same package in the requirements file, it will throw a
+    # parsing error
+    input_reqs = ["flask==0.5\n", "flask==0.5\nrequests==1.0\nflask==0.3\n"]
+    req_paths = [req_file, other_req_file]
+
+    # Populate the requirements files
+    for (input_req, req_path) in zip(input_reqs, req_paths):
+        with open(req_path, "w") as f:
+            f.write(input_req)
+
+    # Simulate an error being raised during file recovery
+    def mock_replace(*_args, **_kwargs):
+        raise OSError
+
+    monkeypatch.setattr(os, "replace", mock_replace)
+
+    source = requirement.RequirementSource(req_paths, ResolveLibResolver())
+    with pytest.raises(DependencyFixError):
+        source.fix(
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+            )
+        )
+    # One for the parsing error and one for each file that we failed to rollback
+    assert len(logger.warning.calls) == 3
+
+    # We couldn't move the original requirements files back so we should expect a partially applied
+    # fix. The first requirements file contains the fix, while the second one doesn't since we were
+    # in the process of writing it out and didn't close/flush.
+    expected_reqs = ["flask==1.0\n", "flask==0.5\nrequests==1.0\nflask==0.3\n"]
+    for (expected_req, req_path) in zip(expected_reqs, req_paths):
+        with open(req_path, "r") as f:
+            assert expected_req == f.read()
