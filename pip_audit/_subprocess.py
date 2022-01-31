@@ -4,7 +4,6 @@ responsive from the `pip-audit` CLI.
 """
 
 import os.path
-import shlex
 import subprocess
 from subprocess import Popen
 from typing import Sequence
@@ -35,7 +34,7 @@ def run(args: Sequence[str], *, state: AuditState = AuditState()) -> str:
     # NOTE(ww): We frequently run commands inside of ephemeral virtual environments,
     # which have long absolute paths on some platforms. These make for confusing
     # state updates, so we trim the first argument down to its basename.
-    pretty_args = shlex.join([os.path.basename(args[0]), *args[1:]])
+    pretty_args = " ".join([os.path.basename(args[0]), *args[1:]])
 
     terminated = False
     stdout = bytes()
