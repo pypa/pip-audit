@@ -4,13 +4,13 @@ Create virtual environments with a custom set of packages and inspect their depe
 
 import json
 import logging
-import subprocess
 import venv
 from typing import Iterator, List, Optional, Tuple
 
 from packaging.version import Version
 
 from ._state import AuditState
+from ._subprocess import CalledProcessError, run
 
 logger = logging.getLogger(__name__)
 
@@ -85,10 +85,8 @@ class VirtualEnv(venv.EnvBuilder):
             "wheel",
         ]
         try:
-            subprocess.run(
-                pip_upgrade_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            )
-        except subprocess.CalledProcessError as cpe:
+            run(pip_upgrade_cmd, state=self._state)
+        except CalledProcessError as cpe:
             raise VirtualEnvError(f"Failed to upgrade `pip`: {pip_upgrade_cmd}") from cpe
 
         self._state.update_state("Installing package in isolated environment")
@@ -102,13 +100,8 @@ class VirtualEnv(venv.EnvBuilder):
             *self._install_args,
         ]
         try:
-            subprocess.run(
-                package_install_cmd,
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        except subprocess.CalledProcessError as cpe:
+            run(package_install_cmd, state=self._state)
+        except CalledProcessError as cpe:
             raise VirtualEnvError(f"Failed to install packages: {package_install_cmd}") from cpe
 
         self._state.update_state("Processing package list from isolated environment")
@@ -117,13 +110,10 @@ class VirtualEnv(venv.EnvBuilder):
         # environment contains
         list_cmd = [context.env_exe, "-m", "pip", "list", "-l", "--format", "json"]
         try:
-            process = subprocess.run(
-                list_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
-            )
-        except subprocess.CalledProcessError as cpe:
+            stdout = run(list_cmd, state=self._state)
+        except CalledProcessError as cpe:
             raise VirtualEnvError(f"Failed to run `pip list`: {list_cmd}") from cpe
-        list_output = process.stdout.decode("utf-8")
-        package_list = json.loads(list_output)
+        package_list = json.loads(stdout)
 
         # Convert into a series of name, version pairs
         self._packages = []
