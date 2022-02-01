@@ -13,7 +13,6 @@ jobs:
     strategy:
       matrix:
         python:
-          - "3.6"
           - "3.7"
           - "3.8"
           - "3.9"
@@ -42,7 +41,7 @@ jobs:
         # in this check, since Python can change the `--help` rendering in
         # `argparse` between major versions.
         with:
-          python-version: "3.6"
+          python-version: "3.7"
 
       - name: setup
         run: make

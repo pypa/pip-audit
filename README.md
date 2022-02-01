@@ -30,7 +30,7 @@ support from Google. This is not an official Google product.
 
 ## Installation
 
-`pip-audit` requires Python 3.6 or newer, and can be installed directly via `pip`:
+`pip-audit` requires Python 3.7 or newer, and can be installed directly via `pip`:
 
 ```bash
 python -m pip install pip-audit

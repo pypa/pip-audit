@@ -8,7 +8,7 @@ as well as performing common development tasks.
 
 ## Requirements
 
-`pip-audit`'s only development environment requirement *should* be Python 3.6
+`pip-audit`'s only development environment requirement *should* be Python 3.7
 or newer. Development and testing is actively performed on macOS and Linux,
 but Windows and other supported platforms that are supported by Python
 should also work.
