@@ -13,14 +13,15 @@ All versions prior to 0.0.9 are untracked.
 * CLI: The `--fix` flag has been added, allowing users to attempt to
   automatically upgrade any vulnerable dependencies to the first safe version
   available ([#212](https://github.com/trailofbits/pip-audit/pull/212),
-  [#222](https://github.com/trailofbits/pip-audit/pull/222),
-  [#225](https://github.com/trailofbits/pip-audit/pull/225))
+  [#222](https://github.com/trailofbits/pip-audit/pull/222))
 
 * CLI: The combination of `--fix` and `--dry-run` is now supported, causing
   `pip-audit` to perform the auditing step but not any resulting fix steps
   ([#223](https://github.com/trailofbits/pip-audit/pull/223))
 
 ### Changed
+
+* `pip-audit`'s minimum Python version is now 3.7.
 
 * CLI: The default output format is now correctly pluralized
   ([#221](https://github.com/trailofbits/pip-audit/pull/221))
