@@ -4,15 +4,17 @@ Collect dependencies from one or more `requirements.txt`-formatted files.
 
 import logging
 import os
+import re
 import shutil
 from contextlib import ExitStack
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import IO, Iterator, List, Set, cast
+from typing import IO, Iterator, List, Set, Union, cast
 
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
-from pip_api import parse_requirements
+from packaging.version import Version
+from pip_api import ParsedRequirement, UnparsedRequirement, parse_requirements
 from pip_api.exceptions import PipError
 
 from pip_audit._dependency_source import (
@@ -29,6 +31,8 @@ from pip_audit._state import AuditState
 
 logger = logging.getLogger(__name__)
 
+PINNED_SPECIFIER_RE = re.compile(r"==(?P<version>.+?)$", re.VERBOSE)
+
 
 class RequirementSource(DependencySource):
     """
@@ -39,6 +43,7 @@ class RequirementSource(DependencySource):
         self,
         filenames: List[Path],
         resolver: DependencyResolver,
+        require_hashes: bool = False,
         state: AuditState = AuditState(),
     ) -> None:
         """
@@ -52,6 +57,7 @@ class RequirementSource(DependencySource):
         """
         self.filenames = filenames
         self.resolver = resolver
+        self.require_hashes = require_hashes
         self.state = state
 
     def collect(self) -> Iterator[Dependency]:
@@ -66,6 +72,12 @@ class RequirementSource(DependencySource):
                 reqs = parse_requirements(filename=filename)
             except PipError as pe:
                 raise RequirementSourceError("requirement parsing raised an error") from pe
+
+            # If we're requiring hashes, we skip dependency resolution and check that each
+            # requirement is accompanied by a hash and is pinned
+            if self.require_hashes:
+                yield from self._collect_hashed_deps(iter(reqs.values()))
+                continue
 
             # Invoke the dependency resolver to turn requirements into dependencies
             req_values: List[Requirement] = [Requirement(str(req)) for req in reqs.values()]
@@ -152,6 +164,32 @@ class RequirementSource(DependencySource):
                 # log the error and try to recover the rest of the files.
                 logger.warning(f"encountered an exception during file recovery: {e}")
                 continue
+
+    def _collect_hashed_deps(
+        self, reqs: Iterator[Union[ParsedRequirement, UnparsedRequirement]]
+    ) -> Iterator[Dependency]:
+        for req in reqs:
+            req = cast(ParsedRequirement, req)
+            if req.hash is None:
+                skip_reason = (
+                    f"requirement {req.name} does not contain a hash with "
+                    f"`--require-hashes`: {str(req)}"
+                )
+                logger.debug(skip_reason)
+                yield SkippedDependency(req.name, skip_reason)
+                continue
+            if req.specifier is not None:
+                pinned_specifier_info = PINNED_SPECIFIER_RE.match(str(req.specifier))
+                if pinned_specifier_info is not None:
+                    # Yield a dependency with the hash
+                    pinned_version = pinned_specifier_info.group("version")
+                    yield ResolvedDependency(req.name, Version(pinned_version), req.hash)
+                    continue
+            skip_reason = (
+                f"requirement {req.name} is not pinned with `--require-hashes`: {str(req)}"
+            )
+            logger.debug(skip_reason)
+            yield SkippedDependency(req.name, skip_reason)
 
 
 class RequirementSourceError(DependencySourceError):

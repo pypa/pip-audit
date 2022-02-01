@@ -239,6 +239,12 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="automatically upgrade dependencies with known vulnerabilities",
     )
+    parser.add_argument(
+        "--require-hashes",
+        action="store_true",
+        help="require a hash to check each requirement against, for repeatable audits; this option "
+        "is implied when any package in a requirements file has a --hash option.",
+    )
     return parser
 
 
@@ -272,7 +278,10 @@ def audit() -> None:
         if args.requirements is not None:
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
             source = RequirementSource(
-                req_files, ResolveLibResolver(args.timeout, args.cache_dir, state), state
+                req_files,
+                ResolveLibResolver(args.timeout, args.cache_dir, state),
+                args.require_hashes,
+                state,
             )
         else:
             source = PipSource(local=args.local, paths=args.paths, state=state)

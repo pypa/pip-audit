@@ -5,7 +5,7 @@ of vulnerability information for fully resolved Python packages.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Optional, Tuple
 
 from packaging.utils import canonicalize_name
 from packaging.version import Version
@@ -54,6 +54,7 @@ class ResolvedDependency(Dependency):
     """
 
     version: Version
+    hash: Optional[str] = None
 
 
 @dataclass(frozen=True)
