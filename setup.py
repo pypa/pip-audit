@@ -26,12 +26,10 @@ setup(
         ]
     },
     platforms="any",
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=[
         "pip-api>=0.0.26",
         "packaging>=21.0.0",
-        # TODO: Remove this once 3.7 is our minimally supported version.
-        "dataclasses>=0.6; python_version < '3.7'",
         "progress>=1.6",
         "resolvelib>=0.8.0",
         "html5lib>=1.1",
@@ -49,11 +47,8 @@ setup(
             "pretend",
             "coverage[toml]",
             "interrogate",
-            # TODO: Remove this environment marker once 3.7 is our minimal version.
-            "pdoc3; python_version >= '3.7'",
+            "pdoc3",
             "mypy",
-            # TODO: Remove this once 3.7 is our minimally supported version.
-            "types-dataclasses; python_version < '3.7'",
             "types-requests",
             "types-html5lib",
         ]
