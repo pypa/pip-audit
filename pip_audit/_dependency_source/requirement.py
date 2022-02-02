@@ -14,7 +14,9 @@ from typing import IO, Iterator, List, Set, Union, cast
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
-from pip_api import ParsedRequirement, UnparsedRequirement, parse_requirements
+from pip_api import parse_requirements
+from pip_api._parse_requirements import Requirement as ParsedRequirement
+from pip_api._parse_requirements import UnparsedRequirement
 from pip_api.exceptions import PipError
 
 from pip_audit._dependency_source import (
@@ -170,7 +172,7 @@ class RequirementSource(DependencySource):
     ) -> Iterator[Dependency]:
         for req in reqs:
             req = cast(ParsedRequirement, req)
-            if req.hash is None:
+            if req.hashes is None:
                 skip_reason = (
                     f"requirement {req.name} does not contain a hash with "
                     f"`--require-hashes`: {str(req)}"
@@ -183,7 +185,7 @@ class RequirementSource(DependencySource):
                 if pinned_specifier_info is not None:
                     # Yield a dependency with the hash
                     pinned_version = pinned_specifier_info.group("version")
-                    yield ResolvedDependency(req.name, Version(pinned_version), req.hash)
+                    yield ResolvedDependency(req.name, Version(pinned_version), req.hashes)
                     continue
             skip_reason = (
                 f"requirement {req.name} is not pinned with `--require-hashes`: {str(req)}"

@@ -71,7 +71,7 @@ class PyPIService(VulnerabilityService):
         results: List[VulnerabilityResult] = []
 
         # If the dependency has a hash explicitly listed, check it against the PyPI data
-        if spec.hash is not None:
+        if spec.hashes:
             releases = response_json["releases"]
             release = releases.get(str(spec.version))
             if release is None:
@@ -79,21 +79,22 @@ class PyPIService(VulnerabilityService):
                     "Could not find release to compare hashes: "
                     f"{spec.canonical_name} ({spec.version})"
                 )
-            found = False
-            hash_type, hash_value = spec.hash.split(":", 1)
-            for dist in release:
-                digests = dist.get("digests")
-                if digests is None:
-                    continue
-                pypi_hash = digests.get(hash_type)
-                if pypi_hash is not None and pypi_hash == hash_value:
-                    found = True
-                    break
-            if not found:
-                raise ServiceError(
-                    f"Mismatched hash for {spec.canonical_name} ({spec.version}): listed "
-                    f"{hash_value} of type {hash_type} could not be found in PyPI releases"
-                )
+            for hash_type, hash_values in spec.hashes.items():
+                for hash_value in hash_values:
+                    found = False
+                    for dist in release:
+                        digests = dist.get("digests")
+                        if digests is None:
+                            continue
+                        pypi_hash = digests.get(hash_type)
+                        if pypi_hash is not None and pypi_hash == hash_value:
+                            found = True
+                            break
+                    if not found:
+                        raise ServiceError(
+                            f"Mismatched hash for {spec.canonical_name} ({spec.version}): listed "
+                            f"{hash_value} of type {hash_type} could not be found in PyPI releases"
+                        )
 
         vulns = response_json.get("vulnerabilities")
 
