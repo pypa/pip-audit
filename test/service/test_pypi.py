@@ -206,3 +206,28 @@ def test_pypi_skipped_dep(cache_dir):
     assert dep in results
     vulns = results[dep]
     assert len(vulns) == 0
+
+
+def test_pypi_hashed_dep(cache_dir):
+    pypi = service.PyPIService(cache_dir)
+    dep = service.ResolvedDependency(
+        "flask",
+        Version("2.0.1"),
+        hashes={"sha256": ["a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9"]},
+    )
+    results = dict(pypi.query_all(iter([dep])))
+    assert len(results) == 1
+    assert dep in results
+    vulns = results[dep]
+    assert len(vulns) == 0
+
+
+def test_pypi_hashed_dep_mismatch(cache_dir):
+    pypi = service.PyPIService(cache_dir)
+    dep = service.ResolvedDependency(
+        "flask",
+        Version("2.0.1"),
+        hashes={"sha256": ["mismatched-hash"]},
+    )
+    with pytest.raises(service.ServiceError):
+        dict(pypi.query_all(iter([dep])))

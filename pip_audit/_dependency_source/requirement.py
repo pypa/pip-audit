@@ -77,7 +77,12 @@ class RequirementSource(DependencySource):
 
             # If we're requiring hashes, we skip dependency resolution and check that each
             # requirement is accompanied by a hash and is pinned
-            if self.require_hashes:
+            #
+            # If at least one requirement has a hash, it implies that we require hashes for all
+            # requirements
+            if self.require_hashes or any(
+                isinstance(req, ParsedRequirement) and req.hashes for req in reqs.values()
+            ):
                 yield from self._collect_hashed_deps(iter(reqs.values()))
                 continue
 

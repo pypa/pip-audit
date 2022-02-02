@@ -83,9 +83,7 @@ class PyPIService(VulnerabilityService):
                 for hash_value in hash_values:
                     found = False
                     for dist in release:
-                        digests = dist.get("digests")
-                        if digests is None:
-                            continue
+                        digests = dist["digests"]
                         pypi_hash = digests.get(hash_type)
                         if pypi_hash is not None and pypi_hash == hash_value:
                             found = True
