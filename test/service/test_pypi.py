@@ -231,3 +231,33 @@ def test_pypi_hashed_dep_mismatch(cache_dir):
     )
     with pytest.raises(service.ServiceError):
         dict(pypi.query_all(iter([dep])))
+
+
+def test_pypi_hashed_dep_no_release_data(cache_dir, monkeypatch):
+    def get_mock_response():
+        class MockResponse:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {
+                    "releases": {},
+                    "vulnerabilities": [
+                        {
+                            "id": "VULN-0",
+                            "details": "The first vulnerability",
+                            "fixed_in": ["1.1"],
+                        }
+                    ],
+                }
+
+        return MockResponse()
+
+    monkeypatch.setattr(
+        service.pypi, "caching_session", lambda _: get_mock_session(get_mock_response)
+    )
+
+    pypi = service.PyPIService(cache_dir)
+    dep = service.ResolvedDependency("foo", Version("1.0"), hashes={"sha256": ["package-hash"]})
+    with pytest.raises(service.ServiceError):
+        dict(pypi.query_all(iter([dep])))

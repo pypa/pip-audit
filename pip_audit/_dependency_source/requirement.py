@@ -76,7 +76,9 @@ class RequirementSource(DependencySource):
                 raise RequirementSourceError("requirement parsing raised an error") from pe
 
             # If we're requiring hashes, we skip dependency resolution and check that each
-            # requirement is accompanied by a hash and is pinned
+            # requirement is accompanied by a hash and is pinned. Files that include hashes must
+            # explicitly list all transitive dependencies so assuming that the requirements file is
+            # valid and able to be installed with `-r`, we can skip dependency resolution.
             #
             # If at least one requirement has a hash, it implies that we require hashes for all
             # requirements
@@ -177,14 +179,10 @@ class RequirementSource(DependencySource):
     ) -> Iterator[Dependency]:
         for req in reqs:
             req = cast(ParsedRequirement, req)
-            if req.hashes is None:
-                skip_reason = (
-                    f"requirement {req.name} does not contain a hash with "
-                    f"`--require-hashes`: {str(req)}"
+            if not req.hashes:
+                raise RequirementSourceError(
+                    f"requirement {req.name} does not contain a hash: {str(req)}"
                 )
-                logger.debug(skip_reason)
-                yield SkippedDependency(req.name, skip_reason)
-                continue
             if req.specifier is not None:
                 pinned_specifier_info = PINNED_SPECIFIER_RE.match(str(req.specifier))
                 if pinned_specifier_info is not None:
@@ -192,11 +190,7 @@ class RequirementSource(DependencySource):
                     pinned_version = pinned_specifier_info.group("version")
                     yield ResolvedDependency(req.name, Version(pinned_version), req.hashes)
                     continue
-            skip_reason = (
-                f"requirement {req.name} is not pinned with `--require-hashes`: {str(req)}"
-            )
-            logger.debug(skip_reason)
-            yield SkippedDependency(req.name, skip_reason)
+            raise RequirementSourceError(f"requirement {req.name} is not pinned: {str(req)}")
 
 
 class RequirementSourceError(DependencySourceError):
