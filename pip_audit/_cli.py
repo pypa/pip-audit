@@ -243,7 +243,7 @@ def _parser() -> argparse.ArgumentParser:
         "--require-hashes",
         action="store_true",
         help="require a hash to check each requirement against, for repeatable audits; this option "
-        "is implied when any package in a requirements file has a --hash option.",
+        "is implied when any package in a requirements file has a `--hash` option.",
     )
     return parser
 

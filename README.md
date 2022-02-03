@@ -117,7 +117,7 @@ optional arguments:
                         vulnerabilities (default: False)
   --require-hashes      require a hash to check each requirement against, for
                         repeatable audits; this option is implied when any
-                        package in a requirements file has a --hash option.
+                        package in a requirements file has a `--hash` option.
                         (default: False)
 ```
 <!-- @end-pip-audit-help@ -->
