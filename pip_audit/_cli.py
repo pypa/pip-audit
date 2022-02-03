@@ -268,6 +268,10 @@ def audit() -> None:
     output_desc = args.desc.to_bool(args.format)
     formatter = args.format.to_format(output_desc)
 
+    # The `--require-hashes` flag is only valid with requirements files
+    if args.require_hashes and args.requirements is None:
+        parser.error("The --require-hashes flag can only be used with --requirement (-r)")
+
     with ExitStack() as stack:
         actors = []
         if args.progress_spinner:
