@@ -1,3 +1,4 @@
+import itertools
 from typing import Dict, List
 
 import pretend  # type: ignore
@@ -6,6 +7,17 @@ from packaging.version import Version
 from requests.exceptions import HTTPError
 
 import pip_audit._service as service
+
+
+def get_mock_session(func):
+    class MockSession:
+        def __init__(self, create_response):
+            self.create_response = create_response
+
+        def post(self, url, **kwargs):
+            return self.create_response()
+
+    return MockSession(func)
 
 
 def test_osv():
@@ -109,3 +121,128 @@ def test_osv_skipped_dep():
 
     vulns = results[dep]
     assert len(vulns) == 0
+
+
+def test_osv_unique_aliases(monkeypatch, cache_dir):
+    def get_mock_response():
+        class MockResponse:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {
+                    "vulns": [
+                        {
+                            "aliases": ["alias-1"],
+                            "id": "PYSEC-0",
+                            "details": "The first vulnerability",
+                            "affected": [
+                                {
+                                    "package": {"ecosystem": "PyPI", "name": "foo"},
+                                    "ranges": [{"type": "ECOSYSTEM", "events": [{"fixed": "1.1"}]}],
+                                }
+                            ],
+                        },
+                        {
+                            "aliases": ["alias-1", "alias-2"],
+                            "id": "PYSEC-1",
+                            "details": "The second vulnerability",
+                            "affected": [
+                                {
+                                    "package": {"ecosystem": "PyPI", "name": "foo"},
+                                    "ranges": [{"type": "ECOSYSTEM", "events": [{"fixed": "1.1"}]}],
+                                }
+                            ],
+                        },
+                    ]
+                }
+
+        return MockResponse()
+
+    monkeypatch.setattr(
+        service.osv, "caching_session", lambda *a, **kw: get_mock_session(get_mock_response)
+    )
+
+    osv = service.OsvService(cache_dir)
+    dep = service.ResolvedDependency("foo", Version("1.0"))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        osv.query_all(iter([dep]))
+    )
+
+    assert len(results) == 1
+    vulns = results[dep]
+    assert len(vulns) == 1
+    assert vulns[0].id == "PYSEC-0"
+    assert vulns[0].aliases == ["alias-1"]
+
+
+# Parametrize on all possible response orders here, to ensure that our
+# vulnerability uniquing/selection is not order dependent.
+@pytest.mark.parametrize(
+    "vulns",
+    itertools.permutations(
+        [
+            {
+                "aliases": ["alias-1"],
+                "id": "VULN-0",
+                "details": "The first vulnerability",
+                "affected": [
+                    {
+                        "package": {"ecosystem": "PyPI", "name": "foo"},
+                        "ranges": [{"type": "ECOSYSTEM", "events": [{"fixed": "1.1"}]}],
+                    }
+                ],
+            },
+            {
+                "aliases": ["alias-1", "alias-2"],
+                "id": "PYSEC-XYZ",
+                "details": "The second vulnerability",
+                "affected": [
+                    {
+                        "package": {"ecosystem": "PyPI", "name": "foo"},
+                        "ranges": [{"type": "ECOSYSTEM", "events": [{"fixed": "1.1"}]}],
+                    }
+                ],
+            },
+            {
+                "aliases": ["alias-3"],
+                "id": "VULN-ABC",
+                "details": "The third vulnerability",
+                "affected": [
+                    {
+                        "package": {"ecosystem": "PyPI", "name": "foo"},
+                        "ranges": [{"type": "ECOSYSTEM", "events": [{"fixed": "1.1"}]}],
+                    }
+                ],
+            },
+        ]
+    ),
+)
+def test_osv_unique_aliases_prefer_pysec(monkeypatch, cache_dir, vulns):
+    def get_mock_response():
+        class MockResponse:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {"vulns": vulns}
+
+        return MockResponse()
+
+    monkeypatch.setattr(
+        service.osv, "caching_session", lambda *a, **kw: get_mock_session(get_mock_response)
+    )
+
+    osv = service.OsvService(cache_dir)
+    dep = service.ResolvedDependency("foo", Version("1.0"))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        osv.query_all(iter([dep]))
+    )
+
+    assert len(results) == 1
+    vulns = results[dep]
+    assert len(vulns) == 2
+    assert vulns[0].id == "PYSEC-XYZ"
+    assert vulns[0].aliases == ["alias-1", "alias-2"]
+    assert vulns[1].id == "VULN-ABC"
+    assert vulns[1].aliases == ["alias-3"]
