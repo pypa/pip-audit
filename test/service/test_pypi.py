@@ -114,6 +114,7 @@ def test_pypi_mocked_response(monkeypatch, cache_dir):
                 return {
                     "vulnerabilities": [
                         {
+                            "aliases": ["foo", "bar"],
                             "id": "VULN-0",
                             "details": "The first vulnerability",
                             "fixed_in": ["1.1", "1.4"],
@@ -177,6 +178,7 @@ def test_pypi_invalid_version(monkeypatch, cache_dir):
                 return {
                     "vulnerabilities": [
                         {
+                            "aliases": ["foo", "bar"],
                             "id": "VULN-0",
                             "details": "The first vulnerability",
                             "fixed_in": ["invalid_version"],
@@ -206,3 +208,87 @@ def test_pypi_skipped_dep(cache_dir):
     assert dep in results
     vulns = results[dep]
     assert len(vulns) == 0
+
+
+def test_pypi_unique_aliases(monkeypatch, cache_dir):
+    def get_mock_response():
+        class MockResponse:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {
+                    "vulnerabilities": [
+                        {
+                            "aliases": ["alias-1"],
+                            "id": "PYSEC-0",
+                            "details": "The first vulnerability",
+                            "fixed_in": ["1.0"],
+                        },
+                        {
+                            "aliases": ["alias-1", "alias-2"],
+                            "id": "PYSEC-1",
+                            "details": "The first vulnerability",
+                            "fixed_in": ["1.0"],
+                        },
+                    ]
+                }
+
+        return MockResponse()
+
+    monkeypatch.setattr(
+        service.pypi, "caching_session", lambda _: get_mock_session(get_mock_response)
+    )
+
+    pypi = service.PyPIService(cache_dir)
+    dep = service.ResolvedDependency("foo", Version("1.0"))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all(iter([dep]))
+    )
+
+    assert len(results) == 1
+    vulns = results[dep]
+    assert len(vulns) == 1
+    assert vulns[0].id == "PYSEC-0"
+
+
+def test_pypi_unique_aliases_prefer_pysec(monkeypatch, cache_dir):
+    def get_mock_response():
+        class MockResponse:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {
+                    "vulnerabilities": [
+                        {
+                            "aliases": ["alias-1"],
+                            "id": "VULN-0",
+                            "details": "The first vulnerability",
+                            "fixed_in": ["1.0"],
+                        },
+                        {
+                            "aliases": ["alias-1", "alias-2"],
+                            "id": "PYSEC-XYZ",
+                            "details": "The first vulnerability",
+                            "fixed_in": ["1.0"],
+                        },
+                    ]
+                }
+
+        return MockResponse()
+
+    monkeypatch.setattr(
+        service.pypi, "caching_session", lambda _: get_mock_session(get_mock_response)
+    )
+
+    pypi = service.PyPIService(cache_dir)
+    dep = service.ResolvedDependency("foo", Version("1.0"))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all(iter([dep]))
+    )
+
+    assert len(results) == 1
+    vulns = results[dep]
+    assert len(vulns) == 1
+    assert vulns[0].id == "PYSEC-XYZ"
