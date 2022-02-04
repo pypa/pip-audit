@@ -21,6 +21,7 @@ def test_audit(vuln_service, dep_source):
                 id="fake-id",
                 description="this is not a real result",
                 fix_versions=[Version("1.1.0")],
+                aliases=[],
             )
         ],
     )

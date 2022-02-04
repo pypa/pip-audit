@@ -87,6 +87,11 @@ class VulnerabilityResult:
     A list of versions that can be upgraded to that resolve the vulnerability.
     """
 
+    aliases: List[str]
+    """
+    A list of aliases (alternative identifiers) for this result.
+    """
+
 
 class VulnerabilityService(ABC):
     """

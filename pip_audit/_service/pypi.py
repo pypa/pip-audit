@@ -112,6 +112,6 @@ class PyPIService(VulnerabilityService):
             # The ranges aren't guaranteed to come in chronological order
             fix_versions.sort()
 
-            results.append(VulnerabilityResult(v["id"], v["details"], fix_versions))
+            results.append(VulnerabilityResult(v["id"], v["details"], fix_versions, v["aliases"]))
 
         return spec, results

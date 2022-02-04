@@ -140,6 +140,7 @@ def test_pypi_mocked_response(monkeypatch, cache_dir):
         id="VULN-0",
         description="The first vulnerability",
         fix_versions=[Version("1.1"), Version("1.4")],
+        aliases=["foo", "bar"],
     )
 
 
@@ -292,3 +293,4 @@ def test_pypi_unique_aliases_prefer_pysec(monkeypatch, cache_dir):
     vulns = results[dep]
     assert len(vulns) == 1
     assert vulns[0].id == "PYSEC-XYZ"
+    assert vulns[0].aliases == ["alias-1", "alias-2"]
