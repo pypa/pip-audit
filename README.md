@@ -71,7 +71,7 @@ python -m pip_audit --help
 usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
                  [-d] [-S] [--desc [{on,off,auto}]] [--cache-dir CACHE_DIR]
                  [--progress-spinner {on,off}] [--timeout TIMEOUT]
-                 [--path PATHS] [-v] [--fix]
+                 [--path PATHS] [-v] [--fix] [--require-hashes]
 
 audit the Python environment for dependencies with known vulnerabilities
 
@@ -115,6 +115,10 @@ optional arguments:
                         setting it to `debug` (default: False)
   --fix                 automatically upgrade dependencies with known
                         vulnerabilities (default: False)
+  --require-hashes      require a hash to check each requirement against, for
+                        repeatable audits; this option is implied when any
+                        package in a requirements file has a `--hash` option.
+                        (default: False)
 ```
 <!-- @end-pip-audit-help@ -->
 
