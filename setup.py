@@ -28,7 +28,7 @@ setup(
     platforms="any",
     python_requires=">=3.7",
     install_requires=[
-        "pip-api>=0.0.26",
+        "pip-api>=0.0.27",
         "packaging>=21.0.0",
         "progress>=1.6",
         "resolvelib>=0.8.0",

@@ -4,8 +4,8 @@ of vulnerability information for fully resolved Python packages.
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Iterator, List, Tuple
+from dataclasses import dataclass, field
+from typing import Dict, Iterator, List, Tuple
 
 from packaging.utils import canonicalize_name
 from packaging.version import Version
@@ -54,6 +54,7 @@ class ResolvedDependency(Dependency):
     """
 
     version: Version
+    hashes: Dict[str, List[str]] = field(default_factory=dict, hash=False)
 
 
 @dataclass(frozen=True)

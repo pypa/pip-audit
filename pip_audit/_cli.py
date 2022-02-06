@@ -239,6 +239,12 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="automatically upgrade dependencies with known vulnerabilities",
     )
+    parser.add_argument(
+        "--require-hashes",
+        action="store_true",
+        help="require a hash to check each requirement against, for repeatable audits; this option "
+        "is implied when any package in a requirements file has a `--hash` option.",
+    )
     return parser
 
 
@@ -262,6 +268,10 @@ def audit() -> None:
     output_desc = args.desc.to_bool(args.format)
     formatter = args.format.to_format(output_desc)
 
+    # The `--require-hashes` flag is only valid with requirements files
+    if args.require_hashes and args.requirements is None:
+        parser.error("The --require-hashes flag can only be used with --requirement (-r)")
+
     with ExitStack() as stack:
         actors = []
         if args.progress_spinner:
@@ -272,7 +282,10 @@ def audit() -> None:
         if args.requirements is not None:
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
             source = RequirementSource(
-                req_files, ResolveLibResolver(args.timeout, args.cache_dir, state), state
+                req_files,
+                ResolveLibResolver(args.timeout, args.cache_dir, state),
+                args.require_hashes,
+                state,
             )
         else:
             source = PipSource(local=args.local, paths=args.paths, state=state)

@@ -283,3 +283,70 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
     for (expected_req, req_path) in zip(expected_reqs, req_paths):
         with open(req_path, "r") as f:
             assert expected_req == f.read().strip()
+
+
+def test_requirement_source_require_hashes(monkeypatch):
+    source = requirement.RequirementSource(
+        [Path("requirements.txt")], ResolveLibResolver(), require_hashes=True
+    )
+
+    monkeypatch.setattr(
+        _parse_requirements, "_read_file", lambda _: ["flask==2.0.1 --hash=sha256:flask-hash"]
+    )
+
+    # The hash should be populated in the resolved dependency. Additionally, the source should not
+    # calculate and resolve transitive dependencies since requirements files with hashes must
+    # explicitly list all dependencies.
+    specs = list(source.collect())
+    assert specs == [
+        ResolvedDependency("flask", Version("2.0.1"), hashes={"sha256": ["flask-hash"]})
+    ]
+
+
+def test_requirement_source_require_hashes_missing(monkeypatch):
+    source = requirement.RequirementSource(
+        [Path("requirements.txt")], ResolveLibResolver(), require_hashes=True
+    )
+
+    monkeypatch.setattr(
+        _parse_requirements,
+        "_read_file",
+        lambda _: ["flask==2.0.1"],
+    )
+
+    # All requirements must be hashed when collecting with `require-hashes`
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
+
+
+def test_requirement_source_require_hashes_inferred(monkeypatch):
+    source = requirement.RequirementSource([Path("requirements.txt")], ResolveLibResolver())
+
+    monkeypatch.setattr(
+        _parse_requirements,
+        "_read_file",
+        lambda _: ["flask==2.0.1 --hash=sha256:flask-hash\nrequests==1.0"],
+    )
+
+    # If at least one requirement is hashed, this infers `require-hashes`
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
+
+
+def test_requirement_source_require_hashes_unpinned(monkeypatch):
+    source = requirement.RequirementSource(
+        [Path("requirements.txt")], ResolveLibResolver(), require_hashes=True
+    )
+
+    monkeypatch.setattr(
+        _parse_requirements,
+        "_read_file",
+        lambda _: [
+            "flask==2.0.1 --hash=sha256:flask-hash\nrequests>=1.0 --hash=sha256:requests-hash"
+        ],
+    )
+
+    # When hashed dependencies are provided, all dependencies must be explicitly pinned to an exact
+    # version number
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
