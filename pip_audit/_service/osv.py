@@ -4,7 +4,7 @@ Functionality for using the [OSV](https://osv.dev/) API as a `VulnerabilityServi
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, cast
+from typing import List, Optional, Tuple, cast
 
 import requests
 from packaging.version import Version
@@ -75,37 +75,10 @@ class OsvService(VulnerabilityService):
         if not response_json:
             return spec, results
 
-        # We reduce the list of vulnerabilities down according to the following rules:
-        # 1. If a vulnerability shares an alias with any other vulnerability, then
-        #    we only emit it once.
-        # 2. We prefer vulnerabilities with PYSEC IDs whenever possible.
-        vulns = response_json["vulns"]
-
-        # First pass: unique and add all PYSEC vulnerabilities first.
-        unique_vulns: List[Dict[str, Any]] = []
-        seen_aliases: Set[str] = set()
-        for v in vulns:
-            if not v["id"].startswith("PYSEC"):
-                continue
-
-            if seen_aliases.intersection(set(v["aliases"])):
-                continue
-
-            seen_aliases.update(v["aliases"])
-            unique_vulns.append(v)
-
-        # Second pass: add any non-PYSEC vulnerabilities.
-        for v in vulns:
-            if seen_aliases.intersection(set(v["aliases"])):
-                continue
-
-            seen_aliases.update(v["aliases"])
-            unique_vulns.append(v)
-
-        for vuln in unique_vulns:
+        for vuln in response_json["vulns"]:
             id = vuln["id"]
             description = vuln["details"]
-            aliases = vuln["aliases"]
+            aliases = set(vuln["aliases"])
             fix_versions: List[Version] = []
             for affected in vuln["affected"]:
                 pkg = affected["package"]
@@ -129,7 +102,5 @@ class OsvService(VulnerabilityService):
             fix_versions.sort()
 
             results.append(VulnerabilityResult(id, description, fix_versions, aliases))
-
-        #
 
         return spec, results

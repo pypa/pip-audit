@@ -5,7 +5,7 @@ API as a `VulnerabilityService`.
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, cast
+from typing import List, Optional, Tuple, cast
 
 import requests
 from packaging.version import InvalidVersion, Version
@@ -100,33 +100,7 @@ class PyPIService(VulnerabilityService):
         if vulns is None:
             return spec, results
 
-        # We reduce the list of vulnerabilities down according to the following rules:
-        # 1. If a vulnerability shares an alias with any other vulnerability, then
-        #    we only emit it once.
-        # 2. We prefer vulnerabilities with PYSEC IDs whenever possible.
-
-        # First pass: unique and add all PYSEC vulnerabilities first.
-        unique_vulns: List[Dict[str, Any]] = []
-        seen_aliases: Set[str] = set()
         for v in vulns:
-            if not v["id"].startswith("PYSEC"):
-                continue
-
-            if seen_aliases.intersection(set(v["aliases"])):
-                continue
-
-            seen_aliases.update(v["aliases"])
-            unique_vulns.append(v)
-
-        # Second pass: add any non-PYSEC vulnerabilities.
-        for v in vulns:
-            if seen_aliases.intersection(set(v["aliases"])):
-                continue
-
-            seen_aliases.update(v["aliases"])
-            unique_vulns.append(v)
-
-        for v in unique_vulns:
             # Put together the fix versions list
             try:
                 fix_versions = [Version(fixed_in) for fixed_in in v["fixed_in"]]
@@ -136,6 +110,8 @@ class PyPIService(VulnerabilityService):
             # The ranges aren't guaranteed to come in chronological order
             fix_versions.sort()
 
-            results.append(VulnerabilityResult(v["id"], v["details"], fix_versions, v["aliases"]))
+            results.append(
+                VulnerabilityResult(v["id"], v["details"], fix_versions, set(v["aliases"]))
+            )
 
         return spec, results

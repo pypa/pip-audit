@@ -5,7 +5,7 @@ of vulnerability information for fully resolved Python packages.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, Iterator, List, Tuple
+from typing import Dict, Iterator, List, Set, Tuple
 
 from packaging.utils import canonicalize_name
 from packaging.version import Version
@@ -88,9 +88,9 @@ class VulnerabilityResult:
     A list of versions that can be upgraded to that resolve the vulnerability.
     """
 
-    aliases: List[str]
+    aliases: Set[str]
     """
-    A list of aliases (alternative identifiers) for this result.
+    A set of aliases (alternative identifiers) for this result.
     """
 
 

@@ -19,13 +19,13 @@ _TEST_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
                 Version("1.1"),
                 Version("1.4"),
             ],
-            aliases=[],
+            aliases=set(),
         ),
         service.VulnerabilityResult(
             id="VULN-1",
             description="The second vulnerability",
             fix_versions=[Version("1.0")],
-            aliases=[],
+            aliases=set(),
         ),
     ],
     _RESOLVED_DEP_BAR: [
@@ -33,7 +33,7 @@ _TEST_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
             id="VULN-2",
             description="The third vulnerability",
             fix_versions=[],
-            aliases=[],
+            aliases=set(),
         )
     ],
 }
@@ -47,7 +47,7 @@ _TEST_VULN_DATA_SKIPPED_DEP: Dict[service.Dependency, List[service.Vulnerability
                 Version("1.1"),
                 Version("1.4"),
             ],
-            aliases=[],
+            aliases=set(),
         ),
     ],
     _SKIPPED_DEP: [],
