@@ -39,6 +39,11 @@ All versions prior to 0.0.9 are untracked.
   provided in a requirements file are checked against those reported by PyPI
   ([#229](https://github.com/trailofbits/pip-audit/pull/229))
 
+* Vulnerability sources: `pip-audit` now uniques each result based on its
+  alias set, reducing the amount of duplicate information in the default
+  columnar output format
+  ([#232](https://github.com/trailofbits/pip-audit/pull/232))
+
 ### Fixed
 
 * CLI: A regression causing excess output during `pip audit -r`
