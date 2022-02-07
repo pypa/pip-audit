@@ -8,6 +8,17 @@ from requests.exceptions import HTTPError
 import pip_audit._service as service
 
 
+def get_mock_session(func):
+    class MockSession:
+        def __init__(self, create_response):
+            self.create_response = create_response
+
+        def post(self, url, **kwargs):
+            return self.create_response()
+
+    return MockSession(func)
+
+
 def test_osv():
     osv = service.OsvService()
     dep = service.ResolvedDependency("jinja2", Version("2.4.1"))

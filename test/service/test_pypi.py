@@ -114,6 +114,7 @@ def test_pypi_mocked_response(monkeypatch, cache_dir):
                 return {
                     "vulnerabilities": [
                         {
+                            "aliases": ["foo", "bar"],
                             "id": "VULN-0",
                             "details": "The first vulnerability",
                             "fixed_in": ["1.1", "1.4"],
@@ -139,6 +140,7 @@ def test_pypi_mocked_response(monkeypatch, cache_dir):
         id="VULN-0",
         description="The first vulnerability",
         fix_versions=[Version("1.1"), Version("1.4")],
+        aliases={"foo", "bar"},
     )
 
 
@@ -177,6 +179,7 @@ def test_pypi_invalid_version(monkeypatch, cache_dir):
                 return {
                     "vulnerabilities": [
                         {
+                            "aliases": ["foo", "bar"],
                             "id": "VULN-0",
                             "details": "The first vulnerability",
                             "fixed_in": ["invalid_version"],

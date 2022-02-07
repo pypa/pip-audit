@@ -78,6 +78,7 @@ class OsvService(VulnerabilityService):
         for vuln in response_json["vulns"]:
             id = vuln["id"]
             description = vuln["details"]
+            aliases = set(vuln["aliases"])
             fix_versions: List[Version] = []
             for affected in vuln["affected"]:
                 pkg = affected["package"]
@@ -100,6 +101,6 @@ class OsvService(VulnerabilityService):
             # The ranges aren't guaranteed to come in chronological order
             fix_versions.sort()
 
-            results.append(VulnerabilityResult(id, description, fix_versions))
+            results.append(VulnerabilityResult(id, description, fix_versions, aliases))
 
         return spec, results

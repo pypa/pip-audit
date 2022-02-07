@@ -1,7 +1,12 @@
 import pytest
 from packaging.version import Version
 
-from pip_audit._service.interface import Dependency, ResolvedDependency, SkippedDependency
+from pip_audit._service.interface import (
+    Dependency,
+    ResolvedDependency,
+    SkippedDependency,
+    VulnerabilityResult,
+)
 
 
 def test_dependency_typing():
@@ -41,3 +46,19 @@ def test_vulnerability_service_no_results(vuln_service, spec):
 
     _, vulns = service.query(spec)
     assert len(vulns) == 0
+
+
+def test_vulnerability_result_update_aliases():
+    result1 = VulnerabilityResult(
+        id="FOO", description="stub", fix_versions=[Version("1.0.0")], aliases={"BAR", "BAZ", "ZAP"}
+    )
+    result2 = VulnerabilityResult(
+        id="BAR",
+        description="stub",
+        fix_versions=[Version("1.0.0")],
+        aliases={"FOO", "BAZ", "QUUX"},
+    )
+
+    merged = result1.merge_aliases(result2)
+    assert merged.id == "FOO"
+    assert merged.aliases == {"BAR", "BAZ", "ZAP", "QUUX"}

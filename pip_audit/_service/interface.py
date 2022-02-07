@@ -3,9 +3,11 @@ Interfaces for interacting with vulnerability services, i.e. sources
 of vulnerability information for fully resolved Python packages.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, Iterator, List, Tuple
+from typing import Dict, Iterator, List, Set, Tuple
 
 from packaging.utils import canonicalize_name
 from packaging.version import Version
@@ -87,6 +89,30 @@ class VulnerabilityResult:
     """
     A list of versions that can be upgraded to that resolve the vulnerability.
     """
+
+    aliases: Set[str]
+    """
+    A set of aliases (alternative identifiers) for this result.
+    """
+
+    def alias_of(self, other: VulnerabilityResult) -> bool:
+        """
+        Returns whether this result is an "alias" of another result.
+
+        Two results are said to be aliases if their respective sets of
+        `{id, *aliases}` intersect at all. A result is therefore its own alias.
+        """
+        return bool((self.aliases | {self.id}).intersection(other.aliases | {other.id}))
+
+    def merge_aliases(self, other: VulnerabilityResult) -> VulnerabilityResult:
+        """
+        Merge `other`'s aliases into this result, returning a new result.
+        """
+
+        # Our own ID should never occur in the alias set.
+        return VulnerabilityResult(
+            self.id, self.description, self.fix_versions, self.aliases | other.aliases - {self.id}
+        )
 
 
 class VulnerabilityService(ABC):

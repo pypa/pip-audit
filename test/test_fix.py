@@ -19,6 +19,7 @@ def test_fix(vuln_service):
                 id="fake-id",
                 description="this is not a real result",
                 fix_versions=[Version("1.0.0")],
+                aliases=set(),
             )
         ]
     }
@@ -36,6 +37,7 @@ def test_fix_skipped_deps(vuln_service):
                 id="fake-id",
                 description="this is not a real result",
                 fix_versions=[Version("1.0.0")],
+                aliases=set(),
             )
         ]
     }
@@ -55,7 +57,10 @@ def test_fix_resolution_impossible(vuln_service):
     result: Dict[Dependency, List[VulnerabilityResult]] = {
         dep: [
             VulnerabilityResult(
-                id="fake-id", description="this is not a real result", fix_versions=list()
+                id="fake-id",
+                description="this is not a real result",
+                fix_versions=list(),
+                aliases=set(),
             )
         ]
     }

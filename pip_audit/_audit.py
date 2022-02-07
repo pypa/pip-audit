@@ -4,7 +4,7 @@ Core auditing APIs.
 
 import logging
 from dataclasses import dataclass
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Set, Tuple
 
 from pip_audit._dependency_source import DependencySource
 from pip_audit._service import Dependency, VulnerabilityResult, VulnerabilityService
@@ -49,6 +49,12 @@ class Auditor:
     ) -> Iterator[Tuple[Dependency, List[VulnerabilityResult]]]:
         """
         Perform the auditing step, collecting dependencies from `source`.
+
+        Individual vulnerability results are uniqued based on their `aliases` sets:
+        any two results for the same dependency that share an alias are collapsed
+        into a single result with a union of all aliases.
+
+        `PYSEC`-identified results are given priority over other results.
         """
         specs = source.collect()
 
@@ -57,4 +63,32 @@ class Auditor:
             logger.info(f"Dry run: would have audited {len(list(specs))} packages")
             return {}
         else:
-            yield from self._service.query_all(specs)
+            for dep, vulns in self._service.query_all(specs):
+                unique_vulns: List[VulnerabilityResult] = []
+                seen_aliases: Set[str] = set()
+
+                # First pass, add all PYSEC vulnerabilities and track their
+                # alias sets.
+                for v in vulns:
+                    if not v.id.startswith("PYSEC"):
+                        continue
+
+                    seen_aliases.update(v.aliases | {v.id})
+                    unique_vulns.append(v)
+
+                # Second pass: add any non-PYSEC vulnerabilities.
+                for v in vulns:
+                    # If we've already seen this vulnerability by another name,
+                    # don't add it. Instead, find the previous result and update
+                    # its alias set.
+                    if seen_aliases.intersection(v.aliases | {v.id}):
+                        idx, previous = next(
+                            (i, p) for (i, p) in enumerate(unique_vulns) if p.alias_of(v)
+                        )
+                        unique_vulns[idx] = previous.merge_aliases(v)
+                        continue
+
+                    seen_aliases.update(v.aliases | {v.id})
+                    unique_vulns.append(v)
+
+                yield (dep, unique_vulns)
