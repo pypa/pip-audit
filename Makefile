@@ -22,7 +22,7 @@ else
 	COV_ARGS := --fail-under 100
 endif
 
-env/pyvenv.cfg:
+env/pyvenv.cfg: setup.py
 	# Create our Python 3 virtual environment
 	rm -rf env
 	python3 -m venv env
