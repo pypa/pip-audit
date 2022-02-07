@@ -19,6 +19,10 @@ All versions prior to 0.0.9 are untracked.
   `pip-audit` to perform the auditing step but not any resulting fix steps
   ([#223](https://github.com/trailofbits/pip-audit/pull/223))
 
+* CLI: The `--require-hashes` flag has been added which can be used in
+  conjunction with `-r` to check that all requirements in the file have an
+  associated hash ([#229](https://github.com/trailofbits/pip-audit/pull/229))
+
 ### Changed
 
 * `pip-audit`'s minimum Python version is now 3.7.
@@ -30,6 +34,10 @@ All versions prior to 0.0.9 are untracked.
   `--format=cyclonedx-json`) now use CycloneDX
   [Schema 1.4](https://cyclonedx.org/docs/1.4/xml/)
   ([#216](https://github.com/trailofbits/pip-audit/pull/216))
+
+* Vulnerability sources: When using PyPI as a vulnerability service, any hashes
+  provided in a requirements file are checked against those reported by PyPI
+  ([#229](https://github.com/trailofbits/pip-audit/pull/229))
 
 ### Fixed
 
