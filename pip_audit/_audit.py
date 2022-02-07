@@ -52,8 +52,9 @@ class Auditor:
 
         Individual vulnerability results are uniqued based on their `aliases` sets:
         any two results for the same dependency that share an alias are collapsed
-        into a single result. `PYSEC`-identified results are given priority over
-        other results.
+        into a single result with a union of all aliases.
+
+        `PYSEC`-identified results are given priority over other results.
         """
         specs = source.collect()
 
@@ -77,7 +78,14 @@ class Auditor:
 
                 # Second pass: add any non-PYSEC vulnerabilities.
                 for v in vulns:
+                    # If we've already seen this vulnerability by another name,
+                    # don't add it. Instead, find the previous result and update
+                    # its alias set.
                     if seen_aliases.intersection(v.aliases | {v.id}):
+                        idx, previous = next(
+                            (i, p) for (i, p) in enumerate(unique_vulns) if p.alias_of(v)
+                        )
+                        unique_vulns[idx] = previous.merge_aliases(v)
                         continue
 
                     seen_aliases.update(v.aliases | {v.id})

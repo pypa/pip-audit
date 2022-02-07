@@ -127,3 +127,6 @@ def test_audit_dedupes_aliases_by_id(dep_source, vulns):
     assert len(results) == 1
     assert len(results[0][1]) == 1
     assert results[0][1][0].id == "PYSEC-0"
+
+    # The result contains the merged alias set for all aliases.
+    assert results[0][1][0].aliases == {"FAKE-1", "CVE-XXXX-YYYYY"}
