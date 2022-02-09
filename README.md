@@ -121,9 +121,10 @@ optional arguments:
                         package in a requirements file has a `--hash` option.
                         (default: False)
   --index-url INDEX_URL
-                        base URL of the Python Package Index; this should point
-                        to a repository compliant with PEP 503 (the simple
-                        repository API) (default: https://pypi.org/simple)
+                        base URL of the Python Package Index; this should
+                        point to a repository compliant with PEP 503 (the
+                        simple repository API) (default:
+                        https://pypi.org/simple)
   --extra-index-url EXTRA_INDEX_URLS
                         extra URLs of package indexes to use in addition to
                         `--index-url`; should follow the same rules as
