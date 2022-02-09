@@ -339,11 +339,15 @@ def test_resolvelib_multiple_indexes(monkeypatch):
         resolver.provider.session, "get", lambda url, **kwargs: get_multiple_index_package_mock(url)
     )
 
+    # We want to check that dependency resolution is considering packages found on both indexes
+    #
+    # Test with a requirement that will resolve to a package on the first index
     req = Requirement("flask<=0.5")
     resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert req in resolved_deps
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("0.5"))]
 
+    # Now test with a requirement that will resolve to a package on the second index
     req = Requirement("flask<=0.6")
     resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert req in resolved_deps
