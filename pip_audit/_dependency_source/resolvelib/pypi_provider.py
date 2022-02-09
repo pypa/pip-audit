@@ -175,6 +175,7 @@ class Candidate:
 def get_project_from_indexes(
     index_urls: List[str], session, project, extras, timeout: Optional[int], state: AuditState
 ) -> Iterator[Candidate]:
+    """Return candidates from all indexes created from the project name and extras."""
     project_found = False
     for index_url in index_urls:
         # Not all indexes are guaranteed to have the project so this isn't an error
@@ -193,7 +194,7 @@ def get_project_from_indexes(
 def get_project_from_index(
     index_url: str, session, project, extras, timeout: Optional[int], state: AuditState
 ) -> Iterator[Candidate]:
-    """Return candidates created from the project name and extras."""
+    """Return candidates from an index created from the project name and extras."""
     url = index_url + "/" + project
     response: requests.Response = session.get(url, timeout=timeout)
     if response.status_code == 404:
