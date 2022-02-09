@@ -245,6 +245,22 @@ def _parser() -> argparse.ArgumentParser:
         help="require a hash to check each requirement against, for repeatable audits; this option "
         "is implied when any package in a requirements file has a `--hash` option.",
     )
+    parser.add_argument(
+        "--index-url",
+        type=str,
+        help="base URL of the Python Package Index; this should point to a repository compliant "
+        "with PEP 503 (the simple repository API)",
+        default="https://pypi.org/simple",
+    )
+    parser.add_argument(
+        "--extra-index-url",
+        type=str,
+        action="append",
+        dest="extra_index_urls",
+        default=[],
+        help="extra URLs of package indexes to use in addition to `--index-url`; should follow the "
+        "same rules as `--index-url`",
+    )
     return parser
 
 
@@ -280,10 +296,11 @@ def audit() -> None:
 
         source: DependencySource
         if args.requirements is not None:
+            index_urls = [args.index_url] + args.extra_index_urls
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
             source = RequirementSource(
                 req_files,
-                ResolveLibResolver(args.timeout, args.cache_dir, state),
+                ResolveLibResolver(index_urls, args.timeout, args.cache_dir, state),
                 args.require_hashes,
                 state,
             )

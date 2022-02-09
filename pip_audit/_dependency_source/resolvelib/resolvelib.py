@@ -28,6 +28,8 @@ class ResolveLibResolver(DependencyResolver):
 
     def __init__(
         self,
+        # TODO(alex): Make this non-optional
+        index_urls: List[str] = [],
         timeout: Optional[int] = None,
         cache_dir: Optional[Path] = None,
         state: AuditState = AuditState(),
@@ -40,7 +42,7 @@ class ResolveLibResolver(DependencyResolver):
 
         `state` is an `AuditState` to use for state callbacks.
         """
-        self.provider = PyPIProvider(timeout, cache_dir, state)
+        self.provider = PyPIProvider(index_urls, timeout, cache_dir, state)
         self.reporter = BaseReporter()
         self.resolver: Resolver = Resolver(self.provider, self.reporter)
 
