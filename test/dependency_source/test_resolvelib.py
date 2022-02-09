@@ -303,3 +303,48 @@ def test_resolvelib_http_notfound(monkeypatch):
     ]
     assert req in resolved_deps
     assert resolved_deps[req] == expected_deps
+
+
+def test_resolvelib_multiple_indexes(monkeypatch):
+    url1 = "https://index1"
+    url2 = "https://index2"
+    package_url1 = f"{url1}/flask"
+    package_url2 = f"{url2}/flask"
+    data1 = (
+        '<a href="https://files.pythonhosted.org/packages/d4/6a/'
+        "93500f2a7089b4e993fb095215979890b6204a5ba3f6b0f63dc6c3c6c827/Flask-0.5.tar.gz#"
+        'sha256=20e176b1db0e2bfe92d869f7b5d0ee3e5d6cb60e793755aaf2284bd78a6202ea">Flask-0.5.tar.gz'
+        "</a><br/>"
+    )
+    data2 = (
+        '<a href="https://files.pythonhosted.org/packages/44/86/'
+        "481371798994529e105633a50b2332638105a1e191053bc0f4bbc9b91791/Flask-0.6.tar.gz#"
+        'sha256=9dc18a7c673bf0a6fada51e011fc411285a8301f6dfc1c000ebfa272b5e609e4">Flask-0.6.tar.gz'
+        "</a><br/>"
+    )
+
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _: get_metadata_mock()
+    )
+
+    def get_multiple_index_package_mock(url):
+        if url == package_url1:
+            return get_package_mock(data1)
+        else:
+            assert url == package_url2
+            return get_package_mock(data2)
+
+    resolver = resolvelib.ResolveLibResolver([url1, url2])
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda url, **kwargs: get_multiple_index_package_mock(url)
+    )
+
+    req = Requirement("flask<=0.5")
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    assert req in resolved_deps
+    assert resolved_deps[req] == [ResolvedDependency("flask", Version("0.5"))]
+
+    req = Requirement("flask<=0.6")
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    assert req in resolved_deps
+    assert resolved_deps[req] == [ResolvedDependency("flask", Version("0.6"))]
