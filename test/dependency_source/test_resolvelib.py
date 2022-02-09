@@ -352,3 +352,48 @@ def test_resolvelib_multiple_indexes(monkeypatch):
     resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert req in resolved_deps
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("0.6"))]
+
+
+def test_resolvelib_package_missing_on_one_index(monkeypatch):
+    url1 = "https://index1"
+    url2 = "https://index2"
+    package_url1 = f"{url1}/flask"
+    package_url2 = f"{url2}/flask"
+    data1 = (
+        '<a href="https://files.pythonhosted.org/packages/d4/6a/'
+        "93500f2a7089b4e993fb095215979890b6204a5ba3f6b0f63dc6c3c6c827/Flask-0.5.tar.gz#"
+        'sha256=20e176b1db0e2bfe92d869f7b5d0ee3e5d6cb60e793755aaf2284bd78a6202ea">Flask-0.5.tar.gz'
+        "</a><br/>"
+    )
+
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _: get_metadata_mock()
+    )
+
+    # Simulate the package not existing on the second index
+    def get_multiple_index_package_mock(url):
+        if url == package_url1:
+            return get_package_mock(data1)
+        else:
+            assert url == package_url2
+            pkg = get_package_mock(str())
+            pkg.status_code = 404
+            return pkg
+
+    resolver = resolvelib.ResolveLibResolver([url1, url2])
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda url, **kwargs: get_multiple_index_package_mock(url)
+    )
+
+    # If a package doesn't exist on one index, we shouldn't expect an error. We should just skip it
+    # and only use the other index for finding candidates.
+    req = Requirement("flask<=0.5")
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    assert req in resolved_deps
+    assert resolved_deps[req] == [ResolvedDependency("flask", Version("0.5"))]
+
+    # Now test with a requirement that will resolve to a package on the second index
+    req = Requirement("flask<=0.6")
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    assert req in resolved_deps
+    assert resolved_deps[req] == [ResolvedDependency("flask", Version("0.5"))]
