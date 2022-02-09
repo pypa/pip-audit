@@ -258,6 +258,8 @@ class PyPIProvider(AbstractProvider):
         """
         Create a new `PyPIProvider`.
 
+        `index_urls` is a list of package index URLs.
+
         `timeout` is an optional argument to control how many seconds the component should wait for
         responses to network requests.
 
