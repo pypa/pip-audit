@@ -285,9 +285,14 @@ def audit() -> None:
     output_desc = args.desc.to_bool(args.format)
     formatter = args.format.to_format(output_desc)
 
-    # The `--require-hashes` flag is only valid with requirements files
-    if args.require_hashes and args.requirements is None:
-        parser.error("The --require-hashes flag can only be used with --requirement (-r)")
+    # Check for flags that are only valid with requirements files
+    if args.requirements is None:
+        if args.require_hashes:
+            parser.error("The --require-hashes flag can only be used with --requirement (-r)")
+        elif args.index_url != PYPI_URL:
+            parser.error("The --index-url flag can only be used with --requirement (-r)")
+        elif args.extra_index_urls:
+            parser.error("The --extra-index-url flag can only be used with --requirement (-r)")
 
     with ExitStack() as stack:
         actors = []
