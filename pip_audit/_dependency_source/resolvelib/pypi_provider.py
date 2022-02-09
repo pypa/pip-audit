@@ -187,7 +187,7 @@ def get_project_from_indexes(
             pass
     if not project_found:
         raise PyPINotFoundError(
-            f"Could not find project {project} on any of the supplied index URLs: {index_urls}"
+            f'Could not find project "{project}" on any of the supplied index URLs: {index_urls}'
         )
 
 

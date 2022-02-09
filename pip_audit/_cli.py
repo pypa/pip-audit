@@ -14,6 +14,7 @@ from typing import List, NoReturn, Optional, Type, cast
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
 from pip_audit._dependency_source import (
+    PYPI_URL,
     DependencySource,
     PipSource,
     RequirementSource,
@@ -250,7 +251,7 @@ def _parser() -> argparse.ArgumentParser:
         type=str,
         help="base URL of the Python Package Index; this should point to a repository compliant "
         "with PEP 503 (the simple repository API)",
-        default="https://pypi.org/simple",
+        default=PYPI_URL,
     )
     parser.add_argument(
         "--extra-index-url",

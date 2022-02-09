@@ -11,9 +11,10 @@ from .interface import (
 )
 from .pip import PipSource, PipSourceError
 from .requirement import RequirementSource
-from .resolvelib import ResolveLibResolver
+from .resolvelib import PYPI_URL, ResolveLibResolver
 
 __all__ = [
+    "PYPI_URL",
     "DependencyFixError",
     "DependencyResolver",
     "DependencyResolverError",

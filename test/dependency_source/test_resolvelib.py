@@ -295,7 +295,11 @@ def test_resolvelib_http_notfound(monkeypatch):
     resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert len(resolved_deps) == 1
     expected_deps = [
-        SkippedDependency(name="flask", skip_reason='Could not find project "flask" on PyPI')
+        SkippedDependency(
+            name="flask",
+            skip_reason='Could not find project "flask" on any of the supplied index URLs: '
+            "['https://pypi.org/simple']",
+        )
     ]
     assert req in resolved_deps
     assert resolved_deps[req] == expected_deps

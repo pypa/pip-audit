@@ -19,6 +19,8 @@ from .pypi_provider import PyPINotFoundError, PyPIProvider
 
 logger = logging.getLogger(__name__)
 
+PYPI_URL = "https://pypi.org/simple"
+
 
 class ResolveLibResolver(DependencyResolver):
     """
@@ -28,8 +30,7 @@ class ResolveLibResolver(DependencyResolver):
 
     def __init__(
         self,
-        # TODO(alex): Make this non-optional
-        index_urls: List[str] = [],
+        index_urls: List[str] = [PYPI_URL],
         timeout: Optional[int] = None,
         cache_dir: Optional[Path] = None,
         state: AuditState = AuditState(),
