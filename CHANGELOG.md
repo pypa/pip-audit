@@ -23,6 +23,14 @@ All versions prior to 0.0.9 are untracked.
   conjunction with `-r` to check that all requirements in the file have an
   associated hash ([#229](https://github.com/trailofbits/pip-audit/pull/229))
 
+* CLI: The `--index-url` flag has been added, allowing users to use custom
+  package indices when running with the `-r` flag
+  ([#238](https://github.com/trailofbits/pip-audit/pull/238))
+
+* CLI: The `--extra-index-url` flag has been added, allowing users to use
+  multiple package indices when running with the `-r` flag
+  ([#238](https://github.com/trailofbits/pip-audit/pull/238))
+
 ### Changed
 
 * `pip-audit`'s minimum Python version is now 3.7.
