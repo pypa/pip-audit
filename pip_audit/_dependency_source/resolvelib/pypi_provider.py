@@ -172,14 +172,33 @@ class Candidate:
         return metadata
 
 
-def get_project_from_pypi(
-    session, project, extras, timeout: Optional[int], state: AuditState
+def get_project_from_indexes(
+    index_urls: List[str], session, project, extras, timeout: Optional[int], state: AuditState
 ) -> Iterator[Candidate]:
-    """Return candidates created from the project name and extras."""
-    url = "https://pypi.org/simple/{}".format(project)
+    """Return candidates from all indexes created from the project name and extras."""
+    project_found = False
+    for index_url in index_urls:
+        # Not all indexes are guaranteed to have the project so this isn't an error
+        # We should only return an error if it can't be found on ANY of the supplied index URLs
+        try:
+            yield from get_project_from_index(index_url, session, project, extras, timeout, state)
+            project_found = True
+        except PyPINotFoundError:
+            pass
+    if not project_found:
+        raise PyPINotFoundError(
+            f'Could not find project "{project}" on any of the supplied index URLs: {index_urls}'
+        )
+
+
+def get_project_from_index(
+    index_url: str, session, project, extras, timeout: Optional[int], state: AuditState
+) -> Iterator[Candidate]:
+    """Return candidates from an index created from the project name and extras."""
+    url = index_url + "/" + project
     response: requests.Response = session.get(url, timeout=timeout)
     if response.status_code == 404:
-        raise PyPINotFoundError(f'Could not find project "{project}" on PyPI')
+        raise PyPINotFoundError
     response.raise_for_status()
     data = response.content
     doc = html5lib.parse(data, namespaceHTMLElements=False)
@@ -231,12 +250,15 @@ class PyPIProvider(AbstractProvider):
 
     def __init__(
         self,
+        index_urls: List[str],
         timeout: Optional[int] = None,
         cache_dir: Optional[Path] = None,
         state: AuditState = AuditState(),
     ):
         """
         Create a new `PyPIProvider`.
+
+        `index_urls` is a list of package index URLs.
 
         `timeout` is an optional argument to control how many seconds the component should wait for
         responses to network requests.
@@ -245,6 +267,7 @@ class PyPIProvider(AbstractProvider):
 
         `state` is an `AuditState` to use for state callbacks.
         """
+        self.index_urls = index_urls
         self.timeout = timeout
         self.session = caching_session(cache_dir, use_pip=True)
         self._state = state
@@ -282,8 +305,8 @@ class PyPIProvider(AbstractProvider):
         candidates = sorted(
             [
                 candidate
-                for candidate in get_project_from_pypi(
-                    self.session, identifier, extras, self.timeout, self._state
+                for candidate in get_project_from_indexes(
+                    self.index_urls, self.session, identifier, extras, self.timeout, self._state
                 )
                 if candidate.version not in bad_versions
                 and all(candidate.version in r.specifier for r in requirements)

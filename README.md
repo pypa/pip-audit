@@ -72,6 +72,7 @@ usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
                  [-d] [-S] [--desc [{on,off,auto}]] [--cache-dir CACHE_DIR]
                  [--progress-spinner {on,off}] [--timeout TIMEOUT]
                  [--path PATHS] [-v] [--fix] [--require-hashes]
+                 [--index-url INDEX_URL] [--extra-index-url EXTRA_INDEX_URLS]
 
 audit the Python environment for dependencies with known vulnerabilities
 
@@ -119,6 +120,15 @@ optional arguments:
                         repeatable audits; this option is implied when any
                         package in a requirements file has a `--hash` option.
                         (default: False)
+  --index-url INDEX_URL
+                        base URL of the Python Package Index; this should
+                        point to a repository compliant with PEP 503 (the
+                        simple repository API) (default:
+                        https://pypi.org/simple)
+  --extra-index-url EXTRA_INDEX_URLS
+                        extra URLs of package indexes to use in addition to
+                        `--index-url`; should follow the same rules as
+                        `--index-url` (default: [])
 ```
 <!-- @end-pip-audit-help@ -->
 

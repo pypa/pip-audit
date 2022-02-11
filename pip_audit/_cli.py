@@ -14,6 +14,7 @@ from typing import List, NoReturn, Optional, Type, cast
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
 from pip_audit._dependency_source import (
+    PYPI_URL,
     DependencySource,
     PipSource,
     RequirementSource,
@@ -245,6 +246,22 @@ def _parser() -> argparse.ArgumentParser:
         help="require a hash to check each requirement against, for repeatable audits; this option "
         "is implied when any package in a requirements file has a `--hash` option.",
     )
+    parser.add_argument(
+        "--index-url",
+        type=str,
+        help="base URL of the Python Package Index; this should point to a repository compliant "
+        "with PEP 503 (the simple repository API)",
+        default=PYPI_URL,
+    )
+    parser.add_argument(
+        "--extra-index-url",
+        type=str,
+        action="append",
+        dest="extra_index_urls",
+        default=[],
+        help="extra URLs of package indexes to use in addition to `--index-url`; should follow the "
+        "same rules as `--index-url`",
+    )
     return parser
 
 
@@ -268,9 +285,14 @@ def audit() -> None:
     output_desc = args.desc.to_bool(args.format)
     formatter = args.format.to_format(output_desc)
 
-    # The `--require-hashes` flag is only valid with requirements files
-    if args.require_hashes and args.requirements is None:
-        parser.error("The --require-hashes flag can only be used with --requirement (-r)")
+    # Check for flags that are only valid with requirements files
+    if args.requirements is None:
+        if args.require_hashes:
+            parser.error("The --require-hashes flag can only be used with --requirement (-r)")
+        elif args.index_url != PYPI_URL:
+            parser.error("The --index-url flag can only be used with --requirement (-r)")
+        elif args.extra_index_urls:
+            parser.error("The --extra-index-url flag can only be used with --requirement (-r)")
 
     with ExitStack() as stack:
         actors = []
@@ -280,10 +302,11 @@ def audit() -> None:
 
         source: DependencySource
         if args.requirements is not None:
+            index_urls = [args.index_url] + args.extra_index_urls
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
             source = RequirementSource(
                 req_files,
-                ResolveLibResolver(args.timeout, args.cache_dir, state),
+                ResolveLibResolver(index_urls, args.timeout, args.cache_dir, state),
                 args.require_hashes,
                 state,
             )
