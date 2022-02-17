@@ -8,6 +8,7 @@ from pip_audit import _subprocess
 from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
 
 
+@pytest.mark.online
 def test_virtual_env():
     with TemporaryDirectory() as ve_dir:
         ve = VirtualEnv(["flask==2.0.1"])

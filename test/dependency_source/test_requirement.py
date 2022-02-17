@@ -20,6 +20,7 @@ from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency
 
 
+@pytest.mark.online
 def test_requirement_source(monkeypatch):
     source = requirement.RequirementSource([Path("requirements.txt")], ResolveLibResolver())
 
@@ -29,6 +30,7 @@ def test_requirement_source(monkeypatch):
     assert ResolvedDependency("flask", Version("2.0.1")) in specs
 
 
+@pytest.mark.online
 def test_requirement_source_multiple_files(monkeypatch):
     file1 = "requirements1.txt"
     file2 = "requirements2.txt"
@@ -85,6 +87,7 @@ def test_requirement_source_resolver_error(monkeypatch):
         list(source.collect())
 
 
+@pytest.mark.online
 def test_requirement_source_duplicate_dependencies(monkeypatch):
     source = requirement.RequirementSource(
         [Path("requirements1.txt"), Path("requirements2.txt")], ResolveLibResolver()

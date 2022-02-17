@@ -19,6 +19,7 @@ def get_mock_session(func):
     return MockSession(func)
 
 
+@pytest.mark.online
 def test_pypi(cache_dir):
     pypi = service.PyPIService(cache_dir)
     dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
@@ -31,6 +32,7 @@ def test_pypi(cache_dir):
     assert len(vulns) > 0
 
 
+@pytest.mark.online
 def test_pypi_multiple_pkg(cache_dir):
     pypi = service.PyPIService(cache_dir)
     deps: List[service.Dependency] = [
@@ -211,6 +213,7 @@ def test_pypi_skipped_dep(cache_dir):
     assert len(vulns) == 0
 
 
+@pytest.mark.online
 def test_pypi_hashed_dep(cache_dir):
     pypi = service.PyPIService(cache_dir)
     dep = service.ResolvedDependency(
@@ -225,6 +228,7 @@ def test_pypi_hashed_dep(cache_dir):
     assert len(vulns) == 0
 
 
+@pytest.mark.online
 def test_pypi_hashed_dep_mismatch(cache_dir):
     pypi = service.PyPIService(cache_dir)
     dep = service.ResolvedDependency(
