@@ -47,6 +47,7 @@ def check_deps(resolved_deps: List[ResolvedDependency], expected_deps: List[Reso
         assert found
 
 
+@pytest.mark.online
 def test_resolvelib():
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
@@ -66,6 +67,7 @@ def test_resolvelib():
     check_deps(resolved_deps[req], expected_deps)  # type: ignore
 
 
+@pytest.mark.online
 def test_resolvelib_extras():
     resolver = resolvelib.ResolveLibResolver()
 
@@ -97,6 +99,7 @@ def test_resolvelib_extras():
     check_deps(resolved_deps[req], expected_deps)  # type: ignore
 
 
+@pytest.mark.online
 def test_resolvelib_sdist():
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("ansible-core==2.11.5")

@@ -19,6 +19,7 @@ def get_mock_session(func):
     return MockSession(func)
 
 
+@pytest.mark.online
 def test_osv():
     osv = service.OsvService()
     dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
@@ -33,6 +34,7 @@ def test_osv():
     assert len(vulns) > 0
 
 
+@pytest.mark.online
 def test_osv_uses_canonical_package_name():
     # OSV's API only recognizes canonicalized package names, so make sure
     # that our adapter is canonicalizing any dependencies passed into it.
@@ -43,6 +45,7 @@ def test_osv_uses_canonical_package_name():
     assert len(results) > 0
 
 
+@pytest.mark.online
 def test_osv_version_ranges():
     # Try a package with vulnerabilities that have an explicitly stated introduced and fixed
     # version
@@ -59,6 +62,7 @@ def test_osv_version_ranges():
     assert len(vulns) > 0
 
 
+@pytest.mark.online
 def test_osv_multiple_pkg():
     osv = service.OsvService()
     deps: List[service.Dependency] = [
@@ -76,6 +80,7 @@ def test_osv_multiple_pkg():
     assert len(results[deps[1]]) > 0
 
 
+@pytest.mark.online
 def test_osv_no_vuln():
     osv = service.OsvService()
     dep = service.ResolvedDependency("foo", Version("1.0.0"))
