@@ -321,6 +321,7 @@ def audit() -> None:
         result = {}
         pkg_count = 0
         vuln_count = 0
+        skip_count = 0
         for (spec, vulns) in auditor.audit(source):
             if spec.is_skipped():
                 spec = cast(SkippedDependency, spec)
@@ -328,6 +329,7 @@ def audit() -> None:
                     _fatal(f"{spec.name}: {spec.skip_reason}")
                 else:
                     state.update_state(f"Skipping {spec.name}: {spec.skip_reason}")
+                skip_count += 1
             else:
                 spec = cast(ResolvedDependency, spec)
                 state.update_state(f"Auditing {spec.name} ({spec.version})")
@@ -390,3 +392,5 @@ def audit() -> None:
             sys.exit(1)
     else:
         print("No known vulnerabilities found", file=sys.stderr)
+        if skip_count > 0:
+            print(formatter.format(result, fixes))
