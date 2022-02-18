@@ -40,6 +40,13 @@ class ColumnsFormat(VulnerabilityFormat):
         """
         self.output_desc = output_desc
 
+    @property
+    def is_manifest(self):
+        """
+        See `VulnerabilityFormat.is_manifest`.
+        """
+        return False
+
     def format(
         self,
         result: Dict[service.Dependency, List[service.VulnerabilityResult]],

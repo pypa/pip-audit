@@ -371,8 +371,6 @@ def audit() -> None:
                         fix = SkippedFixVersion(fix.dep, skip_reason)
                 fixes.append(fix)
 
-    # TODO(ww): Refine this: we should always output if our output format is an SBOM
-    # or other manifest format (like the default JSON format).
     if vuln_count > 0:
         summary_msg = (
             f"Found {vuln_count} known "
@@ -392,5 +390,7 @@ def audit() -> None:
             sys.exit(1)
     else:
         print("No known vulnerabilities found", file=sys.stderr)
-        if skip_count > 0:
+        # If our output format is a "manifest" format we always emit it,
+        # even if nothing other than a dependency summary is present.
+        if skip_count > 0 or formatter.is_manifest:
             print(formatter.format(result, fixes))

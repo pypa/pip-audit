@@ -1,4 +1,12 @@
+import pytest
+
 import pip_audit._format as format
+
+
+@pytest.mark.parametrize("output_desc", [True, False])
+def test_columns_not_manifest(output_desc):
+    fmt = format.ColumnsFormat(output_desc)
+    assert not fmt.is_manifest
 
 
 def test_columns(vuln_data):

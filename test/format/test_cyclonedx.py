@@ -2,8 +2,17 @@ import json
 import xml.etree.ElementTree as ET
 
 import pretend  # type: ignore
+import pytest
 
 from pip_audit._format import CycloneDxFormat
+
+
+@pytest.mark.parametrize(
+    "inner", [CycloneDxFormat.InnerFormat.Xml, CycloneDxFormat.InnerFormat.Json]
+)
+def test_cyclonedx_manifest(inner):
+    fmt = CycloneDxFormat(inner_format=inner)
+    assert fmt.is_manifest
 
 
 def test_cyclonedx_inner_json(vuln_data):
