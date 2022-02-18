@@ -52,6 +52,12 @@ All versions prior to 0.0.9 are untracked.
   columnar output format
   ([#232](https://github.com/trailofbits/pip-audit/pull/232))
 
+* CLI: `pip-audit` now prints its output more frequently, including when
+  there are no discovered vulnerabilities but packages were skipped.
+  Similarly, "manifest" output formats (JSON, CycloneDX) are now emitted
+  unconditionally
+  ([#240](https://github.com/trailofbits/pip-audit/pull/240))
+
 ### Fixed
 
 * CLI: A regression causing excess output during `pip audit -r`
