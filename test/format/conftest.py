@@ -53,6 +53,17 @@ _TEST_VULN_DATA_SKIPPED_DEP: Dict[service.Dependency, List[service.Vulnerability
     _SKIPPED_DEP: [],
 }
 
+_TEST_NO_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
+    _RESOLVED_DEP_FOO: [],
+    _RESOLVED_DEP_BAR: [],
+}
+
+_TEST_NO_VULN_DATA_SKIPPED_DEP: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
+    _RESOLVED_DEP_FOO: [],
+    _RESOLVED_DEP_BAR: [],
+    _SKIPPED_DEP: [],
+}
+
 _TEST_FIX_DATA: List[fix.FixVersion] = [
     fix.ResolvedFixVersion(dep=_RESOLVED_DEP_FOO, version=Version("1.8")),
     fix.ResolvedFixVersion(dep=_RESOLVED_DEP_BAR, version=Version("0.3")),
@@ -72,6 +83,16 @@ def vuln_data():
 @pytest.fixture(autouse=True)
 def vuln_data_skipped_dep():
     return _TEST_VULN_DATA_SKIPPED_DEP
+
+
+@pytest.fixture(autouse=True)
+def no_vuln_data():
+    return _TEST_NO_VULN_DATA
+
+
+@pytest.fixture(autouse=True)
+def no_vuln_data_skipped_dep():
+    return _TEST_NO_VULN_DATA_SKIPPED_DEP
 
 
 @pytest.fixture(autouse=True)

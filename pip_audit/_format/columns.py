@@ -40,6 +40,13 @@ class ColumnsFormat(VulnerabilityFormat):
         """
         self.output_desc = output_desc
 
+    @property
+    def is_manifest(self):
+        """
+        See `VulnerabilityFormat.is_manifest`.
+        """
+        return False
+
     def format(
         self,
         result: Dict[service.Dependency, List[service.VulnerabilityResult]],
@@ -66,17 +73,20 @@ class ColumnsFormat(VulnerabilityFormat):
             for vuln in vulns:
                 vuln_data.append(self._format_vuln(dep, vuln, applied_fix))
 
-        vuln_strings, sizes = tabulate(vuln_data)
-
-        # Create and add a separator.
-        if len(vuln_data) > 0:
-            vuln_strings.insert(1, " ".join(map(lambda x: "-" * x, sizes)))
-
         columns_string = str()
-        for row in vuln_strings:
-            if columns_string:
-                columns_string += "\n"
-            columns_string += row
+
+        # If it's just a header, don't bother adding it to the output
+        if len(vuln_data) > 1:
+            vuln_strings, sizes = tabulate(vuln_data)
+
+            # Create and add a separator.
+            if len(vuln_data) > 0:
+                vuln_strings.insert(1, " ".join(map(lambda x: "-" * x, sizes)))
+
+            for row in vuln_strings:
+                if columns_string:
+                    columns_string += "\n"
+                columns_string += row
 
         # Now display the skipped dependencies
         skip_data: List[List[Any]] = []
@@ -99,7 +109,9 @@ class ColumnsFormat(VulnerabilityFormat):
         skip_strings.insert(1, " ".join(map(lambda x: "-" * x, sizes)))
 
         for row in skip_strings:
-            columns_string += "\n" + row
+            if columns_string:
+                columns_string += "\n"
+            columns_string += row
 
         return columns_string
 

@@ -1,6 +1,15 @@
 import json
 
+import pytest
+
 import pip_audit._format as format
+
+
+@pytest.mark.parametrize("output_desc", [True, False])
+def test_json_manifest(output_desc):
+    fmt = format.JsonFormat(output_desc)
+
+    assert fmt.is_manifest
 
 
 def test_json(vuln_data):

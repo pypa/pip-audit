@@ -68,6 +68,13 @@ class CycloneDxFormat(VulnerabilityFormat):
 
         self._inner_format = inner_format
 
+    @property
+    def is_manifest(self):
+        """
+        See `VulnerabilityFormat.is_manifest`.
+        """
+        return True
+
     def format(
         self,
         result: Dict[service.Dependency, List[service.VulnerabilityResult]],
