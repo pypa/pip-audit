@@ -38,7 +38,7 @@ setup(
     ],
     extras_require={
         "dev": [
-            "bump",
+            "bump >= 1.3.1",
             "flake8",
             "black",
             "isort",
