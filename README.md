@@ -9,7 +9,7 @@ pip-audit
 
 `pip-audit` is a tool for scanning Python environments for packages
 with known vulnerabilities. It uses the Python Packaging Advisory Database
-(https://github.com/pypa/advisory-db) via the
+(https://github.com/pypa/advisory-database) via the
 [PyPI JSON API](https://warehouse.pypa.io/api-reference/json.html) as a source
 of vulnerability reports.
 
