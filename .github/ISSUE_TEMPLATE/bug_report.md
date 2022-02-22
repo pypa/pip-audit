@@ -9,7 +9,7 @@ assignees: ''
 
 Thank you for reporting a potential bug in `pip-audit`! Please read the next parts of this template carefully:
 
-**IMPORTANT**: Please **do not** report auditing errors (false positives or negatives) to this repository. Instead, please report them to [pypa/advisory-db](https://github.com/pypa/advisory-db/issues/new). 
+**IMPORTANT**: Please **do not** report auditing errors (false positives or negatives) to this repository. Instead, please report them to [pypa/advisory-database](https://github.com/pypa/advisory-database/issues/new).
 
 **IMPORTANT:** Please fill out every section below. Bug reports with missing information will be
 given a lower priority or closed outright.
