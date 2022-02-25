@@ -262,6 +262,11 @@ def _parser() -> argparse.ArgumentParser:
         help="extra URLs of package indexes to use in addition to `--index-url`; should follow the "
         "same rules as `--index-url`",
     )
+    parser.add_argument(
+        "--skip-editable",
+        action="store_true",
+        help="don't audit packages that are marked as editable",
+    )
     return parser
 
 
@@ -311,7 +316,9 @@ def audit() -> None:
                 state,
             )
         else:
-            source = PipSource(local=args.local, paths=args.paths, state=state)
+            source = PipSource(
+                local=args.local, paths=args.paths, skip_editable=args.skip_editable, state=state
+            )
 
         # `--dry-run` only affects the auditor if `--fix` is also not supplied,
         # since the combination of `--dry-run` and `--fix` implies that the user
