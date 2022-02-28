@@ -407,6 +407,6 @@ def test_resolvelib_skip_editable():
     resolver = resolvelib.ResolveLibResolver(skip_editable=True)
     req = ParsedRequirement("foo==1.0.0", editable=True, filename="stub", lineno=1)
 
-    deps = resolver.resolve(req)
+    deps = resolver.resolve(req)  # type: ignore
     assert len(deps) == 1
     assert deps[0] == SkippedDependency(name="foo", skip_reason="requirement marked as editable")
