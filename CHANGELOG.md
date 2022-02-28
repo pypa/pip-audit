@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased] - ReleaseDate
 
+### Added
+
+* CLI: The `--skip-editable` flag has been added, allowing users to skip local
+  packages or parsed requirements (via `-r`) that are marked as editable
+  ([#244](https://github.com/trailofbits/pip-audit/pull/244))
+
 ## [2.0.0] - 2022-02-18
 
 ### Added
