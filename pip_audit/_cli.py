@@ -309,11 +309,15 @@ def audit() -> None:
         if args.requirements is not None:
             index_urls = [args.index_url] + args.extra_index_urls
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
+            # TODO: This is a leaky abstraction; we should construct the ResolveLibResolver
+            # within the RequirementSource instead of in-line here.
             source = RequirementSource(
                 req_files,
-                ResolveLibResolver(index_urls, args.timeout, args.cache_dir, state),
-                args.require_hashes,
-                state,
+                ResolveLibResolver(
+                    index_urls, args.timeout, args.cache_dir, args.skip_editable, state
+                ),
+                require_hashes=args.require_hashes,
+                state=state,
             )
         else:
             source = PipSource(
