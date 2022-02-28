@@ -5,6 +5,7 @@ import pytest
 import requests
 from packaging.requirements import Requirement
 from packaging.version import Version
+from pip_api import Requirement as ParsedRequirement
 from requests.exceptions import HTTPError
 from resolvelib.resolvers import InconsistentCandidate, ResolutionImpossible
 
@@ -400,3 +401,12 @@ def test_resolvelib_package_missing_on_one_index(monkeypatch):
     resolved_deps = dict(resolver.resolve_all(iter([req])))
     assert req in resolved_deps
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("0.5"))]
+
+
+def test_resolvelib_skip_editable():
+    resolver = resolvelib.ResolveLibResolver(skip_editable=True)
+    req = ParsedRequirement("foo==1.0.0", editable=True, filename="stub", lineno=1)
+
+    deps = resolver.resolve(req)  # type: ignore
+    assert len(deps) == 1
+    assert deps[0] == SkippedDependency(name="foo", skip_reason="requirement marked as editable")

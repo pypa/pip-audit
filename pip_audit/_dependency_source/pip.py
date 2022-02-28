@@ -37,7 +37,12 @@ class PipSource(DependencySource):
     """
 
     def __init__(
-        self, *, local: bool = False, paths: Sequence[Path] = [], state: AuditState = AuditState()
+        self,
+        *,
+        local: bool = False,
+        paths: Sequence[Path] = [],
+        skip_editable: bool = False,
+        state: AuditState = AuditState(),
     ) -> None:
         """
         Create a new `PipSource`.
@@ -49,10 +54,14 @@ class PipSource(DependencySource):
         list is empty, the `DependencySource` will query the current Python
         environment.
 
+        `skip_editable` controls whether dependencies marked as "editable" are skipped.
+        By default, editable dependencies are not skipped.
+
         `state` is an `AuditState` to use for state callbacks.
         """
         self._local = local
         self._paths = paths
+        self._skip_editable = skip_editable
         self.state = state
 
         if _PIP_VERSION < _MINIMUM_RELIABLE_PIP_VERSION:
@@ -76,16 +85,21 @@ class PipSource(DependencySource):
                 local=self._local, paths=list(self._paths)
             ).items():
                 dep: Dependency
-                try:
-                    dep = ResolvedDependency(name=dist.name, version=Version(str(dist.version)))
-                    self.state.update_state(f"Collecting {dep.name} ({dep.version})")
-                except InvalidVersion:
-                    skip_reason = (
-                        "Package has invalid version and could not be audited: "
-                        f"{dist.name} ({dist.version})"
+                if dist.editable and self._skip_editable:
+                    dep = SkippedDependency(
+                        name=dist.name, skip_reason="distribution marked as editable"
                     )
-                    logger.debug(skip_reason)
-                    dep = SkippedDependency(name=dist.name, skip_reason=skip_reason)
+                else:
+                    try:
+                        dep = ResolvedDependency(name=dist.name, version=Version(str(dist.version)))
+                        self.state.update_state(f"Collecting {dep.name} ({dep.version})")
+                    except InvalidVersion:
+                        skip_reason = (
+                            "Package has invalid version and could not be audited: "
+                            f"{dist.name} ({dist.version})"
+                        )
+                        logger.debug(skip_reason)
+                        dep = SkippedDependency(name=dist.name, skip_reason=skip_reason)
                 yield dep
         except Exception as e:
             raise PipSourceError("failed to list installed distributions") from e

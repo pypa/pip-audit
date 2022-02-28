@@ -5,9 +5,10 @@ Resolve a list of dependencies via the `resolvelib` API as well as a custom
 
 import logging
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from packaging.requirements import Requirement
+from pip_api import Requirement as ParsedRequirement
 from requests.exceptions import HTTPError
 from resolvelib import BaseReporter, Resolver
 
@@ -33,6 +34,7 @@ class ResolveLibResolver(DependencyResolver):
         index_urls: List[str] = [PYPI_URL],
         timeout: Optional[int] = None,
         cache_dir: Optional[Path] = None,
+        skip_editable: bool = False,
         state: AuditState = AuditState(),
     ) -> None:
         """
@@ -41,16 +43,31 @@ class ResolveLibResolver(DependencyResolver):
         `timeout` and `cache_dir` are optional arguments for HTTP timeouts
         and caching, respectively.
 
+        `skip_editable` controls whether requirements marked as "editable" are skipped.
+        By default, editable requirements are not skipped.
+
         `state` is an `AuditState` to use for state callbacks.
         """
         self.provider = PyPIProvider(index_urls, timeout, cache_dir, state)
         self.reporter = BaseReporter()
         self.resolver: Resolver = Resolver(self.provider, self.reporter)
+        self._skip_editable = skip_editable
 
     def resolve(self, req: Requirement) -> List[Dependency]:
         """
         Resolve the given `Requirement` into a `Dependency` list.
         """
+
+        # HACK: `resolve` takes both `packaging.Requirement` and `pip_api.Requirement`,
+        # since the latter is a subclass. But only the latter knows whether the
+        # requirement is editable, so we need to check for it here.
+        if isinstance(req, ParsedRequirement):
+            req = cast(ParsedRequirement, req)
+            if req.editable and self._skip_editable:
+                return [
+                    SkippedDependency(name=req.name, skip_reason="requirement marked as editable")
+                ]
+
         deps: List[Dependency] = []
         try:
             result = self.resolver.resolve([req])
