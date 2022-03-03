@@ -3,7 +3,7 @@ Collect dependencies from `pyproject.toml` files.
 """
 
 import logging
-import shutil
+import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Iterator, List, Set, cast
@@ -104,9 +104,12 @@ class PyProjectSource(DependencySource):
                 # Projects without dependencies aren't an error case
                 logger.warn(f"pyproject file {self.filename} does not contain `dependencies` list")
                 return
+
             deps = project["dependencies"]
             reqs: List[Requirement] = [Requirement(dep) for dep in deps]
             for i in range(len(reqs)):
+                # When we find a requirement that matches the provided fix version, we need to edit
+                # the requirement's specifier and then write it back to the underlying TOML data.
                 req = reqs[i]
                 if (
                     req.name == fix_version.dep.name
@@ -116,8 +119,16 @@ class PyProjectSource(DependencySource):
                     req.specifier = SpecifierSet(f"=={fix_version.version}")
                     deps[i] = str(req)
                 assert req.marker is None or req.marker.evaluate()
+
+            # Now dump the new edited TOML to the temporary file.
             toml.dump(pyproject_data, tmp)
-            shutil.copyfileobj(tmp, f)
+
+            # And replace the original `pyproject.toml` file
+            os.replace(tmp.name, self.filename)
+
+            # Stop the file wrapper from attempting to cleanup if we've successfully moved the
+            # temporary file into place.
+            tmp._closer.delete = False
 
 
 class PyProjectSourceError(DependencySourceError):
