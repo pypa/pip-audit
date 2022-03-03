@@ -32,11 +32,26 @@ class PyProjectSource(DependencySource):
     def __init__(
         self, filename: Path, resolver: DependencyResolver, state: AuditState = AuditState()
     ) -> None:
+        """
+        Create a new `PyProjectSource`.
+
+        `filename` provides a path to a `pyproject.toml` file
+
+        `resolver` is the `DependencyResolver` to use.
+
+        `state` is an `AuditState` to use for state callbacks.
+        """
         self.filename = filename
         self.resolver = resolver
         self.state = state
 
     def collect(self) -> Iterator[Dependency]:
+        """
+        Collect all of the dependencies discovered by this `PyProjectSource`.
+
+        Raises a `PyProjectSourceError` on any errors.
+        """
+
         collected: Set[Dependency] = set()
         with open(self.filename, "r") as f:
             pyproject_data = toml.load(f)
@@ -71,12 +86,20 @@ class PyProjectSource(DependencySource):
                 raise PyProjectSourceError("dependency resolver raised an error") from dre
 
     def fix(self, fix_version: ResolvedFixVersion) -> None:
+        """
+        Fixes a dependency version for this `PyProjectSource`.
+        """
+
         raise NotImplementedError
 
 
 class PyProjectSourceError(DependencySourceError):
+    """A `pyproject.toml` specific `DependencySourceError`."""
+
     pass
 
 
 class PyProjectFixError(DependencyFixError):
+    """A `pyproject.toml` specific `DependencyFixError`."""
+
     pass
