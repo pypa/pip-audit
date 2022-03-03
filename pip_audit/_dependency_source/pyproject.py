@@ -3,11 +3,14 @@ Collect dependencies from `pyproject.toml` files.
 """
 
 import logging
+import shutil
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Iterator, List, Set, cast
 
 import toml
 from packaging.requirements import Requirement
+from packaging.specifiers import SpecifierSet
 
 from pip_audit._dependency_source import (
     DependencyFixError,
@@ -90,7 +93,31 @@ class PyProjectSource(DependencySource):
         Fixes a dependency version for this `PyProjectSource`.
         """
 
-        raise NotImplementedError
+        with open(self.filename, "r+") as f, NamedTemporaryFile(mode="r+") as tmp:
+            pyproject_data = toml.load(f)
+            if "project" not in pyproject_data:
+                raise PyProjectFixError(
+                    f"pyproject file {self.filename} does not contain `project` section"
+                )
+            project = pyproject_data["project"]
+            if "dependencies" not in project:
+                # Projects without dependencies aren't an error case
+                logger.warn(f"pyproject file {self.filename} does not contain `dependencies` list")
+                return
+            deps = project["dependencies"]
+            reqs: List[Requirement] = [Requirement(dep) for dep in deps]
+            for i in range(len(reqs)):
+                req = reqs[i]
+                if (
+                    req.name == fix_version.dep.name
+                    and req.specifier.contains(fix_version.dep.version)
+                    and not req.specifier.contains(fix_version.version)
+                ):
+                    req.specifier = SpecifierSet(f"=={fix_version.version}")
+                    deps[i] = str(req)
+                assert req.marker is None or req.marker.evaluate()
+            toml.dump(pyproject_data, tmp)
+            shutil.copyfileobj(tmp, f)
 
 
 class PyProjectSourceError(DependencySourceError):
