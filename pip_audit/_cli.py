@@ -17,6 +17,7 @@ from pip_audit._dependency_source import (
     PYPI_URL,
     DependencySource,
     PipSource,
+    PyProjectSource,
     RequirementSource,
     ResolveLibResolver,
 )
@@ -158,6 +159,12 @@ def _parser() -> argparse.ArgumentParser:
         action="append",
         dest="requirements",
         help="audit the given requirements file; this option can be used multiple times",
+    )
+    dep_source_args.add_argument(
+        "-p",
+        "--pyproject",
+        type=argparse.FileType("r"),
+        help="audit the given `pyproject.toml` file",
     )
     parser.add_argument(
         "-f",
@@ -301,13 +308,20 @@ def audit() -> None:
         state = stack.enter_context(AuditState(members=actors))
 
         source: DependencySource
+        index_urls = [args.index_url] + args.extra_index_urls
         if args.requirements is not None:
-            index_urls = [args.index_url] + args.extra_index_urls
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
             source = RequirementSource(
                 req_files,
                 ResolveLibResolver(index_urls, args.timeout, args.cache_dir, state),
                 args.require_hashes,
+                state,
+            )
+        elif args.pyproject is not None:
+            pyproject_file = Path(args.pyproject.name)
+            source = PyProjectSource(
+                pyproject_file,
+                ResolveLibResolver(index_urls, args.timeout, args.cache_dir, state),
                 state,
             )
         else:
