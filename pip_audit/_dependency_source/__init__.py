@@ -10,6 +10,7 @@ from .interface import (
     DependencySourceError,
 )
 from .pip import PipSource, PipSourceError
+from .pyproject import PyProjectSource
 from .requirement import RequirementSource
 from .resolvelib import PYPI_URL, ResolveLibResolver
 
@@ -22,6 +23,7 @@ __all__ = [
     "DependencySourceError",
     "PipSource",
     "PipSourceError",
+    "PyProjectSource",
     "RequirementSource",
     "ResolveLibResolver",
 ]

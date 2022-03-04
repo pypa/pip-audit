@@ -17,6 +17,7 @@ from pip_audit._dependency_source import (
     PYPI_URL,
     DependencySource,
     PipSource,
+    PyProjectSource,
     RequirementSource,
     ResolveLibResolver,
 )
@@ -159,6 +160,9 @@ def _parser() -> argparse.ArgumentParser:
         dest="requirements",
         help="audit the given requirements file; this option can be used multiple times",
     )
+    dep_source_args.add_argument(
+        "project_path", type=Path, nargs="?", help="audit a local Python project at the given path"
+    )
     parser.add_argument(
         "-f",
         "--format",
@@ -274,6 +278,17 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _dep_source_from_project_path(project_path: Path, state: AuditState) -> DependencySource:
+    # Check for a `pyproject.toml`
+    pyproject_path = project_path / "pyproject.toml"
+    if pyproject_path.is_file():
+        return PyProjectSource(pyproject_path, ResolveLibResolver(), state)
+
+    # TODO: Checks for setup.py and other project files will go here.
+
+    _fatal(f"couldn't find a supported project file in {project_path}")
+
+
 def audit() -> None:
     """
     The primary entrypoint for `pip-audit`.
@@ -306,8 +321,8 @@ def audit() -> None:
         state = stack.enter_context(AuditState(members=actors))
 
         source: DependencySource
+        index_urls = [args.index_url] + args.extra_index_urls
         if args.requirements is not None:
-            index_urls = [args.index_url] + args.extra_index_urls
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
             # TODO: This is a leaky abstraction; we should construct the ResolveLibResolver
             # within the RequirementSource instead of in-line here.
@@ -319,6 +334,12 @@ def audit() -> None:
                 require_hashes=args.require_hashes,
                 state=state,
             )
+        elif args.project_path is not None:
+            # NOTE: We'll probably want to support --skip-editable here,
+            # once PEP 660 is more widely supported: https://www.python.org/dev/peps/pep-0660/
+
+            # Determine which kind of project file exists in the project path
+            source = _dep_source_from_project_path(args.project_path, state)
         else:
             source = PipSource(
                 local=args.local, paths=args.paths, skip_editable=args.skip_editable, state=state
