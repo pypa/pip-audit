@@ -1,14 +1,22 @@
 from pathlib import Path
+from typing import List
 
 import pretend  # type: ignore
 import pytest
+from packaging.requirements import Requirement
 from packaging.version import Version
 
-from pip_audit._dependency_source import DependencySourceError, ResolveLibResolver, pyproject
-from pip_audit._service import ResolvedDependency
+from pip_audit._dependency_source import (
+    DependencyResolver,
+    DependencyResolverError,
+    DependencySourceError,
+    ResolveLibResolver,
+    pyproject,
+)
+from pip_audit._service import Dependency, ResolvedDependency
 
 
-def __init_pyproject(filename: Path, contents: str) -> Path:
+def _init_pyproject(filename: Path, contents: str) -> Path:
     with open(filename, mode="w") as f:
         f.write(contents)
     return filename
@@ -16,7 +24,7 @@ def __init_pyproject(filename: Path, contents: str) -> Path:
 
 @pytest.mark.online
 def test_pyproject_source(req_file):
-    filename = __init_pyproject(
+    filename = _init_pyproject(
         req_file(),
         """
 [project]
@@ -31,7 +39,7 @@ dependencies = [
 
 
 def test_pyproject_source_no_project_section(req_file):
-    filename = __init_pyproject(
+    filename = _init_pyproject(
         req_file(),
         """
 [some_other_section]
@@ -49,7 +57,7 @@ def test_pyproject_source_no_deps(monkeypatch, req_file):
     logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(pyproject, "logger", logger)
 
-    filename = __init_pyproject(
+    filename = _init_pyproject(
         req_file(),
         """
 [project]
@@ -64,7 +72,9 @@ def test_pyproject_source_no_deps(monkeypatch, req_file):
 
 
 def test_pyproject_source_duplicate_deps(req_file):
-    filename = __init_pyproject(
+    # Click is a dependency of Flask. We should check that the dependencies of Click aren't returned
+    # twice.
+    filename = _init_pyproject(
         req_file(),
         """
 [project]
@@ -76,4 +86,25 @@ dependencies = [
     )
     source = pyproject.PyProjectSource(filename, ResolveLibResolver())
     specs = list(source.collect())
+
+    # Check that the list of dependencies is already deduplicated
     assert len(specs) == len(set(specs))
+
+
+def test_pyproject_source_resolver_error(monkeypatch, req_file):
+    class MockResolver(DependencyResolver):
+        def resolve(self, req: Requirement) -> List[Dependency]:
+            raise DependencyResolverError
+
+    filename = _init_pyproject(
+        req_file(),
+        """
+[project]
+dependencies = [
+  "flask==2.0.1"
+]
+""",
+    )
+    source = pyproject.PyProjectSource(filename, MockResolver())
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
