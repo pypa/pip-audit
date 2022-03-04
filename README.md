@@ -180,6 +180,13 @@ $ pip-audit -r ./requirements.txt -l
 No known vulnerabilities found
 ```
 
+Audit dependencies for a local Python project:
+```
+$ pip-audit .
+No known vulnerabilities found
+```
+`pip-audit` searches the provided path for various Python "project" files. At the moment, only `pyproject.toml` is supported.
+
 Audit dependencies when there are vulnerabilities present:
 ```
 $ pip-audit
