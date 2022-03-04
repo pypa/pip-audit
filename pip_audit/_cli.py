@@ -161,10 +161,7 @@ def _parser() -> argparse.ArgumentParser:
         help="audit the given requirements file; this option can be used multiple times",
     )
     dep_source_args.add_argument(
-        "-p",
-        "--pyproject",
-        type=argparse.FileType("r"),
-        help="audit the given `pyproject.toml` file",
+        "project_path", type=Path, nargs="?", help="audit a local Python project at the given path"
     )
     parser.add_argument(
         "-f",
@@ -276,6 +273,15 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _create_project_source(project_path: Path, state: AuditState) -> Optional[DependencySource]:
+    # Check for a `pyproject.toml`
+    pyproject_path = project_path.joinpath("pyproject.toml")
+    if pyproject_path.is_file():
+        return PyProjectSource(pyproject_path, ResolveLibResolver(), state)
+    else:
+        return None
+
+
 def audit() -> None:
     """
     The primary entrypoint for `pip-audit`.
@@ -317,13 +323,12 @@ def audit() -> None:
                 args.require_hashes,
                 state,
             )
-        elif args.pyproject is not None:
-            pyproject_file = Path(args.pyproject.name)
-            source = PyProjectSource(
-                pyproject_file,
-                ResolveLibResolver(index_urls, args.timeout, args.cache_dir, state),
-                state,
-            )
+        elif args.project_path is not None:
+            # Determine which kind of project file exists in the project path
+            _source = _create_project_source(args.project_path, state)
+            if _source is None:
+                parser.error(f"couldn't find project file at path: {args.project_path}")
+            source = _source
         else:
             source = PipSource(local=args.local, paths=args.paths, state=state)
 
