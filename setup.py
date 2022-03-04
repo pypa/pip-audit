@@ -28,13 +28,13 @@ setup(
     platforms="any",
     python_requires=">=3.7",
     install_requires=[
-        "pip-api>=0.0.27",
+        "pip-api>=0.0.28",
         "packaging>=21.0.0",
         "progress>=1.6",
         "resolvelib>=0.8.0",
         "html5lib>=1.1",
         "CacheControl[filecache]>=0.12.10",
-        "cyclonedx-python-lib>=1.0.0,<2.0.0",
+        "cyclonedx-python-lib>=1.0.0,<3.0.0",
     ],
     extras_require={
         "dev": [

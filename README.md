@@ -9,7 +9,7 @@ pip-audit
 
 `pip-audit` is a tool for scanning Python environments for packages
 with known vulnerabilities. It uses the Python Packaging Advisory Database
-(https://github.com/pypa/advisory-db) via the
+(https://github.com/pypa/advisory-database) via the
 [PyPI JSON API](https://warehouse.pypa.io/api-reference/json.html) as a source
 of vulnerability reports.
 
@@ -73,7 +73,7 @@ usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
                  [--progress-spinner {on,off}] [--timeout TIMEOUT]
                  [--path PATHS] [-v] [--fix] [--require-hashes]
                  [--index-url INDEX_URL] [--extra-index-url EXTRA_INDEX_URLS]
-                 [project_path]
+                 [--skip-editable] [project_path]
 
 audit the Python environment for dependencies with known vulnerabilities
 
@@ -134,6 +134,8 @@ optional arguments:
                         extra URLs of package indexes to use in addition to
                         `--index-url`; should follow the same rules as
                         `--index-url` (default: [])
+  --skip-editable       don't audit packages that are marked as editable
+                        (default: False)
 ```
 <!-- @end-pip-audit-help@ -->
 

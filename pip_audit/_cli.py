@@ -266,6 +266,11 @@ def _parser() -> argparse.ArgumentParser:
         help="extra URLs of package indexes to use in addition to `--index-url`; should follow the "
         "same rules as `--index-url`",
     )
+    parser.add_argument(
+        "--skip-editable",
+        action="store_true",
+        help="don't audit packages that are marked as editable",
+    )
     return parser
 
 
@@ -317,11 +322,15 @@ def audit() -> None:
         index_urls = [args.index_url] + args.extra_index_urls
         if args.requirements is not None:
             req_files: List[Path] = [Path(req.name) for req in args.requirements]
+            # TODO: This is a leaky abstraction; we should construct the ResolveLibResolver
+            # within the RequirementSource instead of in-line here.
             source = RequirementSource(
                 req_files,
-                ResolveLibResolver(index_urls, args.timeout, args.cache_dir, state),
-                args.require_hashes,
-                state,
+                ResolveLibResolver(
+                    index_urls, args.timeout, args.cache_dir, args.skip_editable, state
+                ),
+                require_hashes=args.require_hashes,
+                state=state,
             )
         elif args.project_path is not None:
             # Determine which kind of project file exists in the project path
@@ -330,7 +339,9 @@ def audit() -> None:
                 parser.error(f"couldn't find project file at path: {args.project_path}")
             source = _source
         else:
-            source = PipSource(local=args.local, paths=args.paths, state=state)
+            source = PipSource(
+                local=args.local, paths=args.paths, skip_editable=args.skip_editable, state=state
+            )
 
         # `--dry-run` only affects the auditor if `--fix` is also not supplied,
         # since the combination of `--dry-run` and `--fix` implies that the user
