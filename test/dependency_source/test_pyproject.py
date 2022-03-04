@@ -71,6 +71,7 @@ def test_pyproject_source_no_deps(monkeypatch, req_file):
     assert len(logger.warning.calls) == 1
 
 
+@pytest.mark.online
 def test_pyproject_source_duplicate_deps(req_file):
     # Click is a dependency of Flask. We should check that the dependencies of Click aren't returned
     # twice.
