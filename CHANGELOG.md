@@ -14,6 +14,10 @@ All versions prior to 0.0.9 are untracked.
   packages or parsed requirements (via `-r`) that are marked as editable
   ([#244](https://github.com/trailofbits/pip-audit/pull/244))
 
+* CLI: `pip-audit` can audit projects that list their dependencies in
+  `pyproject.toml` files, via `pip-audit <dir>`
+  ([#246](https://github.com/trailofbits/pip-audit/pull/246))
+
 ## [2.0.0] - 2022-02-18
 
 ### Added
