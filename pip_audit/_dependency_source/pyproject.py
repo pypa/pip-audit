@@ -65,7 +65,9 @@ class PyProjectSource(DependencySource):
             project = pyproject_data["project"]
             if "dependencies" not in project:
                 # Projects without dependencies aren't an error case
-                logger.warn(f"pyproject file {self.filename} does not contain `dependencies` list")
+                logger.warning(
+                    f"pyproject file {self.filename} does not contain `dependencies` list"
+                )
                 return
             deps = project["dependencies"]
             reqs: List[Requirement] = [Requirement(dep) for dep in deps]
@@ -102,7 +104,9 @@ class PyProjectSource(DependencySource):
             project = pyproject_data["project"]
             if "dependencies" not in project:
                 # Projects without dependencies aren't an error case
-                logger.warn(f"pyproject file {self.filename} does not contain `dependencies` list")
+                logger.warning(
+                    f"pyproject file {self.filename} does not contain `dependencies` list"
+                )
                 return
 
             deps = project["dependencies"]
@@ -123,7 +127,7 @@ class PyProjectSource(DependencySource):
             # Now dump the new edited TOML to the temporary file.
             toml.dump(pyproject_data, tmp)
 
-            # And replace the original `pyproject.toml` file
+            # And replace the original `pyproject.toml` file.
             os.replace(tmp.name, self.filename)
 
             # Stop the file wrapper from attempting to cleanup if we've successfully moved the
