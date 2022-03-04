@@ -278,13 +278,15 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _create_project_source(project_path: Path, state: AuditState) -> Optional[DependencySource]:
+def _dep_source_from_project_path(project_path: Path, state: AuditState) -> DependencySource:
     # Check for a `pyproject.toml`
-    pyproject_path = project_path.joinpath("pyproject.toml")
+    pyproject_path = project_path / "pyproject.toml"
     if pyproject_path.is_file():
         return PyProjectSource(pyproject_path, ResolveLibResolver(), state)
-    else:
-        return None
+
+    # TODO: Checks for setup.py and other project files will go here.
+
+    _fatal(f"couldn't find a supported project file in {project_path}")
 
 
 def audit() -> None:
@@ -333,11 +335,11 @@ def audit() -> None:
                 state=state,
             )
         elif args.project_path is not None:
+            # NOTE: We'll probably want to support --skip-editable here,
+            # once PEP 660 is more widely supported: https://www.python.org/dev/peps/pep-0660/
+
             # Determine which kind of project file exists in the project path
-            _source = _create_project_source(args.project_path, state)
-            if _source is None:
-                parser.error(f"couldn't find project file at path: {args.project_path}")
-            source = _source
+            source = _dep_source_from_project_path(args.project_path, state)
         else:
             source = PipSource(
                 local=args.local, paths=args.paths, skip_editable=args.skip_editable, state=state

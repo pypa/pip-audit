@@ -55,20 +55,23 @@ class PyProjectSource(DependencySource):
         """
 
         collected: Set[Dependency] = set()
-        with open(self.filename, "r") as f:
+        with self.filename.open("r") as f:
             pyproject_data = toml.load(f)
-            if "project" not in pyproject_data:
+
+            project = pyproject_data.get("project")
+            if project is None:
                 raise PyProjectSourceError(
                     f"pyproject file {self.filename} does not contain `project` section"
                 )
-            project = pyproject_data["project"]
-            if "dependencies" not in project:
+
+            deps = project.get("dependencies")
+            if deps is None:
                 # Projects without dependencies aren't an error case
                 logger.warning(
                     f"pyproject file {self.filename} does not contain `dependencies` list"
                 )
                 return
-            deps = project["dependencies"]
+
             reqs: List[Requirement] = [Requirement(dep) for dep in deps]
             try:
                 for _, deps in self.resolver.resolve_all(iter(reqs)):
@@ -94,21 +97,23 @@ class PyProjectSource(DependencySource):
         Fixes a dependency version for this `PyProjectSource`.
         """
 
-        with open(self.filename, "r+") as f, NamedTemporaryFile(mode="r+") as tmp:
+        with self.filename.open("r+") as f, NamedTemporaryFile(mode="r+", delete=False) as tmp:
             pyproject_data = toml.load(f)
-            if "project" not in pyproject_data:
+
+            project = pyproject_data.get("project")
+            if project is None:
                 raise PyProjectFixError(
                     f"pyproject file {self.filename} does not contain `project` section"
                 )
-            project = pyproject_data["project"]
-            if "dependencies" not in project:
+
+            deps = project.get("dependencies")
+            if deps is None:
                 # Projects without dependencies aren't an error case
                 logger.warning(
                     f"pyproject file {self.filename} does not contain `dependencies` list"
                 )
                 return
 
-            deps = project["dependencies"]
             reqs: List[Requirement] = [Requirement(dep) for dep in deps]
             for i in range(len(reqs)):
                 # When we find a requirement that matches the provided fix version, we need to edit
@@ -128,10 +133,6 @@ class PyProjectSource(DependencySource):
 
             # And replace the original `pyproject.toml` file.
             os.replace(tmp.name, self.filename)
-
-            # Stop the file wrapper from attempting to cleanup if we've successfully moved the
-            # temporary file into place.
-            tmp._closer.delete = False
 
 
 class PyProjectSourceError(DependencySourceError):
