@@ -40,9 +40,7 @@ setup(
         "dev": [
             "bump >= 1.3.1",
             "flake8",
-            "black",
-            # See: https://github.com/psf/black/issues/2964
-            "click >= 8.0.0, < 8.1.0",
+            "black >= 22.3.0",
             "isort",
             "pytest",
             "pytest-cov",
