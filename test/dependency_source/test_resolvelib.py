@@ -174,7 +174,7 @@ def test_resolvelib_sdist_patched(monkeypatch, suffix):
 
 def test_resolvelib_sdist_vexing_parse(monkeypatch):
     # Some sdist filenames have ambiguous parses: `cffi-1.0.2-2.tar.gz`
-    # could be parsed as `(cffi, 1.0.2.post2)` or `(cffi-1.0.2, 2)`.
+    # could be parsed as `(cffi, 1.0.2.post2)` or `(cffi-1-0-2, 2)`.
     # `packaging.utils.parse_sdist_filename` parses it as the latter, which results
     # in a wrong version for `cffi`.
     # When this happens, we filter by distribution to ensure we don't select
