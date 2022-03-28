@@ -337,8 +337,6 @@ class PyPIProvider(AbstractProvider):
         """
         See `resolvelib.providers.AbstractProvider.is_satisfied_by`.
         """
-        if canonicalize_name(requirement.name) != candidate.name:
-            return False
         return candidate.version in requirement.specifier
 
     def get_dependencies(self, candidate):
