@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased] - ReleaseDate
 
+### Fixed
+
+* Dependency sources: A bug caused by ambiguous parses of source distribution
+  files was fixed ([#249](https://github.com/trailofbits/pip-audit/pull/249))
+
 ## [2.1.0] - 2022-03-11
 
 ### Added

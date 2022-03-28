@@ -310,6 +310,13 @@ class PyPIProvider(AbstractProvider):
                 )
                 if candidate.version not in bad_versions
                 and all(candidate.version in r.specifier for r in requirements)
+                # HACK(ww): Additionally check that each candidate's name matches the
+                # expected project name (identifier).
+                # This technically shouldn't be required, but parsing distribution names
+                # from package indices is imprecise/unreliable when distribution filenames
+                # are PEP 440 compliant but not normalized.
+                # See: https://github.com/pypa/packaging/issues/527
+                and candidate.name == identifier
             ],
             key=attrgetter("version", "is_wheel"),
             reverse=True,
@@ -330,8 +337,6 @@ class PyPIProvider(AbstractProvider):
         """
         See `resolvelib.providers.AbstractProvider.is_satisfied_by`.
         """
-        if canonicalize_name(requirement.name) != candidate.name:
-            return False
         return candidate.version in requirement.specifier
 
     def get_dependencies(self, candidate):

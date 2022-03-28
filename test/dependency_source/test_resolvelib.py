@@ -7,7 +7,7 @@ from packaging.requirements import Requirement
 from packaging.version import Version
 from pip_api import Requirement as ParsedRequirement
 from requests.exceptions import HTTPError
-from resolvelib.resolvers import InconsistentCandidate, ResolutionImpossible
+from resolvelib.resolvers import ResolutionImpossible
 
 from pip_audit._dependency_source import resolvelib
 from pip_audit._dependency_source.resolvelib import pypi_provider
@@ -172,6 +172,34 @@ def test_resolvelib_sdist_patched(monkeypatch, suffix):
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("2.0.1"))]
 
 
+def test_resolvelib_sdist_vexing_parse(monkeypatch):
+    # Some sdist filenames have ambiguous parses: `cffi-1.0.2-2.tar.gz`
+    # could be parsed as `(cffi, 1.0.2.post2)` or `(cffi-1-0-2, 2)`.
+    # `packaging.utils.parse_sdist_filename` parses it as the latter, which results
+    # in a wrong version for `cffi`.
+    # When this happens, we filter by distribution to ensure we don't select
+    # an incorrect version number.
+    data = (
+        '<a href="https://files.pythonhosted.org/packages/54/4f/'
+        "1b294c1a4ab7b2ad5ca5fc4a9a65a22ef1ac48be126289d97668852d4ab3/cffi-1.0.2-2.tar.gz#"
+        'sha256=a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9">'
+        "cffi-1.0.2-2.tar.gz</a><br/>"
+    )
+
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+    )
+
+    resolver = resolvelib.ResolveLibResolver()
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
+    )
+
+    req = Requirement("cffi")
+    with pytest.raises(ResolutionImpossible):
+        dict(resolver.resolve_all(iter([req])))
+
+
 def test_resolvelib_wheel_python_version(monkeypatch):
     # Some versions stipulate a particular Python version and should be skipped by the provider.
     # Since `pip-audit` doesn't support Python 2.7, the Flask version below should always be skipped
@@ -194,7 +222,7 @@ def test_resolvelib_wheel_python_version(monkeypatch):
 
 
 def test_resolvelib_wheel_canonical_name_mismatch(monkeypatch):
-    # Call the underlying wheel, Mask instead of Flask. This should throw an `InconsistentCandidate`
+    # Call the underlying wheel, Mask instead of Flask. This should throw an `ResolutionImpossible`
     # error.
     data = (
         '<a href="https://files.pythonhosted.org/packages/54/4f/'
@@ -213,7 +241,7 @@ def test_resolvelib_wheel_canonical_name_mismatch(monkeypatch):
     )
 
     req = Requirement("flask==2.0.1")
-    with pytest.raises(InconsistentCandidate):
+    with pytest.raises(ResolutionImpossible):
         dict(resolver.resolve_all(iter([req])))
 
 
