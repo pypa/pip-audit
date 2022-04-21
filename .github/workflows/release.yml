@@ -9,6 +9,9 @@ jobs:
   pypi:
     name: upload release to PyPI
     runs-on: ubuntu-latest
+    permissions:
+      # NOTE: Needed to create GitHub releases.
+      contents: write
     steps:
     - uses: actions/checkout@v2
 
