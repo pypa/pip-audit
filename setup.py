@@ -51,6 +51,7 @@ setup(
             "mypy",
             "types-requests",
             "types-html5lib",
+            "pre-commit",
         ]
     },
     classifiers=[
