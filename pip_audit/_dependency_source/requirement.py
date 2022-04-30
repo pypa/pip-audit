@@ -203,7 +203,7 @@ class RequirementSource(DependencySource):
                     f"requirement {req.name} does not contain a hash {str(req)}"
                 )
 
-            if req.specifier is None:
+            if not req.specifier:
                 raise RequirementSourceError(f"requirement {req.name} is not pinned: {str(req)}")
 
             pinned_specifier = PINNED_SPECIFIER_RE.match(str(req.specifier))
