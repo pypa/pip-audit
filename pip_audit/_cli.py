@@ -271,6 +271,12 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="don't audit packages that are marked as editable",
     )
+    parser.add_argument(
+        "--no-deps",
+        action="store_true",
+        help="don't perform any dependency resolution; requires all requirements are pinned "
+        "to an exact version",
+    )
     return parser
 
 
@@ -313,6 +319,8 @@ def audit() -> None:
             parser.error("The --index-url flag can only be used with --requirement (-r)")
         elif args.extra_index_urls:
             parser.error("The --extra-index-url flag can only be used with --requirement (-r)")
+        elif args.no_deps:
+            parser.error("The --no-deps flag can only be used with --requirement (-r)")
 
     with ExitStack() as stack:
         actors = []
@@ -332,6 +340,7 @@ def audit() -> None:
                     index_urls, args.timeout, args.cache_dir, args.skip_editable, state
                 ),
                 require_hashes=args.require_hashes,
+                no_deps=args.no_deps,
                 state=state,
             )
         elif args.project_path is not None:
