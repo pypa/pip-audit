@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased] - ReleaseDate
 
+### Added
+
+* CLI: The `--no-deps` flag has been added, allowing users to skip dependency
+  resolution entirely when `pip-audit` is used in requirements mode.
+
 ## [2.1.1] - 2022-03-29
 
 ### Fixed
