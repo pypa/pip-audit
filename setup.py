@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 
+import importlib
+
 from setuptools import find_packages, setup
 
-version = {}
-with open("./pip_audit/_version.py") as f:
-    exec(f.read(), version)
+version = importlib.import_module("._version", package="pip_audit")
 
 with open("./README.md") as f:
     long_description = f.read()
 
 setup(
     name="pip-audit",
-    version=version["__version__"],
+    version=version.__version__,
     license="Apache-2.0",
     author="William Woodruff",
     author_email="william@trailofbits.com",
