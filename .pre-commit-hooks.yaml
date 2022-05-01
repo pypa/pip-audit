@@ -1,0 +1,6 @@
+- id: pip-audit
+  name: pip-audit
+  description: "Audits Python environments and dependency trees for known vulnerabilities"
+  entry: pip-audit
+  pass_filenames: false
+  language: python
