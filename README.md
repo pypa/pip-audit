@@ -303,6 +303,20 @@ and purposes, `pip-audit -r INPUT` is functionally equivalent to
 `pip install -r INPUT`, with a small amount of **non-security isolation** to
 avoid conflicts with any of your local environments.
 
+## pre-commit support
+
+pip-audit has [pre-commit](https://pre-commit.com/) support. Please specify your
+arguments in your pre-commit config. An example config using requirements file can be:
+
+```yaml
+  - repo: https://github.com/trailofbits/pip-audit
+    rev: v2.1.2
+    hooks:
+      -   id: pip-audit
+          args: ["-r", "requirements.txt"]
+```
+- Any valid CLI arguments documented above can be passed.
+
 ## Licensing
 
 `pip-audit` is licensed under the Apache 2.0 License.
