@@ -8,6 +8,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased] - ReleaseDate
 
+## [2.2.0] - 2022-05-02
+
 ### Added
 
 * CLI: The `--output` option has been added, allowing users to specify
@@ -195,6 +197,7 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/trailofbits/pip-audit/compare/v2.0.0...HEAD
+[2.2.0]: https://github.com/trailofbits/pip-audit/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/trailofbits/pip-audit/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/trailofbits/pip-audit/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/trailofbits/pip-audit/compare/v1.1.2...v2.0.0
