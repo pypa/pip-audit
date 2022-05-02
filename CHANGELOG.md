@@ -10,7 +10,8 @@ All versions prior to 0.0.9 are untracked.
 
 ### Fixed
 
-* A bug introduced with a previous fix to version parsing ([#263]) was
+* A bug introduced with a previous fix to version parsing
+  ([#263](https://github.com/trailofbits/pip-audit/pull/263)) was
   fixed ([#264](https://github.com/trailofbits/pip-audit/pull/264))
 
 ## [2.2.0] - 2022-05-02
