@@ -72,8 +72,8 @@ class PyPIService(VulnerabilityService):
 
         # If the dependency has a hash explicitly listed, check it against the PyPI data
         if spec.hashes:
-            releases = response_json["releases"]
-            release = releases.get(str(spec.version))
+            releases = {Version(k): v for k, v in response_json["releases"].items()}
+            release = releases.get(spec.version)
             if release is None:
                 raise ServiceError(
                     "Could not find release to compare hashes: "
