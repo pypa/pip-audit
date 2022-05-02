@@ -316,6 +316,11 @@ arguments in your pre-commit config. An example config using requirements file c
     hooks:
       -   id: pip-audit
           args: ["-r", "requirements.txt"]
+
+ci:
+  # Leave pip-audit to only run locally and not in CI
+  # pre-commit.ci does not allow network calls
+  skip: [pip-audit]
 ```
 - Any valid CLI arguments documented above can be passed.
 
