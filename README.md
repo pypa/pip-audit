@@ -73,7 +73,7 @@ usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
                  [--progress-spinner {on,off}] [--timeout TIMEOUT]
                  [--path PATHS] [-v] [--fix] [--require-hashes]
                  [--index-url INDEX_URL] [--extra-index-url EXTRA_INDEX_URLS]
-                 [--skip-editable]
+                 [--skip-editable] [-o FILE]
                  [project_path]
 
 audit the Python environment for dependencies with known vulnerabilities
@@ -137,6 +137,8 @@ optional arguments:
                         `--index-url` (default: [])
   --skip-editable       don't audit packages that are marked as editable
                         (default: False)
+  -o FILE, --output FILE
+                        output results to the given file (default: None)
 ```
 <!-- @end-pip-audit-help@ -->
 
