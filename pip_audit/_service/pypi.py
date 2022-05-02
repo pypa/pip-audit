@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import List, Optional, Tuple, cast
 
 import requests
-from packaging.version import InvalidVersion, Version, parse
+from packaging.utils import canonicalize_version
+from packaging.version import InvalidVersion, Version
 
 from pip_audit._cache import caching_session
 from pip_audit._service.interface import (
@@ -72,10 +73,16 @@ class PyPIService(VulnerabilityService):
 
         # If the dependency has a hash explicitly listed, check it against the PyPI data
         if spec.hashes:
-            # NOTE: We use `parse(...)` instead of `Version(...)` because PyPI
-            # has lots of releases with legacy versions.
-            releases = {parse(k): v for k, v in response_json["releases"].items()}
-            release = releases.get(spec.version)
+            # NOTE: PyPI has lots of "legacy" version formats in old releases.
+            # To handle these, we attempt to parse and canonicalize them as
+            # PEP 440 versions, falling back on the unparsed version.
+            releases = {}
+            for r, v in response_json["releases"].items():
+                try:
+                    releases[canonicalize_version(Version(r))] = v
+                except InvalidVersion:
+                    releases[r] = v
+            release = releases.get(canonicalize_version(spec.version))
             if release is None:
                 raise ServiceError(
                     "Could not find release to compare hashes: "
