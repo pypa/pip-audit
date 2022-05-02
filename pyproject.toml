@@ -1,5 +1,57 @@
+[project]
+name = "pip_audit"
+dynamic = ["version"]
+description = "A tool for scanning Python environments for known vulnerabilities"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{name = "William Woodruff", email = "william@trailofbits.com"}]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+]
+dependencies=[
+    "CacheControl[filecache]>=0.12.10",
+    "cyclonedx-python-lib>=1.0.0,<3.0.0",
+    "html5lib>=1.1",
+    "packaging>=21.0.0",
+    "pip-api>=0.0.28",
+    "progress>=1.6",
+    "resolvelib>=0.8.0",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "pip_audit._version.__version__"}
+
+[project.optional-dependencies]
+dev = [
+    "black>=22.3.0",
+    "bump>=1.3.1",
+    "coverage[toml]",
+    "flake8",
+    "interrogate",
+    "isort",
+    "mypy",
+    "pdoc3",
+    "pretend",
+    "pytest",
+    "pytest-cov",
+    "types-html5lib",
+    "types-requests",
+]
+
+[project.scripts]
+"pip-audit" = "pip_audit._cli:audit"
+
+[project.urls]
+"Homepage" = "https://pypi.org/project/pip-audit/"
+"Issues" = "https://github.com/trailofbits/pip-audit/issues"
+"Source" = "https://github.com/trailofbits/pip-audit"
+
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.isort]
