@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple, cast
 
 import requests
-from packaging.version import InvalidVersion, Version
+from packaging.version import InvalidVersion, Version, parse
 
 from pip_audit._cache import caching_session
 from pip_audit._service.interface import (
@@ -72,7 +72,9 @@ class PyPIService(VulnerabilityService):
 
         # If the dependency has a hash explicitly listed, check it against the PyPI data
         if spec.hashes:
-            releases = {Version(k): v for k, v in response_json["releases"].items()}
+            # NOTE: We use `parse(...)` instead of `Version(...)` because PyPI
+            # has lots of releases with legacy versions.
+            releases = {parse(k): v for k, v in response_json["releases"].items()}
             release = releases.get(spec.version)
             if release is None:
                 raise ServiceError(
