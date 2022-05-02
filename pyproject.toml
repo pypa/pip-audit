@@ -12,7 +12,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Security",
 ]
-dependencies=[
+dependencies = [
     "CacheControl[filecache]>=0.12.10",
     "cyclonedx-python-lib>=1.0.0,<3.0.0",
     "html5lib>=1.1",
@@ -21,6 +21,9 @@ dependencies=[
     "progress>=1.6",
     "resolvelib>=0.8.0",
 ]
+
+[tool.setuptools]
+packages = ["pip_audit"]
 
 [tool.setuptools.dynamic]
 version = {attr = "pip_audit._version.__version__"}
