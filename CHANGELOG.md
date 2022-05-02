@@ -16,7 +16,7 @@ All versions prior to 0.0.9 are untracked.
 
 ### Fixed
 
-* Dependency sources: A bug caused by insufficient version normalization
+* Vulnerability sources: A bug caused by insufficient version normalization
   was fixed ([#263](https://github.com/trailofbits/pip-audit/pull/263))
 
 ## [2.1.1] - 2022-03-29
