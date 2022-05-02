@@ -285,7 +285,7 @@ def _parser() -> argparse.ArgumentParser:
         help="output results to the given file",
         # NOTE: Ideally we would set default=sys.stdout here, but
         # argparse's default renderer uses __repr__ and produces
-        # a pretty unpleasant help message. 
+        # a pretty unpleasant help message.
     )
     return parser
 
