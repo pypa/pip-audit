@@ -22,7 +22,7 @@ else
 	COV_ARGS := --fail-under 100
 endif
 
-env/pyvenv.cfg: setup.py setup.cfg
+env/pyvenv.cfg: setup.py pyproject.toml
 	# Create our Python 3 virtual environment
 	rm -rf env
 	python3 -m venv env
