@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased] - ReleaseDate
 
+### Added
+
+* CLI: The `--output` option has been added, allowing users to specify
+  a file to write output to. The default behavior of writing to `stdout`
+  is unchanged ([#262](https://github.com/trailofbits/pip-audit/pull/262))
+
 ## [2.1.1] - 2022-03-29
 
 ### Fixed

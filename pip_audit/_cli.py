@@ -271,6 +271,16 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="don't audit packages that are marked as editable",
     )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=argparse.FileType("w"),
+        metavar="FILE",
+        help="output results to the given file",
+        # NOTE: Ideally we would set default=sys.stdout here, but
+        # argparse's default renderer uses __repr__ and produces
+        # a pretty unpleasant help message.
+    )
     return parser
 
 
@@ -298,6 +308,9 @@ def audit() -> None:
 
     if args.verbose:
         logging.root.setLevel("DEBUG")
+
+    if args.output is None:
+        args.output = sys.stdout
 
     logger.debug(f"parsed arguments: {args}")
 
@@ -417,7 +430,7 @@ def audit() -> None:
                 f"{'package' if fixed_pkg_count == 1 else 'packages'}"
             )
         print(summary_msg, file=sys.stderr)
-        print(formatter.format(result, fixes))
+        print(formatter.format(result, fixes), file=args.output)
         if pkg_count != fixed_pkg_count:
             sys.exit(1)
     else:
@@ -425,4 +438,4 @@ def audit() -> None:
         # If our output format is a "manifest" format we always emit it,
         # even if nothing other than a dependency summary is present.
         if skip_count > 0 or formatter.is_manifest:
-            print(formatter.format(result, fixes))
+            print(formatter.format(result, fixes), file=args.output)
