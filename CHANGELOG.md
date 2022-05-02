@@ -6,7 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 All versions prior to 0.0.9 are untracked.
 
-## [Unreleased] - ReleaseDate
+## [2.2.1] - 2022-05-02
+
+### Fixed
+
+* A bug introduced with a previous fix to version parsing
+  ([#263](https://github.com/trailofbits/pip-audit/pull/263)) was
+  fixed ([#264](https://github.com/trailofbits/pip-audit/pull/264))
+
+## [2.2.0] - 2022-05-02
 
 ### Added
 
@@ -199,6 +207,8 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/trailofbits/pip-audit/compare/v2.0.0...HEAD
+[2.2.1]: https://github.com/trailofbits/pip-audit/compare/v2.2.0...v2.2.1
+[2.2.0]: https://github.com/trailofbits/pip-audit/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/trailofbits/pip-audit/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/trailofbits/pip-audit/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/trailofbits/pip-audit/compare/v1.1.2...v2.0.0
