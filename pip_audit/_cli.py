@@ -335,6 +335,20 @@ def audit() -> None:
         elif args.no_deps:
             parser.error("The --no-deps flag can only be used with --requirement (-r)")
 
+    # Nudge users to consider alternate workflows.
+    if args.require_hashes and args.no_deps:
+        logger.warning("The --no-deps flag is redundant when used with --require-hashes")
+
+    if args.no_deps:
+        logger.warning(
+            "--no-deps is supported, but users are encouraged to fully hash their "
+            "pinned dependencies"
+        )
+        logger.warning(
+            "Consider using a tool like `pip-compile`: "
+            "https://pip-tools.readthedocs.io/en/latest/#using-hashes"
+        )
+
     with ExitStack() as stack:
         actors = []
         if args.progress_spinner:
