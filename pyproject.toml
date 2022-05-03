@@ -21,6 +21,7 @@ dependencies = [
     "progress>=1.6",
     "resolvelib>=0.8.0",
 ]
+requires-python = ">=3.7"
 
 [tool.setuptools]
 packages = ["pip_audit"]
