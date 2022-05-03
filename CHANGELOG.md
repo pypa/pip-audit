@@ -21,6 +21,10 @@ All versions prior to 0.0.9 are untracked.
 * CLI: The `--output` option has been added, allowing users to specify
   a file to write output to. The default behavior of writing to `stdout`
   is unchanged ([#262](https://github.com/trailofbits/pip-audit/pull/262))
+  
+* CLI: The `--no-deps` flag has been added, allowing users to skip dependency
+  resolution entirely when `pip-audit` is used in requirements mode
+  ([#255](https://github.com/trailofbits/pip-audit/pull/255))
 
 ### Fixed
 

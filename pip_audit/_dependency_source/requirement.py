@@ -47,6 +47,7 @@ class RequirementSource(DependencySource):
         resolver: DependencyResolver,
         *,
         require_hashes: bool = False,
+        no_deps: bool = False,
         state: AuditState = AuditState(),
     ) -> None:
         """
@@ -59,11 +60,16 @@ class RequirementSource(DependencySource):
         `require_hashes` controls the hash policy: if `True`, dependency collection
         will fail unless all requirements include hashes.
 
+        `no_deps` controls the dependency resolution policy: if `True`,
+        dependency resolution is not performed and the inputs are checked
+        and treated as "frozen".
+
         `state` is an `AuditState` to use for state callbacks.
         """
         self._filenames = filenames
         self._resolver = resolver
         self._require_hashes = require_hashes
+        self._no_deps = no_deps
         self.state = state
 
     def collect(self) -> Iterator[Dependency]:
@@ -79,17 +85,20 @@ class RequirementSource(DependencySource):
             except PipError as pe:
                 raise RequirementSourceError("requirement parsing raised an error") from pe
 
-            # If we're requiring hashes, we skip dependency resolution and check that each
-            # requirement is accompanied by a hash and is pinned. Files that include hashes must
-            # explicitly list all transitive dependencies so assuming that the requirements file is
-            # valid and able to be installed with `-r`, we can skip dependency resolution.
+            # There are three cases where we skip dependency resolution:
             #
-            # If at least one requirement has a hash, it implies that we require hashes for all
-            # requirements
-            if self._require_hashes or any(
+            # 1. The user has explicitly specified `--require-hashes`.
+            # 2. One or more parsed requirements has hashes specified, enabling
+            #    hash checking for all requirements.
+            # 3. The user has explicitly specified `--no-deps`.
+            require_hashes = self._require_hashes or any(
                 isinstance(req, ParsedRequirement) and req.hashes for req in reqs.values()
-            ):
-                yield from self._collect_hashed_deps(iter(reqs.values()))
+            )
+            skip_deps = require_hashes or self._no_deps
+            if skip_deps:
+                yield from self._collect_preresolved_deps(
+                    iter(reqs.values()), require_hashes=require_hashes
+                )
                 continue
 
             # Invoke the dependency resolver to turn requirements into dependencies
@@ -178,26 +187,32 @@ class RequirementSource(DependencySource):
                 logger.warning(f"encountered an exception during file recovery: {e}")
                 continue
 
-    def _collect_hashed_deps(
-        self, reqs: Iterator[Union[ParsedRequirement, UnparsedRequirement]]
+    def _collect_preresolved_deps(
+        self,
+        reqs: Iterator[Union[ParsedRequirement, UnparsedRequirement]],
+        require_hashes: bool = False,
     ) -> Iterator[Dependency]:
-        # NOTE: Editable and hashed requirements are incompatible by definition, so
-        # we don't bother checking whether the user has asked us to skip editable requirements
-        # when we're doing hashed requirement collection.
+        """
+        Collect pre-resolved (pinned) dependencies, optionally enforcing a
+        hash requirement policy.
+        """
         for req in reqs:
             req = cast(ParsedRequirement, req)
-            if not req.hashes:
+            if require_hashes and not req.hashes:
                 raise RequirementSourceError(
-                    f"requirement {req.name} does not contain a hash: {str(req)}"
+                    f"requirement {req.name} does not contain a hash {str(req)}"
                 )
-            if req.specifier is not None:
-                pinned_specifier_info = PINNED_SPECIFIER_RE.match(str(req.specifier))
-                if pinned_specifier_info is not None:
-                    # Yield a dependency with the hash
-                    pinned_version = pinned_specifier_info.group("version")
-                    yield ResolvedDependency(req.name, Version(pinned_version), req.hashes)
-                    continue
-            raise RequirementSourceError(f"requirement {req.name} is not pinned: {str(req)}")
+
+            if not req.specifier:
+                raise RequirementSourceError(f"requirement {req.name} is not pinned: {str(req)}")
+
+            pinned_specifier = PINNED_SPECIFIER_RE.match(str(req.specifier))
+            if pinned_specifier is None:
+                raise RequirementSourceError(f"requirement {req.name} is not pinned: {str(req)}")
+
+            yield ResolvedDependency(
+                req.name, Version(pinned_specifier.group("version")), req.hashes
+            )
 
 
 class RequirementSourceError(DependencySourceError):

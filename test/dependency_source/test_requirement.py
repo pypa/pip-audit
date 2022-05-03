@@ -353,3 +353,34 @@ def test_requirement_source_require_hashes_unpinned(monkeypatch):
     # version number
     with pytest.raises(DependencySourceError):
         list(source.collect())
+
+
+def test_requirement_source_no_deps(monkeypatch):
+    source = requirement.RequirementSource(
+        [Path("requirements.txt")], ResolveLibResolver(), no_deps=True
+    )
+
+    monkeypatch.setattr(
+        _parse_requirements,
+        "_read_file",
+        lambda _: ["flask==2.0.1"],
+    )
+
+    specs = list(source.collect())
+    assert specs == [ResolvedDependency("flask", Version("2.0.1"), hashes={})]
+
+
+def test_requirement_source_no_deps_unpinned(monkeypatch):
+    source = requirement.RequirementSource(
+        [Path("requirements.txt")], ResolveLibResolver(), no_deps=True
+    )
+
+    monkeypatch.setattr(
+        _parse_requirements,
+        "_read_file",
+        lambda _: ["flask\nrequests>=1.0"],
+    )
+
+    # When dependency resolution is disabled, all requirements must be pinned.
+    with pytest.raises(DependencySourceError):
+        list(source.collect())

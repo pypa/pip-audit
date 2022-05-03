@@ -272,6 +272,12 @@ def _parser() -> argparse.ArgumentParser:
         help="don't audit packages that are marked as editable",
     )
     parser.add_argument(
+        "--no-deps",
+        action="store_true",
+        help="don't perform any dependency resolution; requires all requirements are pinned "
+        "to an exact version",
+    )
+    parser.add_argument(
         "-o",
         "--output",
         type=argparse.FileType("w"),
@@ -326,6 +332,22 @@ def audit() -> None:
             parser.error("The --index-url flag can only be used with --requirement (-r)")
         elif args.extra_index_urls:
             parser.error("The --extra-index-url flag can only be used with --requirement (-r)")
+        elif args.no_deps:
+            parser.error("The --no-deps flag can only be used with --requirement (-r)")
+
+    # Nudge users to consider alternate workflows.
+    if args.require_hashes and args.no_deps:
+        logger.warning("The --no-deps flag is redundant when used with --require-hashes")
+
+    if args.no_deps:
+        logger.warning(
+            "--no-deps is supported, but users are encouraged to fully hash their "
+            "pinned dependencies"
+        )
+        logger.warning(
+            "Consider using a tool like `pip-compile`: "
+            "https://pip-tools.readthedocs.io/en/latest/#using-hashes"
+        )
 
     with ExitStack() as stack:
         actors = []
@@ -345,6 +367,7 @@ def audit() -> None:
                     index_urls, args.timeout, args.cache_dir, args.skip_editable, state
                 ),
                 require_hashes=args.require_hashes,
+                no_deps=args.no_deps,
                 state=state,
             )
         elif args.project_path is not None:
