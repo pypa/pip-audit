@@ -27,10 +27,11 @@ requires-python = ">=3.7"
 packages = ["pip_audit"]
 
 [tool.setuptools.dynamic]
-version = {attr = "pip_audit._version.__version__"}
+version = {attr = "pip_audit.__version__"}
 
 [project.optional-dependencies]
 dev = [
+    "build",
     "black>=22.3.0",
     "bump>=1.3.1",
     "coverage[toml]",
