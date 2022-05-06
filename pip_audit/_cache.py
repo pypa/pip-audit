@@ -12,8 +12,8 @@ from typing import Any, Optional
 
 import pip_api
 import requests
-from cachecontrol import CacheControl  # type: ignore
-from cachecontrol.caches import FileCache  # type: ignore
+from cachecontrol import CacheControl
+from cachecontrol.caches import FileCache
 from packaging.version import Version
 
 from pip_audit._service.interface import ServiceError
@@ -74,7 +74,7 @@ class _SafeFileCache(FileCache):
     caching directory as a running `pip` process).
     """
 
-    def __init__(self, directory):
+    def __init__(self, directory: Path):
         self._logged_warning = False
         super().__init__(directory)
 
@@ -134,7 +134,7 @@ class _SafeFileCache(FileCache):
                 self._logged_warning = True
 
 
-def caching_session(cache_dir: Optional[Path], *, use_pip=False) -> CacheControl:
+def caching_session(cache_dir: Optional[Path], *, use_pip: bool = False) -> CacheControl:
     """
     Return a `requests` style session, with suitable caching middleware.
 

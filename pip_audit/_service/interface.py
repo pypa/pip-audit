@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, Iterator, List, Set, Tuple
+from typing import Any, Dict, Iterator, List, Set, Tuple
 
 from packaging.utils import canonicalize_name
 from packaging.version import Version
@@ -28,7 +28,7 @@ class Dependency:
     Use the `canonicalized_name` property when a canonicalized form is necessary.
     """
 
-    def __init__(self, *_args, **_kwargs) -> None:
+    def __init__(self, *_args: Any, **_kwargs: Any) -> None:
         """
         A stub constructor that always fails.
         """

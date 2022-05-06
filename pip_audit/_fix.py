@@ -4,7 +4,7 @@ Functionality for resolving fixed versions of dependencies.
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, Iterator, List, cast
+from typing import Any, Dict, Iterator, List, cast
 
 from packaging.version import Version
 
@@ -29,7 +29,7 @@ class FixVersion:
 
     dep: ResolvedDependency
 
-    def __init__(self, *_args, **_kwargs) -> None:  # pragma: no cover
+    def __init__(self, *_args: Any, **_kwargs: Any) -> None:  # pragma: no cover
         """
         A stub constructor that always fails.
         """
