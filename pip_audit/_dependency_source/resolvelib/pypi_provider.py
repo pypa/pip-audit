@@ -295,7 +295,7 @@ class PyPIProvider(AbstractProvider):
         identifier: Any,
         resolutions: Mapping[Any, Any],
         candidates: Mapping[Any, Iterator[Any]],
-        information: Mapping[Any, Iterator[RequirementInformation[Any, Any]]],
+        information: Mapping[Any, Iterator[RequirementInformation]],
         backtrack_causes: Any,
     ):
         """
