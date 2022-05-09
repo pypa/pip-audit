@@ -56,7 +56,7 @@ class OutputFormatChoice(str, enum.Enum):
         else:
             assert_never(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value
 
 
@@ -77,7 +77,7 @@ class VulnerabilityServiceChoice(str, enum.Enum):
         else:
             assert_never(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value
 
 
@@ -101,7 +101,7 @@ class VulnerabilityDescriptionChoice(str, enum.Enum):
         else:
             assert_never(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value
 
 
@@ -117,7 +117,7 @@ class ProgressSpinnerChoice(str, enum.Enum):
     def __bool__(self) -> bool:
         return self is ProgressSpinnerChoice.On
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value
 
 

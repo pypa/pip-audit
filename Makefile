@@ -24,8 +24,7 @@ endif
 
 env/pyvenv.cfg: setup.py pyproject.toml
 	# Create our Python 3 virtual environment
-	rm -rf env
-	python3 -m venv env
+	[[ ! -d env ]] || python3 -m venv env
 	./env/bin/python -m pip install --upgrade pip
 	./env/bin/python -m pip install -e .[dev]
 
@@ -47,7 +46,7 @@ lint: env/pyvenv.cfg
 		black $(ALL_PY_SRCS) && \
 		isort $(ALL_PY_SRCS) && \
 		flake8 $(ALL_PY_SRCS) && \
-		mypy $(PY_MODULE) test/ && \
+		mypy $(PY_MODULE) && \
 		interrogate -c pyproject.toml .
 
 .PHONY: test tests

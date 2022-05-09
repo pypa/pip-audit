@@ -5,6 +5,7 @@ Create virtual environments with a custom set of packages and inspect their depe
 import json
 import logging
 import venv
+from types import SimpleNamespace
 from typing import Iterator, List, Optional, Tuple
 
 from packaging.version import Version
@@ -54,7 +55,7 @@ class VirtualEnv(venv.EnvBuilder):
         self._packages: Optional[List[Tuple[str, Version]]] = None
         self._state = state
 
-    def post_setup(self, context):
+    def post_setup(self, context: SimpleNamespace) -> None:
         """
         Install the custom package and populate the list of installed packages.
 

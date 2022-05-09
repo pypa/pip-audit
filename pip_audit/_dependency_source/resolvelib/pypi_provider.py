@@ -6,24 +6,25 @@ authors under the ISC license.
 """
 
 import itertools
-from email.message import EmailMessage
+from email.message import EmailMessage, Message
 from email.parser import BytesParser
 from io import BytesIO
 from operator import attrgetter
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import BinaryIO, Iterator, List, Optional, Set, cast
+from typing import Any, BinaryIO, Iterator, List, Mapping, Optional, Set, Union, cast
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
 import html5lib
 import requests
-from cachecontrol import CacheControl  # type: ignore
+from cachecontrol import CacheControl
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel_filename
 from packaging.version import Version
 from resolvelib.providers import AbstractProvider
+from resolvelib.resolvers import RequirementInformation
 
 from pip_audit._cache import caching_session
 from pip_audit._state import AuditState
@@ -68,10 +69,10 @@ class Candidate:
         self._timeout = timeout
         self._state = state
 
-        self._metadata: Optional[EmailMessage] = None
+        self._metadata: Optional[Message] = None
         self._dependencies: Optional[List[Requirement]] = None
 
-    def __repr__(self):  # pragma: no cover
+    def __repr__(self) -> str:  # pragma: no cover
         """
         A string representation for `Candidate`.
         """
@@ -80,7 +81,7 @@ class Candidate:
         return f"<{self.name}[{','.join(self.extras)}]=={self.version} wheel={self.is_wheel}>"
 
     @property
-    def metadata(self) -> EmailMessage:
+    def metadata(self) -> Message:
         """
         Return the package metadata for this candidate.
         """
@@ -94,7 +95,7 @@ class Candidate:
                 self._metadata = self._get_metadata_for_sdist()
         return self._metadata
 
-    def _get_dependencies(self):
+    def _get_dependencies(self) -> Iterator[Requirement]:
         """
         Computes the dependency set for this candidate.
         """
@@ -119,7 +120,7 @@ class Candidate:
             self._dependencies = list(self._get_dependencies())
         return self._dependencies
 
-    def _get_metadata_for_wheel(self):
+    def _get_metadata_for_wheel(self) -> Message:
         """
         Extracts the metadata for this candidate, if it's a wheel.
         """
@@ -138,7 +139,7 @@ class Candidate:
         # If we didn't find the metadata, return an empty dict
         return EmailMessage()  # pragma: no cover
 
-    def _get_metadata_for_sdist(self):
+    def _get_metadata_for_sdist(self) -> Message:
         """
         Extracts the metadata for this candidate, if it's a source distribution.
         """
@@ -173,7 +174,12 @@ class Candidate:
 
 
 def get_project_from_indexes(
-    index_urls: List[str], session, project, extras, timeout: Optional[int], state: AuditState
+    index_urls: List[str],
+    session: CacheControl,
+    project: str,
+    extras: Set[str],
+    timeout: Optional[int],
+    state: AuditState,
 ) -> Iterator[Candidate]:
     """Return candidates from all indexes created from the project name and extras."""
     project_found = False
@@ -192,7 +198,12 @@ def get_project_from_indexes(
 
 
 def get_project_from_index(
-    index_url: str, session, project, extras, timeout: Optional[int], state: AuditState
+    index_url: str,
+    session: CacheControl,
+    project: str,
+    extras: Set[str],
+    timeout: Optional[int],
+    state: AuditState,
 ) -> Iterator[Candidate]:
     """Return candidates from an index created from the project name and extras."""
     url = index_url + "/" + project
@@ -272,19 +283,32 @@ class PyPIProvider(AbstractProvider):
         self.session = caching_session(cache_dir, use_pip=True)
         self._state = state
 
-    def identify(self, requirement_or_candidate):
+    def identify(self, requirement_or_candidate: Union[Requirement, Candidate]) -> str:
         """
         See `resolvelib.providers.AbstractProvider.identify`.
         """
         return canonicalize_name(requirement_or_candidate.name)
 
-    def get_preference(self, identifier, resolutions, candidates, information, backtrack_causes):
+    # TODO: Typing. See: https://github.com/sarugaku/resolvelib/issues/104
+    def get_preference(  # type: ignore[override, no-untyped-def]
+        self,
+        identifier: Any,
+        resolutions: Mapping[Any, Any],
+        candidates: Mapping[Any, Iterator[Any]],
+        information: Mapping[Any, Iterator[RequirementInformation]],
+        backtrack_causes: Any,
+    ):
         """
         See `resolvelib.providers.AbstractProvider.get_preference`.
         """
         return sum(1 for _ in candidates[identifier])
 
-    def find_matches(self, identifier, requirements, incompatibilities):
+    def find_matches(
+        self,
+        identifier: Any,
+        requirements: Mapping[Any, Iterator[Any]],
+        incompatibilities: Mapping[Any, Iterator[Any]],
+    ) -> Iterator[Any]:
         """
         See `resolvelib.providers.AbstractProvider.find_matches`.
         """
@@ -333,13 +357,13 @@ class PyPIProvider(AbstractProvider):
             else:
                 yield from candidates
 
-    def is_satisfied_by(self, requirement, candidate):
+    def is_satisfied_by(self, requirement: Any, candidate: Any) -> bool:
         """
         See `resolvelib.providers.AbstractProvider.is_satisfied_by`.
         """
         return candidate.version in requirement.specifier
 
-    def get_dependencies(self, candidate):
+    def get_dependencies(self, candidate: Any) -> Any:
         """
         See `resolvelib.providers.AbstractProvider.get_dependencies`.
         """

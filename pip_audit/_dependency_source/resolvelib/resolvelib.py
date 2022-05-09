@@ -5,9 +5,9 @@ Resolve a list of dependencies via the `resolvelib` API as well as a custom
 
 import logging
 from pathlib import Path
-from typing import List, Optional, cast
+from typing import List, Optional, Union
 
-from packaging.requirements import Requirement
+from packaging.requirements import Requirement as _Requirement
 from pip_api import Requirement as ParsedRequirement
 from requests.exceptions import HTTPError
 from resolvelib import BaseReporter, Resolver
@@ -21,6 +21,9 @@ from .pypi_provider import PyPINotFoundError, PyPIProvider
 logger = logging.getLogger(__name__)
 
 PYPI_URL = "https://pypi.org/simple"
+
+
+Requirement = Union[_Requirement, ParsedRequirement]
 
 
 class ResolveLibResolver(DependencyResolver):
@@ -62,7 +65,6 @@ class ResolveLibResolver(DependencyResolver):
         # since the latter is a subclass. But only the latter knows whether the
         # requirement is editable, so we need to check for it here.
         if isinstance(req, ParsedRequirement):
-            req = cast(ParsedRequirement, req)
             if req.editable and self._skip_editable:
                 return [
                     SkippedDependency(name=req.name, skip_reason="requirement marked as editable")

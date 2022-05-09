@@ -69,7 +69,7 @@ class CycloneDxFormat(VulnerabilityFormat):
         self._inner_format = inner_format
 
     @property
-    def is_manifest(self):
+    def is_manifest(self) -> bool:
         """
         See `VulnerabilityFormat.is_manifest`.
         """

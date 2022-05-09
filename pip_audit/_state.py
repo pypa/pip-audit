@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from logging.handlers import MemoryHandler
 from typing import Any, Dict, List, Sequence
 
-from progress.spinner import Spinner as BaseSpinner  # type: ignore
+from progress.spinner import Spinner as BaseSpinner
 
 
 class AuditState:
@@ -30,7 +30,7 @@ class AuditState:
 
         self._members = members
 
-    def update_state(self, message: str):
+    def update_state(self, message: str) -> None:
         """
         Called whenever `pip_audit`'s internal state changes in a way that's meaningful to
         expose to a user.
@@ -64,7 +64,9 @@ class AuditState:
         self.initialize()
         return self
 
-    def __exit__(self, _exc_type, _exc_value, _exc_traceback):  # pragma: no cover
+    def __exit__(
+        self, _exc_type: Any, _exc_value: Any, _exc_traceback: Any
+    ) -> None:  # pragma: no cover
         """
         Helper to ensure `finalize` gets called when the `pip-audit` state falls out of scope of a
         `with` statement.
@@ -122,7 +124,7 @@ class AuditSpinner(_StateActor, BaseSpinner):  # pragma: no cover
         )
         self.prev_handlers: List[logging.Handler] = []
 
-    def _writeln_truncated(self, line: str):
+    def _writeln_truncated(self, line: str) -> None:
         """
         Wraps `BaseSpinner.writeln`, providing reasonable truncation behavior
         when a line would otherwise overflow its terminal row and cause the progress

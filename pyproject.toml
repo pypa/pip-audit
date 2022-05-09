@@ -78,3 +78,19 @@ omit = ["pip_audit/_cli.py"]
 exclude = ["setup.py", "env", "test", "pip_audit/_cli.py", "pip_audit/_version.py"]
 ignore-semiprivate = true
 fail-under = 100
+
+[tool.mypy]
+allow_redefinition = true
+check_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+no_implicit_optional = true
+show_error_codes = true
+strict_equality = true
+warn_no_return = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true

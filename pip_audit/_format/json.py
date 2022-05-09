@@ -27,7 +27,7 @@ class JsonFormat(VulnerabilityFormat):
         self.output_desc = output_desc
 
     @property
-    def is_manifest(self):
+    def is_manifest(self) -> bool:
         """
         See `VulnerabilityFormat.is_manifest`.
         """
