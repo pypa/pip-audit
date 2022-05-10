@@ -114,6 +114,12 @@ class VulnerabilityResult:
             self.id, self.description, self.fix_versions, self.aliases | other.aliases - {self.id}
         )
 
+    def has_any_id(self, ids: Set[str]) -> bool:
+        """
+        Returns whether ids intersects with {id} | aliases.
+        """
+        return bool(ids & (self.aliases | {self.id}))
+
 
 class VulnerabilityService(ABC):
     """
