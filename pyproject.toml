@@ -1,3 +1,7 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
 [project]
 name = "pip_audit"
 dynamic = ["version"]
@@ -23,12 +27,6 @@ dependencies = [
 ]
 requires-python = ">=3.7"
 
-[tool.setuptools]
-packages = ["pip_audit"]
-
-[tool.setuptools.dynamic]
-version = {attr = "pip_audit.__version__"}
-
 [project.optional-dependencies]
 dev = [
     "build",
@@ -48,16 +46,12 @@ dev = [
 ]
 
 [project.scripts]
-"pip-audit" = "pip_audit._cli:audit"
+pip-audit = "pip_audit._cli:audit"
 
 [project.urls]
-"Homepage" = "https://pypi.org/project/pip-audit/"
-"Issues" = "https://github.com/trailofbits/pip-audit/issues"
-"Source" = "https://github.com/trailofbits/pip-audit"
-
-[build-system]
-requires = ["setuptools>=61.0.0", "wheel"]
-build-backend = "setuptools.build_meta"
+Homepage = "https://pypi.org/project/pip-audit/"
+Issues = "https://github.com/trailofbits/pip-audit/issues"
+Source = "https://github.com/trailofbits/pip-audit"
 
 [tool.isort]
 line_length = 100
@@ -75,7 +69,7 @@ omit = ["pip_audit/_cli.py"]
 [tool.interrogate]
 # don't enforce documentation coverage for packaging, testing, the virtual
 # environment, or the CLI (which is documented separately).
-exclude = ["setup.py", "env", "test", "pip_audit/_cli.py", "pip_audit/_version.py"]
+exclude = ["env", "test", "pip_audit/_cli.py"]
 ignore-semiprivate = true
 fail-under = 100
 

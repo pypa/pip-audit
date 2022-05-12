@@ -1,7 +1,6 @@
 PY_MODULE := pip_audit
 
-ALL_PY_SRCS := setup.py \
-	$(shell find $(PY_MODULE) -name '*.py') \
+ALL_PY_SRCS := $(shell find $(PY_MODULE) -name '*.py') \
 	$(shell find test -name '*.py')
 
 # Optionally overridden by the user in the `release` target.
@@ -22,9 +21,9 @@ else
 	COV_ARGS := --fail-under 100
 endif
 
-env/pyvenv.cfg: setup.py pyproject.toml
+env/pyvenv.cfg: pyproject.toml
 	# Create our Python 3 virtual environment
-	[[ ! -d env ]] || python3 -m venv env
+	[[ -d env ]] || python3 -m venv env
 	./env/bin/python -m pip install --upgrade pip
 	./env/bin/python -m pip install -e .[dev]
 
@@ -70,7 +69,7 @@ package: env/pyvenv.cfg
 release: env/pyvenv.cfg
 	@. env/bin/activate && \
 		NEXT_VERSION=$$(bump $(BUMP_ARGS)) && \
-		git add $(PY_MODULE)/_version.py && git diff --quiet --exit-code && \
+		git add $(PY_MODULE)/__init__.py && git diff --quiet --exit-code && \
 		git commit -m "version: v$${NEXT_VERSION}" && \
 		git tag v$${NEXT_VERSION} && \
 		echo "RUN ME MANUALLY: git push origin main && git push origin v$${NEXT_VERSION}"
