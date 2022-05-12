@@ -1,3 +1,0 @@
-[bump]
-input = pip_audit/__init__.py
-reset = true
