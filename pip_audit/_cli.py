@@ -287,6 +287,14 @@ def _parser() -> argparse.ArgumentParser:
         # argparse's default renderer uses __repr__ and produces
         # a pretty unpleasant help message.
     )
+    parser.add_argument(
+        "--ignore-vuln",
+        type=str,
+        action="append",
+        dest="ignore_vulns",
+        default=[],
+        help="ignore a specific vulnerability by its vulnerability ID",
+    )
     return parser
 
 
@@ -390,6 +398,8 @@ def audit() -> None:
         pkg_count = 0
         vuln_count = 0
         skip_count = 0
+        vuln_ignore_count = 0
+        vulns_to_ignore = set(args.ignore_vulns)
         for (spec, vulns) in auditor.audit(source):
             if spec.is_skipped():
                 spec = cast(SkippedDependency, spec)
@@ -401,6 +411,10 @@ def audit() -> None:
             else:
                 spec = cast(ResolvedDependency, spec)
                 state.update_state(f"Auditing {spec.name} ({spec.version})")
+            if vulns_to_ignore:
+                filtered_vulns = [v for v in vulns if not v.has_any_id(vulns_to_ignore)]
+                vuln_ignore_count += len(vulns) - len(filtered_vulns)
+                vulns = filtered_vulns
             result[spec] = vulns
             if len(vulns) > 0:
                 pkg_count += 1
@@ -442,7 +456,8 @@ def audit() -> None:
     if vuln_count > 0:
         summary_msg = (
             f"Found {vuln_count} known "
-            f"{'vulnerability' if vuln_count == 1 else 'vulnerabilities'} "
+            f"{'vulnerability' if vuln_count == 1 else 'vulnerabilities'}"
+            f"{(vuln_ignore_count and ', ignored %d ' % vuln_ignore_count) or ' '}"
             f"in {pkg_count} {'package' if pkg_count == 1 else 'packages'}"
         )
         if args.fix:
@@ -457,7 +472,14 @@ def audit() -> None:
         if pkg_count != fixed_pkg_count:
             sys.exit(1)
     else:
-        print("No known vulnerabilities found", file=sys.stderr)
+        summary_msg = "No known vulnerabilities found"
+        if vuln_ignore_count:
+            summary_msg += f", {vuln_ignore_count} ignored"
+
+        print(
+            summary_msg,
+            file=sys.stderr,
+        )
         # If our output format is a "manifest" format we always emit it,
         # even if nothing other than a dependency summary is present.
         if skip_count > 0 or formatter.is_manifest:

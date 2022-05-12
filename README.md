@@ -74,6 +74,7 @@ usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
                  [--path PATHS] [-v] [--fix] [--require-hashes]
                  [--index-url INDEX_URL] [--extra-index-url EXTRA_INDEX_URLS]
                  [--skip-editable] [--no-deps] [-o FILE]
+                 [--ignore-vuln IGNORE_VULNS]
                  [project_path]
 
 audit the Python environment for dependencies with known vulnerabilities
@@ -142,6 +143,9 @@ optional arguments:
                         False)
   -o FILE, --output FILE
                         output results to the given file (default: None)
+  --ignore-vuln IGNORE_VULNS
+                        ignore a specific vulnerability by its vulnerability
+                        ID (default: [])
 ```
 <!-- @end-pip-audit-help@ -->
 

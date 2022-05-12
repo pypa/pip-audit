@@ -62,3 +62,14 @@ def test_vulnerability_result_update_aliases():
     merged = result1.merge_aliases(result2)
     assert merged.id == "FOO"
     assert merged.aliases == {"BAR", "BAZ", "ZAP", "QUUX"}
+
+
+def test_vulnerability_result_has_any_id():
+    result = VulnerabilityResult(
+        id="FOO", description="bar", fix_versions=[Version("1.0.0")], aliases={"BAR", "BAZ", "QUUX"}
+    )
+
+    assert result.has_any_id({"FOO"})
+    assert result.has_any_id({"ham", "eggs", "BAZ"})
+    assert not result.has_any_id({"zilch"})
+    assert not result.has_any_id(set())

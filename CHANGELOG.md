@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 All versions prior to 0.0.9 are untracked.
 
+## [Unreleased]
+
+### Added
+
+* CLI: The `--ignore-vuln` option has been added, allowing users to
+  specify vulnerability IDs to ignore during the final report.
+  ([#275](https://github.com/trailofbits/pip-audit/pull/275))
+
 ## [2.2.1] - 2022-05-02
 
 ### Fixed
