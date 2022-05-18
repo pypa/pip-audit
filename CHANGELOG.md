@@ -8,11 +8,17 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.3.0] - 2022-05-18
+
 ### Added
 
 * CLI: The `--ignore-vuln` option has been added, allowing users to
-  specify vulnerability IDs to ignore during the final report.
+  specify vulnerability IDs to ignore during the final report
   ([#275](https://github.com/trailofbits/pip-audit/pull/275))
+
+* CLI: The `--no-deps` flag has been added, allowing users to skip dependency
+  resolution entirely when `pip-audit` is used in requirements mode
+  ([#255](https://github.com/trailofbits/pip-audit/pull/255))
 
 ## [2.2.1] - 2022-05-02
 
@@ -29,10 +35,6 @@ All versions prior to 0.0.9 are untracked.
 * CLI: The `--output` option has been added, allowing users to specify
   a file to write output to. The default behavior of writing to `stdout`
   is unchanged ([#262](https://github.com/trailofbits/pip-audit/pull/262))
-  
-* CLI: The `--no-deps` flag has been added, allowing users to skip dependency
-  resolution entirely when `pip-audit` is used in requirements mode
-  ([#255](https://github.com/trailofbits/pip-audit/pull/255))
 
 ### Fixed
 
@@ -215,6 +217,7 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/trailofbits/pip-audit/compare/v2.0.0...HEAD
+[2.3.0]: https://github.com/trailofbits/pip-audit/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/trailofbits/pip-audit/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/trailofbits/pip-audit/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/trailofbits/pip-audit/compare/v2.1.0...v2.1.1
