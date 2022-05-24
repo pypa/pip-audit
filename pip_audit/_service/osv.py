@@ -89,9 +89,7 @@ class OsvService(VulnerabilityService):
             if description is None:
                 description = "N/A"
 
-            aliases = set()
-            if "aliases" in vuln:
-                aliases.update(vuln["aliases"])
+            aliases = set(vuln.get("aliases", []))
 
             # OSV doesn't mandate this field either. There's very little we
             # can do without it, so we skip any results that are missing it.
