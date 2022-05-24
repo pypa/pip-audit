@@ -14,6 +14,12 @@ All versions prior to 0.0.9 are untracked.
   faster and more responsive
   ([#283](https://github.com/trailofbits/pip-audit/pull/283))
 
+### Fixed
+
+* Vulnerability sources: a bug stemming from an incorrect assumption
+  about OSV's schema guarantees was fixed
+  ([#284](https://github.com/trailofbits/pip-audit/pull/284))
+
 ## [2.3.1] - 2022-05-24
 
 ### Fixed
