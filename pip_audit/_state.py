@@ -4,13 +4,11 @@ well as a progress spinner implementation for use with CLI applications.
 """
 
 import logging
-import os
 from abc import ABC, abstractmethod
 from logging.handlers import MemoryHandler
-from typing import Any, Dict, List, Sequence
+from typing import Any, List, Sequence
 
-from progress import SHOW_CURSOR
-from progress.spinner import Spinner as BaseSpinner
+from rich.console import Console
 
 
 class AuditState:
@@ -99,24 +97,20 @@ class _StateActor(ABC):
         raise NotImplementedError  # pragma: no cover
 
 
-class AuditSpinner(_StateActor, BaseSpinner):  # pragma: no cover
+class AuditSpinner(_StateActor):  # pragma: no cover
     """
-    A progress spinner for the `pip-audit` CLI, specialized from `BaseSpinner`.
-
-    This spinner is also written as a `AuditState` actor.
+    A progress spinner for `pip-audit`, using `rich.status`'s spinner support
+    under the hood.
     """
 
-    def __init__(self, message: str = "", **kwargs: Dict[str, Any]):
+    def __init__(self, message: str = "") -> None:
         """
-        Create a new `AuditSpinner`.
-
-        `message` is the initial text that the progress spinner should display.
-
-        Any remaining keyword arguments are forwarded onto the constructor of the underlying
-        `BaseSpinner` implementation.
+        Initialize the `AuditSpinner`.
         """
 
-        super().__init__(message=message, **kwargs)
+        self._console = Console()
+        # NOTE: audits can be quite fast, so we need a pretty high refresh rate here.
+        self._spinner = self._console.status(message, spinner="line", refresh_per_second=30)
 
         # Keep the target set to `None` to ensure that the logs don't get written until the spinner
         # has finished writing output, regardless of the capacity argument
@@ -125,67 +119,19 @@ class AuditSpinner(_StateActor, BaseSpinner):  # pragma: no cover
         )
         self.prev_handlers: List[logging.Handler] = []
 
-    def _writeln_truncated(self, line: str) -> None:
-        """
-        Wraps `BaseSpinner.writeln`, providing reasonable truncation behavior
-        when a line would otherwise overflow its terminal row and cause the progress
-        bar to break.
-        """
-        if not (self.file and self.is_tty()):
-            return
-
-        columns, _ = os.get_terminal_size(self.file.fileno())
-        if columns > 4 and len(line) >= columns:
-            line = f"{line[0:columns - 4]} ..."
-        else:
-            line = line[0:columns]
-
-        self.writeln(line)
-
-    def update(self) -> None:
-        """
-        Update the progress spinner.
-
-        This method is overriden from `BaseSpinner` to customize the appearance of the spinner and
-        should not be called directly.
-        """
-        i = self.index % len(self.phases)
-        line = f"{self.phases[i]} {self.message}"
-        self._writeln_truncated(line)
-
-    def finish(self) -> None:
-        """
-        Finish the progress spinner.
-
-        This method is overridden from `BaseSpinner` to customize the spinner's termination
-        behavior: instead of finishing by printing a newline and leaving the last spinner state
-        on the terminal, we clear the spinner entirely and reset the line's state, leaving
-        no trace of the spinner at all.
-        """
-        self.writeln("")
-        self.file.write("\r")
-
-        # `BaseSpinner` normally re-reveals the cursor as part of `finish()` or
-        # `__del__`, but we override `finish()` and `__del__` isn't reliably
-        # invoked on context exit. So we do it manually here.
-        self.file.write(SHOW_CURSOR)
-        self.file.flush()
-
     def update_state(self, message: str) -> None:
         """
-        Update the state message for the progress spinner.
-
-        This method is overriden from `AuditState` to update the spinner with feedback from the API
-        and should not be called directly.
+        Update the spinner's state.
         """
-        self.message = message
-        self.next()
+
+        self._spinner.update(message)
 
     def initialize(self) -> None:
         """
         Redirect logging to an in-memory log handler so that it doesn't get mixed in with the
         spinner output.
         """
+
         # Remove all existing log handlers
         #
         # We're recording them here since we'll want to restore them once the spinner falls out of
@@ -199,12 +145,15 @@ class AuditSpinner(_StateActor, BaseSpinner):  # pragma: no cover
         # Redirect logging to our in-memory handler that will buffer the log lines
         root_logger.addHandler(self.log_handler)
 
+        self._spinner.start()
+
     def finalize(self) -> None:
         """
         Cleanup the spinner output so it doesn't get combined with subsequent `stderr` output and
         flush any logs that were recorded while the spinner was active.
         """
-        self.finish()
+
+        self._spinner.stop()
 
         # Now that the spinner is complete, flush the logs
         root_logger = logging.root

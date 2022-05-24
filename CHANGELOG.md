@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Changed
+
+* CLI: `pip-audit`'s progress spinner has been refactored to make it
+  faster and more responsive
+  ([#283](https://github.com/trailofbits/pip-audit/pull/283))
+
 ## [2.3.1] - 2022-05-24
 
 ### Fixed
