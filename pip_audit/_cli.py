@@ -360,7 +360,7 @@ def audit() -> None:
     with ExitStack() as stack:
         actors = []
         if args.progress_spinner:
-            actors.append(AuditSpinner())
+            actors.append(AuditSpinner("Collecting inputs"))
         state = stack.enter_context(AuditState(members=actors))
 
         source: DependencySource
