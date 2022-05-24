@@ -125,3 +125,80 @@ def test_osv_skipped_dep():
 
     vulns = results[dep]
     assert len(vulns) == 0
+
+
+@pytest.mark.parametrize(
+    ["summary", "details", "description"],
+    [
+        ("fakesummary", "fakedetails", "fakesummary"),
+        (None, "fakedetails", "fakedetails"),
+        (None, None, "N/A"),
+    ],
+)
+def test_osv_vuln_description_fallbacks(monkeypatch, summary, details, description):
+    payload = {
+        "vulns": [
+            {
+                "id": "fakeid",
+                "summary": summary,
+                "details": details,
+                "affected": [
+                    {
+                        "package": {"name": "foo", "ecosystem": "PyPI"},
+                        "ranges": [{"type": "ECOSYSTEM", "events": [{"fixed": "1.0.1"}]}],
+                    }
+                ],
+            }
+        ],
+    }
+
+    response = pretend.stub(raise_for_status=lambda: None, json=lambda: payload)
+    post = pretend.call_recorder(lambda *a, **kw: response)
+
+    osv = service.OsvService()
+    monkeypatch.setattr(osv.session, "post", post)
+
+    dep = service.ResolvedDependency("foo", Version("1.0.0"))
+    results = dict(osv.query_all(iter([dep])))
+
+    assert len(results) == 1
+    assert dep in results
+
+    vulns = results[dep]
+    assert len(vulns) == 1
+
+    assert vulns[0].description == description
+
+
+def test_osv_vuln_affected_missing(monkeypatch):
+    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    monkeypatch.setattr(service.osv, "logger", logger)
+
+    payload = {
+        "vulns": [
+            {
+                "id": "fakeid",
+                "summary": "fakesummary",
+                "details": "fakedetails",
+            }
+        ],
+    }
+
+    response = pretend.stub(raise_for_status=lambda: None, json=lambda: payload)
+    post = pretend.call_recorder(lambda *a, **kw: response)
+
+    osv = service.OsvService()
+    monkeypatch.setattr(osv.session, "post", post)
+
+    dep = service.ResolvedDependency("foo", Version("1.0.0"))
+    results = dict(osv.query_all(iter([dep])))
+
+    assert len(results) == 1
+    assert dep in results
+
+    vulns = results[dep]
+    assert len(vulns) == 0
+
+    assert logger.warning.calls == [
+        pretend.call("OSV vuln entry 'fakeid' is missing 'affected' list")
+    ]

@@ -3,6 +3,7 @@ Functionality for using the [OSV](https://osv.dev/) API as a `VulnerabilityServi
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import List, Optional, Tuple, cast
 
@@ -17,6 +18,8 @@ from pip_audit._service.interface import (
     VulnerabilityResult,
     VulnerabilityService,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class OsvService(VulnerabilityService):
@@ -77,10 +80,26 @@ class OsvService(VulnerabilityService):
 
         for vuln in response_json["vulns"]:
             id = vuln["id"]
-            description = vuln["details"]
-            aliases = set(vuln["aliases"])
+
+            # The summary is intended to be shorter, so we prefer it over
+            # details, if present. However, neither is required.
+            description = vuln.get("summary")
+            if description is None:
+                description = vuln.get("details")
+            if description is None:
+                description = "N/A"
+
+            aliases = set(vuln.get("aliases", []))
+
+            # OSV doesn't mandate this field either. There's very little we
+            # can do without it, so we skip any results that are missing it.
+            affecteds = vuln.get("affected")
+            if affecteds is None:
+                logger.warning(f"OSV vuln entry '{id}' is missing 'affected' list")
+                continue
+
             fix_versions: List[Version] = []
-            for affected in vuln["affected"]:
+            for affected in affecteds:
                 pkg = affected["package"]
                 # We only care about PyPI versions
                 if pkg["name"] == spec.canonical_name and pkg["ecosystem"] == "PyPI":
