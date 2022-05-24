@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 from logging.handlers import MemoryHandler
 from typing import Any, Dict, List, Sequence
 
+from progress import SHOW_CURSOR
 from progress.spinner import Spinner as BaseSpinner
 
 
@@ -163,6 +164,11 @@ class AuditSpinner(_StateActor, BaseSpinner):  # pragma: no cover
         """
         self.writeln("")
         self.file.write("\r")
+
+        # `BaseSpinner` normally re-reveals the cursor as part of `finish()` or
+        # `__del__`, but we override `finish()` and `__del__` isn't reliably
+        # invoked on context exit. So we do it manually here.
+        self.file.write(SHOW_CURSOR)
         self.file.flush()
 
     def update_state(self, message: str) -> None:

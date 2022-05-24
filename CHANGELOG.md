@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* CLI: A bug causing the terminal's cursor to disappear on some
+  versions of CPython was fixed
+  ([#280](https://github.com/trailofbits/pip-audit/issues/280))
+
 ## [2.3.0] - 2022-05-18
 
 ### Added
