@@ -3,7 +3,7 @@ from typing import Dict, List
 import pretend  # type: ignore
 import pytest
 from packaging.version import Version
-from requests.exceptions import HTTPError
+from requests.exceptions import ConnectTimeout, HTTPError
 
 import pip_audit._service as service
 
@@ -93,6 +93,17 @@ def test_osv_no_vuln():
 
     vulns = results[dep]
     assert len(vulns) == 0
+
+
+def test_osv_connection_error(monkeypatch):
+    osv = service.OsvService()
+    monkeypatch.setattr(osv.session, "post", pretend.raiser(ConnectTimeout))
+
+    dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
+    with pytest.raises(
+        service.ConnectionError, match="Could not connect to OSV's vulnerability feed"
+    ):
+        dict(osv.query_all(iter([dep])))
 
 
 def test_osv_error_response(monkeypatch):

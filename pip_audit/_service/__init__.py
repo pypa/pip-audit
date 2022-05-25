@@ -3,6 +3,7 @@ Vulnerability service interfaces and implementations for `pip-audit`.
 """
 
 from .interface import (
+    ConnectionError,
     Dependency,
     ResolvedDependency,
     ServiceError,
@@ -14,6 +15,7 @@ from .osv import OsvService
 from .pypi import PyPIService
 
 __all__ = [
+    "ConnectionError",
     "Dependency",
     "ResolvedDependency",
     "ServiceError",
