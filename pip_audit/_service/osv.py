@@ -12,6 +12,7 @@ from packaging.version import Version
 
 from pip_audit._cache import caching_session
 from pip_audit._service.interface import (
+    ConnectionError,
     Dependency,
     ResolvedDependency,
     ServiceError,
@@ -56,17 +57,15 @@ class OsvService(VulnerabilityService):
             "package": {"name": spec.canonical_name, "ecosystem": "PyPI"},
             "version": str(spec.version),
         }
-        response: requests.Response = self.session.post(
-            url=url,
-            data=json.dumps(query),
-            timeout=self.timeout,
-        )
-
-        results: List[VulnerabilityResult] = []
-
-        # Check for an unsuccessful status code
         try:
+            response: requests.Response = self.session.post(
+                url=url,
+                data=json.dumps(query),
+                timeout=self.timeout,
+            )
             response.raise_for_status()
+        except requests.ConnectTimeout:
+            raise ConnectionError("Could not connect to OSV's vulnerability feed")
         except requests.HTTPError as http_error:
             raise ServiceError from http_error
 
@@ -74,6 +73,7 @@ class OsvService(VulnerabilityService):
         # associated vulnerabilities
         #
         # In that case, return an empty list
+        results: List[VulnerabilityResult] = []
         response_json = response.json()
         if not response_json:
             return spec, results

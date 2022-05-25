@@ -25,6 +25,7 @@ from pip_audit._dependency_source.interface import DependencySourceError
 from pip_audit._fix import ResolvedFixVersion, SkippedFixVersion, resolve_fix_versions
 from pip_audit._format import ColumnsFormat, CycloneDxFormat, JsonFormat, VulnerabilityFormat
 from pip_audit._service import OsvService, PyPIService, VulnerabilityService
+from pip_audit._service.interface import ConnectionError as VulnServiceConnectionError
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditSpinner, AuditState
 from pip_audit._util import assert_never
@@ -400,25 +401,34 @@ def audit() -> None:
         skip_count = 0
         vuln_ignore_count = 0
         vulns_to_ignore = set(args.ignore_vulns)
-        for (spec, vulns) in auditor.audit(source):
-            if spec.is_skipped():
-                spec = cast(SkippedDependency, spec)
-                if args.strict:
-                    _fatal(f"{spec.name}: {spec.skip_reason}")
+        try:
+            for (spec, vulns) in auditor.audit(source):
+                if spec.is_skipped():
+                    spec = cast(SkippedDependency, spec)
+                    if args.strict:
+                        _fatal(f"{spec.name}: {spec.skip_reason}")
+                    else:
+                        state.update_state(f"Skipping {spec.name}: {spec.skip_reason}")
+                    skip_count += 1
                 else:
-                    state.update_state(f"Skipping {spec.name}: {spec.skip_reason}")
-                skip_count += 1
-            else:
-                spec = cast(ResolvedDependency, spec)
-                state.update_state(f"Auditing {spec.name} ({spec.version})")
-            if vulns_to_ignore:
-                filtered_vulns = [v for v in vulns if not v.has_any_id(vulns_to_ignore)]
-                vuln_ignore_count += len(vulns) - len(filtered_vulns)
-                vulns = filtered_vulns
-            result[spec] = vulns
-            if len(vulns) > 0:
-                pkg_count += 1
-                vuln_count += len(vulns)
+                    spec = cast(ResolvedDependency, spec)
+                    state.update_state(f"Auditing {spec.name} ({spec.version})")
+                if vulns_to_ignore:
+                    filtered_vulns = [v for v in vulns if not v.has_any_id(vulns_to_ignore)]
+                    vuln_ignore_count += len(vulns) - len(filtered_vulns)
+                    vulns = filtered_vulns
+                result[spec] = vulns
+                if len(vulns) > 0:
+                    pkg_count += 1
+                    vuln_count += len(vulns)
+        except VulnServiceConnectionError as e:
+            # The most common source of connection errors is corporate blocking,
+            # so we offer a bit of advice.
+            logger.error(str(e))
+            _fatal(
+                "Tip: your network may be blocking this service. "
+                "Try another service with `-s SERVICE`"
+            )
 
         # If the `--fix` flag has been applied, find a set of suitable fix versions and upgrade the
         # dependencies at the source

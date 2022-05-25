@@ -14,6 +14,10 @@ All versions prior to 0.0.9 are untracked.
   faster and more responsive
   ([#283](https://github.com/trailofbits/pip-audit/pull/283))
 
+* CLI, Vulnerability sources: the error message used to report
+  connection failures to vulnerability sources was improved
+  ([#287](https://github.com/trailofbits/pip-audit/pull/287))
+
 ### Fixed
 
 * Vulnerability sources: a bug stemming from an incorrect assumption

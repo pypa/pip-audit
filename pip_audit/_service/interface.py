@@ -158,3 +158,12 @@ class ServiceError(Exception):
     """
 
     pass
+
+
+class ConnectionError(ServiceError):
+    """
+    A specialization of `ServiceError` specifically for cases where the
+    vulnerability service is unreachable or offline.
+    """
+
+    pass

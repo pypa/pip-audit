@@ -13,6 +13,7 @@ from packaging.version import InvalidVersion, Version
 
 from pip_audit._cache import caching_session
 from pip_audit._service.interface import (
+    ConnectionError,
     Dependency,
     ResolvedDependency,
     ServiceError,
@@ -55,9 +56,17 @@ class PyPIService(VulnerabilityService):
         spec = cast(ResolvedDependency, spec)
 
         url = f"https://pypi.org/pypi/{spec.canonical_name}/{str(spec.version)}/json"
-        response: requests.Response = self.session.get(url=url, timeout=self.timeout)
+
         try:
+            response: requests.Response = self.session.get(url=url, timeout=self.timeout)
             response.raise_for_status()
+        except requests.ConnectTimeout:
+            # Apart from a normal network outage, this can happen for two main
+            # reasons:
+            # 1. PyPI's APIs are offline
+            # 2. The user is behind a firewall or corporate network that blocks
+            #    PyPI (and they're probably using custom indices)
+            raise ConnectionError("Could not connect to PyPI's vulnerability feed")
         except requests.HTTPError as http_error:
             if response.status_code == 404:
                 skip_reason = (

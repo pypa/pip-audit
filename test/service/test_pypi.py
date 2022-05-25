@@ -48,6 +48,20 @@ def test_pypi_multiple_pkg(cache_dir):
     assert len(results[deps[1]]) > 0
 
 
+def test_pypi_connection_error(monkeypatch):
+    session = pretend.stub(get=pretend.raiser(requests.ConnectTimeout))
+    caching_session = pretend.call_recorder(lambda c, **kw: session)
+    monkeypatch.setattr(service.pypi, "caching_session", caching_session)
+
+    cache_dir = pretend.stub()
+    pypi = service.PyPIService(cache_dir)
+
+    with pytest.raises(
+        service.ConnectionError, match="Could not connect to PyPI's vulnerability feed"
+    ):
+        dict(pypi.query_all(iter([service.ResolvedDependency("fakedep", Version("1.0.0"))])))
+
+
 def test_pypi_http_notfound(monkeypatch, cache_dir):
     # If we get a "not found" response, that means that we're querying a package or version that
     # isn't known to PyPI. If that's the case, we should just log a debug message and continue on
