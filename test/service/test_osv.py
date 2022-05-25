@@ -138,6 +138,35 @@ def test_osv_skipped_dep():
     assert len(vulns) == 0
 
 
+@pytest.mark.parametrize("version", ["0.0.0", "2.0.0", "2.3.4"])
+def test_osv_unsupported_schema_version(monkeypatch, version):
+    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    monkeypatch.setattr(service.osv, "logger", logger)
+
+    payload = {
+        "vulns": [
+            {"schema_version": version},
+        ]
+    }
+
+    response = pretend.stub(raise_for_status=lambda: None, json=lambda: payload)
+    post = pretend.call_recorder(lambda *a, **kw: response)
+
+    osv = service.OsvService()
+    monkeypatch.setattr(osv.session, "post", post)
+
+    dep = service.ResolvedDependency("foo", Version("1.0.0"))
+    results = dict(osv.query_all(iter([dep])))
+
+    assert logger.warning.calls == [pretend.call(f"Unsupported OSV schema version: {version}")]
+
+    assert len(results) == 1
+    assert dep in results
+
+    vulns = results[dep]
+    assert len(vulns) == 0
+
+
 @pytest.mark.parametrize(
     ["summary", "details", "description"],
     [

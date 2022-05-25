@@ -18,6 +18,9 @@ All versions prior to 0.0.9 are untracked.
   connection failures to vulnerability sources was improved
   ([#287](https://github.com/trailofbits/pip-audit/pull/287))
 
+* Vulnerability sources: the OSV service is now more resilient
+  to schema changes ([#288](https://github.com/trailofbits/pip-audit/pull/288))
+
 ### Fixed
 
 * Vulnerability sources: a bug stemming from an incorrect assumption
