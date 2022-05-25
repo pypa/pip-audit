@@ -79,6 +79,15 @@ class OsvService(VulnerabilityService):
             return spec, results
 
         for vuln in response_json["vulns"]:
+            # Sanity check: only the v1 schema is specified at the moment,
+            # and the code below probably won't work with future incompatible
+            # schemas without additional changes.
+            # The absence of a schema is treated as 1.0.0, per the OSV spec.
+            schema_version = Version(vuln.get("schema_version", "1.0.0"))
+            if schema_version.major != 1:
+                logger.warning(f"Unsupported OSV schema version: {schema_version}")
+                continue
+
             id = vuln["id"]
 
             # The summary is intended to be shorter, so we prefer it over
