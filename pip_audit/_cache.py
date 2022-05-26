@@ -36,6 +36,8 @@ def _get_pip_cache() -> Path:
     try:
         process = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError as cpe:  # pragma: no cover
+        # NOTE: This should only happen if pip's cache has been explicitly disabled,
+        # which we check for in the caller (via `PIP_NO_CACHE_DIR`).
         raise ServiceError(f"Failed to query the `pip` HTTP cache directory: {cmd}") from cpe
     cache_dir = process.stdout.decode("utf-8").strip("\n")
     http_cache_dir = Path(cache_dir) / "http"
@@ -47,13 +49,17 @@ def _get_cache_dir(custom_cache_dir: Optional[Path], *, use_pip: bool = True) ->
     Returns a directory path suitable for HTTP caching.
 
     The directory is **not** guaranteed to exist.
+
+    `use_pip` tells the function to prefer `pip`'s pre-existing cache,
+    **unless** `PIP_NO_CACHE_DIR` is present in the environment.
     """
 
     # If the user has explicitly requested a directory, pass it through unscathed.
     if custom_cache_dir is not None:
         return custom_cache_dir
 
-    if use_pip:
+    # Respect pip's PIP_NO_CACHE_DIR environment setting.
+    if use_pip and not os.getenv("PIP_NO_CACHE_DIR"):
         pip_cache_dir = _get_pip_cache() if _PIP_VERSION >= _MINIMUM_PIP_VERSION else None
         if pip_cache_dir is not None:
             return pip_cache_dir
