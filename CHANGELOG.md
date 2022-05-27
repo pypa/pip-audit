@@ -27,6 +27,10 @@ All versions prior to 0.0.9 are untracked.
   about OSV's schema guarantees was fixed
   ([#284](https://github.com/trailofbits/pip-audit/pull/284))
 
+* Caching: `pip-audit` now respects `pip`'s `PIP_NO_CACHE_DIR`
+  and will not attempt to use the `pip` cache if present
+  ([#290](https://github.com/trailofbits/pip-audit/pull/290))
+
 ## [2.3.1] - 2022-05-24
 
 ### Fixed

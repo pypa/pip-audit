@@ -32,6 +32,13 @@ def test_get_cache_dir_do_not_use_pip():
     assert cache_dir == Path.home() / ".pip-audit-cache"
 
 
+def test_get_cache_dir_pip_disabled_in_environment(monkeypatch):
+    monkeypatch.setenv("PIP_NO_CACHE_DIR", "1")
+
+    # Even with use_pip=True, we avoid pip's cache if the environment tells us to.
+    assert _get_cache_dir(None, use_pip=True) == Path.home() / ".pip-audit-cache"
+
+
 def test_get_cache_dir_old_pip(monkeypatch):
     # Check the case where we have an old `pip`
     monkeypatch.setattr(cache, "_PIP_VERSION", Version("1.0.0"))
