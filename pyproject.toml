@@ -18,7 +18,8 @@ classifiers = [
 ]
 dependencies = [
     "CacheControl[filecache]>=0.12.10",
-    "cyclonedx-python-lib>=1.0.0,<3.0.0",
+    # TODO: https://github.com/CycloneDX/cyclonedx-python-lib/issues/245
+    "cyclonedx-python-lib>=2.0.0,<2.5.0",
     "html5lib>=1.1",
     "packaging>=21.0.0",
     "pip-api>=0.0.28",
