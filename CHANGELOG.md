@@ -21,6 +21,10 @@ All versions prior to 0.0.9 are untracked.
 * Vulnerability sources: the OSV service is now more resilient
   to schema changes ([#288](https://github.com/trailofbits/pip-audit/pull/288))
 
+* Vulnerability sources: the PyPI service provides a better
+  error message during some cases of service degradation
+  ([#294](https://github.com/trailofbits/pip-audit/pull/294))
+
 ### Fixed
 
 * Vulnerability sources: a bug stemming from an incorrect assumption
