@@ -43,9 +43,6 @@ jobs:
         with:
           python-version: "3.7"
 
-      - name: setup
-        run: make
-
       - name: check-readme
         run: |
           diff \
