@@ -152,6 +152,13 @@ def caching_session(cache_dir: Optional[Path], *, use_pip: bool = False) -> Cach
     directory, falling back on the internal `pip-audit` cache directory if the user's
     version of `pip` is too old.
     """
+
+    # We limit the number of redirects to 5, since the services we connect to
+    # should really never redirect more than once or twice.
+    inner_session = requests.Session()
+    inner_session.max_redirects = 5
+
     return CacheControl(
-        requests.Session(), cache=_SafeFileCache(_get_cache_dir(cache_dir, use_pip=use_pip))
+        inner_session,
+        cache=_SafeFileCache(_get_cache_dir(cache_dir, use_pip=use_pip)),
     )

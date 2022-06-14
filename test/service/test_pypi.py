@@ -48,7 +48,19 @@ def test_pypi_multiple_pkg(cache_dir):
     assert len(results[deps[1]]) > 0
 
 
-def test_pypi_connection_error(monkeypatch):
+def test_pypi_redirect_loop(monkeypatch):
+    session = pretend.stub(get=pretend.raiser(requests.TooManyRedirects))
+    caching_session = pretend.call_recorder(lambda c, **kw: session)
+    monkeypatch.setattr(service.pypi, "caching_session", caching_session)
+
+    cache_dir = pretend.stub()
+    pypi = service.PyPIService(cache_dir)
+
+    with pytest.raises(service.ConnectionError, match="PyPI is not redirecting properly"):
+        dict(pypi.query_all(iter([service.ResolvedDependency("fakedep", Version("1.0.0"))])))
+
+
+def test_pypi_connect_timeout(monkeypatch):
     session = pretend.stub(get=pretend.raiser(requests.ConnectTimeout))
     caching_session = pretend.call_recorder(lambda c, **kw: session)
     monkeypatch.setattr(service.pypi, "caching_session", caching_session)

@@ -60,6 +60,11 @@ class PyPIService(VulnerabilityService):
         try:
             response: requests.Response = self.session.get(url=url, timeout=self.timeout)
             response.raise_for_status()
+        except requests.TooManyRedirects:
+            # This should never happen with a healthy PyPI instance, but might
+            # happen during an outage or network event.
+            # Ref 2022-06-10: https://status.python.org/incidents/lgpr13fy71bk
+            raise ConnectionError("PyPI is not redirecting properly")
         except requests.ConnectTimeout:
             # Apart from a normal network outage, this can happen for two main
             # reasons:
