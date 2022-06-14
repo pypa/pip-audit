@@ -34,10 +34,6 @@ env/pyvenv.cfg: pyproject.toml
 	./env/bin/python -m pip install --upgrade pip
 	./env/bin/python -m pip install -e .[dev]
 
-.PHONY: run
-run: env/pyvenv.cfg
-	@. env/bin/activate && pip-audit $(ARGS)
-
 .PHONY: lint
 lint: env/pyvenv.cfg
 	. env/bin/activate && \
