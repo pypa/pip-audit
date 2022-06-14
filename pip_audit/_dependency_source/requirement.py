@@ -81,11 +81,20 @@ class RequirementSource(DependencySource):
         """
         collected: Set[Dependency] = set()
         for filename in self._filenames:
-            for dep in self._collect_cached_deps(filename):
-                if dep in collected:
-                    continue
-                collected.add(dep)
-                yield dep
+            try:
+                reqs = parse_requirements(filename=filename)
+            except PipError as pe:
+                raise RequirementSourceError(
+                    f"requirement parsing raised an error: {filename}"
+                ) from pe
+            try:
+                for dep in self._collect_cached_deps(filename, list(reqs.values())):
+                    if dep in collected:
+                        continue
+                    collected.add(dep)
+                    yield dep
+            except DependencyResolverError as dre:
+                raise RequirementSourceError from dre
 
     def fix(self, fix_version: ResolvedFixVersion) -> None:
         """
@@ -144,9 +153,18 @@ class RequirementSource(DependencySource):
             # The vulnerable dependency may not be explicitly listed in the requirements file if it
             # is a subdependency of a requirement. In this case, we should explicitly add the fixed
             # dependency into the requirements file.
-            if not fixed and fix_version.dep in self._collect_cached_deps(filename):
-                f.write("# added by pip-audit to fix subdependency" + os.linesep)
-                f.write(f"{fix_version.dep.name}=={fix_version.version}" + os.linesep)
+            try:
+                if not fixed and fix_version.dep in self._collect_cached_deps(
+                    filename, list(reqs.values())
+                ):
+                    logger.warning(
+                        f"added fixed subdependency explicitly to requirements file {filename}: "
+                        f"{fix_version.dep.canonical_name}"
+                    )
+                    f.write("# added by pip-audit to fix subdependency" + os.linesep)
+                    f.write(f"{fix_version.dep.canonical_name}=={fix_version.version}" + os.linesep)
+            except DependencyResolverError as dre:
+                raise RequirementFixError from dre
 
     def _recover_files(self, tmp_files: List[IO[str]]) -> None:
         for (filename, tmp_file) in zip(self._filenames, tmp_files):
@@ -188,7 +206,9 @@ class RequirementSource(DependencySource):
                 req.name, Version(pinned_specifier.group("version")), req.hashes
             )
 
-    def _collect_cached_deps(self, filename: Path) -> Iterator[Dependency]:
+    def _collect_cached_deps(
+        self, filename: Path, reqs: List[Union[ParsedRequirement, UnparsedRequirement]]
+    ) -> Iterator[Dependency]:
         """
         Collect resolved dependencies for a given requirements file, retrieving them from the
         dependency cache if possible.
@@ -196,13 +216,7 @@ class RequirementSource(DependencySource):
         # See if we've already have cached dependencies for this file
         cached_deps_for_file = self._dep_cache.get(filename, None)
         if cached_deps_for_file is not None:
-            return cached_deps_for_file
-
-        # Otherwise, resolve dependencies
-        try:
-            reqs = parse_requirements(filename=filename)
-        except PipError as pe:
-            raise RequirementSourceError("requirement parsing raised an error") from pe
+            yield from cached_deps_for_file
 
         new_cached_deps_for_file = set()
 
@@ -213,33 +227,28 @@ class RequirementSource(DependencySource):
         #    hash checking for all requirements.
         # 3. The user has explicitly specified `--no-deps`.
         require_hashes = self._require_hashes or any(
-            isinstance(req, ParsedRequirement) and req.hashes for req in reqs.values()
+            isinstance(req, ParsedRequirement) and req.hashes for req in reqs
         )
         skip_deps = require_hashes or self._no_deps
         if skip_deps:
-            for dep in self._collect_preresolved_deps(
-                iter(reqs.values()), require_hashes=require_hashes
-            ):
+            for dep in self._collect_preresolved_deps(iter(reqs), require_hashes=require_hashes):
                 new_cached_deps_for_file.add(dep)
                 yield dep
         else:
             # Invoke the dependency resolver to turn requirements into dependencies
-            req_values: List[Requirement] = [Requirement(str(req)) for req in reqs.values()]
-            try:
-                for _, deps in self._resolver.resolve_all(iter(req_values)):
-                    for dep in deps:
-                        new_cached_deps_for_file.add(dep)
+            req_values: List[Requirement] = [Requirement(str(req)) for req in reqs]
+            for _, deps in self._resolver.resolve_all(iter(req_values)):
+                for dep in deps:
+                    new_cached_deps_for_file.add(dep)
 
-                        if dep.is_skipped():  # pragma: no cover
-                            dep = cast(SkippedDependency, dep)
-                            self.state.update_state(f"Skipping {dep.name}: {dep.skip_reason}")
-                        else:
-                            dep = cast(ResolvedDependency, dep)
-                            self.state.update_state(f"Collecting {dep.name} ({dep.version})")
+                    if dep.is_skipped():  # pragma: no cover
+                        dep = cast(SkippedDependency, dep)
+                        self.state.update_state(f"Skipping {dep.name}: {dep.skip_reason}")
+                    else:
+                        dep = cast(ResolvedDependency, dep)
+                        self.state.update_state(f"Collecting {dep.name} ({dep.version})")
 
-                        yield dep
-            except DependencyResolverError as dre:
-                raise RequirementSourceError("dependency resolver raised an error") from dre
+                    yield dep
 
         # Cache the collected dependencies
         self._dep_cache[filename] = new_cached_deps_for_file
