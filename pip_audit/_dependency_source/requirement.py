@@ -153,6 +153,10 @@ class RequirementSource(DependencySource):
             # The vulnerable dependency may not be explicitly listed in the requirements file if it
             # is a subdependency of a requirement. In this case, we should explicitly add the fixed
             # dependency into the requirements file.
+            #
+            # To know whether this is the case, we'll need to resolve dependencies if we haven't
+            # already in order to figure out whether this subdependency belongs to this file or
+            # another.
             try:
                 if not fixed and fix_version.dep in self._collect_cached_deps(
                     filename, list(reqs.values())

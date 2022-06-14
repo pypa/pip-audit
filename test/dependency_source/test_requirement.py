@@ -476,3 +476,48 @@ def test_requirement_source_fix_explicit_subdep_resolver_error(req_file):
                 version=Version("4.0.0"),
             )
         )
+
+
+def test_requirement_source_fix_explicit_subdep_comment_removal(req_file):
+    # This test is documenting a weakness in the current fix implementation.
+    #
+    # When fixing a subdependency and explicitly adding it to the requirements file, we add a
+    # comment above the line to explain its presence since it's unusual to explicitly pin a
+    # subdependency like this.
+    #
+    # When we "fix" dependencies, we use `pip-api` to parse the requirements file and write it back
+    # out with the relevant line amended or added. One downside of this method is that `pip-api`
+    # filters out comments so applying fixes removes all comments in the file.
+    # See: https://github.com/di/pip-api/issues/120
+    #
+    # Therefore, when we apply a subdependency fix, the automated comment will be removed
+    # by any subsequent fixes.
+
+    # Recreate the vulnerable subdependency case.
+    flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
+    jinja_dep: Optional[ResolvedDependency] = None
+    for dep in flask_deps:
+        if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
+            jinja_dep = dep
+            break
+    assert jinja_dep is not None
+
+    # Now place a fix for the top-level `flask` requirement after the `jinja2` subdependency fix.
+    #
+    # When applying the `flask` fix, `pip-audit` reparses the requirements file, stripping out the
+    # comment and writes it back out with the fixed `flask` version.
+    _check_fixes(
+        ["flask==2.0.1"],
+        ["flask==3.0.0\njinja2==4.0.0"],
+        [req_file()],
+        [
+            ResolvedFixVersion(
+                dep=jinja_dep,
+                version=Version("4.0.0"),
+            ),
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("2.0.1")),
+                version=Version("3.0.0"),
+            ),
+        ],
+    )
