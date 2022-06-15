@@ -445,6 +445,36 @@ def test_requirement_source_fix_explicit_subdep(monkeypatch, req_file):
     assert len(logger.warning.calls) == 1
 
 
+def test_requirement_source_fix_explicit_subdep_multiple_reqs(monkeypatch, req_file):
+    # Recreate the vulnerable subdependency case.
+    flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
+    jinja_dep: Optional[ResolvedDependency] = None
+    for dep in flask_deps:
+        if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
+            jinja_dep = dep
+            break
+    assert jinja_dep is not None
+
+    # This time our requirements file also lists `django-jinja`, another requirement that depends on
+    # `jinja2`. We're expecting that the comment generated above the `jinja2` requirement that gets
+    # added into the file will list both `flask` and `django-jinja` as sources.
+    _check_fixes(
+        ["flask==2.0.1\ndjango-jinja==1.0"],
+        [
+            "flask==2.0.1\ndjango-jinja==1.0\n"
+            "# pip-audit: subdependency fixed via django-jinja==1.0,flask==2.0.1\n"
+            "jinja2==4.0.0"
+        ],
+        [req_file()],
+        [
+            ResolvedFixVersion(
+                dep=jinja_dep,
+                version=Version("4.0.0"),
+            )
+        ],
+    )
+
+
 def test_requirement_source_fix_explicit_subdep_resolver_error(req_file):
     # Pass the requirement source a resolver that automatically raises errors
     class MockResolver(DependencyResolver):
