@@ -39,6 +39,18 @@ class MarkdownFormat(VulnerabilityFormat):
         Returns a Markdown formatted string representing a set of vulnerability results and applied
         fixes.
         """
+        return (
+            self._format_vuln_results(result, fixes)
+            + os.linesep
+            + os.linesep
+            + self._format_skipped_deps(result)
+        )
+
+    def _format_vuln_results(
+        self,
+        result: Dict[service.Dependency, List[service.VulnerabilityResult]],
+        fixes: List[fix.FixVersion],
+    ) -> str:
         header = "Name | Version | ID | Fix Versions"
         border = "--- | --- | --- | ---"
         if fixes:
@@ -87,3 +99,20 @@ class MarkdownFormat(VulnerabilityFormat):
             f"Successfully upgraded {applied_fix.dep.canonical_name} ({applied_fix.dep.version} "
             f"=> {applied_fix.version})"
         )
+
+    def _format_skipped_deps(
+        self, result: Dict[service.Dependency, List[service.VulnerabilityResult]]
+    ) -> str:
+        header = "Name | Skip Reason"
+        border = "--- | ---"
+
+        skipped_dep_rows: List[str] = []
+        for dep, _ in result.items():
+            if dep.is_skipped():
+                dep = cast(service.SkippedDependency, dep)
+                skipped_dep_rows.append(self._format_skipped_dep(dep))
+
+        return header + os.linesep + border + os.linesep + os.linesep.join(skipped_dep_rows)
+
+    def _format_skipped_dep(self, dep: service.SkippedDependency) -> str:
+        return f"{dep.name} | {dep.skip_reason}"
