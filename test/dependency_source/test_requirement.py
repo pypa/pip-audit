@@ -141,8 +141,8 @@ def test_requirement_source_fix(req_file):
 
 def test_requirement_source_fix_multiple_files(req_file):
     _check_fixes(
-        ["flask==0.5", "requests==1.0\nflask==0.5"],
-        ["flask==1.0", "requests==1.0\nflask==1.0"],
+        ["flask==0.5", "requests==2.0\nflask==0.5"],
+        ["flask==1.0", "requests==2.0\nflask==1.0"],
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
@@ -154,8 +154,8 @@ def test_requirement_source_fix_multiple_files(req_file):
 
 def test_requirement_source_fix_specifier_match(req_file):
     _check_fixes(
-        ["flask<1.0", "requests==1.0\nflask<=0.6"],
-        ["flask==1.0", "requests==1.0\nflask==1.0"],
+        ["flask<1.0", "requests==2.0\nflask<=0.6"],
+        ["flask==1.0", "requests==2.0\nflask==1.0"],
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
@@ -170,8 +170,8 @@ def test_requirement_source_fix_specifier_no_match(req_file):
     # version. If the specifier matches both, we don't apply the fix since installing from the given
     # requirements file would already install the fixed version.
     _check_fixes(
-        ["flask>=0.5", "requests==1.0\nflask<2.0"],
-        ["flask>=0.5", "requests==1.0\nflask<2.0"],
+        ["flask>=0.5", "requests==2.0\nflask<2.0"],
+        ["flask>=0.5", "requests==2.0\nflask<2.0"],
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
@@ -187,11 +187,11 @@ def test_requirement_source_fix_marker(req_file):
     _check_fixes(
         [
             'flask<1.0; python_version > "2.7"',
-            'requests==1.0\nflask<=0.6; python_version <= "2.7"',
+            'requests==2.0\nflask<=0.6; python_version <= "2.7"',
         ],
         [
             'flask==1.0; python_version > "2.7"',
-            "requests==1.0",
+            "requests==2.0",
         ],
         [req_file(), req_file()],
         [
@@ -207,9 +207,9 @@ def test_requirement_source_fix_comments(req_file):
     _check_fixes(
         [
             "# comment here\nflask==0.5",
-            "requests==1.0\n# another comment\nflask==0.5",
+            "requests==2.0\n# another comment\nflask==0.5",
         ],
-        ["flask==1.0", "requests==1.0\nflask==1.0"],
+        ["flask==1.0", "requests==2.0\nflask==1.0"],
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
@@ -225,7 +225,7 @@ def test_requirement_source_fix_parse_failure(monkeypatch, req_file):
 
     # If `pip-api` encounters multiple of the same package in the requirements file, it will throw a
     # parsing error
-    input_reqs = ["flask==0.5", "flask==0.5\nrequests==1.0\nflask==0.3"]
+    input_reqs = ["flask==0.5", "flask==0.5\nrequests==2.0\nflask==0.3"]
     req_paths = [req_file(), req_file()]
 
     # Populate the requirements files
@@ -255,7 +255,7 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
 
     # If `pip-api` encounters multiple of the same package in the requirements file, it will throw a
     # parsing error
-    input_reqs = ["flask==0.5", "flask==0.5\nrequests==1.0\nflask==0.3"]
+    input_reqs = ["flask==0.5", "flask==0.5\nrequests==2.0\nflask==0.3"]
     req_paths = [req_file(), req_file()]
 
     # Populate the requirements files
@@ -282,7 +282,7 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
     # We couldn't move the original requirements files back so we should expect a partially applied
     # fix. The first requirements file contains the fix, while the second one doesn't since we were
     # in the process of writing it out and didn't flush.
-    expected_reqs = ["flask==1.0", "flask==0.5\nrequests==1.0\nflask==0.3"]
+    expected_reqs = ["flask==1.0", "flask==0.5\nrequests==2.0\nflask==0.3"]
     for (expected_req, req_path) in zip(expected_reqs, req_paths):
         with open(req_path, "r") as f:
             assert expected_req == f.read().strip()
@@ -328,7 +328,7 @@ def test_requirement_source_require_hashes_inferred(monkeypatch):
     monkeypatch.setattr(
         _parse_requirements,
         "_read_file",
-        lambda _: ["flask==2.0.1 --hash=sha256:flask-hash\nrequests==1.0"],
+        lambda _: ["flask==2.0.1 --hash=sha256:flask-hash\nrequests==2.0"],
     )
 
     # If at least one requirement is hashed, this infers `require-hashes`
