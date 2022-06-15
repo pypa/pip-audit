@@ -168,7 +168,9 @@ class RequirementSource(DependencySource):
                             "added fixed subdependency explicitly to requirements file "
                             f"{filename}: {fix_version.dep.canonical_name}"
                         )
-                        origin_reqs_formatted = ",".join([str(req) for req in origin_reqs])
+                        origin_reqs_formatted = ",".join(
+                            [str(req) for req in sorted(list(origin_reqs), key=lambda x: x.name)]
+                        )
                         print(
                             f"# pip-audit: subdependency fixed via {origin_reqs_formatted}",
                             file=f,
