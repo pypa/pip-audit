@@ -303,11 +303,13 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _dep_source_from_project_path(project_path: Path, state: AuditState) -> DependencySource:
+def _dep_source_from_project_path(
+    project_path: Path, resolver: ResolveLibResolver, state: AuditState
+) -> DependencySource:
     # Check for a `pyproject.toml`
     pyproject_path = project_path / "pyproject.toml"
     if pyproject_path.is_file():
-        return PyProjectSource(pyproject_path, ResolveLibResolver(), state)
+        return PyProjectSource(pyproject_path, resolver, state)
 
     # TODO: Checks for setup.py and other project files will go here.
 
@@ -348,6 +350,12 @@ def audit() -> None:
     if args.require_hashes and args.no_deps:
         logger.warning("The --no-deps flag is redundant when used with --require-hashes")
 
+    if args.require_hashes and isinstance(service, OsvService):
+        logger.warning(
+            "The --require-hashes flag with --service osv only enforces hash presence NOT hash "
+            "validity. Use --service pypi to enforce hash validity."
+        )
+
     if args.no_deps:
         logger.warning(
             "--no-deps is supported, but users are encouraged to fully hash their "
@@ -384,7 +392,13 @@ def audit() -> None:
             # once PEP 660 is more widely supported: https://www.python.org/dev/peps/pep-0660/
 
             # Determine which kind of project file exists in the project path
-            source = _dep_source_from_project_path(args.project_path, state)
+            source = _dep_source_from_project_path(
+                args.project_path,
+                ResolveLibResolver(
+                    index_urls, args.timeout, args.cache_dir, args.skip_editable, state
+                ),
+                state,
+            )
         else:
             source = PipSource(
                 local=args.local, paths=args.paths, skip_editable=args.skip_editable, state=state

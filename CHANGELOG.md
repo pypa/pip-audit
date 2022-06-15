@@ -8,6 +8,20 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Changed
+
+* CLI: `pip-audit` now warns on the combination of `-s osv` and
+  `--require-hashes`, notifying users that only the PyPI service
+  can fully verify hashes
+  ([#298](https://github.com/trailofbits/pip-audit/pull/298))
+
+### Fixed
+
+* CLI/Dependency sources: `--cache-dir=...` and other flags that affect
+  dependency resolver behavior now work correctly when auditing a
+  `pyproject.toml` dependency source
+  ([#300](https://github.com/trailofbits/pip-audit/pull/300))
+
 ## [2.3.2] - 2022-05-14
 
 ### Changed

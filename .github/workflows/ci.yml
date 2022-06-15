@@ -43,8 +43,7 @@ jobs:
         with:
           python-version: "3.7"
 
-      - name: setup
-        run: make
+      - run: python -m pip install .
 
       - name: check-readme
         run: |
@@ -54,5 +53,5 @@ jobs:
                 < README.md | sed '1d;$d' \
             ) \
             <( \
-              make run ARGS="--help" \
+              python -m pip_audit --help \
             )
