@@ -9,7 +9,7 @@ import shutil
 from contextlib import ExitStack
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import IO, Dict, Iterator, List, Set, Union, cast
+from typing import IO, Dict, Iterator, List, Set, Tuple, Union, cast
 
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
@@ -71,7 +71,7 @@ class RequirementSource(DependencySource):
         self._require_hashes = require_hashes
         self._no_deps = no_deps
         self.state = state
-        self._dep_cache: Dict[Path, Set[Dependency]] = {}
+        self._dep_cache: Dict[Path, Dict[Requirement, Set[Dependency]]] = {}
 
     def collect(self) -> Iterator[Dependency]:
         """
@@ -88,7 +88,7 @@ class RequirementSource(DependencySource):
                     f"requirement parsing raised an error: {filename}"
                 ) from pe
             try:
-                for dep in self._collect_cached_deps(filename, list(reqs.values())):
+                for _, dep in self._collect_cached_deps(filename, list(reqs.values())):
                     if dep in collected:
                         continue
                     collected.add(dep)
@@ -158,15 +158,22 @@ class RequirementSource(DependencySource):
             # already in order to figure out whether this subdependency belongs to this file or
             # another.
             try:
-                if not fixed and fix_version.dep in self._collect_cached_deps(
-                    filename, list(reqs.values())
-                ):
-                    logger.warning(
-                        f"added fixed subdependency explicitly to requirements file {filename}: "
-                        f"{fix_version.dep.canonical_name}"
-                    )
-                    print("# added by pip-audit to fix subdependency", file=f)
-                    print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
+                if not fixed:
+                    origin_reqs: Set[Requirement] = set()
+                    for req, dep in self._collect_cached_deps(filename, list(reqs.values())):
+                        if fix_version.dep == dep:
+                            origin_reqs.add(req)
+                    if origin_reqs:
+                        logger.warning(
+                            "added fixed subdependency explicitly to requirements file "
+                            f"{filename}: {fix_version.dep.canonical_name}"
+                        )
+                        origin_reqs_formatted = ",".join([str(req) for req in origin_reqs])
+                        print(
+                            f"# pip-audit: subdependency fixed via {origin_reqs_formatted}",
+                            file=f,
+                        )
+                        print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
             except DependencyResolverError as dre:
                 raise RequirementFixError from dre
 
@@ -187,7 +194,7 @@ class RequirementSource(DependencySource):
         self,
         reqs: Iterator[Union[ParsedRequirement, UnparsedRequirement]],
         require_hashes: bool = False,
-    ) -> Iterator[Dependency]:
+    ) -> Iterator[Tuple[Requirement, Dependency]]:
         """
         Collect pre-resolved (pinned) dependencies, optionally enforcing a
         hash requirement policy.
@@ -206,13 +213,13 @@ class RequirementSource(DependencySource):
             if pinned_specifier is None:
                 raise RequirementSourceError(f"requirement {req.name} is not pinned: {str(req)}")
 
-            yield ResolvedDependency(
+            yield Requirement(str(req)), ResolvedDependency(
                 req.name, Version(pinned_specifier.group("version")), req.hashes
             )
 
     def _collect_cached_deps(
         self, filename: Path, reqs: List[Union[ParsedRequirement, UnparsedRequirement]]
-    ) -> Iterator[Dependency]:
+    ) -> Iterator[Tuple[Requirement, Dependency]]:
         """
         Collect resolved dependencies for a given requirements file, retrieving them from the
         dependency cache if possible.
@@ -220,9 +227,11 @@ class RequirementSource(DependencySource):
         # See if we've already have cached dependencies for this file
         cached_deps_for_file = self._dep_cache.get(filename, None)
         if cached_deps_for_file is not None:
-            yield from cached_deps_for_file
+            for req, deps in cached_deps_for_file.items():
+                for dep in deps:
+                    yield req, dep
 
-        new_cached_deps_for_file = set()
+        new_cached_deps_for_file: Dict[Requirement, Set[Dependency]] = dict()
 
         # There are three cases where we skip dependency resolution:
         #
@@ -235,15 +244,21 @@ class RequirementSource(DependencySource):
         )
         skip_deps = require_hashes or self._no_deps
         if skip_deps:
-            for dep in self._collect_preresolved_deps(iter(reqs), require_hashes=require_hashes):
-                new_cached_deps_for_file.add(dep)
-                yield dep
+            for req, dep in self._collect_preresolved_deps(
+                iter(reqs), require_hashes=require_hashes
+            ):
+                if req not in new_cached_deps_for_file:
+                    new_cached_deps_for_file[req] = set()
+                new_cached_deps_for_file[req].add(dep)
+                yield req, dep
         else:
             # Invoke the dependency resolver to turn requirements into dependencies
             req_values: List[Requirement] = [Requirement(str(req)) for req in reqs]
-            for _, deps in self._resolver.resolve_all(iter(req_values)):
-                for dep in deps:
-                    new_cached_deps_for_file.add(dep)
+            for req, resolved_deps in self._resolver.resolve_all(iter(req_values)):
+                for dep in resolved_deps:
+                    if req not in new_cached_deps_for_file:
+                        new_cached_deps_for_file[req] = set()
+                    new_cached_deps_for_file[req].add(dep)
 
                     if dep.is_skipped():  # pragma: no cover
                         dep = cast(SkippedDependency, dep)
@@ -252,7 +267,7 @@ class RequirementSource(DependencySource):
                         dep = cast(ResolvedDependency, dep)
                         self.state.update_state(f"Collecting {dep.name} ({dep.version})")
 
-                    yield dep
+                    yield req, dep
 
         # Cache the collected dependencies
         self._dep_cache[filename] = new_cached_deps_for_file
