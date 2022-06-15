@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Vulnerability fixing: the `--fix` flag now works for vulnerabilities found in
+  requirement subdependencies. A new line is now added to the requirement file
+  to explicitly pin the offending subdependency
+  ([#297](https://github.com/trailofbits/pip-audit/pull/297))
+
 ## [2.3.3]
 
 ### Changed
