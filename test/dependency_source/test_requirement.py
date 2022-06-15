@@ -431,7 +431,7 @@ def test_requirement_source_fix_explicit_subdep(monkeypatch, req_file):
     # associated comment.
     _check_fixes(
         ["flask==2.0.1"],
-        ["flask==2.0.1\n# pip-audit: subdependency fixed via flask==2.0.1\njinja2==4.0.0"],
+        ["flask==2.0.1\n    # pip-audit: subdependency fixed via flask==2.0.1\njinja2==4.0.0"],
         [req_file()],
         [
             ResolvedFixVersion(
@@ -462,7 +462,7 @@ def test_requirement_source_fix_explicit_subdep_multiple_reqs(monkeypatch, req_f
         ["flask==2.0.1\ndjango-jinja==1.0"],
         [
             "flask==2.0.1\ndjango-jinja==1.0\n"
-            "# pip-audit: subdependency fixed via django-jinja==1.0,flask==2.0.1\n"
+            "    # pip-audit: subdependency fixed via django-jinja==1.0,flask==2.0.1\n"
             "jinja2==4.0.0"
         ],
         [req_file()],
