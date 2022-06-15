@@ -8,6 +8,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.3.3]
+
 ### Changed
 
 * CLI: `pip-audit` now warns on the combination of `-s osv` and
@@ -268,7 +270,8 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/trailofbits/pip-audit/compare/v2.0.0...HEAD
-[2.3.1]: https://github.com/trailofbits/pip-audit/compare/v2.3.1...v2.3.2
+[2.3.3]: https://github.com/trailofbits/pip-audit/compare/v2.3.2...v2.3.3
+[2.3.2]: https://github.com/trailofbits/pip-audit/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/trailofbits/pip-audit/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/trailofbits/pip-audit/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/trailofbits/pip-audit/compare/v2.2.0...v2.2.1
