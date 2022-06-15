@@ -148,7 +148,7 @@ class RequirementSource(DependencySource):
                     req.specifier = SpecifierSet(f"=={fix_version.version}")
                     fixed = True
                 assert req.marker is None or req.marker.evaluate()
-                f.write(str(req) + os.linesep)
+                print(str(req), file=f)
 
             # The vulnerable dependency may not be explicitly listed in the requirements file if it
             # is a subdependency of a requirement. In this case, we should explicitly add the fixed
@@ -165,8 +165,8 @@ class RequirementSource(DependencySource):
                         f"added fixed subdependency explicitly to requirements file {filename}: "
                         f"{fix_version.dep.canonical_name}"
                     )
-                    f.write("# added by pip-audit to fix subdependency" + os.linesep)
-                    f.write(f"{fix_version.dep.canonical_name}=={fix_version.version}" + os.linesep)
+                    print("# added by pip-audit to fix subdependency", file=f)
+                    print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
             except DependencyResolverError as dre:
                 raise RequirementFixError from dre
 
