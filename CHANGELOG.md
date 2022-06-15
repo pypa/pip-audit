@@ -22,6 +22,11 @@ All versions prior to 0.0.9 are untracked.
   `pyproject.toml` dependency source
   ([#300](https://github.com/trailofbits/pip-audit/pull/300))
 
+* Vulnerability fixing: the `--fix` flag now works for vulnerabilities found in
+  requirement subdependencies. A new line is now added to the requirement file
+  to explicitly pin the offending subdependency
+  ([#297](https://github.com/trailofbits/pip-audit/pull/297))
+
 ## [2.3.2] - 2022-05-14
 
 ### Changed
