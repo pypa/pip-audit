@@ -21,23 +21,18 @@ else
 	COV_ARGS := --fail-under 100
 endif
 
-env/pyvenv.cfg: pyproject.toml
-	# Create our Python 3 virtual environment
-	[[ -d env ]] || python3 -m venv env
-	./env/bin/python -m pip install --upgrade pip
-	./env/bin/python -m pip install -e .[dev]
-
-
-.PHONY: dev
-dev: env/pyvenv.cfg
-
 .PHONY: all
 all:
 	@echo "Run my targets individually!"
 
-.PHONY: run
-run: env/pyvenv.cfg
-	@. env/bin/activate && pip-audit $(ARGS)
+.PHONY: dev
+dev: env/pyvenv.cfg
+
+env/pyvenv.cfg: pyproject.toml
+	# Create our Python 3 virtual environment
+	python3 -m venv env
+	./env/bin/python -m pip install --upgrade pip
+	./env/bin/python -m pip install -e .[dev]
 
 .PHONY: lint
 lint: env/pyvenv.cfg
