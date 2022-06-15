@@ -36,6 +36,9 @@ support from Google. This is not an official Google product.
 python -m pip install pip-audit
 ```
 
+Alternatively, you can use `pip-audit` in your CI via the official
+[`trailofbits/gh-action-pip-audit` GitHub Action](https://github.com/trailofbits/gh-action-pip-audit).
+
 ### Third-party packages
 
 There are multiple **third-party** packages for `pip-audit`. The matrices and badges below
