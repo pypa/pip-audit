@@ -101,11 +101,9 @@ class VirtualEnv(venv.EnvBuilder):
             *self._install_args,
         ]
         try:
-            package_install_stdout = run(package_install_cmd, state=self._state)
+            run(package_install_cmd, state=self._state)
         except CalledProcessError as cpe:
-            raise VirtualEnvError(
-                f"Failed to install packages: {package_install_cmd}\n{package_install_stdout}"
-            ) from cpe
+            raise VirtualEnvError(f"Failed to install packages: {package_install_cmd}") from cpe
 
         self._state.update_state("Processing package list from isolated environment")
 
