@@ -172,7 +172,7 @@ class RequirementSource(DependencySource):
                             [str(req) for req in sorted(list(origin_reqs), key=lambda x: x.name)]
                         )
                         print(
-                            f"# pip-audit: subdependency fixed via {origin_reqs_formatted}",
+                            f"    # pip-audit: subdependency fixed via {origin_reqs_formatted}",
                             file=f,
                         )
                         print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
