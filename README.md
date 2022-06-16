@@ -218,7 +218,7 @@ Flask 0.5     PYSEC-2018-66  0.12.3       The Pallets Project flask version Befo
 
 Audit dependencies in JSON format:
 ```
-$ pip-audit -f json | jq
+$ pip-audit -f json | python -m json.tool
 Found 2 known vulnerabilities in 1 package
 [
   {
