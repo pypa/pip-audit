@@ -21,10 +21,11 @@ support from Google. This is not an official Google product.
 * [Features](#features)
 * [Installation](#installation)
   * [Third-party packages](#third-party-packages)
+  * [GitHub Actions](#github-actions)
+  * [`pre-commit` support](#pre-commit-support)
 * [Usage](#usage)
   * [Exit codes](#exit-codes)
   * [Dry runs](#dry-runs)
-  * [`pre-commit` support](#pre-commit-support)
 * [Examples](#examples)
 * [Troubleshooting](#troubleshooting)
 * [Security model](#security-model)
@@ -53,9 +54,6 @@ support from Google. This is not an official Google product.
 python -m pip install pip-audit
 ```
 
-Alternatively, you can use `pip-audit` in your CI via the official
-[`trailofbits/gh-action-pip-audit` GitHub Action](https://github.com/trailofbits/gh-action-pip-audit).
-
 ### Third-party packages
 
 There are multiple **third-party** packages for `pip-audit`. The matrices and badges below
@@ -76,6 +74,48 @@ conda install -c conda-forge pip-audit
 
 Third-party packages are **not** directly supported by this project. Please consult your package manager's
 documentation for more detailed installation guidance.
+
+### GitHub Actions
+
+`pip-audit` has [an official GitHub Action](https://github.com/trailofbits/gh-action-pip-audit)!
+
+You can install it from the
+[GitHub Marketplace](https://github.com/marketplace/actions/gh-action-pip-audit), or
+add it to your CI manually:
+
+```yaml
+jobs:
+  pip-audit:
+    steps:
+      - uses: trailofbits/gh-action-pip-audit@v0.0.4
+        with:
+          inputs: requirements.txt
+```
+
+See the
+[action documentation](https://github.com/trailofbits/gh-action-pip-audit/blob/main/README.md)
+for more details and usage examples.
+
+### `pre-commit` support
+
+`pip-audit` has [`pre-commit`](https://pre-commit.com/) support.
+
+For example, using `pip-audit` via `pre-commit` to audit a requirements file:
+
+```yaml
+  - repo: https://github.com/trailofbits/pip-audit
+    rev: v2.1.2
+    hooks:
+      -   id: pip-audit
+          args: ["-r", "requirements.txt"]
+
+ci:
+  # Leave pip-audit to only run locally and not in CI
+  # pre-commit.ci does not allow network calls
+  skip: [pip-audit]
+```
+
+Any `pip-audit` arguments documented below can be passed.
 
 ## Usage
 
@@ -188,27 +228,6 @@ an audit (or fix) step is actually performed.
 * In fix mode, `pip-audit --fix --dry-run` performs the auditing step and prints
   out the fix behavior (i.e., which dependencies would be upgraded or skipped)
   that *would have been performed*.
-
-### `pre-commit` support
-
-`pip-audit` has [`pre-commit`](https://pre-commit.com/) support.
-
-For example, using `pip-audit` via `pre-commit` to audit a requirements file:
-
-```yaml
-  - repo: https://github.com/trailofbits/pip-audit
-    rev: v2.1.2
-    hooks:
-      -   id: pip-audit
-          args: ["-r", "requirements.txt"]
-
-ci:
-  # Leave pip-audit to only run locally and not in CI
-  # pre-commit.ci does not allow network calls
-  skip: [pip-audit]
-```
-
-Any `pip-audit` arguments documented above can be passed.
 
 ## Examples
 
