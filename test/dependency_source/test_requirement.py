@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import pretend  # type: ignore
 import pytest
@@ -141,8 +141,8 @@ def test_requirement_source_fix(req_file):
 
 def test_requirement_source_fix_multiple_files(req_file):
     _check_fixes(
-        ["flask==0.5", "requests==1.0\nflask==0.5"],
-        ["flask==1.0", "requests==1.0\nflask==1.0"],
+        ["flask==0.5", "requests==2.0\nflask==0.5"],
+        ["flask==1.0", "requests==2.0\nflask==1.0"],
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
@@ -154,8 +154,8 @@ def test_requirement_source_fix_multiple_files(req_file):
 
 def test_requirement_source_fix_specifier_match(req_file):
     _check_fixes(
-        ["flask<1.0", "requests==1.0\nflask<=0.6"],
-        ["flask==1.0", "requests==1.0\nflask==1.0"],
+        ["flask<1.0", "requests==2.0\nflask<=0.6"],
+        ["flask==1.0", "requests==2.0\nflask==1.0"],
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
@@ -170,8 +170,8 @@ def test_requirement_source_fix_specifier_no_match(req_file):
     # version. If the specifier matches both, we don't apply the fix since installing from the given
     # requirements file would already install the fixed version.
     _check_fixes(
-        ["flask>=0.5", "requests==1.0\nflask<2.0"],
-        ["flask>=0.5", "requests==1.0\nflask<2.0"],
+        ["flask>=0.5", "requests==2.0\nflask<2.0"],
+        ["flask>=0.5", "requests==2.0\nflask<2.0"],
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
@@ -187,11 +187,11 @@ def test_requirement_source_fix_marker(req_file):
     _check_fixes(
         [
             'flask<1.0; python_version > "2.7"',
-            'requests==1.0\nflask<=0.6; python_version <= "2.7"',
+            'requests==2.0\nflask<=0.6; python_version <= "2.7"',
         ],
         [
             'flask==1.0; python_version > "2.7"',
-            "requests==1.0",
+            "requests==2.0",
         ],
         [req_file(), req_file()],
         [
@@ -207,9 +207,9 @@ def test_requirement_source_fix_comments(req_file):
     _check_fixes(
         [
             "# comment here\nflask==0.5",
-            "requests==1.0\n# another comment\nflask==0.5",
+            "requests==2.0\n# another comment\nflask==0.5",
         ],
-        ["flask==1.0", "requests==1.0\nflask==1.0"],
+        ["flask==1.0", "requests==2.0\nflask==1.0"],
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
@@ -225,7 +225,7 @@ def test_requirement_source_fix_parse_failure(monkeypatch, req_file):
 
     # If `pip-api` encounters multiple of the same package in the requirements file, it will throw a
     # parsing error
-    input_reqs = ["flask==0.5", "flask==0.5\nrequests==1.0\nflask==0.3"]
+    input_reqs = ["flask==0.5", "flask==0.5\nrequests==2.0\nflask==0.3"]
     req_paths = [req_file(), req_file()]
 
     # Populate the requirements files
@@ -255,7 +255,7 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
 
     # If `pip-api` encounters multiple of the same package in the requirements file, it will throw a
     # parsing error
-    input_reqs = ["flask==0.5", "flask==0.5\nrequests==1.0\nflask==0.3"]
+    input_reqs = ["flask==0.5", "flask==0.5\nrequests==2.0\nflask==0.3"]
     req_paths = [req_file(), req_file()]
 
     # Populate the requirements files
@@ -282,7 +282,7 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
     # We couldn't move the original requirements files back so we should expect a partially applied
     # fix. The first requirements file contains the fix, while the second one doesn't since we were
     # in the process of writing it out and didn't flush.
-    expected_reqs = ["flask==1.0", "flask==0.5\nrequests==1.0\nflask==0.3"]
+    expected_reqs = ["flask==1.0", "flask==0.5\nrequests==2.0\nflask==0.3"]
     for (expected_req, req_path) in zip(expected_reqs, req_paths):
         with open(req_path, "r") as f:
             assert expected_req == f.read().strip()
@@ -328,7 +328,7 @@ def test_requirement_source_require_hashes_inferred(monkeypatch):
     monkeypatch.setattr(
         _parse_requirements,
         "_read_file",
-        lambda _: ["flask==2.0.1 --hash=sha256:flask-hash\nrequests==1.0"],
+        lambda _: ["flask==2.0.1 --hash=sha256:flask-hash\nrequests==2.0"],
     )
 
     # If at least one requirement is hashed, this infers `require-hashes`
@@ -384,3 +384,170 @@ def test_requirement_source_no_deps_unpinned(monkeypatch):
     # When dependency resolution is disabled, all requirements must be pinned.
     with pytest.raises(DependencySourceError):
         list(source.collect())
+
+
+def test_requirement_source_dep_caching(monkeypatch):
+    source = requirement.RequirementSource(
+        [Path("requirements.txt")], ResolveLibResolver(), no_deps=True
+    )
+
+    monkeypatch.setattr(
+        _parse_requirements,
+        "_read_file",
+        lambda _: ["flask==2.0.1"],
+    )
+
+    specs = list(source.collect())
+
+    class MockResolver(DependencyResolver):
+        def resolve(self, req: Requirement) -> List[Dependency]:
+            raise DependencyResolverError
+
+    # Now run collect again and check that dependency resolution doesn't get repeated
+    source._resolver = MockResolver()
+
+    cached_specs = list(source.collect())
+    assert specs == cached_specs
+
+
+def test_requirement_source_fix_explicit_subdep(monkeypatch, req_file):
+    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    monkeypatch.setattr(requirement, "logger", logger)
+
+    # We're going to simulate the situation where a subdependency of `flask` has a vulnerability.
+    # In this case, we're choosing `jinja2`.
+    flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
+
+    # Firstly, get a handle on the `jinja2` dependency. The version cannot be hardcoded since it
+    # depends what versions are available on PyPI when dependency resolution runs.
+    jinja_dep: Optional[ResolvedDependency] = None
+    for dep in flask_deps:
+        if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
+            jinja_dep = dep
+            break
+    assert jinja_dep is not None
+
+    # Check that the `jinja2` dependency is explicitly added to the requirements file with an
+    # associated comment.
+    _check_fixes(
+        ["flask==2.0.1"],
+        ["flask==2.0.1\n    # pip-audit: subdependency fixed via flask==2.0.1\njinja2==4.0.0"],
+        [req_file()],
+        [
+            ResolvedFixVersion(
+                dep=jinja_dep,
+                version=Version("4.0.0"),
+            )
+        ],
+    )
+
+    # When explicitly listing a fixed subdependency, we issue a warning.
+    assert len(logger.warning.calls) == 1
+
+
+def test_requirement_source_fix_explicit_subdep_multiple_reqs(monkeypatch, req_file):
+    # Recreate the vulnerable subdependency case.
+    flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
+    jinja_dep: Optional[ResolvedDependency] = None
+    for dep in flask_deps:
+        if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
+            jinja_dep = dep
+            break
+    assert jinja_dep is not None
+
+    # This time our requirements file also lists `django-jinja`, another requirement that depends on
+    # `jinja2`. We're expecting that the comment generated above the `jinja2` requirement that gets
+    # added into the file will list both `flask` and `django-jinja` as sources.
+    _check_fixes(
+        ["flask==2.0.1\ndjango-jinja==1.0"],
+        [
+            "flask==2.0.1\ndjango-jinja==1.0\n"
+            "    # pip-audit: subdependency fixed via django-jinja==1.0,flask==2.0.1\n"
+            "jinja2==4.0.0"
+        ],
+        [req_file()],
+        [
+            ResolvedFixVersion(
+                dep=jinja_dep,
+                version=Version("4.0.0"),
+            )
+        ],
+    )
+
+
+def test_requirement_source_fix_explicit_subdep_resolver_error(req_file):
+    # Pass the requirement source a resolver that automatically raises errors
+    class MockResolver(DependencyResolver):
+        def resolve(self, req: Requirement) -> List[Dependency]:
+            raise DependencyResolverError
+
+    req_file_name = req_file()
+    with open(req_file_name, "w") as f:
+        f.write("flask==2.0.1")
+
+    # Recreate the vulnerable subdependency case.
+    flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
+    jinja_dep: Optional[ResolvedDependency] = None
+    for dep in flask_deps:
+        if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
+            jinja_dep = dep
+            break
+    assert jinja_dep is not None
+
+    # When we try to fix a vulnerable subdependency, we need to resolve dependencies if that
+    # information isn't already cached.
+    #
+    # Test the case where we hit a resolver error.
+    source = requirement.RequirementSource([req_file_name], MockResolver())
+    with pytest.raises(DependencyFixError):
+        source.fix(
+            ResolvedFixVersion(
+                dep=jinja_dep,
+                version=Version("4.0.0"),
+            )
+        )
+
+
+def test_requirement_source_fix_explicit_subdep_comment_removal(req_file):
+    # This test is documenting a weakness in the current fix implementation.
+    #
+    # When fixing a subdependency and explicitly adding it to the requirements file, we add a
+    # comment above the line to explain its presence since it's unusual to explicitly pin a
+    # subdependency like this.
+    #
+    # When we "fix" dependencies, we use `pip-api` to parse the requirements file and write it back
+    # out with the relevant line amended or added. One downside of this method is that `pip-api`
+    # filters out comments so applying fixes removes all comments in the file.
+    # See: https://github.com/di/pip-api/issues/120
+    #
+    # Therefore, when we apply a subdependency fix, the automated comment will be removed
+    # by any subsequent fixes.
+
+    # Recreate the vulnerable subdependency case.
+    flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
+    jinja_dep: Optional[ResolvedDependency] = None
+    for dep in flask_deps:
+        if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
+            jinja_dep = dep
+            break
+    assert jinja_dep is not None
+
+    # Now place a fix for the top-level `flask` requirement after the `jinja2` subdependency fix.
+    #
+    # When applying the `flask` fix, `pip-audit` reparses the requirements file, stripping out the
+    # comment and writes it back out with the fixed `flask` version.
+    _check_fixes(
+        ["flask==2.0.1"],
+        ["flask==3.0.0\njinja2==4.0.0"],
+        [req_file()],
+        [
+            ResolvedFixVersion(
+                dep=jinja_dep,
+                version=Version("4.0.0"),
+            ),
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("2.0.1")),
+                version=Version("3.0.0"),
+            ),
+        ],
+    )
