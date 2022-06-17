@@ -13,9 +13,11 @@ jobs:
       # NOTE: Needed to create GitHub releases.
       contents: write
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ">= 3.7"
 
     - name: create release
       id: create_release
