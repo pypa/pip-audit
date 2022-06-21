@@ -367,7 +367,11 @@ $ pip-audit --local
 
 Alternatively, if your input is fully pinned (and optionally hashed), you
 can tell `pip-audit` to skip dependency resolution with either `--no-deps`
-(pinned without hashes) or `--require-hashes` (pinned including hashes):
+(pinned without hashes) or `--require-hashes` (pinned including hashes).
+
+The latter is equivalent to `pip`'s
+[hash-checking mode](https://pip.pypa.io/en/stable/cli/pip_install/#hash-checking-mode)
+and is preferred, since it offers additional integrity.
 
 ```console
 # fails if any dependency is not fully pinned
