@@ -16,6 +16,23 @@ of vulnerability reports.
 This project is developed by [Trail of Bits](https://www.trailofbits.com/) with
 support from Google. This is not an official Google product.
 
+## Index
+
+* [Features](#features)
+* [Installation](#installation)
+  * [Third-party packages](#third-party-packages)
+  * [GitHub Actions](#github-actions)
+  * [`pre-commit` support](#pre-commit-support)
+* [Usage](#usage)
+  * [Exit codes](#exit-codes)
+  * [Dry runs](#dry-runs)
+* [Examples](#examples)
+* [Troubleshooting](#troubleshooting)
+* [Security model](#security-model)
+* [Licensing](#licensing)
+* [Contributing](#contributing)
+* [Code of Conduct](#code-of-conduct)
+
 ## Features
 
 * Support for auditing local environments and requirements-style files
@@ -25,6 +42,7 @@ support from Google. This is not an official Google product.
 * Support for emitting
   [SBOMs](https://en.wikipedia.org/wiki/Software_bill_of_materials) in
   [CycloneDX](https://cyclonedx.org/) XML or JSON
+* Support for automatically fixing vulnerable dependencies (`--fix`)
 * Human and machine-readable output formats (columnar, JSON)
 * Seamlessly reuses your existing local `pip` caches
 
@@ -35,9 +53,6 @@ support from Google. This is not an official Google product.
 ```bash
 python -m pip install pip-audit
 ```
-
-Alternatively, you can use `pip-audit` in your CI via the official
-[`trailofbits/gh-action-pip-audit` GitHub Action](https://github.com/trailofbits/gh-action-pip-audit).
 
 ### Third-party packages
 
@@ -59,6 +74,48 @@ conda install -c conda-forge pip-audit
 
 Third-party packages are **not** directly supported by this project. Please consult your package manager's
 documentation for more detailed installation guidance.
+
+### GitHub Actions
+
+`pip-audit` has [an official GitHub Action](https://github.com/trailofbits/gh-action-pip-audit)!
+
+You can install it from the
+[GitHub Marketplace](https://github.com/marketplace/actions/gh-action-pip-audit), or
+add it to your CI manually:
+
+```yaml
+jobs:
+  pip-audit:
+    steps:
+      - uses: trailofbits/gh-action-pip-audit@v0.0.4
+        with:
+          inputs: requirements.txt
+```
+
+See the
+[action documentation](https://github.com/trailofbits/gh-action-pip-audit/blob/main/README.md)
+for more details and usage examples.
+
+### `pre-commit` support
+
+`pip-audit` has [`pre-commit`](https://pre-commit.com/) support.
+
+For example, using `pip-audit` via `pre-commit` to audit a requirements file:
+
+```yaml
+  - repo: https://github.com/trailofbits/pip-audit
+    rev: v2.1.2
+    hooks:
+      -   id: pip-audit
+          args: ["-r", "requirements.txt"]
+
+ci:
+  # Leave pip-audit to only run locally and not in CI
+  # pre-commit.ci does not allow network calls
+  skip: [pip-audit]
+```
+
+Any `pip-audit` arguments documented below can be passed.
 
 ## Usage
 
@@ -221,7 +278,7 @@ Flask 0.5     PYSEC-2018-66  0.12.3       The Pallets Project flask version Befo
 
 Audit dependencies in JSON format:
 ```
-$ pip-audit -f json | jq
+$ pip-audit -f json | python -m json.tool
 Found 2 known vulnerabilities in 1 package
 [
   {
@@ -282,6 +339,48 @@ flask 0.5     PYSEC-2019-179 1.0          Successfully upgraded flask (0.5 => 1.
 flask 0.5     PYSEC-2018-66  0.12.3       Successfully upgraded flask (0.5 => 1.0)
 ```
 
+## Troubleshooting
+
+Have you resolved a problem with `pip-audit`? Help us by contributing to this
+section!
+
+### `pip-audit` takes longer than I expect!
+
+Depending on how you're using it, `pip-audit` may have to perform its
+own dependency resolution, which can take roughly as long as `pip install`
+does for a project. See the [security model](#security-model) for an explanation.
+
+You have two options for avoiding dependency resolution: *audit a pre-installed
+environment*, or *ensure that your dependencies are already fully resolved*.
+
+If you know that you've already fully configured an environment equivalent
+to the one that `pip-audit -r requirements.txt` would audit, you can simply
+reuse it:
+
+```console
+# Note the absence of any "input" arguments, indicating that the environment is used.
+$ pip-audit
+
+# Optionally filter out non-local packages, for virtual environments:
+$ pip-audit --local
+```
+
+Alternatively, if your input is fully pinned (and optionally hashed), you
+can tell `pip-audit` to skip dependency resolution with either `--no-deps`
+(pinned without hashes) or `--require-hashes` (pinned including hashes).
+
+The latter is equivalent to `pip`'s
+[hash-checking mode](https://pip.pypa.io/en/stable/cli/pip_install/#hash-checking-mode)
+and is preferred, since it offers additional integrity.
+
+```console
+# fails if any dependency is not fully pinned
+$ pip-audit --no-deps -r requirements.txt
+
+# fails if any dependency is not fully pinned *or* is missing hashes
+$ pip-audit --require-hashes -r requirements.txt
+```
+
 ## Security Model
 
 This section exists to describe the security assumptions you **can** and **must not**
@@ -315,25 +414,6 @@ and purposes, `pip-audit -r INPUT` is functionally equivalent to
 `pip install -r INPUT`, with a small amount of **non-security isolation** to
 avoid conflicts with any of your local environments.
 
-## pre-commit support
-
-pip-audit has [pre-commit](https://pre-commit.com/) support. Please specify your
-arguments in your pre-commit config. An example config using requirements file can be:
-
-```yaml
-  - repo: https://github.com/trailofbits/pip-audit
-    rev: v2.1.2
-    hooks:
-      -   id: pip-audit
-          args: ["-r", "requirements.txt"]
-
-ci:
-  # Leave pip-audit to only run locally and not in CI
-  # pre-commit.ci does not allow network calls
-  skip: [pip-audit]
-```
-- Any valid CLI arguments documented above can be passed.
-
 ## Licensing
 
 `pip-audit` is licensed under the Apache 2.0 License.
@@ -347,5 +427,6 @@ the ISC license.
 See [the contributing docs](CONTRIBUTING.md) for details.
 
 ## Code of Conduct
+
 Everyone interacting with this project is expected to follow the
 [PSF Code of Conduct](https://github.com/pypa/.github/blob/main/CODE_OF_CONDUCT.md).
