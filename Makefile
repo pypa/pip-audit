@@ -60,16 +60,6 @@ package: env/pyvenv.cfg
 	. env/bin/activate && \
 		python3 -m build
 
-.PHONY: release
-release: env/pyvenv.cfg
-	@. env/bin/activate && \
-		NEXT_VERSION=$$(bump $(BUMP_ARGS)) && \
-		git add $(PY_MODULE)/__init__.py && git diff --quiet --exit-code && \
-		git commit -m "version: v$${NEXT_VERSION}" && \
-		git tag v$${NEXT_VERSION} && \
-		echo "RUN ME MANUALLY: git push origin main && git push origin v$${NEXT_VERSION}"
-
-
 .PHONY: edit
 edit:
 	$(EDITOR) $(ALL_PY_SRCS)
