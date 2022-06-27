@@ -1,7 +1,7 @@
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types:
+      - published
 
 name: release
 
@@ -9,26 +9,12 @@ jobs:
   pypi:
     name: upload release to PyPI
     runs-on: ubuntu-latest
-    permissions:
-      # NOTE: Needed to create GitHub releases.
-      contents: write
     steps:
     - uses: actions/checkout@v3
 
     - uses: actions/setup-python@v4
       with:
         python-version: ">= 3.7"
-
-    - name: create release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: ${{ contains(github.ref, 'pre') || contains(github.ref, 'rc') }}
 
     - name: deps
       run: python -m pip install -U setuptools build wheel

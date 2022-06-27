@@ -96,27 +96,50 @@ here! They're documented for completeness and for onboarding future maintainers.
 Releases of `pip-audit` are managed with [`bump`](https://github.com/di/bump)
 and GitHub Actions.
 
-```bash
-# default release (patch bump)
-make release
+The following manual steps are required:
 
-# override the default
-# vX.Y.Z -> vX.Y.Z-rc.0
-make release BUMP_ARGS="--pre rc.0"
+1. Create a new development branch for the release. For example:
 
-# vX.Y.Z -> vN.0.0
-make release BUMP_ARGS="--major"
-```
+    ```console
+    $ git checkout -b prepare-1.0.0
+    ```
 
-`make release` will fail if there are any untracked changes in the source tree.
+1. Update `pip-audit`'s `__version__` attribute. It can be found under `pip_audit/__init__.py`.
 
-If `make release` succeeds, you'll see an output like this:
+    **Note**: You can do this automatically with `bump`:
 
-```
-RUN ME MANUALLY: git push origin main && git push origin vX.Y.Z
-```
+    ```console
+    # See bump --help for all options
+    $ bump --major
+    ```
 
-Run that last command sequence to complete the release.
+1. Commit your changes to the branch and create a new Pull Request.
+
+1. Tag another maintainer for review. Once approved, you may merge your PR.
+
+1. Create a new tag corresponding to the merged version change. For example:
+
+    ```console
+    # IMPORTANT: don't forget the `v` prefix!
+    $ git tag v1.0.0
+    ```
+
+1. Push the new tag:
+
+    ```console
+    $ git push origin v1.0.0
+    ```
+
+1. Use the [releases page](https://github.com/trailofbits/pip-audit/releases) to
+   create a new release, marking it as a "pre-release" if appropriate.
+
+1. Copy the relevant
+  [CHANGELOG](https://github.com/trailofbits/pip-audit/blob/main/CHANGELOG.md)
+  entries into the release notes.
+
+1. Save and publish the release. The CI will take care of all other tasks.
+
+
 
 ## Development practices
 
