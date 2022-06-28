@@ -39,12 +39,11 @@ class MarkdownFormat(VulnerabilityFormat):
         Returns a Markdown formatted string representing a set of vulnerability results and applied
         fixes.
         """
-        return (
-            self._format_vuln_results(result, fixes)
-            + os.linesep
-            + os.linesep
-            + self._format_skipped_deps(result)
-        )
+        output = self._format_vuln_results(result, fixes)
+        skipped_deps_output = self._format_skipped_deps(result)
+        if skipped_deps_output:
+            output += os.linesep + os.linesep + skipped_deps_output
+        return output
 
     def _format_vuln_results(
         self,
@@ -77,7 +76,10 @@ class MarkdownFormat(VulnerabilityFormat):
         vuln: service.VulnerabilityResult,
         applied_fix: Optional[fix.FixVersion],
     ) -> str:
-        vuln_text = f"{dep.canonical_name} | {dep.version} | {vuln.id} | {self._format_fix_versions(vuln.fix_versions)}"
+        vuln_text = (
+            f"{dep.canonical_name} | {dep.version} | {vuln.id} | "
+            f"{self._format_fix_versions(vuln.fix_versions)}"
+        )
         if applied_fix is not None:
             vuln_text += self._format_applied_fix(applied_fix)
         if self.output_desc:
@@ -111,6 +113,9 @@ class MarkdownFormat(VulnerabilityFormat):
             if dep.is_skipped():
                 dep = cast(service.SkippedDependency, dep)
                 skipped_dep_rows.append(self._format_skipped_dep(dep))
+
+        if not skipped_dep_rows:
+            return str()
 
         return header + os.linesep + border + os.linesep + os.linesep.join(skipped_dep_rows)
 
