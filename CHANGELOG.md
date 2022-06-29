@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Added
+
+* Output formats: `pip-audit` now supports a Markdown format
+  (`--format=markdown`) which renders results as a set of Markdown tables.
+  ([#312](https://github.com/trailofbits/pip-audit/pull/312))
+
 ## [2.3.4]
 
 ### Fixed
