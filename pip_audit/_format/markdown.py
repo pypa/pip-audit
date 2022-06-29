@@ -14,6 +14,11 @@ from .interface import VulnerabilityFormat
 
 
 class MarkdownFormat(VulnerabilityFormat):
+    """
+    An implementation of `VulnerabilityFormat` that formats vulnerability results as a set of
+    Markdown tables.
+    """
+
     def __init__(self, output_desc: bool) -> None:
         """
         Create a new `MarkdownFormat`.
@@ -42,7 +47,11 @@ class MarkdownFormat(VulnerabilityFormat):
         output = self._format_vuln_results(result, fixes)
         skipped_deps_output = self._format_skipped_deps(result)
         if skipped_deps_output:
-            output += os.linesep + os.linesep + skipped_deps_output
+            # If we wrote the results table already, we need to add some line breaks to ensure that
+            # the skipped dependency table renders correctly.
+            if output:
+                output += os.linesep + os.linesep
+            output += skipped_deps_output
         return output
 
     def _format_vuln_results(
@@ -68,6 +77,9 @@ class MarkdownFormat(VulnerabilityFormat):
             for vuln in vulns:
                 vuln_rows.append(self._format_vuln(dep, vuln, applied_fix))
 
+        if not vuln_rows:
+            return str()
+
         return header + os.linesep + border + os.linesep + os.linesep.join(vuln_rows)
 
     def _format_vuln(
@@ -81,7 +93,7 @@ class MarkdownFormat(VulnerabilityFormat):
             f"{self._format_fix_versions(vuln.fix_versions)}"
         )
         if applied_fix is not None:
-            vuln_text += self._format_applied_fix(applied_fix)
+            vuln_text += f" | {self._format_applied_fix(applied_fix)}"
         if self.output_desc:
             vuln_text += f" | {vuln.description}"
         return vuln_text
