@@ -43,7 +43,7 @@ support from Google. This is not an official Google product.
   [SBOMs](https://en.wikipedia.org/wiki/Software_bill_of_materials) in
   [CycloneDX](https://cyclonedx.org/) XML or JSON
 * Support for automatically fixing vulnerable dependencies (`--fix`)
-* Human and machine-readable output formats (columnar, JSON)
+* Human and machine-readable output formats (columnar, Markdown, JSON)
 * Seamlessly reuses your existing local `pip` caches
 
 ## Installation
