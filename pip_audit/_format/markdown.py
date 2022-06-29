@@ -3,6 +3,7 @@ Functionality for formatting vulnerability results as a Markdown table.
 """
 
 import os
+from textwrap import dedent
 from typing import Dict, List, Optional, cast
 
 from packaging.version import Version
@@ -50,7 +51,7 @@ class MarkdownFormat(VulnerabilityFormat):
             # If we wrote the results table already, we need to add some line breaks to ensure that
             # the skipped dependency table renders correctly.
             if output:
-                output += os.linesep + os.linesep
+                output += "\n"
             output += skipped_deps_output
         return output
 
@@ -80,7 +81,15 @@ class MarkdownFormat(VulnerabilityFormat):
         if not vuln_rows:
             return str()
 
-        return header + os.linesep + border + os.linesep + os.linesep.join(vuln_rows)
+        return (
+            dedent(
+                f"""
+            {header}
+            {border}
+            """
+            )
+            + "\n".join(vuln_rows)
+        )
 
     def _format_vuln(
         self,
@@ -129,7 +138,15 @@ class MarkdownFormat(VulnerabilityFormat):
         if not skipped_dep_rows:
             return str()
 
-        return header + os.linesep + border + os.linesep + os.linesep.join(skipped_dep_rows)
+        return (
+            dedent(
+                f"""
+            {header}
+            {border}
+            """
+            )
+            + "\n".join(skipped_dep_rows)
+        )
 
     def _format_skipped_dep(self, dep: service.SkippedDependency) -> str:
         return f"{dep.name} | {dep.skip_reason}"
