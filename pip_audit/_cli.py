@@ -23,7 +23,13 @@ from pip_audit._dependency_source import (
 )
 from pip_audit._dependency_source.interface import DependencySourceError
 from pip_audit._fix import ResolvedFixVersion, SkippedFixVersion, resolve_fix_versions
-from pip_audit._format import ColumnsFormat, CycloneDxFormat, JsonFormat, VulnerabilityFormat
+from pip_audit._format import (
+    ColumnsFormat,
+    CycloneDxFormat,
+    JsonFormat,
+    MarkdownFormat,
+    VulnerabilityFormat,
+)
 from pip_audit._service import OsvService, PyPIService, VulnerabilityService
 from pip_audit._service.interface import ConnectionError as VulnServiceConnectionError
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency
@@ -44,6 +50,7 @@ class OutputFormatChoice(str, enum.Enum):
     Json = "json"
     CycloneDxJson = "cyclonedx-json"
     CycloneDxXml = "cyclonedx-xml"
+    Markdown = "markdown"
 
     def to_format(self, output_desc: bool) -> VulnerabilityFormat:
         if self is OutputFormatChoice.Columns:
@@ -54,6 +61,8 @@ class OutputFormatChoice(str, enum.Enum):
             return CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Json)
         elif self is OutputFormatChoice.CycloneDxXml:
             return CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Xml)
+        elif self is OutputFormatChoice.Markdown:
+            return MarkdownFormat(output_desc)
         else:
             assert_never(self)
 
