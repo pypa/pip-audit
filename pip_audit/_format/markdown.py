@@ -2,7 +2,6 @@
 Functionality for formatting vulnerability results as a Markdown table.
 """
 
-import os
 from textwrap import dedent
 from typing import Dict, List, Optional, cast
 
