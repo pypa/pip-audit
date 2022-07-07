@@ -8,6 +8,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.4.1]
+
 ### Fixed
 
 * Fixed a breakage in hash-checking mode caused by a
@@ -293,6 +295,7 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/trailofbits/pip-audit/compare/v2.0.0...HEAD
+[2.4.1]: https://github.com/trailofbits/pip-audit/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/trailofbits/pip-audit/compare/v2.3.4...v2.4.0
 [2.3.4]: https://github.com/trailofbits/pip-audit/compare/v2.3.3...v2.3.4
 [2.3.3]: https://github.com/trailofbits/pip-audit/compare/v2.3.2...v2.3.3
