@@ -274,7 +274,7 @@ def test_pypi_hashed_dep_no_release_data(cache_dir, monkeypatch):
 
             def json(self):
                 return {
-                    "releases": {},
+                    "urls": [],
                     "vulnerabilities": [
                         {
                             "id": "VULN-0",
@@ -294,67 +294,3 @@ def test_pypi_hashed_dep_no_release_data(cache_dir, monkeypatch):
     dep = service.ResolvedDependency("foo", Version("1.0"), hashes={"sha256": ["package-hash"]})
     with pytest.raises(service.ServiceError):
         dict(pypi.query_all(iter([dep])))
-
-
-def test_pypi_legacy_release_versions_do_not_crash(cache_dir, monkeypatch):
-    def get_mock_response():
-        class MockResponse:
-            def raise_for_status(self):
-                pass
-
-            def json(self):
-                return {
-                    "releases": {
-                        # Sampled from real invalid ("legacy") versions on PyPI
-                        "0.8.0-final0": [],
-                        "0.1-bulbasaur": [],
-                        "0.8d": [],
-                        "2004d": [],
-                        "0.5.2.5.g5b3e942": [],
-                        "git-unknown": [],
-                        "0.7.1.fix1": [],
-                        "r1": [],
-                        "0.1.0.1.g46ab6a7": [],
-                        "1.8.-1": [],
-                        "9bbb4f3": [],
-                        "2.0.0-final": [],
-                        "2013-02-16": [],
-                        "1.0beta5prerelease": [],
-                        "1.1.0-2-g555364d-dirty": [],
-                        "0.2-test1": [],
-                        "1.2.dev-r25": [],
-                        # Some valid PEP 440 versions for good measure
-                        "0.8.0rc1": [],
-                        "0.9.0": [],
-                        "1.0.0": [{"digests": {"sha256": "fakesha"}}],
-                    },
-                    "vulnerabilities": [
-                        {
-                            "id": "VULN-0",
-                            "details": "The first vulnerability",
-                            "fixed_in": ["1.1"],
-                            "aliases": [],
-                        }
-                    ],
-                }
-
-        return MockResponse()
-
-    monkeypatch.setattr(
-        service.pypi, "caching_session", lambda _: get_mock_session(get_mock_response)
-    )
-
-    pypi = service.PyPIService(cache_dir)
-    dep = service.ResolvedDependency("foo", Version("1.0"), hashes={"sha256": ["fakesha"]})
-    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
-        pypi.query_all(iter([dep]))
-    )
-    assert len(results) == 1
-    assert dep in results
-    assert len(results[dep]) == 1
-    assert results[dep][0] == service.VulnerabilityResult(
-        id="VULN-0",
-        description="The first vulnerability",
-        fix_versions=[Version("1.1")],
-        aliases=set(),
-    )

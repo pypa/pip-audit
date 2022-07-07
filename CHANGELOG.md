@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed a breakage in hash-checking mode caused by a
+  [change to the PyPI JSON API](https://discuss.python.org/t/backwards-incompatible-change-to-pypi-json-api/17154)
+  ([#318](https://github.com/trailofbits/pip-audit/pull/318))
+
 ## [2.4.0]
 
 ### Added
