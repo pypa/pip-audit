@@ -27,3 +27,10 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.PYPI_TOKEN }}
+
+    - name: sign
+      uses: trailofbits/gh-action-sigstore-python@v0.0.1
+      with:
+        inputs: >
+          "pip_audit-${{ github.event.release.tag_name }}.tar.gz
+          "pip_audit-${{ github.event.release.tag_name }}-py3-none-any.whl"
