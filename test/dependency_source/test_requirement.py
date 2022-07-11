@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from typing import List, Optional
 
+import pip_requirements_parser
 import pretend  # type: ignore
 import pytest
 from packaging.requirements import Requirement
@@ -24,7 +25,7 @@ from pip_audit._service import Dependency, ResolvedDependency
 def test_requirement_source(monkeypatch):
     source = requirement.RequirementSource([Path("requirements.txt")], ResolveLibResolver())
 
-    monkeypatch.setattr(_parse_requirements, "_read_file", lambda _: ["flask==2.0.1"])
+    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "flask==2.0.1")
 
     specs = list(source.collect())
     assert ResolvedDependency("flask", Version("2.0.1")) in specs
@@ -41,17 +42,16 @@ def test_requirement_source_multiple_files(monkeypatch):
         ResolveLibResolver(),
     )
 
-    def read_file_mock(f):
-        filename = f.name
+    def get_file_content_mock(filename):
         if filename == file1:
-            return ["flask==2.0.1"]
+            return "flask==2.0.1"
         elif filename == file2:
-            return ["requests==2.8.1"]
+            return "requests==2.8.1"
         else:
             assert filename == file3
-            return ["pip-api==0.0.22\n", "packaging==21.0"]
+            return "pip-api==0.0.22\npackaging==21.0"
 
-    monkeypatch.setattr(_parse_requirements, "_read_file", read_file_mock)
+    monkeypatch.setattr(pip_requirements_parser, "get_file_content", get_file_content_mock)
 
     specs = list(source.collect())
     assert ResolvedDependency("flask", Version("2.0.1")) in specs
@@ -66,7 +66,7 @@ def test_requirement_source_parse_error(monkeypatch):
     # Duplicate dependencies aren't allowed in a requirements file so we should expect the parser to
     # raise here
     monkeypatch.setattr(
-        _parse_requirements, "_read_file", lambda _: ["flask==2.0.1\n", "flask==2.0.0"]
+        pip_requirements_parser, "get_file_content", lambda _: "flask==2.0.1\nflask==2.0.0"
     )
 
     with pytest.raises(DependencySourceError):
@@ -81,7 +81,7 @@ def test_requirement_source_resolver_error(monkeypatch):
 
     source = requirement.RequirementSource([Path("requirements.txt")], MockResolver())
 
-    monkeypatch.setattr(_parse_requirements, "_read_file", lambda _: ["flask==2.0.1"])
+    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "flask==2.0.1")
 
     with pytest.raises(DependencySourceError):
         list(source.collect())
@@ -94,7 +94,7 @@ def test_requirement_source_duplicate_dependencies(monkeypatch):
     )
 
     # Return the same requirements for both files
-    monkeypatch.setattr(_parse_requirements, "_read_file", lambda _: ["flask==2.0.1"])
+    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "flask==2.0.1")
 
     specs = list(source.collect())
 
@@ -294,7 +294,9 @@ def test_requirement_source_require_hashes(monkeypatch):
     )
 
     monkeypatch.setattr(
-        _parse_requirements, "_read_file", lambda _: ["flask==2.0.1 --hash=sha256:flask-hash"]
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==2.0.1 --hash=sha256:flask-hash",
     )
 
     # The hash should be populated in the resolved dependency. Additionally, the source should not
@@ -312,9 +314,9 @@ def test_requirement_source_require_hashes_missing(monkeypatch):
     )
 
     monkeypatch.setattr(
-        _parse_requirements,
-        "_read_file",
-        lambda _: ["flask==2.0.1"],
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==2.0.1",
     )
 
     # All requirements must be hashed when collecting with `require-hashes`
@@ -326,9 +328,9 @@ def test_requirement_source_require_hashes_inferred(monkeypatch):
     source = requirement.RequirementSource([Path("requirements.txt")], ResolveLibResolver())
 
     monkeypatch.setattr(
-        _parse_requirements,
-        "_read_file",
-        lambda _: ["flask==2.0.1 --hash=sha256:flask-hash\nrequests==2.0"],
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==2.0.1 --hash=sha256:flask-hash\nrequests==2.0",
     )
 
     # If at least one requirement is hashed, this infers `require-hashes`
@@ -342,11 +344,9 @@ def test_requirement_source_require_hashes_unpinned(monkeypatch):
     )
 
     monkeypatch.setattr(
-        _parse_requirements,
-        "_read_file",
-        lambda _: [
-            "flask==2.0.1 --hash=sha256:flask-hash\nrequests>=1.0 --hash=sha256:requests-hash"
-        ],
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==2.0.1 --hash=sha256:flask-hash\nrequests>=1.0 --hash=sha256:requests-hash",
     )
 
     # When hashed dependencies are provided, all dependencies must be explicitly pinned to an exact
@@ -361,9 +361,9 @@ def test_requirement_source_no_deps(monkeypatch):
     )
 
     monkeypatch.setattr(
-        _parse_requirements,
-        "_read_file",
-        lambda _: ["flask==2.0.1"],
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==2.0.1",
     )
 
     specs = list(source.collect())
@@ -376,9 +376,9 @@ def test_requirement_source_no_deps_unpinned(monkeypatch):
     )
 
     monkeypatch.setattr(
-        _parse_requirements,
-        "_read_file",
-        lambda _: ["flask\nrequests>=1.0"],
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask\nrequests>=1.0",
     )
 
     # When dependency resolution is disabled, all requirements must be pinned.
@@ -392,9 +392,9 @@ def test_requirement_source_dep_caching(monkeypatch):
     )
 
     monkeypatch.setattr(
-        _parse_requirements,
-        "_read_file",
-        lambda _: ["flask==2.0.1"],
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==2.0.1",
     )
 
     specs = list(source.collect())

@@ -18,6 +18,7 @@ from pip_api import Requirement as ParsedRequirement
 from pip_api import parse_requirements
 from pip_api._parse_requirements import UnparsedRequirement
 from pip_api.exceptions import PipError
+from pip_requirements_parser import InstallRequirement, RequirementsFile
 
 from pip_audit._dependency_source import (
     DependencyFixError,
@@ -82,13 +83,23 @@ class RequirementSource(DependencySource):
         collected: Set[Dependency] = set()
         for filename in self._filenames:
             try:
-                reqs = parse_requirements(filename=filename)
-            except PipError as pe:
-                raise RequirementSourceError(
-                    f"requirement parsing raised an error: {filename}"
-                ) from pe
-            try:
-                for _, dep in self._collect_cached_deps(filename, list(reqs.values())):
+                rf = RequirementsFile.from_file(filename.name)
+                if rf.invalid_lines:
+                    raise RequirementSourceError(
+                        f"Parsed invalid lines, file={filename}, lines={rf.invalid_lines}"
+                    )
+
+                reqs: List[InstallRequirement] = []
+                name_to_req: Dict[str, InstallRequirement] = {}
+                for req in rf.requirements:
+                    if req.marker is None or req.marker.evaluate():
+                        # This means we have a duplicate requirement for the same package
+                        if req.name in name_to_req:
+                            raise RequirementSourceError(f"Found duplicate package: {req.name}")
+                        name_to_req[req.name] = req
+                        reqs.append(req)
+
+                for _, dep in self._collect_cached_deps(filename, reqs):
                     if dep in collected:
                         continue
                     collected.add(dep)
@@ -194,7 +205,7 @@ class RequirementSource(DependencySource):
 
     def _collect_preresolved_deps(
         self,
-        reqs: Iterator[Union[ParsedRequirement, UnparsedRequirement]],
+        reqs: Iterator[InstallRequirement],
         require_hashes: bool = False,
     ) -> Iterator[Tuple[Requirement, Dependency]]:
         """
@@ -202,8 +213,7 @@ class RequirementSource(DependencySource):
         hash requirement policy.
         """
         for req in reqs:
-            req = cast(ParsedRequirement, req)
-            if require_hashes and not req.hashes:
+            if require_hashes and not req.hash_options:
                 raise RequirementSourceError(
                     f"requirement {req.name} does not contain a hash {str(req)}"
                 )
@@ -215,12 +225,27 @@ class RequirementSource(DependencySource):
             if pinned_specifier is None:
                 raise RequirementSourceError(f"requirement {req.name} is not pinned: {str(req)}")
 
-            yield Requirement(str(req)), ResolvedDependency(
-                req.name, Version(pinned_specifier.group("version")), req.hashes
+            yield req.req, ResolvedDependency(
+                req.name,
+                Version(pinned_specifier.group("version")),
+                self._build_hash_options_mapping(req.hash_options),
             )
 
+    def _build_hash_options_mapping(self, hash_options: List[str]) -> Dict[str, List[str]]:
+        """
+        A helper that takes a list of hash options and returns a dictionary mapping from hash
+        algorithm (e.g. sha256) to a list of values.
+        """
+        mapping: Dict[str, List[str]] = {}
+        for hash_option in hash_options:
+            algorithm, hash_ = hash_option.split(":")
+            if algorithm not in mapping:
+                mapping[algorithm] = []
+            mapping[algorithm].append(hash_)
+        return mapping
+
     def _collect_cached_deps(
-        self, filename: Path, reqs: List[Union[ParsedRequirement, UnparsedRequirement]]
+        self, filename: Path, reqs: List[InstallRequirement]
     ) -> Iterator[Tuple[Requirement, Dependency]]:
         """
         Collect resolved dependencies for a given requirements file, retrieving them from the
@@ -241,9 +266,7 @@ class RequirementSource(DependencySource):
         # 2. One or more parsed requirements has hashes specified, enabling
         #    hash checking for all requirements.
         # 3. The user has explicitly specified `--no-deps`.
-        require_hashes = self._require_hashes or any(
-            isinstance(req, ParsedRequirement) and req.hashes for req in reqs
-        )
+        require_hashes = self._require_hashes or any(req.hash_options for req in reqs)
         skip_deps = require_hashes or self._no_deps
         if skip_deps:
             for req, dep in self._collect_preresolved_deps(
@@ -255,7 +278,7 @@ class RequirementSource(DependencySource):
                 yield req, dep
         else:
             # Invoke the dependency resolver to turn requirements into dependencies
-            req_values: List[Requirement] = [Requirement(str(req)) for req in reqs]
+            req_values: List[Requirement] = [r.req for r in reqs]
             for req, resolved_deps in self._resolver.resolve_all(iter(req_values)):
                 for dep in resolved_deps:
                     if req not in new_cached_deps_for_file:
