@@ -181,9 +181,9 @@ def test_requirement_source_fix_specifier_no_match(req_file):
     )
 
 
-def test_requirement_source_fix_marker(req_file):
-    # `pip-api` automatically filters out requirements with markers that don't apply to the current
-    # environment
+def test_requirement_source_fix_preserve_marker(req_file):
+    # `pip-requirements-parser` preserves requirements with markers that don't apply to the current
+    # environment.
     _check_fixes(
         [
             'flask<1.0; python_version > "2.7"',
@@ -191,7 +191,7 @@ def test_requirement_source_fix_marker(req_file):
         ],
         [
             'flask==1.0; python_version > "2.7"',
-            "requests==2.0",
+            'requests==2.0\nflask==1.0; python_version <= "2.7"',
         ],
         [req_file(), req_file()],
         [
@@ -209,7 +209,7 @@ def test_requirement_source_fix_comments(req_file):
             "# comment here\nflask==0.5",
             "requests==2.0\n# another comment\nflask==0.5",
         ],
-        ["flask==1.0", "requests==2.0\nflask==1.0"],
+        ["# comment here\nflask==1.0", "requests==2.0\n# another comment\nflask==1.0"],
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
@@ -263,7 +263,6 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
         with open(req_path, "w") as f:
             f.write(input_req)
 
-    # Simulate an error being raised during file recovery
     def mock_replace(*_args, **_kwargs):
         raise OSError
 
@@ -508,20 +507,19 @@ def test_requirement_source_fix_explicit_subdep_resolver_error(req_file):
         )
 
 
-def test_requirement_source_fix_explicit_subdep_comment_removal(req_file):
-    # This test is documenting a weakness in the current fix implementation.
+def test_requirement_source_fix_explicit_subdep_comment_retension(req_file):
+    # This test is regression testing a weakness in the previous fix implementation.
     #
     # When fixing a subdependency and explicitly adding it to the requirements file, we add a
     # comment above the line to explain its presence since it's unusual to explicitly pin a
     # subdependency like this.
     #
-    # When we "fix" dependencies, we use `pip-api` to parse the requirements file and write it back
-    # out with the relevant line amended or added. One downside of this method is that `pip-api`
-    # filters out comments so applying fixes removes all comments in the file.
-    # See: https://github.com/di/pip-api/issues/120
+    # When we "fix" dependencies, we parse the requirements file and write it back out with the
+    # relevant line amended or added. When we used `pip-api` for requirements parsing, our fix logic
+    # had the unfortunate side effect of stripping comments from the file. Importantly, when we
+    # applied subdependency fixes, the automated comments used to be removed by any subsequent fixes.
     #
-    # Therefore, when we apply a subdependency fix, the automated comment will be removed
-    # by any subsequent fixes.
+    # Since we've switching `pip-requirements-parser`, we should no longer have this issue.
 
     # Recreate the vulnerable subdependency case.
     flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
@@ -534,11 +532,14 @@ def test_requirement_source_fix_explicit_subdep_comment_removal(req_file):
 
     # Now place a fix for the top-level `flask` requirement after the `jinja2` subdependency fix.
     #
-    # When applying the `flask` fix, `pip-audit` reparses the requirements file, stripping out the
-    # comment and writes it back out with the fixed `flask` version.
+    # When applying the `flask` fix, `pip-audit` reparses the requirements file, and writes it back
+    # out with the fixed `flask` version with the comments preserved.
+    #
+    # One quirk is that comment indentation isn't preserved (the automated comment was originally
+    # indented with 4 spaces).
     _check_fixes(
         ["flask==2.0.1"],
-        ["flask==3.0.0\njinja2==4.0.0"],
+        ["flask==3.0.0\n# pip-audit: subdependency fixed via flask==2.0.1\njinja2==4.0.0"],
         [req_file()],
         [
             ResolvedFixVersion(

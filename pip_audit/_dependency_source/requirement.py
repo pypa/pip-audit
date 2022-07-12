@@ -11,7 +11,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import IO, Dict, Iterator, List, Set, Tuple, Union, cast
 
-from packaging.requirements import Requirement
+from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 from pip_api import Requirement as ParsedRequirement
@@ -90,13 +90,13 @@ class RequirementSource(DependencySource):
                     )
 
                 reqs: List[InstallRequirement] = []
-                name_to_req: Dict[str, InstallRequirement] = {}
+                req_names: Set[str] = set()
                 for req in rf.requirements:
                     if req.marker is None or req.marker.evaluate():
                         # This means we have a duplicate requirement for the same package
-                        if req.name in name_to_req:
+                        if req.name in req_names:
                             raise RequirementSourceError(f"Found duplicate package: {req.name}")
-                        name_to_req[req.name] = req
+                        req_names.add(req.name)
                         reqs.append(req)
 
                 for _, dep in self._collect_cached_deps(filename, reqs):
@@ -140,26 +140,37 @@ class RequirementSource(DependencySource):
         # Reparse the requirements file. We want to rewrite each line to the new requirements file
         # and only modify the lines that we're fixing.
         try:
-            reqs = parse_requirements(filename=filename)
+            reqs = list(RequirementsFile.parse(filename=str(filename)))
         except PipError as pe:
             raise RequirementFixError(f"requirement parsing raised an error: {filename}") from pe
 
-        # Convert requirements types from pip-api's vendored types to our own
-        req_list: List[Requirement] = [Requirement(str(req)) for req in reqs.values()]
+        # Check ahead of time for anything invalid in the requirements file since we don't want to
+        # encounter this while writing out the file. Check for duplicate requirements and lines that
+        # failed to parse.
+        req_names: Set[str] = set()
+        for req in reqs:
+            if isinstance(req, InstallRequirement) and (
+                req.marker is None or req.marker.evaluate()
+            ):
+                if req.name in req_names:
+                    raise RequirementFixError("Duplicate req")
+                req_names.add(req.name)
+            elif isinstance(req, InvalidRequirement):
+                raise RequirementFixError("Invalid req")
 
         # Now write out the new requirements file
         with filename.open("w") as f:
             fixed = False
-            for req in req_list:
+            for req in reqs:
                 if (
-                    req.name == fix_version.dep.name
+                    isinstance(req, InstallRequirement)
+                    and req.name == fix_version.dep.name
                     and req.specifier.contains(fix_version.dep.version)
                     and not req.specifier.contains(fix_version.version)
                 ):
-                    req.specifier = SpecifierSet(f"=={fix_version.version}")
+                    req.req.specifier = SpecifierSet(f"=={fix_version.version}")
                     fixed = True
-                assert req.marker is None or req.marker.evaluate()
-                print(str(req), file=f)
+                print(req.dumps(), file=f)
 
             # The vulnerable dependency may not be explicitly listed in the requirements file if it
             # is a subdependency of a requirement. In this case, we should explicitly add the fixed
@@ -170,8 +181,11 @@ class RequirementSource(DependencySource):
             # another.
             try:
                 if not fixed:
+                    installed_reqs: List[InstallRequirement] = filter(
+                        lambda r: isinstance(r, InstallRequirement), reqs
+                    )
                     origin_reqs: Set[Requirement] = set()
-                    for req, dep in self._collect_cached_deps(filename, list(reqs.values())):
+                    for req, dep in self._collect_cached_deps(filename, list(installed_reqs)):
                         if fix_version.dep == dep:
                             origin_reqs.add(req)
                     if origin_reqs:
