@@ -212,7 +212,6 @@ def test_requirement_source_fix_preserve_marker(req_file):
 
 
 def test_requirement_source_fix_comments(req_file):
-    # `pip-api` automatically filters out comments
     _check_fixes(
         [
             "# comment here\nflask==0.5",
@@ -232,8 +231,8 @@ def test_requirement_source_fix_parse_failure(monkeypatch, req_file):
     logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(requirement, "logger", logger)
 
-    # If `pip-api` encounters multiple of the same package in the requirements file, it will throw a
-    # parsing error
+    # If we encounter multiple of the same package in the requirements file, we will throw a parsing
+    # error
     input_reqs = ["flask==0.5", "flask==0.5\nrequests==2.0\nflask==0.3"]
     req_paths = [req_file(), req_file()]
 
@@ -262,8 +261,8 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
     logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(requirement, "logger", logger)
 
-    # If `pip-api` encounters multiple of the same package in the requirements file, it will throw a
-    # parsing error
+    # If we encounter multiple of the same package in the requirements file, we will throw a parsing
+    # error
     input_reqs = ["flask==0.5", "flask==0.5\nrequests==2.0\nflask==0.3"]
     req_paths = [req_file(), req_file()]
 
