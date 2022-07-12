@@ -8,6 +8,9 @@ on:
   schedule:
     - cron: '0 12 * * *'
 
+permissions:
+  id-token: write
+
 jobs:
   test:
     strategy:
@@ -57,3 +60,18 @@ jobs:
             <( \
               python -m pip_audit --help \
             )
+  sign-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ">= 3.7"
+      - name: deps
+        run: python -m pip install -U setuptools build wheel
+      - name: build
+        run: python -m build
+      - name: sign
+        uses: trailofbits/gh-action-sigstore-python@v0.0.2
+        with:
+          inputs: ./dist/*.tar.gz ./dist/*.whl
