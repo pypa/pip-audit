@@ -262,6 +262,7 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
         with open(req_path, "w") as f:
             f.write(input_req)
 
+    # Simulate an error being raised during file recovery
     def mock_replace(*_args, **_kwargs):
         raise OSError
 
