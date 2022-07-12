@@ -32,12 +32,12 @@ def test_requirement_source(monkeypatch):
 
 @pytest.mark.online
 def test_requirement_source_multiple_files(monkeypatch):
-    file1 = "requirements1.txt"
-    file2 = "requirements2.txt"
-    file3 = "requirements3.txt"
+    file1 = Path("requirements1.txt")
+    file2 = Path("requirements2.txt")
+    file3 = Path("requirements3.txt")
 
     source = requirement.RequirementSource(
-        [Path(file1), Path(file2), Path(file3)],
+        [file1, file2, file3],
         ResolveLibResolver(),
     )
 
