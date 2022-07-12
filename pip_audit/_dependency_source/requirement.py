@@ -9,15 +9,11 @@ import shutil
 from contextlib import ExitStack
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import IO, Dict, Iterator, List, Set, Tuple, Union, cast
+from typing import IO, Dict, Iterator, List, Set, Tuple, cast
 
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
-from pip_api import Requirement as ParsedRequirement
-from pip_api import parse_requirements
-from pip_api._parse_requirements import UnparsedRequirement
-from pip_api.exceptions import PipError
 from pip_requirements_parser import InstallRequirement, RequirementsFile
 
 from pip_audit._dependency_source import (
@@ -139,10 +135,7 @@ class RequirementSource(DependencySource):
     def _fix_file(self, filename: Path, fix_version: ResolvedFixVersion) -> None:
         # Reparse the requirements file. We want to rewrite each line to the new requirements file
         # and only modify the lines that we're fixing.
-        try:
-            reqs = list(RequirementsFile.parse(filename=str(filename)))
-        except PipError as pe:
-            raise RequirementFixError(f"requirement parsing raised an error: {filename}") from pe
+        reqs = list(RequirementsFile.parse(filename=str(filename)))
 
         # Check ahead of time for anything invalid in the requirements file since we don't want to
         # encounter this while writing out the file. Check for duplicate requirements and lines that
@@ -181,9 +174,9 @@ class RequirementSource(DependencySource):
             # another.
             try:
                 if not fixed:
-                    installed_reqs: List[InstallRequirement] = filter(
-                        lambda r: isinstance(r, InstallRequirement), reqs
-                    )
+                    installed_reqs: List[InstallRequirement] = [
+                        r for r in reqs if isinstance(r, InstallRequirement)
+                    ]
                     origin_reqs: Set[Requirement] = set()
                     for req, dep in self._collect_cached_deps(filename, list(installed_reqs)):
                         if fix_version.dep == dep:

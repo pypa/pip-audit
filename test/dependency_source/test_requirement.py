@@ -7,7 +7,6 @@ import pretend  # type: ignore
 import pytest
 from packaging.requirements import Requirement
 from packaging.version import Version
-from pip_api import _parse_requirements
 
 from pip_audit._dependency_source import (
     DependencyFixError,
@@ -345,7 +344,8 @@ def test_requirement_source_require_hashes_unpinned(monkeypatch):
     monkeypatch.setattr(
         pip_requirements_parser,
         "get_file_content",
-        lambda _: "flask==2.0.1 --hash=sha256:flask-hash\nrequests>=1.0 --hash=sha256:requests-hash",
+        lambda _: "flask==2.0.1 --hash=sha256:flask-hash\nrequests>=1.0 "
+        "--hash=sha256:requests-hash",
     )
 
     # When hashed dependencies are provided, all dependencies must be explicitly pinned to an exact
@@ -517,7 +517,8 @@ def test_requirement_source_fix_explicit_subdep_comment_retension(req_file):
     # When we "fix" dependencies, we parse the requirements file and write it back out with the
     # relevant line amended or added. When we used `pip-api` for requirements parsing, our fix logic
     # had the unfortunate side effect of stripping comments from the file. Importantly, when we
-    # applied subdependency fixes, the automated comments used to be removed by any subsequent fixes.
+    # applied subdependency fixes, the automated comments used to be removed by any subsequent
+    # fixes.
     #
     # Since we've switching `pip-requirements-parser`, we should no longer have this issue.
 
