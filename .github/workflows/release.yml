@@ -5,6 +5,9 @@ on:
 
 name: release
 
+permissions:
+  id-token: write
+
 jobs:
   pypi:
     name: upload release to PyPI
