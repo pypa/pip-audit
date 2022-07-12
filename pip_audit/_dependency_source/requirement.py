@@ -138,6 +138,9 @@ class RequirementSource(DependencySource):
     def _fix_file(self, filename: Path, fix_version: ResolvedFixVersion) -> None:
         # Reparse the requirements file. We want to rewrite each line to the new requirements file
         # and only modify the lines that we're fixing.
+        #
+        # This time we're using the `RequirementsFile.parse` API instead of `Requirements.from_file`
+        # since we want to access each line sequentially in order to rewrite the file.
         reqs = list(RequirementsFile.parse(filename=str(filename)))
 
         # Check ahead of time for anything invalid in the requirements file since we don't want to
