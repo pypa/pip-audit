@@ -2,11 +2,11 @@ import os
 from pathlib import Path
 from typing import List, Optional
 
+import pip_requirements_parser
 import pretend  # type: ignore
 import pytest
 from packaging.requirements import Requirement
 from packaging.version import Version
-from pip_api import _parse_requirements
 
 from pip_audit._dependency_source import (
     DependencyFixError,
@@ -24,7 +24,7 @@ from pip_audit._service import Dependency, ResolvedDependency
 def test_requirement_source(monkeypatch):
     source = requirement.RequirementSource([Path("requirements.txt")], ResolveLibResolver())
 
-    monkeypatch.setattr(_parse_requirements, "_read_file", lambda _: ["flask==2.0.1"])
+    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "flask==2.0.1")
 
     specs = list(source.collect())
     assert ResolvedDependency("flask", Version("2.0.1")) in specs
@@ -32,26 +32,25 @@ def test_requirement_source(monkeypatch):
 
 @pytest.mark.online
 def test_requirement_source_multiple_files(monkeypatch):
-    file1 = "requirements1.txt"
-    file2 = "requirements2.txt"
-    file3 = "requirements3.txt"
+    file1 = Path("requirements1.txt")
+    file2 = Path("requirements2.txt")
+    file3 = Path("requirements3.txt")
 
     source = requirement.RequirementSource(
-        [Path(file1), Path(file2), Path(file3)],
+        [file1, file2, file3],
         ResolveLibResolver(),
     )
 
-    def read_file_mock(f):
-        filename = f.name
+    def get_file_content_mock(filename):
         if filename == file1:
-            return ["flask==2.0.1"]
+            return "flask==2.0.1"
         elif filename == file2:
-            return ["requests==2.8.1"]
+            return "requests==2.8.1"
         else:
             assert filename == file3
-            return ["pip-api==0.0.22\n", "packaging==21.0"]
+            return "pip-api==0.0.22\npackaging==21.0"
 
-    monkeypatch.setattr(_parse_requirements, "_read_file", read_file_mock)
+    monkeypatch.setattr(pip_requirements_parser, "get_file_content", get_file_content_mock)
 
     specs = list(source.collect())
     assert ResolvedDependency("flask", Version("2.0.1")) in specs
@@ -66,7 +65,7 @@ def test_requirement_source_parse_error(monkeypatch):
     # Duplicate dependencies aren't allowed in a requirements file so we should expect the parser to
     # raise here
     monkeypatch.setattr(
-        _parse_requirements, "_read_file", lambda _: ["flask==2.0.1\n", "flask==2.0.0"]
+        pip_requirements_parser, "get_file_content", lambda _: "flask==2.0.1\nflask==2.0.0"
     )
 
     with pytest.raises(DependencySourceError):
@@ -81,7 +80,7 @@ def test_requirement_source_resolver_error(monkeypatch):
 
     source = requirement.RequirementSource([Path("requirements.txt")], MockResolver())
 
-    monkeypatch.setattr(_parse_requirements, "_read_file", lambda _: ["flask==2.0.1"])
+    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "flask==2.0.1")
 
     with pytest.raises(DependencySourceError):
         list(source.collect())
@@ -94,13 +93,23 @@ def test_requirement_source_duplicate_dependencies(monkeypatch):
     )
 
     # Return the same requirements for both files
-    monkeypatch.setattr(_parse_requirements, "_read_file", lambda _: ["flask==2.0.1"])
+    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "flask==2.0.1")
 
     specs = list(source.collect())
 
     # If the dependency list has duplicates, then converting to a set will reduce the length of the
     # collection
     assert len(specs) == len(set(specs))
+
+
+@pytest.mark.online
+def test_requirement_source_invalid_lines(monkeypatch):
+    source = requirement.RequirementSource([Path("requirements1.txt")], ResolveLibResolver())
+
+    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "a#b#c")
+
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
 
 
 def _check_fixes(
@@ -181,9 +190,9 @@ def test_requirement_source_fix_specifier_no_match(req_file):
     )
 
 
-def test_requirement_source_fix_marker(req_file):
-    # `pip-api` automatically filters out requirements with markers that don't apply to the current
-    # environment
+def test_requirement_source_fix_preserve_marker(req_file):
+    # `pip-requirements-parser` preserves requirements with markers that don't apply to the current
+    # environment.
     _check_fixes(
         [
             'flask<1.0; python_version > "2.7"',
@@ -191,7 +200,7 @@ def test_requirement_source_fix_marker(req_file):
         ],
         [
             'flask==1.0; python_version > "2.7"',
-            "requests==2.0",
+            'requests==2.0\nflask==1.0; python_version <= "2.7"',
         ],
         [req_file(), req_file()],
         [
@@ -203,13 +212,12 @@ def test_requirement_source_fix_marker(req_file):
 
 
 def test_requirement_source_fix_comments(req_file):
-    # `pip-api` automatically filters out comments
     _check_fixes(
         [
             "# comment here\nflask==0.5",
             "requests==2.0\n# another comment\nflask==0.5",
         ],
-        ["flask==1.0", "requests==2.0\nflask==1.0"],
+        ["# comment here\nflask==1.0", "requests==2.0\n# another comment\nflask==1.0"],
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
@@ -223,8 +231,8 @@ def test_requirement_source_fix_parse_failure(monkeypatch, req_file):
     logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(requirement, "logger", logger)
 
-    # If `pip-api` encounters multiple of the same package in the requirements file, it will throw a
-    # parsing error
+    # If we encounter multiple of the same package in the requirements file, we will throw a parsing
+    # error
     input_reqs = ["flask==0.5", "flask==0.5\nrequests==2.0\nflask==0.3"]
     req_paths = [req_file(), req_file()]
 
@@ -253,8 +261,8 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
     logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(requirement, "logger", logger)
 
-    # If `pip-api` encounters multiple of the same package in the requirements file, it will throw a
-    # parsing error
+    # If we encounter multiple of the same package in the requirements file, we will throw a parsing
+    # error
     input_reqs = ["flask==0.5", "flask==0.5\nrequests==2.0\nflask==0.3"]
     req_paths = [req_file(), req_file()]
 
@@ -294,7 +302,9 @@ def test_requirement_source_require_hashes(monkeypatch):
     )
 
     monkeypatch.setattr(
-        _parse_requirements, "_read_file", lambda _: ["flask==2.0.1 --hash=sha256:flask-hash"]
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==2.0.1 --hash=sha256:flask-hash",
     )
 
     # The hash should be populated in the resolved dependency. Additionally, the source should not
@@ -312,9 +322,9 @@ def test_requirement_source_require_hashes_missing(monkeypatch):
     )
 
     monkeypatch.setattr(
-        _parse_requirements,
-        "_read_file",
-        lambda _: ["flask==2.0.1"],
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==2.0.1",
     )
 
     # All requirements must be hashed when collecting with `require-hashes`
@@ -326,9 +336,9 @@ def test_requirement_source_require_hashes_inferred(monkeypatch):
     source = requirement.RequirementSource([Path("requirements.txt")], ResolveLibResolver())
 
     monkeypatch.setattr(
-        _parse_requirements,
-        "_read_file",
-        lambda _: ["flask==2.0.1 --hash=sha256:flask-hash\nrequests==2.0"],
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==2.0.1 --hash=sha256:flask-hash\nrequests==2.0",
     )
 
     # If at least one requirement is hashed, this infers `require-hashes`
@@ -342,11 +352,10 @@ def test_requirement_source_require_hashes_unpinned(monkeypatch):
     )
 
     monkeypatch.setattr(
-        _parse_requirements,
-        "_read_file",
-        lambda _: [
-            "flask==2.0.1 --hash=sha256:flask-hash\nrequests>=1.0 --hash=sha256:requests-hash"
-        ],
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==2.0.1 --hash=sha256:flask-hash\nrequests>=1.0 "
+        "--hash=sha256:requests-hash",
     )
 
     # When hashed dependencies are provided, all dependencies must be explicitly pinned to an exact
@@ -361,9 +370,9 @@ def test_requirement_source_no_deps(monkeypatch):
     )
 
     monkeypatch.setattr(
-        _parse_requirements,
-        "_read_file",
-        lambda _: ["flask==2.0.1"],
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==2.0.1",
     )
 
     specs = list(source.collect())
@@ -376,9 +385,9 @@ def test_requirement_source_no_deps_unpinned(monkeypatch):
     )
 
     monkeypatch.setattr(
-        _parse_requirements,
-        "_read_file",
-        lambda _: ["flask\nrequests>=1.0"],
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask\nrequests>=1.0",
     )
 
     # When dependency resolution is disabled, all requirements must be pinned.
@@ -392,9 +401,9 @@ def test_requirement_source_dep_caching(monkeypatch):
     )
 
     monkeypatch.setattr(
-        _parse_requirements,
-        "_read_file",
-        lambda _: ["flask==2.0.1"],
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==2.0.1",
     )
 
     specs = list(source.collect())
@@ -508,20 +517,20 @@ def test_requirement_source_fix_explicit_subdep_resolver_error(req_file):
         )
 
 
-def test_requirement_source_fix_explicit_subdep_comment_removal(req_file):
-    # This test is documenting a weakness in the current fix implementation.
+def test_requirement_source_fix_explicit_subdep_comment_retension(req_file):
+    # This test is regression testing a weakness in the previous fix implementation.
     #
     # When fixing a subdependency and explicitly adding it to the requirements file, we add a
     # comment above the line to explain its presence since it's unusual to explicitly pin a
     # subdependency like this.
     #
-    # When we "fix" dependencies, we use `pip-api` to parse the requirements file and write it back
-    # out with the relevant line amended or added. One downside of this method is that `pip-api`
-    # filters out comments so applying fixes removes all comments in the file.
-    # See: https://github.com/di/pip-api/issues/120
+    # When we "fix" dependencies, we parse the requirements file and write it back out with the
+    # relevant line amended or added. When we used `pip-api` for requirements parsing, our fix logic
+    # had the unfortunate side effect of stripping comments from the file. Importantly, when we
+    # applied subdependency fixes, the automated comments used to be removed by any subsequent
+    # fixes.
     #
-    # Therefore, when we apply a subdependency fix, the automated comment will be removed
-    # by any subsequent fixes.
+    # Since we've switching `pip-requirements-parser`, we should no longer have this issue.
 
     # Recreate the vulnerable subdependency case.
     flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
@@ -534,11 +543,14 @@ def test_requirement_source_fix_explicit_subdep_comment_removal(req_file):
 
     # Now place a fix for the top-level `flask` requirement after the `jinja2` subdependency fix.
     #
-    # When applying the `flask` fix, `pip-audit` reparses the requirements file, stripping out the
-    # comment and writes it back out with the fixed `flask` version.
+    # When applying the `flask` fix, `pip-audit` reparses the requirements file, and writes it back
+    # out with the fixed `flask` version with the comments preserved.
+    #
+    # One quirk is that comment indentation isn't preserved (the automated comment was originally
+    # indented with 4 spaces).
     _check_fixes(
         ["flask==2.0.1"],
-        ["flask==3.0.0\njinja2==4.0.0"],
+        ["flask==3.0.0\n# pip-audit: subdependency fixed via flask==2.0.1\njinja2==4.0.0"],
         [req_file()],
         [
             ResolvedFixVersion(
@@ -551,3 +563,17 @@ def test_requirement_source_fix_explicit_subdep_comment_removal(req_file):
             ),
         ],
     )
+
+
+def test_requirement_source_fix_invalid_lines(req_file):
+    req_file_name = req_file()
+    with open(req_file_name, "w") as f:
+        f.write("a#b#c\nflask==0.5")
+
+    source = requirement.RequirementSource([req_file_name], ResolveLibResolver())
+    with pytest.raises(DependencyFixError):
+        source.fix(
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+            )
+        )
