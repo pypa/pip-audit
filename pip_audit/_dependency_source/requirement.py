@@ -82,7 +82,8 @@ class RequirementSource(DependencySource):
                 rf = RequirementsFile.from_file(filename.name)
                 if rf.invalid_lines:
                     raise RequirementSourceError(
-                        f"Parsed invalid lines, file={filename}, lines={rf.invalid_lines}"
+                        f"requirement file {filename} contains invalid lines: "
+                        f"{str(rf.invalid_lines)}"
                     )
 
                 reqs: List[InstallRequirement] = []
@@ -91,7 +92,9 @@ class RequirementSource(DependencySource):
                     if req.marker is None or req.marker.evaluate():
                         # This means we have a duplicate requirement for the same package
                         if req.name in req_names:
-                            raise RequirementSourceError(f"Found duplicate package: {req.name}")
+                            raise RequirementSourceError(
+                                f"package {req.name} has duplicate requirements: {str(req)}"
+                            )
                         req_names.add(req.name)
                         reqs.append(req)
 
@@ -146,10 +149,14 @@ class RequirementSource(DependencySource):
                 req.marker is None or req.marker.evaluate()
             ):
                 if req.name in req_names:
-                    raise RequirementFixError("Duplicate req")
+                    raise RequirementFixError(
+                        f"package {req.name} has duplicate requirements: {str(req)}"
+                    )
                 req_names.add(req.name)
             elif isinstance(req, InvalidRequirement):
-                raise RequirementFixError("Invalid req")
+                raise RequirementFixError(
+                    f"requirement file {filename} has invalid requirement: {str(req)}"
+                )
 
         # Now write out the new requirements file
         with filename.open("w") as f:
