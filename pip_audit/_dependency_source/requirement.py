@@ -79,7 +79,7 @@ class RequirementSource(DependencySource):
         collected: Set[Dependency] = set()
         for filename in self._filenames:
             try:
-                rf = RequirementsFile.from_file(filename.name)
+                rf = RequirementsFile.from_file(filename)
                 if rf.invalid_lines:
                     raise RequirementSourceError(
                         f"requirement file {filename} contains invalid lines: "
