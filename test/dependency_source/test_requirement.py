@@ -102,6 +102,16 @@ def test_requirement_source_duplicate_dependencies(monkeypatch):
     assert len(specs) == len(set(specs))
 
 
+@pytest.mark.online
+def test_requirement_source_invalid_lines(monkeypatch):
+    source = requirement.RequirementSource([Path("requirements1.txt")], ResolveLibResolver())
+
+    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "a#b#c")
+
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
+
+
 def _check_fixes(
     input_reqs: List[str],
     expected_reqs: List[str],
@@ -554,3 +564,17 @@ def test_requirement_source_fix_explicit_subdep_comment_retension(req_file):
             ),
         ],
     )
+
+
+def test_requirement_source_fix_invalid_lines(req_file):
+    req_file_name = req_file()
+    with open(req_file_name, "w") as f:
+        f.write("a#b#c\nflask==0.5")
+
+    source = requirement.RequirementSource([req_file_name], ResolveLibResolver())
+    with pytest.raises(DependencyFixError):
+        source.fix(
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+            )
+        )

@@ -11,10 +11,10 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import IO, Dict, Iterator, List, Set, Tuple, cast
 
-from packaging.requirements import InvalidRequirement, Requirement
+from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
-from pip_requirements_parser import InstallRequirement, RequirementsFile
+from pip_requirements_parser import InstallRequirement, InvalidRequirementLine, RequirementsFile
 
 from pip_audit._dependency_source import (
     DependencyFixError,
@@ -153,7 +153,7 @@ class RequirementSource(DependencySource):
                         f"package {req.name} has duplicate requirements: {str(req)}"
                     )
                 req_names.add(req.name)
-            elif isinstance(req, InvalidRequirement):
+            elif isinstance(req, InvalidRequirementLine):
                 raise RequirementFixError(
                     f"requirement file {filename} has invalid requirement: {str(req)}"
                 )
