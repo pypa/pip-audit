@@ -90,11 +90,7 @@ class OsvService(VulnerabilityService):
 
             id = vuln["id"]
 
-            # The summary is intended to be shorter, so we prefer it over
-            # details, if present. However, neither is required.
             description = vuln.get("summary")
-            if description is None:
-                description = vuln.get("details")
             if description is None:
                 description = "N/A"
 

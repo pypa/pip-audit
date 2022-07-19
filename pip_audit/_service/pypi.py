@@ -117,8 +117,12 @@ class PyPIService(VulnerabilityService):
             # The ranges aren't guaranteed to come in chronological order
             fix_versions.sort()
 
+            description = v.get("summary")
+            if description is None:
+                description = "N/A"
+
             results.append(
-                VulnerabilityResult(v["id"], v["details"], fix_versions, set(v["aliases"]))
+                VulnerabilityResult(v["id"], description, fix_versions, set(v["aliases"]))
             )
 
         return spec, results
