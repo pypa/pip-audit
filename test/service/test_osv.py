@@ -168,20 +168,18 @@ def test_osv_unsupported_schema_version(monkeypatch, version):
 
 
 @pytest.mark.parametrize(
-    ["summary", "details", "description"],
+    ["summary", "description"],
     [
-        ("fakesummary", "fakedetails", "fakesummary"),
-        (None, "fakedetails", "fakedetails"),
-        (None, None, "N/A"),
+        ("fakesummary", "fakesummary"),
+        (None, "N/A"),
     ],
 )
-def test_osv_vuln_description_fallbacks(monkeypatch, summary, details, description):
+def test_osv_vuln_description_fallbacks(monkeypatch, summary, description):
     payload = {
         "vulns": [
             {
                 "id": "fakeid",
                 "summary": summary,
-                "details": details,
                 "affected": [
                     {
                         "package": {"name": "foo", "ecosystem": "PyPI"},

@@ -144,7 +144,7 @@ def test_pypi_mocked_response(monkeypatch, cache_dir):
                         {
                             "aliases": ["foo", "bar"],
                             "id": "VULN-0",
-                            "details": "The first vulnerability",
+                            "summary": "The first vulnerability",
                             "fixed_in": ["1.1", "1.4"],
                         }
                     ]
