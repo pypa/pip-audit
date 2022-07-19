@@ -67,7 +67,7 @@ def resolve_fix_versions(
 ) -> Iterator[FixVersion]:
     """
     Resolves a mapping of dependencies to known vulnerabilities to a series of fix versions without
-    known vulnerabilties.
+    known vulnerabilities.
     """
     for (dep, vulns) in result.items():
         if dep.is_skipped():
