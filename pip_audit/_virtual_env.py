@@ -59,7 +59,7 @@ class VirtualEnv(venv.EnvBuilder):
         """
         Install the custom package and populate the list of installed packages.
 
-        This method is overriden from `EnvBuilder` to execute immediately after the virtual
+        This method is overridden from `EnvBuilder` to execute immediately after the virtual
         environment has been created and should not be called directly.
 
         We do a few things in our custom post-setup:
