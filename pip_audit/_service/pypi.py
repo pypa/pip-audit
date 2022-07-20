@@ -119,7 +119,16 @@ class PyPIService(VulnerabilityService):
 
             description = v.get("summary")
             if description is None:
+                description = v.get("details")
+
+            if description is None:
                 description = "N/A"
+
+            # The "summary" field should be a single line, but "details" might
+            # be multiple (Markdown-formatted) lines. So, we normalize our
+            # description into a single line (and potentially break the Markdown
+            # formatting in the process).
+            description = description.replace("\n", " ")
 
             results.append(
                 VulnerabilityResult(v["id"], description, fix_versions, set(v["aliases"]))

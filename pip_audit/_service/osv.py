@@ -90,9 +90,19 @@ class OsvService(VulnerabilityService):
 
             id = vuln["id"]
 
+            # The summary is intended to be shorter, so we prefer it over
+            # details, if present. However, neither is required.
             description = vuln.get("summary")
             if description is None:
+                description = vuln.get("details")
+            if description is None:
                 description = "N/A"
+
+            # The "summary" field should be a single line, but "details" might
+            # be multiple (Markdown-formatted) lines. So, we normalize our
+            # description into a single line (and potentially break the Markdown
+            # formatting in the process).
+            description = description.replace("\n", " ")
 
             aliases = set(vuln.get("aliases", []))
 
