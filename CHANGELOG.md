@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* CLI: the `--format=markdown` and `--format=columns` output formats are no
+  longer broken by long vulnerability descriptions from the OSV and PyPI
+  vulnerability sources ([#323](https://github.com/trailofbits/pip-audit/pull/323))
+
 ## [2.4.1]
 
 ### Fixed

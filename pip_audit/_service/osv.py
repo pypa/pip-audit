@@ -98,6 +98,12 @@ class OsvService(VulnerabilityService):
             if description is None:
                 description = "N/A"
 
+            # The "summary" field should be a single line, but "details" might
+            # be multiple (Markdown-formatted) lines. So, we normalize our
+            # description into a single line (and potentially break the Markdown
+            # formatting in the process).
+            description = description.replace("\n", " ")
+
             aliases = set(vuln.get("aliases", []))
 
             # OSV doesn't mandate this field either. There's very little we

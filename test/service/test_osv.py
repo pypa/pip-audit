@@ -171,7 +171,9 @@ def test_osv_unsupported_schema_version(monkeypatch, version):
     ["summary", "details", "description"],
     [
         ("fakesummary", "fakedetails", "fakesummary"),
+        ("fakesummary\nanother line", "fakedetails", "fakesummary another line"),
         (None, "fakedetails", "fakedetails"),
+        (None, "fakedetails\nanother line", "fakedetails another line"),
         (None, None, "N/A"),
     ],
 )

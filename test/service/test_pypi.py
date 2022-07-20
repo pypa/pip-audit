@@ -144,7 +144,7 @@ def test_pypi_mocked_response(monkeypatch, cache_dir):
                         {
                             "aliases": ["foo", "bar"],
                             "id": "VULN-0",
-                            "details": "The first vulnerability",
+                            "summary": "The first vulnerability",
                             "fixed_in": ["1.1", "1.4"],
                         }
                     ]
@@ -167,6 +167,57 @@ def test_pypi_mocked_response(monkeypatch, cache_dir):
     assert results[dep][0] == service.VulnerabilityResult(
         id="VULN-0",
         description="The first vulnerability",
+        fix_versions=[Version("1.1"), Version("1.4")],
+        aliases={"foo", "bar"},
+    )
+
+
+@pytest.mark.parametrize(
+    ["summary", "details", "description"],
+    [
+        ("fakesummary", "fakedetails", "fakesummary"),
+        ("fakesummary\nanother line", "fakedetails", "fakesummary another line"),
+        (None, "fakedetails", "fakedetails"),
+        (None, "fakedetails\nanother line", "fakedetails another line"),
+        (None, None, "N/A"),
+    ],
+)
+def test_pypi_vuln_description_fallbacks(monkeypatch, cache_dir, summary, details, description):
+    def get_mock_response():
+        class MockResponse:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {
+                    "vulnerabilities": [
+                        {
+                            "aliases": ["foo", "bar"],
+                            "id": "VULN-0",
+                            "summary": summary,
+                            "details": details,
+                            "fixed_in": ["1.1", "1.4"],
+                        }
+                    ]
+                }
+
+        return MockResponse()
+
+    monkeypatch.setattr(
+        service.pypi, "caching_session", lambda _: get_mock_session(get_mock_response)
+    )
+
+    pypi = service.PyPIService(cache_dir)
+    dep = service.ResolvedDependency("foo", Version("1.0"))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all(iter([dep]))
+    )
+    assert len(results) == 1
+    assert dep in results
+    assert len(results[dep]) == 1
+    assert results[dep][0] == service.VulnerabilityResult(
+        id="VULN-0",
+        description=description,
         fix_versions=[Version("1.1"), Version("1.4")],
         aliases={"foo", "bar"},
     )
@@ -209,7 +260,7 @@ def test_pypi_invalid_version(monkeypatch, cache_dir):
                         {
                             "aliases": ["foo", "bar"],
                             "id": "VULN-0",
-                            "details": "The first vulnerability",
+                            "summary": "The first vulnerability",
                             "fixed_in": ["invalid_version"],
                         }
                     ]
@@ -278,7 +329,7 @@ def test_pypi_hashed_dep_no_release_data(cache_dir, monkeypatch):
                     "vulnerabilities": [
                         {
                             "id": "VULN-0",
-                            "details": "The first vulnerability",
+                            "summary": "The first vulnerability",
                             "fixed_in": ["1.1"],
                         }
                     ],
