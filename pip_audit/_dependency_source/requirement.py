@@ -91,7 +91,7 @@ class RequirementSource(DependencySource):
                 for req in rf.requirements:
                     if req.req is None:
                         # For editable or VCS requirements that don't have an egg fragment that
-                        # lists the package name and version, `pip-requirement-parser` won't attach
+                        # lists the package name and version, `pip-requirements-parser` won't attach
                         # a `Requirement` object to the `InstallRequirement`.
                         #
                         # In this case, we can't audit the dependency so we should signal to the
