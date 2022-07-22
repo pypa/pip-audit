@@ -18,6 +18,7 @@ from pip_audit._dependency_source import (
 )
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency
+from pip_audit._service.interface import SkippedDependency
 
 
 @pytest.mark.online
@@ -110,6 +111,33 @@ def test_requirement_source_invalid_lines(monkeypatch):
 
     with pytest.raises(DependencySourceError):
         list(source.collect())
+
+
+@pytest.mark.online
+def test_requirement_source_editable_with_egg_fragment(monkeypatch):
+    source = requirement.RequirementSource([Path("requirements1.txt")], ResolveLibResolver())
+
+    monkeypatch.setattr(
+        pip_requirements_parser, "get_file_content", lambda _: "-e file:flask.py#egg=flask==2.0.1"
+    )
+
+    specs = list(source.collect())
+    assert ResolvedDependency("flask", Version("2.0.1")) in specs
+
+
+def test_requirement_source_editable_without_egg_fragment(monkeypatch):
+    source = requirement.RequirementSource([Path("requirements1.txt")], ResolveLibResolver())
+
+    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "-e file:flask.py")
+
+    specs = list(source.collect())
+    assert (
+        SkippedDependency(
+            name="-e file:flask.py",
+            skip_reason="could not deduce package/specifier pair from requirement",
+        )
+        in specs
+    )
 
 
 def _check_fixes(
