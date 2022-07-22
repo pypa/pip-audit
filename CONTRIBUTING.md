@@ -49,6 +49,12 @@ make lint
 * [`mypy`](https://mypy.readthedocs.io/en/stable/): Static type checking
 * [`interrogate`](https://interrogate.readthedocs.io/en/latest/): Documentation coverage
 
+To automatically apply any lint-suggested changes, you can run:
+
+```bash
+make reformat
+```
+
 
 ### Testing
 
