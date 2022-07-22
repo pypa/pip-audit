@@ -577,3 +577,14 @@ def test_requirement_source_fix_invalid_lines(req_file):
                 dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
             )
         )
+
+
+def test_requirement_source_editable(monkeypatch):
+    source = requirement.RequirementSource([Path("requirements1.txt")], ResolveLibResolver())
+
+    # Return the same requirements for both files
+    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "-e foo")
+
+    specs = list(source.collect())
+
+    assert len(specs) == len(set(specs))

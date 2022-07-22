@@ -89,6 +89,9 @@ class RequirementSource(DependencySource):
                 reqs: List[InstallRequirement] = []
                 req_names: Set[str] = set()
                 for req in rf.requirements:
+                    if req.is_editable:
+                        # We can't evaluate editable requirements
+                        continue
                     if req.marker is None or req.marker.evaluate():
                         # This means we have a duplicate requirement for the same package
                         if req.name in req_names:
