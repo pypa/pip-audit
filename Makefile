@@ -37,11 +37,17 @@ env/pyvenv.cfg: pyproject.toml
 .PHONY: lint
 lint: env/pyvenv.cfg
 	. env/bin/activate && \
-		black $(ALL_PY_SRCS) && \
-		isort $(ALL_PY_SRCS) && \
+		black --check $(ALL_PY_SRCS) && \
+		isort --check $(ALL_PY_SRCS) && \
 		flake8 $(ALL_PY_SRCS) && \
 		mypy $(PY_MODULE) && \
 		interrogate -c pyproject.toml .
+
+.PHONY: reformat
+reformat:
+	. env/bin/activate && \
+		black $(ALL_PY_SRCS) && \
+		isort $(ALL_PY_SRCS)
 
 .PHONY: test tests
 test tests: env/pyvenv.cfg
