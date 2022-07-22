@@ -133,7 +133,8 @@ def test_requirement_source_editable_without_egg_fragment(monkeypatch):
     assert (
         SkippedDependency(
             name="-e file:flask.py",
-            skip_reason="could not deduce package/specifier pair from requirement",
+            skip_reason="could not deduce package/specifier pair from requirement, please specify "
+            "one with #egg=your_package_name==your_package_version",
         )
         in specs
     )
