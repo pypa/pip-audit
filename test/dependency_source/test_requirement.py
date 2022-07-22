@@ -17,8 +17,7 @@ from pip_audit._dependency_source import (
     requirement,
 )
 from pip_audit._fix import ResolvedFixVersion
-from pip_audit._service import Dependency, ResolvedDependency
-from pip_audit._service.interface import SkippedDependency
+from pip_audit._service import Dependency, ResolvedDependency, SkippedDependency
 
 
 @pytest.mark.online
