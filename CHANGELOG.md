@@ -8,12 +8,14 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.4.3]
+
 ### Fixed
 
 * Fixed a regression in requirements auditing that was introduced during the
   move from `pip-api` to `pip-requirements-parser` where editable installs
   without an egg fragment would cause audits to crash
-  ([#327](https://github.com/trailofbits/pip-audit/pull/331))
+  ([#331](https://github.com/trailofbits/pip-audit/pull/331))
 
 ## [2.4.2]
 
@@ -310,6 +312,7 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/trailofbits/pip-audit/compare/v2.0.0...HEAD
+[2.4.3]: https://github.com/trailofbits/pip-audit/compare/v2.4.2...v2.4.3
 [2.4.2]: https://github.com/trailofbits/pip-audit/compare/v2.4.1...v2.4.2
 [2.4.1]: https://github.com/trailofbits/pip-audit/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/trailofbits/pip-audit/compare/v2.3.4...v2.4.0
