@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed a regression in requirements auditing that was introduced during the
+  move from `pip-api` to `pip-requirements-parser` where editable installs
+  without an egg fragment would cause audits to crash
+  ([#327](https://github.com/trailofbits/pip-audit/pull/331))
+
 ## [2.4.2]
 
 ### Fixed

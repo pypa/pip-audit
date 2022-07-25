@@ -14,7 +14,12 @@ from typing import IO, Dict, Iterator, List, Set, Tuple, cast
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
-from pip_requirements_parser import InstallRequirement, InvalidRequirementLine, RequirementsFile
+from pip_requirements_parser import (
+    EditableRequirement,
+    InstallRequirement,
+    InvalidRequirementLine,
+    RequirementsFile,
+)
 
 from pip_audit._dependency_source import (
     DependencyFixError,
@@ -89,6 +94,20 @@ class RequirementSource(DependencySource):
                 reqs: List[InstallRequirement] = []
                 req_names: Set[str] = set()
                 for req in rf.requirements:
+                    if req.req is None:
+                        # For editable requirements that don't have an egg fragment that lists the
+                        # the package name and version, `pip-requirements-parser` won't attach a
+                        # `Requirement` object to the `InstallRequirement`.
+                        #
+                        # In this case, we can't audit the dependency so we should signal to the
+                        # caller that we're skipping it.
+                        assert isinstance(req, EditableRequirement)
+                        yield SkippedDependency(
+                            name=req.requirement_line.line,
+                            skip_reason="could not deduce package/specifier pair from requirement, "
+                            "please specify them with #egg=your_package_name==your_package_version",
+                        )
+                        continue
                     if req.marker is None or req.marker.evaluate():
                         # This means we have a duplicate requirement for the same package
                         if req.name in req_names:
@@ -148,8 +167,10 @@ class RequirementSource(DependencySource):
         # failed to parse.
         req_names: Set[str] = set()
         for req in reqs:
-            if isinstance(req, InstallRequirement) and (
-                req.marker is None or req.marker.evaluate()
+            if (
+                isinstance(req, InstallRequirement)
+                and (req.marker is None or req.marker.evaluate())
+                and req.req is not None
             ):
                 if req.name in req_names:
                     raise RequirementFixError(
