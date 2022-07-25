@@ -87,7 +87,7 @@ add it to your CI manually:
 jobs:
   pip-audit:
     steps:
-      - uses: trailofbits/gh-action-pip-audit@v0.0.4
+      - uses: trailofbits/gh-action-pip-audit@v1.0.0
         with:
           inputs: requirements.txt
 ```
