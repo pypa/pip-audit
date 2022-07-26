@@ -7,13 +7,22 @@ name = "pip_audit"
 dynamic = ["version"]
 description = "A tool for scanning Python environments for known vulnerabilities"
 readme = "README.md"
-license = {file = "LICENSE"}
-authors = [{name = "William Woodruff", email = "william@trailofbits.com"}]
+license = { file = "LICENSE" }
+authors = [
+    { name = "Alex Cameron", email = "alex.cameron@trailofbits.com" },
+    { name = "Dustin Ingram", email = "di@python.org" },
+    { name = "William Woodruff", email = "william@trailofbits.com" },
+]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: 3.7",
+    "Programming Language :: Python :: 3 :: 3.8",
+    "Programming Language :: Python :: 3 :: 3.9",
+    "Programming Language :: Python :: 3 :: 3.10",
     "Topic :: Security",
 ]
 dependencies = [
