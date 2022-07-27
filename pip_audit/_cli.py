@@ -166,6 +166,7 @@ def _parser() -> argparse.ArgumentParser:
         "-r",
         "--requirement",
         type=argparse.FileType("r"),
+        metavar="REQUIREMENT",
         action="append",
         dest="requirements",
         help="audit the given requirements file; this option can be used multiple times",
@@ -235,6 +236,7 @@ def _parser() -> argparse.ArgumentParser:
     dep_source_args.add_argument(
         "--path",
         type=Path,
+        metavar="PATH",
         action="append",
         dest="paths",
         default=[],
@@ -270,6 +272,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--extra-index-url",
         type=str,
+        metavar="URL",
         action="append",
         dest="extra_index_urls",
         default=[],
@@ -300,6 +303,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--ignore-vuln",
         type=str,
+        metavar="ID",
         action="append",
         dest="ignore_vulns",
         default=[],
