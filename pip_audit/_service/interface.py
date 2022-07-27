@@ -7,10 +7,12 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterator, List, Set, Tuple
+from typing import Any, Dict, Iterator, List, NewType, Set, Tuple
 
 from packaging.utils import canonicalize_name
 from packaging.version import Version
+
+VulnerabilityID = NewType("VulnerabilityID", str)
 
 
 @dataclass(frozen=True)
@@ -75,7 +77,7 @@ class VulnerabilityResult:
     in some Python package.
     """
 
-    id: str
+    id: VulnerabilityID
     """
     A service-provided identifier for the vulnerability.
     """
