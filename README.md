@@ -128,13 +128,12 @@ python -m pip_audit --help
 
 <!-- @begin-pip-audit-help@ -->
 ```
-usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENTS] [-f FORMAT] [-s SERVICE]
-                 [-d] [-S] [--desc [{on,off,auto}]] [--cache-dir CACHE_DIR]
+usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENT] [-f FORMAT] [-s SERVICE] [-d]
+                 [-S] [--desc [{on,off,auto}]] [--cache-dir CACHE_DIR]
                  [--progress-spinner {on,off}] [--timeout TIMEOUT]
-                 [--path PATHS] [-v] [--fix] [--require-hashes]
-                 [--index-url INDEX_URL] [--extra-index-url EXTRA_INDEX_URLS]
-                 [--skip-editable] [--no-deps] [-o FILE]
-                 [--ignore-vuln IGNORE_VULNS]
+                 [--path PATH] [-v] [--fix] [--require-hashes]
+                 [--index-url INDEX_URL] [--extra-index-url URL]
+                 [--skip-editable] [--no-deps] [-o FILE] [--ignore-vuln ID]
                  [project_path]
 
 audit the Python environment for dependencies with known vulnerabilities
@@ -148,7 +147,7 @@ optional arguments:
   -V, --version         show program's version number and exit
   -l, --local           show only results for dependencies in the local
                         environment (default: False)
-  -r REQUIREMENTS, --requirement REQUIREMENTS
+  -r REQUIREMENT, --requirement REQUIREMENT
                         audit the given requirements file; this option can be
                         used multiple times (default: None)
   -f FORMAT, --format FORMAT
@@ -175,7 +174,7 @@ optional arguments:
   --progress-spinner {on,off}
                         display a progress spinner (default: on)
   --timeout TIMEOUT     set the socket timeout (default: 15)
-  --path PATHS          restrict to the specified installation path for
+  --path PATH           restrict to the specified installation path for
                         auditing packages; this option can be used multiple
                         times (default: [])
   -v, --verbose         give more output; this setting overrides the
@@ -192,7 +191,7 @@ optional arguments:
                         point to a repository compliant with PEP 503 (the
                         simple repository API) (default:
                         https://pypi.org/simple)
-  --extra-index-url EXTRA_INDEX_URLS
+  --extra-index-url URL
                         extra URLs of package indexes to use in addition to
                         `--index-url`; should follow the same rules as
                         `--index-url` (default: [])
@@ -203,8 +202,7 @@ optional arguments:
                         False)
   -o FILE, --output FILE
                         output results to the given file (default: None)
-  --ignore-vuln IGNORE_VULNS
-                        ignore a specific vulnerability by its vulnerability
+  --ignore-vuln ID      ignore a specific vulnerability by its vulnerability
                         ID (default: [])
 ```
 <!-- @end-pip-audit-help@ -->
