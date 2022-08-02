@@ -6,7 +6,11 @@ on:
 name: release
 
 permissions:
+  # Used to sign the release's artifacts with sigstore-python.
   id-token: write
+
+  # Used to attach signing artifacts to the published release.
+  contents: write
 
 jobs:
   pypi:
@@ -32,6 +36,7 @@ jobs:
         password: ${{ secrets.PYPI_TOKEN }}
 
     - name: sign
-      uses: trailofbits/gh-action-sigstore-python@v0.0.2
+      uses: trailofbits/gh-action-sigstore-python@v0.0.7
       with:
         inputs: ./dist/*.tar.gz ./dist/*.whl
+        release-signing-artifacts: true
