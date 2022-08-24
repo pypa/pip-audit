@@ -14,6 +14,16 @@ All versions prior to 0.0.9 are untracked.
   audit with the `--no-deps` flag
   ([#355](https://github.com/trailofbits/pip-audit/pull/355))
 
+### Fixed
+
+* Fixed an issue where packages on PyPI with no published versions trigger a
+  dependency resolution failure instead of being skipped
+  ([#357](https://github.com/trailofbits/pip-audit/pull/357))
+  
+* Fixed an incorrect assertion triggering for non-editable URL requirements that
+  don't have an egg fragment
+  ([#359](https://github.com/trailofbits/pip-audit/pull/359))
+
 ## [2.4.3]
 
 ### Fixed

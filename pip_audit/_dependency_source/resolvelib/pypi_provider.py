@@ -213,7 +213,10 @@ def get_project_from_index(
     response.raise_for_status()
     data = response.content
     doc = html5lib.parse(data, namespaceHTMLElements=False)
-    for i in doc.findall(".//a"):
+    links = doc.findall(".//a")
+    if not links:
+        raise PyPINotFoundError
+    for i in links:
         url = i.attrib["href"]
         py_req = i.attrib.get("data-requires-python")
         # Skip items that need a different Python version
