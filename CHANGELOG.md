@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed an incorrect assertion triggering for non-editable URL requirements that
+  don't have an egg fragment
+  ([#359](https://github.com/trailofbits/pip-audit/pull/359))
+
 ## [2.4.3]
 
 ### Fixed
