@@ -140,6 +140,26 @@ def test_requirement_source_editable_without_egg_fragment(monkeypatch):
     )
 
 
+def test_requirement_source_non_editable_without_egg_fragment(monkeypatch):
+    source = requirement.RequirementSource([Path("requirements1.txt")], ResolveLibResolver())
+
+    monkeypatch.setattr(
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "git+https://github.com/unbit/uwsgi.git@1bb9ad77c6d2d310c2d6d1d9ad62de61f725b824",
+    )
+
+    specs = list(source.collect())
+    assert (
+        SkippedDependency(
+            name="git+https://github.com/unbit/uwsgi.git@1bb9ad77c6d2d310c2d6d1d9ad62de61f725b824",
+            skip_reason="could not deduce package/specifier pair from requirement, please specify "
+            "them with #egg=your_package_name==your_package_version",
+        )
+        in specs
+    )
+
+
 def _check_fixes(
     input_reqs: List[str],
     expected_reqs: List[str],
