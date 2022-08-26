@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: test
-        run: make test
+        run: make test PIP_AUDIT_EXTRA=test
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -33,7 +33,7 @@ jobs:
         with:
           python-version: "3.7"
       - name: lint
-        run: make lint
+        run: make lint PIP_AUDIT_EXTRA=lint
   check-readme:
     runs-on: ubuntu-latest
     steps:

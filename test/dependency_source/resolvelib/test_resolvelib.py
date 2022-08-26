@@ -438,3 +438,30 @@ def test_resolvelib_skip_editable():
     deps = resolver.resolve(req)  # type: ignore
     assert len(deps) == 1
     assert deps[0] == SkippedDependency(name="foo", skip_reason="requirement marked as editable")
+
+
+def test_resolvelib_no_links(monkeypatch):
+    # Simulate the project page containing no versions
+    data = str()
+
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+    )
+
+    resolver = resolvelib.ResolveLibResolver()
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
+    )
+
+    req = Requirement("flask==2.0.1")
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    assert len(resolved_deps) == 1
+    expected_deps = [
+        SkippedDependency(
+            name="flask",
+            skip_reason='Could not find project "flask" on any of the supplied index URLs: '
+            "['https://pypi.org/simple']",
+        )
+    ]
+    assert req in resolved_deps
+    assert resolved_deps[req] == expected_deps
