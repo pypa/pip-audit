@@ -443,6 +443,23 @@ def test_requirement_source_no_deps_unpinned(monkeypatch):
         list(source.collect())
 
 
+def test_requirement_source_no_deps_unpinned_url(monkeypatch):
+    source = requirement.RequirementSource(
+        [Path("requirements.txt")], ResolveLibResolver(), no_deps=True
+    )
+
+    monkeypatch.setattr(
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "https://github.com/pallets/flask/archive/refs/tags/2.0.1.tar.gz#egg=flask\n"
+        "requests>=1.0",
+    )
+
+    # When dependency resolution is disabled, all requirements must be pinned.
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
+
+
 def test_requirement_source_dep_caching(monkeypatch):
     source = requirement.RequirementSource(
         [Path("requirements.txt")], ResolveLibResolver(), no_deps=True

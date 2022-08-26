@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Changed
+
+* Improved error message for when unpinned URL requirements are found during an
+  audit with the `--no-deps` flag
+  ([#355](https://github.com/trailofbits/pip-audit/pull/355))
+
 ### Fixed
 
 * Fixed an issue where packages on PyPI with no published versions trigger a
