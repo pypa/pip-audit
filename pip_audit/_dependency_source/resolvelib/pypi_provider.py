@@ -11,6 +11,7 @@ from email.parser import BytesParser
 from io import BytesIO
 from operator import attrgetter
 from pathlib import Path
+from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory
 from typing import Any, BinaryIO, Iterator, List, Mapping, Optional, Set, Union, cast
 from urllib.parse import urlparse
@@ -29,7 +30,7 @@ from resolvelib.resolvers import RequirementInformation
 from pip_audit._cache import caching_session
 from pip_audit._state import AuditState
 from pip_audit._util import python_version
-from pip_audit._virtual_env import VirtualEnv
+from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
 
 # TODO: Final[Version] when our minimal Python is 3.8.
 PYTHON_VERSION: Version = python_version()
@@ -159,8 +160,18 @@ class Candidate:
             )
 
             with TemporaryDirectory() as ve_dir:
-                ve = VirtualEnv([str(sdist)], self._state)
-                ve.create(ve_dir)
+                try:
+                    ve = VirtualEnv([str(sdist)], self._state)
+                    ve.create(ve_dir)
+                except CalledProcessError as e:
+                    # NOTE: Virtual environment creation failure with this error likely indicates
+                    # some kind of layering violation, such as an incorrectly configured
+                    # system Python interfering with a virtual environment's `python` or `pip`.
+                    # We don't really have a cleaner place to capture and transform it,
+                    # since it happens directly in the core `venv` standard library module.
+                    # See: https://bugs.python.org/issue38705
+                    # See: https://github.com/pypa/build/issues/294
+                    raise VirtualEnvError("virtual environment creation failed internally") from e
 
                 self._state.update_state(
                     f"Querying installed packages for {self.name} ({self.version})"
