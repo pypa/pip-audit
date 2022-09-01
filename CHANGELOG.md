@@ -8,7 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.4.4]
+
 ### Changed
+
+* `pip-audit` is now a PyPA member project, and lives under
+  [`pypa/pip-audit`](https://github.com/pypa/pip-audit)!
 
 * Improved error message for when unpinned URL requirements are found during an
   audit with the `--no-deps` flag
@@ -328,6 +333,7 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/pypa/pip-audit/compare/v2.0.0...HEAD
+[2.4.3]: https://github.com/pypa/pip-audit/compare/v2.4.3...v2.4.4
 [2.4.3]: https://github.com/pypa/pip-audit/compare/v2.4.2...v2.4.3
 [2.4.2]: https://github.com/pypa/pip-audit/compare/v2.4.1...v2.4.2
 [2.4.1]: https://github.com/pypa/pip-audit/compare/v2.4.0...v2.4.1
