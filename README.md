@@ -13,8 +13,8 @@ with known vulnerabilities. It uses the Python Packaging Advisory Database
 [PyPI JSON API](https://warehouse.pypa.io/api-reference/json.html) as a source
 of vulnerability reports.
 
-This project is developed by [Trail of Bits](https://www.trailofbits.com/) with
-support from Google. This is not an official Google product.
+This project is maintained in part by [Trail of Bits](https://www.trailofbits.com/)
+with support from Google. This is not an official Google or Trail of Bits product.
 
 ## Index
 
