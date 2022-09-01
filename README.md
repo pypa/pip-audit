@@ -2,7 +2,7 @@ pip-audit
 =========
 
 <!--- BADGES: START --->
-![CI](https://github.com/trailofbits/pip-audit/workflows/CI/badge.svg)
+![CI](https://github.com/pypa/pip-audit/workflows/CI/badge.svg)
 [![PyPI version](https://badge.fury.io/py/pip-audit.svg)](https://pypi.org/project/pip-audit)
 [![Packaging status](https://repology.org/badge/tiny-repos/python:pip-audit.svg)](https://repology.org/project/python:pip-audit/versions)
 <!--- BADGES: END --->
@@ -13,8 +13,8 @@ with known vulnerabilities. It uses the Python Packaging Advisory Database
 [PyPI JSON API](https://warehouse.pypa.io/api-reference/json.html) as a source
 of vulnerability reports.
 
-This project is developed by [Trail of Bits](https://www.trailofbits.com/) with
-support from Google. This is not an official Google product.
+This project is maintained in part by [Trail of Bits](https://www.trailofbits.com/)
+with support from Google. This is not an official Google or Trail of Bits product.
 
 ## Index
 
@@ -77,7 +77,7 @@ documentation for more detailed installation guidance.
 
 ### GitHub Actions
 
-`pip-audit` has [an official GitHub Action](https://github.com/trailofbits/gh-action-pip-audit)!
+`pip-audit` has [an official GitHub Action](https://github.com/pypa/gh-action-pip-audit)!
 
 You can install it from the
 [GitHub Marketplace](https://github.com/marketplace/actions/gh-action-pip-audit), or
@@ -87,13 +87,13 @@ add it to your CI manually:
 jobs:
   pip-audit:
     steps:
-      - uses: trailofbits/gh-action-pip-audit@v1.0.0
+      - uses: pypa/gh-action-pip-audit@v1.0.0
         with:
           inputs: requirements.txt
 ```
 
 See the
-[action documentation](https://github.com/trailofbits/gh-action-pip-audit/blob/main/README.md)
+[action documentation](https://github.com/pypa/gh-action-pip-audit/blob/main/README.md)
 for more details and usage examples.
 
 ### `pre-commit` support
@@ -103,7 +103,7 @@ for more details and usage examples.
 For example, using `pip-audit` via `pre-commit` to audit a requirements file:
 
 ```yaml
-  - repo: https://github.com/trailofbits/pip-audit
+  - repo: https://github.com/pypa/pip-audit
     rev: v2.4.3
     hooks:
       -   id: pip-audit
