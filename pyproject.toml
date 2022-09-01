@@ -69,8 +69,8 @@ pip-audit = "pip_audit._cli:audit"
 
 [project.urls]
 Homepage = "https://pypi.org/project/pip-audit/"
-Issues = "https://github.com/trailofbits/pip-audit/issues"
-Source = "https://github.com/trailofbits/pip-audit"
+Issues = "https://github.com/pypa/pip-audit/issues"
+Source = "https://github.com/pypa/pip-audit"
 
 [tool.isort]
 line_length = 100

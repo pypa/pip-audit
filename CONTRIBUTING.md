@@ -22,7 +22,7 @@ below. But this isn't required; all steps can be done without Make.
 First, clone this repository:
 
 ```bash
-git clone https://github.com/trailofbits/pip-audit
+git clone https://github.com/pypa/pip-audit
 cd pip-audit
 ```
 
@@ -91,7 +91,7 @@ make doc
 the public Python APIs.
 
 Live documentation for the `main` branch is hosted
-[here](https://trailofbits.github.io/pip-audit/). Only the public APIs are
+[here](https://pypa.github.io/pip-audit/). Only the public APIs are
 documented, all undocumented APIs are **intentionally private and unstable.**
 
 ### Releasing
@@ -136,11 +136,11 @@ The following manual steps are required:
     $ git push origin v1.0.0
     ```
 
-1. Use the [releases page](https://github.com/trailofbits/pip-audit/releases) to
+1. Use the [releases page](https://github.com/pypa/pip-audit/releases) to
    create a new release, marking it as a "pre-release" if appropriate.
 
 1. Copy the relevant
-  [CHANGELOG](https://github.com/trailofbits/pip-audit/blob/main/CHANGELOG.md)
+  [CHANGELOG](https://github.com/pypa/pip-audit/blob/main/CHANGELOG.md)
   entries into the release notes.
 
 1. Save and publish the release. The CI will take care of all other tasks.
