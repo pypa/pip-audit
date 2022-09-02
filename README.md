@@ -379,6 +379,48 @@ $ pip-audit --no-deps -r requirements.txt
 $ pip-audit --require-hashes -r requirements.txt
 ```
 
+### Running against pipenv project
+
+pipenv uses both a `Pipfile` and `Pipfile.lock` file to track and freeze dependencies
+instead of a `requirements.txt` file. `pip-audit` cannot process the `Pipfile[.lock]`
+files directly, however, these can be converted to a supported `requirements.txt` file
+that pip-audit can run against. Use a Python tool, such as
+[`pipfile-requirements`](https://github.com/frostming/pipfile-requirements), to
+convert your `Pipfile[.lock]` to a `requirements.txt` file and then run
+`pip-audit` against the generated requirements file.
+
+```console
+# install pipfile-requirements
+$ pipenv install --dev pipfile-requirements
+
+# Convert the Pipfile.lock to requirements.txt
+$ pipenv run pipfile2req Pipfile.lock > requirements.txt
+
+# Run pip-audit against the generated requirements.txt
+$ pipenv run pip-audit -r requirements.txt
+```
+
+The `requirements.txt` file needs to be kept up to date with pipenv When running
+`pip-audit` locally like this. Alternatively, this can be completed in GitHub CI by
+adding this step prior to the `pip-audit` action:
+
+```yaml
+jobs:
+  pip-audit:
+    steps:
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9  # change to your required version of Python
+
+      - name: 'Generate requirements.txt'
+        run: |
+          pipx run pipfile-requirements Pipfile.lock > requirements.txt
+
+      - uses: pypa/gh-action-pip-audit@v1.0.0
+        with:
+          inputs: requirements.txt
+```
+
 ## Security Model
 
 This section exists to describe the security assumptions you **can** and **must not**
