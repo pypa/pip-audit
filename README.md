@@ -28,6 +28,7 @@ with support from Google. This is not an official Google or Trail of Bits produc
   * [Dry runs](#dry-runs)
 * [Examples](#examples)
 * [Troubleshooting](#troubleshooting)
+* [Tips and Tricks](#tips-and-tricks)
 * [Security model](#security-model)
 * [Licensing](#licensing)
 * [Contributing](#contributing)
@@ -379,7 +380,9 @@ $ pip-audit --no-deps -r requirements.txt
 $ pip-audit --require-hashes -r requirements.txt
 ```
 
-### Running against pipenv project
+## Tips and Tricks
+
+### Running against a pipenv project
 
 pipenv uses both a `Pipfile` and `Pipfile.lock` file to track and freeze dependencies
 instead of a `requirements.txt` file. `pip-audit` cannot process the `Pipfile[.lock]`
@@ -400,26 +403,8 @@ $ pipenv run pipfile2req Pipfile.lock > requirements.txt
 $ pipenv run pip-audit -r requirements.txt
 ```
 
-The `requirements.txt` file needs to be kept up to date with pipenv When running
-`pip-audit` locally like this. Alternatively, this can be completed in GitHub CI by
-adding this step prior to the `pip-audit` action:
-
-```yaml
-jobs:
-  pip-audit:
-    steps:
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.9  # change to your required version of Python
-
-      - name: 'Generate requirements.txt'
-        run: |
-          pipx run pipfile-requirements Pipfile.lock > requirements.txt
-
-      - uses: pypa/gh-action-pip-audit@v1.0.0
-        with:
-          inputs: requirements.txt
-```
+The `requirements.txt` file needs to be kept up to date with pipenv when running
+`pip-audit` locally like this.
 
 ## Security Model
 
