@@ -393,13 +393,8 @@ convert your `Pipfile[.lock]` to a `requirements.txt` file and then run
 `pip-audit` against the generated requirements file.
 
 ```console
-# install pipfile-requirements
 $ pipenv install --dev pipfile-requirements
-
-# Convert the Pipfile.lock to requirements.txt
 $ pipenv run pipfile2req Pipfile.lock > requirements.txt
-
-# Run pip-audit against the generated requirements.txt
 $ pipenv run pip-audit -r requirements.txt
 ```
 
