@@ -36,7 +36,7 @@ jobs:
         password: ${{ secrets.PYPI_TOKEN }}
 
     - name: sign
-      uses: trailofbits/gh-action-sigstore-python@v0.0.9
+      uses: sigstore/gh-action-sigstore-python@v0.0.9
       with:
         inputs: ./dist/*.tar.gz ./dist/*.whl
         release-signing-artifacts: true
