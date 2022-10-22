@@ -247,7 +247,7 @@ def test_osv_vuln_affected_missing(monkeypatch):
 
 
 def test_osv_vuln_withdrawn(monkeypatch):
-    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    logger = pretend.stub(debug=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(service.osv, "logger", logger)
 
     payload = {
@@ -274,6 +274,6 @@ def test_osv_vuln_withdrawn(monkeypatch):
     vulns = results[dep]
     assert len(vulns) == 0
 
-    assert logger.warning.calls == [
+    assert logger.debug.calls == [
         pretend.call("OSV vuln entry 'fakeid' marked as withdrawn at some-datetime")
     ]
