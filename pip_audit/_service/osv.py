@@ -93,7 +93,7 @@ class OsvService(VulnerabilityService):
             # If the vulnerability has been withdrawn, we skip it entirely.
             withdrawn_at = vuln.get("withdrawn")
             if withdrawn_at is not None:
-                logger.debug(f"vuln {id} marked as withdrawn at {withdrawn_at}; skipping")
+                logger.debug(f"OSV vuln entry '{id}' marked as withdrawn at {withdrawn_at}")
                 continue
 
             # The summary is intended to be shorter, so we prefer it over
