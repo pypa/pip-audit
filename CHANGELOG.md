@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed an issue where audits done with the OSV vulnerability service (`-s osv`)
+  were not correctly filtered by "withdrawn" status; "withdrawn" vulnerabilities
+  are now excluded ([#386](https://github.com/pypa/pip-audit/pull/386))
+
 ## [2.4.4]
 
 ### Changed

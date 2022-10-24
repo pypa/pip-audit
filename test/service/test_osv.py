@@ -244,3 +244,36 @@ def test_osv_vuln_affected_missing(monkeypatch):
     assert logger.warning.calls == [
         pretend.call("OSV vuln entry 'fakeid' is missing 'affected' list")
     ]
+
+
+def test_osv_vuln_withdrawn(monkeypatch):
+    logger = pretend.stub(debug=pretend.call_recorder(lambda s: None))
+    monkeypatch.setattr(service.osv, "logger", logger)
+
+    payload = {
+        "vulns": [
+            {
+                "id": "fakeid",
+                "withdrawn": "some-datetime",
+            }
+        ],
+    }
+
+    response = pretend.stub(raise_for_status=lambda: None, json=lambda: payload)
+    post = pretend.call_recorder(lambda *a, **kw: response)
+
+    osv = service.OsvService()
+    monkeypatch.setattr(osv.session, "post", post)
+
+    dep = service.ResolvedDependency("foo", Version("1.0.0"))
+    results = dict(osv.query_all(iter([dep])))
+
+    assert len(results) == 1
+    assert dep in results
+
+    vulns = results[dep]
+    assert len(vulns) == 0
+
+    assert logger.debug.calls == [
+        pretend.call("OSV vuln entry 'fakeid' marked as withdrawn at some-datetime")
+    ]
