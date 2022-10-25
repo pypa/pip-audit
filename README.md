@@ -344,6 +344,35 @@ flask 0.5     PYSEC-2018-66  0.12.3       Successfully upgraded flask (0.5 => 1.
 Have you resolved a problem with `pip-audit`? Help us by contributing to this
 section!
 
+### `pip-audit` shows irrelevant vulnerability reports!
+
+In a perfect world, vulnerability feeds would have an infinite signal-to-noise
+ratio: every vulnerability report would be (1) correct, and (2) applicable to
+every use of every dependency.
+
+Unfortunately, neither of these is guaranteed: vulnerability feeds are not
+immune to extraneous or spam reports, and not all uses of a particular
+dependency map to all potential classes of vulnerabilities.
+
+If your `pip-audit` runs produce vulnerability reports that aren't actionable
+for your particular application or use case, you can use the `--ignore-vuln ID`
+option to ignore specific vulnerability reports. `--ignore-vuln` supports
+aliases, so you can use a `GHSA-xxx` or `CVE-xxx` ID instead of a `PYSEC-xxx`
+ID if the report in question does not have a PYSEC ID.
+
+For example, here is how you might ignore GHSA-w596-4wvx-j9j6, which is a
+common source of noisy vulnerability reports and false positives for users of
+[`pytest`](https://github.com/pytest-dev/pytest):
+
+```console
+# Run the audit as normal, but exclude any reports that match GHSA-w596-4wvx-j9j6
+$ pip-audit --ignore-vuln GHSA-w596-4wvx-j9j6
+```
+
+The `--ignore-vuln ID` option works with all other dependency resolution
+and auditing options, meaning that it should function correctly with
+requirements-style inputs, alternative vulnerability feeds, and so forth.
+
 ### `pip-audit` takes longer than I expect!
 
 Depending on how you're using it, `pip-audit` may have to perform its
