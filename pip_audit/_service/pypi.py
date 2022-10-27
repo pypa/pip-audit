@@ -108,6 +108,14 @@ class PyPIService(VulnerabilityService):
             return spec, results
 
         for v in vulns:
+            id = v["id"]
+
+            # If the vulnerability has been withdrawn, we skip it entirely.
+            withdrawn_at = v.get("withdrawn")
+            if withdrawn_at is not None:
+                logger.debug(f"PyPI vuln entry '{id}' marked as withdrawn at {withdrawn_at}")
+                continue
+
             # Put together the fix versions list
             try:
                 fix_versions = [Version(fixed_in) for fixed_in in v["fixed_in"]]
@@ -130,8 +138,6 @@ class PyPIService(VulnerabilityService):
             # formatting in the process).
             description = description.replace("\n", " ")
 
-            results.append(
-                VulnerabilityResult(v["id"], description, fix_versions, set(v["aliases"]))
-            )
+            results.append(VulnerabilityResult(id, description, fix_versions, set(v["aliases"])))
 
         return spec, results
