@@ -172,6 +172,47 @@ def test_pypi_mocked_response(monkeypatch, cache_dir):
     )
 
 
+def test_pypi_vuln_withdrawn(monkeypatch, cache_dir):
+    def get_mock_response():
+        class MockResponse:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {
+                    "vulnerabilities": [
+                        {
+                            "aliases": ["foo", "bar"],
+                            "id": "VULN-0",
+                            "summary": "The first vulnerability",
+                            "fixed_in": ["1.1", "1.4"],
+                            "withdrawn": "some-timestamp",
+                        }
+                    ]
+                }
+
+        return MockResponse()
+
+    monkeypatch.setattr(
+        service.pypi, "caching_session", lambda _: get_mock_session(get_mock_response)
+    )
+    logger = pretend.stub(debug=pretend.call_recorder(lambda s: None))
+    monkeypatch.setattr(service.pypi, "logger", logger)
+
+    pypi = service.PyPIService(cache_dir)
+    dep = service.ResolvedDependency("foo", Version("1.0"))
+    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+        pypi.query_all(iter([dep]))
+    )
+    assert len(results) == 1
+    assert dep in results
+    assert len(results[dep]) == 0
+
+    assert logger.debug.calls == [
+        pretend.call("PyPI vuln entry 'VULN-0' marked as withdrawn at some-timestamp")
+    ]
+
+
 @pytest.mark.parametrize(
     ["summary", "details", "description"],
     [
