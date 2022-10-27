@@ -10,6 +10,11 @@ All versions prior to 0.0.9 are untracked.
 
 ### Fixed
 
+* Fixed an issue where audits done with the PyPI vulnerability service (the
+  default) were not correctly filtered by "withdrawn" status; "withdrawn"
+  vulnerabilities are now excluded
+  ([#393](https://github.com/pypa/pip-audit/pull/393))
+
 * Fixed an issue where audits done with the OSV vulnerability service (`-s osv`)
   were not correctly filtered by "withdrawn" status; "withdrawn" vulnerabilities
   are now excluded ([#386](https://github.com/pypa/pip-audit/pull/386))
