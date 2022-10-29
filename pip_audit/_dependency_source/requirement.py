@@ -251,14 +251,13 @@ class RequirementSource(DependencySource):
                 )
 
             if not req.specifier:
-                if req.link is None:
+                if not req.is_url:
                     raise RequirementSourceError(
                         f"requirement {req.name} is not pinned: {str(req)}"
                     )
                 else:
                     raise RequirementSourceError(
-                        f"requirement {req.name} is not pinned, URL requirements must be pinned "
-                        f"with #egg=your_package_name==your_package_version: {str(req)}"
+                        f"requirement {req.name} is a URL, and URL requirements cannot be pinned"
                     )
 
             pinned_specifier = PINNED_SPECIFIER_RE.match(str(req.specifier))

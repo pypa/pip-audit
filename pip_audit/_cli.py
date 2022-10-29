@@ -448,6 +448,8 @@ def audit() -> None:
                 if len(vulns) > 0:
                     pkg_count += 1
                     vuln_count += len(vulns)
+        except DependencySourceError as e:
+            _fatal(str(e))
         except VulnServiceConnectionError as e:
             # The most common source of connection errors is corporate blocking,
             # so we offer a bit of advice.
