@@ -8,6 +8,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.4.5]
+
 ### Fixed
 
 * Fixed an issue where audits done with the PyPI vulnerability service (the
@@ -349,7 +351,8 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/pypa/pip-audit/compare/v2.0.0...HEAD
-[2.4.3]: https://github.com/pypa/pip-audit/compare/v2.4.3...v2.4.4
+[2.4.5]: https://github.com/pypa/pip-audit/compare/v2.4.4...v2.4.5
+[2.4.4]: https://github.com/pypa/pip-audit/compare/v2.4.3...v2.4.4
 [2.4.3]: https://github.com/pypa/pip-audit/compare/v2.4.2...v2.4.3
 [2.4.2]: https://github.com/pypa/pip-audit/compare/v2.4.1...v2.4.2
 [2.4.1]: https://github.com/pypa/pip-audit/compare/v2.4.0...v2.4.1
