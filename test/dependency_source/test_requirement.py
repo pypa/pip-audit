@@ -451,13 +451,15 @@ def test_requirement_source_no_deps_unpinned_url(monkeypatch):
     monkeypatch.setattr(
         pip_requirements_parser,
         "get_file_content",
-        lambda _: "https://github.com/pallets/flask/archive/refs/tags/2.0.1.tar.gz#egg=flask\n"
-        "requests>=1.0",
+        lambda _: "https://github.com/pallets/flask/archive/refs/tags/2.0.1.tar.gz#egg=flask\n",
     )
 
-    # When dependency resolution is disabled, all requirements must be pinned.
-    with pytest.raises(DependencySourceError):
-        list(source.collect())
+    assert list(source.collect()) == [
+        SkippedDependency(
+            name="flask",
+            skip_reason="URL requirements cannot be pinned to a specific package version",
+        )
+    ]
 
 
 def test_requirement_source_dep_caching(monkeypatch):
