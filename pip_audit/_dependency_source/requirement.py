@@ -250,26 +250,30 @@ class RequirementSource(DependencySource):
                     f"requirement {req.name} does not contain a hash {str(req)}"
                 )
 
-            if not req.specifier:
-                if req.link is None:
+            # NOTE: URL dependencies cannot be pinned, so skipping them
+            # makes sense (under the same principle of skipping dependencies
+            # that can't be found on PyPI). This is also consistent with
+            # what `pip --no-deps` does (installs the URL dependency, but
+            # not any subdependencies).
+            if req.is_url:
+                yield req.req, SkippedDependency(
+                    name=req.name,
+                    skip_reason="URL requirements cannot be pinned to a specific package version",
+                )
+            elif not req.specifier:
+                raise RequirementSourceError(f"requirement {req.name} is not pinned: {str(req)}")
+            else:
+                pinned_specifier = PINNED_SPECIFIER_RE.match(str(req.specifier))
+                if pinned_specifier is None:
                     raise RequirementSourceError(
                         f"requirement {req.name} is not pinned: {str(req)}"
                     )
-                else:
-                    raise RequirementSourceError(
-                        f"requirement {req.name} is not pinned, URL requirements must be pinned "
-                        f"with #egg=your_package_name==your_package_version: {str(req)}"
-                    )
 
-            pinned_specifier = PINNED_SPECIFIER_RE.match(str(req.specifier))
-            if pinned_specifier is None:
-                raise RequirementSourceError(f"requirement {req.name} is not pinned: {str(req)}")
-
-            yield req.req, ResolvedDependency(
-                req.name,
-                Version(pinned_specifier.group("version")),
-                self._build_hash_options_mapping(req.hash_options),
-            )
+                yield req.req, ResolvedDependency(
+                    req.name,
+                    Version(pinned_specifier.group("version")),
+                    self._build_hash_options_mapping(req.hash_options),
+                )
 
     def _build_hash_options_mapping(self, hash_options: List[str]) -> Dict[str, List[str]]:
         """

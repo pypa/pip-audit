@@ -19,6 +19,11 @@ All versions prior to 0.0.9 are untracked.
   were not correctly filtered by "withdrawn" status; "withdrawn" vulnerabilities
   are now excluded ([#386](https://github.com/pypa/pip-audit/pull/386))
 
+* Fixed `pip-audit`'s handling of URL-style requirements in `--no-deps` mode
+  (URL requirements are now treated as skipped, rather than producing
+  an error due to a lack of pinning)
+  ([#395](https://github.com/pypa/pip-audit/pull/395/files))
+
 ## [2.4.4]
 
 ### Changed
