@@ -82,10 +82,6 @@ include_trailing_comma = true
 [tool.black]
 line-length = 100
 
-[tool.coverage.run]
-# don't attempt code coverage for the CLI entrypoints
-omit = ["pip_audit/_cli.py"]
-
 [tool.interrogate]
 # don't enforce documentation coverage for packaging, testing, the virtual
 # environment, or the CLI (which is documented separately).

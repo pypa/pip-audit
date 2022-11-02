@@ -64,7 +64,7 @@ class OutputFormatChoice(str, enum.Enum):
         elif self is OutputFormatChoice.Markdown:
             return MarkdownFormat(output_desc)
         else:
-            assert_never(self)
+            assert_never(self)  # pragma: no cover
 
     def __str__(self) -> str:
         return self.value
@@ -85,7 +85,7 @@ class VulnerabilityServiceChoice(str, enum.Enum):
         elif self is VulnerabilityServiceChoice.Pypi:
             return PyPIService(cache_dir, timeout)
         else:
-            assert_never(self)
+            assert_never(self)  # pragma: no cover
 
     def __str__(self) -> str:
         return self.value
@@ -109,7 +109,7 @@ class VulnerabilityDescriptionChoice(str, enum.Enum):
         elif self is VulnerabilityDescriptionChoice.Auto:
             return bool(format_ is OutputFormatChoice.Json)
         else:
-            assert_never(self)
+            assert_never(self)  # pragma: no cover
 
     def __str__(self) -> str:
         return self.value
@@ -131,14 +131,14 @@ class ProgressSpinnerChoice(str, enum.Enum):
         return self.value
 
 
-def _enum_help(msg: str, e: Type[enum.Enum]) -> str:
+def _enum_help(msg: str, e: Type[enum.Enum]) -> str:  # pragma: no cover
     """
     Render a `--help`-style string for the given enumeration.
     """
     return f"{msg} (choices: {', '.join(str(v) for v in e)})"
 
 
-def _fatal(msg: str) -> NoReturn:
+def _fatal(msg: str) -> NoReturn:  # pragma: no cover
     """
     Log a fatal error to the standard error stream and exit.
     """
@@ -148,7 +148,7 @@ def _fatal(msg: str) -> NoReturn:
     sys.exit(1)
 
 
-def _parser() -> argparse.ArgumentParser:
+def _parser() -> argparse.ArgumentParser:  # pragma: no cover
     parser = argparse.ArgumentParser(
         prog="pip-audit",
         description="audit the Python environment for dependencies with known vulnerabilities",
@@ -312,13 +312,23 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
-    return parser.parse_args()
+def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragma: no cover
+    args = parser.parse_args()
+
+    if args.verbose:
+        logging.root.setLevel("DEBUG")
+
+    if args.output is None:
+        args.output = sys.stdout
+
+    logger.debug(f"parsed arguments: {args}")
+
+    return args
 
 
 def _dep_source_from_project_path(
     project_path: Path, resolver: ResolveLibResolver, state: AuditState
-) -> DependencySource:
+) -> DependencySource:  # pragma: no cover
     # Check for a `pyproject.toml`
     pyproject_path = project_path / "pyproject.toml"
     if pyproject_path.is_file():
@@ -329,20 +339,12 @@ def _dep_source_from_project_path(
     _fatal(f"couldn't find a supported project file in {project_path}")
 
 
-def audit() -> None:
+def audit() -> None:  # pragma: no cover
     """
     The primary entrypoint for `pip-audit`.
     """
     parser = _parser()
     args = _parse_args(parser)
-
-    if args.verbose:
-        logging.root.setLevel("DEBUG")
-
-    if args.output is None:
-        args.output = sys.stdout
-
-    logger.debug(f"parsed arguments: {args}")
 
     service = args.vulnerability_service.to_service(args.timeout, args.cache_dir)
     output_desc = args.desc.to_bool(args.format)
