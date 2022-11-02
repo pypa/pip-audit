@@ -107,7 +107,7 @@ class VulnerabilityDescriptionChoice(str, enum.Enum):
         elif self is VulnerabilityDescriptionChoice.Off:
             return False
         elif self is VulnerabilityDescriptionChoice.Auto:
-            return bool(format_.value is OutputFormatChoice.Json)
+            return bool(format_ is OutputFormatChoice.Json)
         else:
             assert_never(self)
 
