@@ -2,6 +2,56 @@ import pretend  # type: ignore
 import pytest
 
 import pip_audit._cli
+from pip_audit._cli import (
+    OutputFormatChoice,
+    ProgressSpinnerChoice,
+    VulnerabilityDescriptionChoice,
+    VulnerabilityServiceChoice,
+)
+
+
+class TestOutputFormatChoice:
+    def test_to_format_is_exhaustive(self):
+        for choice in OutputFormatChoice:
+            assert choice.to_format(False) is not None
+            assert choice.to_format(True) is not None
+
+    def test_str(self):
+        for choice in OutputFormatChoice:
+            assert str(choice) == choice.value
+
+
+class TestVulnerabilityServiceChoice:
+    def test_to_service_is_exhaustive(self):
+        for choice in VulnerabilityServiceChoice:
+            assert choice.to_service(0, pretend.stub()) is not None
+
+    def test_str(self):
+        for choice in VulnerabilityServiceChoice:
+            assert str(choice) == choice.value
+
+
+class TestVulnerabilityDescriptionChoice:
+    def test_to_bool_is_exhaustive(self):
+        for choice in VulnerabilityDescriptionChoice:
+            assert choice.to_bool(OutputFormatChoice.Json) in {True, False}
+
+    def test_auto_to_bool_for_json(self):
+        assert VulnerabilityDescriptionChoice.Auto.to_bool(OutputFormatChoice.Json) is True
+
+    def test_str(self):
+        for choice in VulnerabilityDescriptionChoice:
+            assert str(choice) == choice.value
+
+
+class TestProgressSpinnerChoice:
+    def test_bool(self):
+        assert bool(ProgressSpinnerChoice.On)
+        assert not bool(ProgressSpinnerChoice.Off)
+
+    def test_str(self):
+        for choice in ProgressSpinnerChoice:
+            assert str(choice) == choice.value
 
 
 @pytest.mark.parametrize(
