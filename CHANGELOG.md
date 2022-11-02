@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed an incorrect interaction between `--desc=auto` and `--format=json`;
+  `--desc=auto` now includes the description in the generated JSON report,
+  as intended ([#399](https://github.com/pypa/pip-audit/pull/399))
+
 ## [2.4.5]
 
 ### Fixed
