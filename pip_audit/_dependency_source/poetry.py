@@ -38,7 +38,7 @@ class PoetrySource(DependencySource):
             name = package["name"]
             try:
                 version = Version(package["version"])
-            except InvalidVersion:
+            except InvalidVersion:  # pragma: no cover
                 skip_reason = (
                     "Package has invalid version and could not be audited: "
                     f"{name} ({package['version']})"
