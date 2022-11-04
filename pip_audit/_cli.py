@@ -17,6 +17,7 @@ from pip_audit._dependency_source import (
     PYPI_URL,
     DependencySource,
     PipSource,
+    PoetrySource,
     PyProjectSource,
     RequirementSource,
     ResolveLibResolver,
@@ -330,8 +331,14 @@ def _dep_source_from_project_path(
     project_path: Path, resolver: ResolveLibResolver, state: AuditState
 ) -> DependencySource:  # pragma: no cover
     # Check for a `pyproject.toml`
+    poetry_lock = project_path / "poetry.lock"
+    if poetry_lock.is_file():
+        logger.debug("using PoetrySource as dependency source")
+        return PoetrySource(path=poetry_lock)
+
     pyproject_path = project_path / "pyproject.toml"
     if pyproject_path.is_file():
+        logger.debug("using PyProjectSource as dependency source")
         return PyProjectSource(pyproject_path, resolver, state)
 
     # TODO: Checks for setup.py and other project files will go here.
