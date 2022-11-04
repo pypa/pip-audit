@@ -44,6 +44,7 @@ requires-python = ">=3.7"
 [project.optional-dependencies]
 test = [
     "coverage[toml]",
+    "poetry",
     "pretend",
     "pytest",
     "pytest-cov",
