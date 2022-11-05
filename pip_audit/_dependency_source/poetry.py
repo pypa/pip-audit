@@ -4,8 +4,6 @@ Collect dependencies from `poetry.lock` files.
 from __future__ import annotations
 
 import logging
-import subprocess
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
@@ -57,8 +55,4 @@ class PoetrySource(DependencySource):
         Note that poetry ignores the version we want to update to,
         and goes straight to the latest version allowed in metadata.
         """
-        subprocess.run(
-            [sys.executable, "-m", "poetry", "update", "--lock", fix_version.dep.name],
-            cwd=self.path.parent,
-            stdout=subprocess.DEVNULL,
-        ).check_returncode()
+        raise NotImplementedError("fix is not supported for poetry yet")

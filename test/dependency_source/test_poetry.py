@@ -7,10 +7,8 @@ from textwrap import dedent
 from typing import Callable
 
 import pytest
-from packaging.version import Version
 
 from pip_audit._dependency_source import PoetrySource
-from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import ResolvedDependency
 
 
@@ -55,9 +53,3 @@ def test_collect_and_fix(lock: Callable) -> None:
     meta_content = meta_path.read_text()
     meta_content = meta_content.replace("2.7.1", "2.7.*")
     meta_path.write_text(meta_content)
-
-    # fix
-    sourcer.fix(ResolvedFixVersion(dep=deps[0], version=Version("2.7.3")))
-    content = lock_path.read_text()
-    assert 'version = "2.7.3"' in content
-    assert "2.7.1" not in content
