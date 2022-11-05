@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict, List
 
 import pretend  # type: ignore
@@ -238,6 +239,7 @@ def test_pypi_vuln_description_fallbacks(monkeypatch, cache_dir, summary, detail
                             "summary": summary,
                             "details": details,
                             "fixed_in": ["1.1", "1.4"],
+                            "published": "2019-08-24T14:15:22Z",
                         }
                     ]
                 }
@@ -261,6 +263,7 @@ def test_pypi_vuln_description_fallbacks(monkeypatch, cache_dir, summary, detail
         description=description,
         fix_versions=[Version("1.1"), Version("1.4")],
         aliases={"foo", "bar"},
+        published=datetime(2019, 8, 24, 14, 15, 22),
     )
 
 
