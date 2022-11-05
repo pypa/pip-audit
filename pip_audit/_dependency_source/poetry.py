@@ -36,7 +36,7 @@ class PoetrySource(DependencySource):
             name = package["name"]
             try:
                 version = Version(package["version"])
-            except InvalidVersion:  # pragma: no cover
+            except InvalidVersion:
                 skip_reason = (
                     "Package has invalid version and could not be audited: "
                     f"{name} ({package['version']})"
@@ -55,4 +55,4 @@ class PoetrySource(DependencySource):
         Note that poetry ignores the version we want to update to,
         and goes straight to the latest version allowed in metadata.
         """
-        raise NotImplementedError("fix is not supported for poetry yet")
+        raise NotImplementedError("fix is not supported for poetry yet")  # pragma: no cover

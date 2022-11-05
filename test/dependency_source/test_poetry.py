@@ -1,55 +1,34 @@
 from __future__ import annotations
 
-import subprocess
-import sys
 from pathlib import Path
-from textwrap import dedent
-from typing import Callable
 
-import pytest
 
 from pip_audit._dependency_source import PoetrySource
-from pip_audit._service import ResolvedDependency
+from pip_audit._service import ResolvedDependency, SkippedDependency
+from packaging.version import Version
+
+TEST_DATA_PATH = Path(__file__).parent / "data"
 
 
-@pytest.fixture
-def lock(tmp_path: Path) -> Callable:
-    def callback(*deps: str) -> Path:
-        metadata = """
-            [tool.poetry]
-            name = "poetry-demo"
-            version = "0.1.0"
-            description = ""
-            authors = ["someone <mail@example.com>"]
-
-            [tool.poetry.dependencies]
-            python = "^3.7"
-        """
-        metadata = dedent(metadata)
-        metadata += "\n".join(deps)
-        (tmp_path / "pyproject.toml").write_text(metadata)
-        cmd = [sys.executable, "-m", "poetry", "lock", "--no-update"]
-        subprocess.run(cmd, cwd=tmp_path).check_returncode()
-        lock_path = tmp_path / "poetry.lock"
-        assert lock_path.exists()
-        return lock_path
-
-    return callback
-
-
-def test_collect_and_fix(lock: Callable) -> None:
-    lock_path: Path = lock("Jinja2 = '2.7.1'")
+def test_collect(tmp_path: Path) -> None:
+    lock_content = (TEST_DATA_PATH / 'poetry.lock').read_text()
+    lock_path = tmp_path / "poetry.lock"
+    lock_path.write_text(lock_content)
     sourcer = PoetrySource(path=lock_path)
+    actual = list(sourcer.collect())
+    expected = [
+        ResolvedDependency(name='jinja2', version=Version('2.11.3')),
+        ResolvedDependency(name='markupsafe', version=Version('2.1.1')),
+    ]
+    assert actual == expected
 
-    # collect
+
+def test_invalid_version(tmp_path: Path) -> None:
+    lock_content = (TEST_DATA_PATH / 'poetry.lock').read_text()
+    lock_content = lock_content.replace('2.11.3', 'oh-hi-mark')
+    lock_path = tmp_path / "poetry.lock"
+    lock_path.write_text(lock_content)
+    sourcer = PoetrySource(path=lock_path)
     deps = list(sourcer.collect())
-    assert [dep.name for dep in deps] == ["jinja2", "markupsafe"]
-    assert isinstance(deps[0], ResolvedDependency)
-    assert isinstance(deps[1], ResolvedDependency)
-    assert str(deps[0].version) == "2.7.1"
-
-    # unlock the version in metadata
-    meta_path = lock_path.parent / "pyproject.toml"
-    meta_content = meta_path.read_text()
-    meta_content = meta_content.replace("2.7.1", "2.7.*")
-    meta_path.write_text(meta_content)
+    assert [dep.name for dep in deps] == ['jinja2', 'markupsafe']
+    assert isinstance(deps[0], SkippedDependency)
