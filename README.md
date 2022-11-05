@@ -37,7 +37,7 @@ with support from Google. This is not an official Google or Trail of Bits produc
 
 ## Features
 
-* Support for auditing local environments and requirements-style files
+* Support for auditing local environments, requirements-style files, and poetry.lock files.
 * Support for multiple vulnerability services
   ([PyPI](https://warehouse.pypa.io/api-reference/json.html#known-vulnerabilities),
   [OSV](https://osv.dev/docs/))
