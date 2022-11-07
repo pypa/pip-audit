@@ -11,7 +11,7 @@ from typing import Iterator
 import toml
 from packaging.version import InvalidVersion, Version
 
-from pip_audit._dependency_source import DependencySource
+from pip_audit._dependency_source import DependencyFixError, DependencySource
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency, SkippedDependency
 
@@ -41,7 +41,6 @@ class PoetrySource(DependencySource):
                     "Package has invalid version and could not be audited: "
                     f"{name} ({package['version']})"
                 )
-                logger.debug(skip_reason)
                 yield SkippedDependency(name=name, skip_reason=skip_reason)
             else:
                 yield ResolvedDependency(name=name, version=version)
@@ -55,4 +54,4 @@ class PoetrySource(DependencySource):
         Note that poetry ignores the version we want to update to,
         and goes straight to the latest version allowed in metadata.
         """
-        raise NotImplementedError("fix is not supported for poetry yet")  # pragma: no cover
+        raise DependencyFixError("fix is not supported for poetry yet")  # pragma: no cover
