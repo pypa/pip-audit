@@ -6,8 +6,9 @@ of vulnerability information for fully resolved Python packages.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import Any, Dict, Iterator, List, NewType, Set, Tuple
+from dataclasses import dataclass, field, replace
+from datetime import datetime
+from typing import Any, Iterator, NewType
 
 from packaging.utils import canonicalize_name
 from packaging.version import Version
@@ -58,7 +59,7 @@ class ResolvedDependency(Dependency):
     """
 
     version: Version
-    hashes: Dict[str, List[str]] = field(default_factory=dict, hash=False)
+    hashes: dict[str, list[str]] = field(default_factory=dict, hash=False)
 
 
 @dataclass(frozen=True)
@@ -87,14 +88,19 @@ class VulnerabilityResult:
     A human-readable description of the vulnerability.
     """
 
-    fix_versions: List[Version]
+    fix_versions: list[Version]
     """
     A list of versions that can be upgraded to that resolve the vulnerability.
     """
 
-    aliases: Set[str]
+    aliases: set[str]
     """
     A set of aliases (alternative identifiers) for this result.
+    """
+
+    published: datetime | None = None
+    """
+    When the vulnerability was first published.
     """
 
     def alias_of(self, other: VulnerabilityResult) -> bool:
@@ -112,11 +118,10 @@ class VulnerabilityResult:
         """
 
         # Our own ID should never occur in the alias set.
-        return VulnerabilityResult(
-            self.id, self.description, self.fix_versions, self.aliases | other.aliases - {self.id}
-        )
+        aliases = self.aliases | other.aliases - {self.id}
+        return replace(self, aliases=aliases)
 
-    def has_any_id(self, ids: Set[str]) -> bool:
+    def has_any_id(self, ids: set[str]) -> bool:
         """
         Returns whether ids intersects with {id} | aliases.
         """
@@ -131,7 +136,7 @@ class VulnerabilityService(ABC):
     @abstractmethod
     def query(
         self, spec: Dependency
-    ) -> Tuple[Dependency, List[VulnerabilityResult]]:  # pragma: no cover
+    ) -> tuple[Dependency, list[VulnerabilityResult]]:  # pragma: no cover
         """
         Query the `VulnerabilityService` for information about the given `Dependency`,
         returning a list of `VulnerabilityResult`.
@@ -140,7 +145,7 @@ class VulnerabilityService(ABC):
 
     def query_all(
         self, specs: Iterator[Dependency]
-    ) -> Iterator[Tuple[Dependency, List[VulnerabilityResult]]]:
+    ) -> Iterator[tuple[Dependency, list[VulnerabilityResult]]]:
         """
         Query the vulnerability service for information on multiple dependencies.
 
@@ -149,6 +154,12 @@ class VulnerabilityService(ABC):
         """
         for spec in specs:
             yield self.query(spec)
+
+    @staticmethod
+    def _parse_rfc3339(dt: str | None) -> datetime | None:
+        if dt is None:
+            return None
+        return datetime.strptime(dt, "%Y-%m-%dT%H:%M:%SZ")
 
 
 class ServiceError(Exception):

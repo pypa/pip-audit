@@ -138,6 +138,14 @@ class PyPIService(VulnerabilityService):
             # formatting in the process).
             description = description.replace("\n", " ")
 
-            results.append(VulnerabilityResult(id, description, fix_versions, set(v["aliases"])))
+            results.append(
+                VulnerabilityResult(
+                    id=id,
+                    description=description,
+                    fix_versions=fix_versions,
+                    aliases=set(v["aliases"]),
+                    published=self._parse_rfc3339(v.get("published")),
+                )
+            )
 
         return spec, results

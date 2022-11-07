@@ -1,11 +1,12 @@
 """
 Functionality for using the [OSV](https://osv.dev/) API as a `VulnerabilityService`.
 """
+from __future__ import annotations
 
 import json
 import logging
 from pathlib import Path
-from typing import List, Optional, Tuple, cast
+from typing import Any, List, Optional, Tuple, cast
 
 import requests
 from packaging.version import Version
@@ -78,6 +79,7 @@ class OsvService(VulnerabilityService):
         if not response_json:
             return spec, results
 
+        vuln: dict[str, Any]
         for vuln in response_json["vulns"]:
             # Sanity check: only the v1 schema is specified at the moment,
             # and the code below probably won't work with future incompatible
@@ -110,10 +112,10 @@ class OsvService(VulnerabilityService):
             # formatting in the process).
             description = description.replace("\n", " ")
 
-            aliases = set(vuln.get("aliases", []))
-
             # OSV doesn't mandate this field either. There's very little we
             # can do without it, so we skip any results that are missing it.
+            #
+            # TODO(@orsinium): not true anymore, the field is marked as required in API docs.
             affecteds = vuln.get("affected")
             if affecteds is None:
                 logger.warning(f"OSV vuln entry '{id}' is missing 'affected' list")
@@ -141,6 +143,14 @@ class OsvService(VulnerabilityService):
             # The ranges aren't guaranteed to come in chronological order
             fix_versions.sort()
 
-            results.append(VulnerabilityResult(id, description, fix_versions, aliases))
+            results.append(
+                VulnerabilityResult(
+                    id=id,
+                    description=description,
+                    fix_versions=fix_versions,
+                    aliases=set(vuln.get("aliases", [])),
+                    published=self._parse_rfc3339(vuln.get("published")),
+                )
+            )
 
         return spec, results
