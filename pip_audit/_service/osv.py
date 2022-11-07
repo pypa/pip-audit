@@ -114,8 +114,6 @@ class OsvService(VulnerabilityService):
 
             # OSV doesn't mandate this field either. There's very little we
             # can do without it, so we skip any results that are missing it.
-            #
-            # TODO(@orsinium): not true anymore, the field is marked as required in API docs.
             affecteds = vuln.get("affected")
             if affecteds is None:
                 logger.warning(f"OSV vuln entry '{id}' is missing 'affected' list")
