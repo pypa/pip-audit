@@ -149,7 +149,7 @@ class OsvService(VulnerabilityService):
                     description=description,
                     fix_versions=fix_versions,
                     aliases=set(vuln.get("aliases", [])),
-                    published=self._parse_rfs3339(vuln.get("published")),
+                    published=self._parse_rfc3339(vuln.get("published")),
                 )
             )
 

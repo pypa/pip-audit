@@ -144,7 +144,7 @@ class PyPIService(VulnerabilityService):
                     description=description,
                     fix_versions=fix_versions,
                     aliases=set(v["aliases"]),
-                    published=self._parse_rfs3339(v.get("published")),
+                    published=self._parse_rfc3339(v.get("published")),
                 )
             )
 

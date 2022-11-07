@@ -156,7 +156,7 @@ class VulnerabilityService(ABC):
             yield self.query(spec)
 
     @staticmethod
-    def _parse_rfs3339(dt: str | None) -> datetime | None:
+    def _parse_rfc3339(dt: str | None) -> datetime | None:
         if dt is None:
             return None
         return datetime.strptime(dt, "%Y-%m-%dT%H:%M:%SZ")
