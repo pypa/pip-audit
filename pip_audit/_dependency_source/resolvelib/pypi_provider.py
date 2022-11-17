@@ -304,7 +304,7 @@ class PyPIProvider(AbstractProvider):
         return canonicalize_name(requirement_or_candidate.name)
 
     # TODO: Typing. See: https://github.com/sarugaku/resolvelib/issues/104
-    def get_preference(  # type: ignore[override, no-untyped-def]
+    def get_preference(  # type: ignore[no-untyped-def]
         self,
         identifier: Any,
         resolutions: Mapping[Any, Any],
