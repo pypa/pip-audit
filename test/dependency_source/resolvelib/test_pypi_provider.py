@@ -50,3 +50,39 @@ class TestCandidate:
                 "Installing source distribution in isolated environment for fakepkg (1.0.0)"
             ),
         ]
+
+
+def test_get_project_from_index_relative_url():
+    data = """
+        <a href="../../packages/packages/foo/bar/long-hash/Flask-2.0.1-py3-none-any.whl">
+        Flask-2.0.1-py3-none-any.whl</a><br/>
+    """
+    response = pretend.stub(
+        raise_for_status=lambda: None,
+        content=data,
+        status_code=200,
+    )
+    session = pretend.stub(get=pretend.call_recorder(lambda u, **kw: response))
+    state = pretend.stub()
+
+    candidates = list(
+        pypi_provider.get_project_from_index(
+            index_url="https://fake-index.example.com/api/pypi/pypi-all/simple/",
+            session=session,
+            project="Flask",
+            extras=set(),
+            timeout=None,
+            state=state,
+        )
+    )
+
+    assert len(candidates) == 1
+
+    candidate = candidates[0]
+    assert candidate.name == "flask"
+    assert candidate.filename == Path("Flask-2.0.1-py3-none-any.whl")
+    assert candidate.version == Version("2.0.1")
+    assert candidate.url == (
+        "https://fake-index.example.com/api/pypi/packages/packages/foo/bar/"
+        "long-hash/Flask-2.0.1-py3-none-any.whl"
+    )

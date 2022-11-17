@@ -287,6 +287,31 @@ def test_resolvelib_sdist_invalid_suffix(monkeypatch):
         dict(resolver.resolve_all(iter([req])))
 
 
+def test_resolvelib_relative_url(monkeypatch):
+    # PEP 503 says that relative URLs are valid and are relative to the project's
+    # simple index URL.
+    data = """
+        <a href="../../packages/packages/foo/bar/long-hash/Flask-2.0.1-py3-none-any.whl">
+        Flask-2.0.1-py3-none-any.whl</a><br/>
+    """
+
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+    )
+
+    resolver = resolvelib.ResolveLibResolver(
+        index_urls=["https://fake-index.example.com/api/pypi/pypi-all/simple/"]
+    )
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
+    )
+
+    req = Requirement("flask==2.0.1")
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    assert req in resolved_deps
+    assert resolved_deps[req] == [ResolvedDependency("flask", Version("2.0.1"))]
+
+
 def test_resolvelib_http_error(monkeypatch):
     def get_http_error_mock():
         class Doc:

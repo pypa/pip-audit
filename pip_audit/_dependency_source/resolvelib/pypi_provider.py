@@ -14,7 +14,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory
 from typing import Any, BinaryIO, Iterator, List, Mapping, Optional, Set, Union, cast
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 from zipfile import ZipFile
 
 import html5lib
@@ -217,8 +217,8 @@ def get_project_from_index(
     state: AuditState,
 ) -> Iterator[Candidate]:
     """Return candidates from an index created from the project name and extras."""
-    url = index_url + "/" + project
-    response: requests.Response = session.get(url, timeout=timeout)
+    project_url = index_url + "/" + project
+    response: requests.Response = session.get(project_url, timeout=timeout)
     if response.status_code == 404:
         raise PyPINotFoundError
     response.raise_for_status()
@@ -228,7 +228,15 @@ def get_project_from_index(
     if not links:
         raise PyPINotFoundError
     for i in links:
-        url = i.attrib["href"]
+        parsed_dist_url = urlparse(i.attrib["href"])
+
+        # Per PEP 503: The distribution's URL can be relative, in which case
+        # it's relative to the project's simple index URL.
+        if not parsed_dist_url.netloc:
+            dist_url = urljoin(project_url, parsed_dist_url.geturl())
+        else:
+            dist_url = parsed_dist_url.geturl()
+
         py_req = i.attrib.get("data-requires-python")
         # Skip items that need a different Python version
         if py_req:
@@ -236,7 +244,7 @@ def get_project_from_index(
             if PYTHON_VERSION not in spec:
                 continue
 
-        path = urlparse(url).path
+        path = parsed_dist_url.path
         filename = path.rpartition("/")[-1]
 
         # Handle wheels and source distributions
@@ -256,7 +264,7 @@ def get_project_from_index(
                 name,
                 Path(filename),
                 version,
-                url=url,
+                url=dist_url,
                 extras=extras,
                 is_wheel=is_wheel,
                 timeout=timeout,

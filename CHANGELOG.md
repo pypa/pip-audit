@@ -14,6 +14,10 @@ All versions prior to 0.0.9 are untracked.
   `--desc=auto` now includes the description in the generated JSON report,
   as intended ([#399](https://github.com/pypa/pip-audit/pull/399))
 
+* Fixed a bug in dependency resolution with third-party indices where
+  relative URLs were not resolved correctly
+  ([#411](https://github.com/pypa/pip-audit/pull/411))
+
 ## [2.4.5]
 
 ### Fixed
