@@ -20,7 +20,7 @@ from .pypi_provider import PyPINotFoundError, PyPIProvider
 
 logger = logging.getLogger(__name__)
 
-PYPI_URL = "https://pypi.org/simple"
+PYPI_URL = "https://pypi.org/simple/"
 
 
 Requirement = Union[_Requirement, ParsedRequirement]

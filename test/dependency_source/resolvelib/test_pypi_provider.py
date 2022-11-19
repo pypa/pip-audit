@@ -83,6 +83,6 @@ def test_get_project_from_index_relative_url():
     assert candidate.filename == Path("Flask-2.0.1-py3-none-any.whl")
     assert candidate.version == Version("2.0.1")
     assert candidate.url == (
-        "https://fake-index.example.com/api/pypi/packages/packages/foo/bar/"
+        "https://fake-index.example.com/api/pypi/pypi-all/packages/packages/foo/bar/"
         "long-hash/Flask-2.0.1-py3-none-any.whl"
     )

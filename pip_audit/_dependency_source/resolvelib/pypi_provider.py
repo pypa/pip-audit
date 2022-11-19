@@ -217,7 +217,11 @@ def get_project_from_index(
     state: AuditState,
 ) -> Iterator[Candidate]:
     """Return candidates from an index created from the project name and extras."""
-    project_url = index_url + "/" + project
+
+    # NOTE: The trailing slash is important here: without it, the `urljoin`
+    # below will treat the final component as a file and strip during the join.
+    # It's also strictly more correct, per PEP 503.
+    project_url = urljoin(index_url, f"{project}/")
     response: requests.Response = session.get(project_url, timeout=timeout)
     if response.status_code == 404:
         raise PyPINotFoundError
@@ -300,6 +304,10 @@ class PyPIProvider(AbstractProvider):
 
         `state` is an `AuditState` to use for state callbacks.
         """
+
+        # Per PEP 503: Index URLs should always be normalized to end with `/`.
+        index_urls = [url if url.endswith("/") else f"{url}/" for url in index_urls]
+
         self.index_urls = index_urls
         self.timeout = timeout
         self.session = caching_session(cache_dir, use_pip=True)

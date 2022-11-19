@@ -355,7 +355,7 @@ def test_resolvelib_http_notfound(monkeypatch):
         SkippedDependency(
             name="flask",
             skip_reason='Could not find project "flask" on any of the supplied index URLs: '
-            "['https://pypi.org/simple']",
+            "['https://pypi.org/simple/']",
         )
     ]
     assert req in resolved_deps
@@ -365,8 +365,8 @@ def test_resolvelib_http_notfound(monkeypatch):
 def test_resolvelib_multiple_indexes(monkeypatch):
     url1 = "https://index1"
     url2 = "https://index2"
-    package_url1 = f"{url1}/flask"
-    package_url2 = f"{url2}/flask"
+    package_url1 = f"{url1}/flask/"
+    package_url2 = f"{url2}/flask/"
     data1 = (
         '<a href="https://files.pythonhosted.org/packages/d4/6a/'
         "93500f2a7089b4e993fb095215979890b6204a5ba3f6b0f63dc6c3c6c827/Flask-0.5.tar.gz#"
@@ -414,8 +414,8 @@ def test_resolvelib_multiple_indexes(monkeypatch):
 def test_resolvelib_package_missing_on_one_index(monkeypatch):
     url1 = "https://index1"
     url2 = "https://index2"
-    package_url1 = f"{url1}/flask"
-    package_url2 = f"{url2}/flask"
+    package_url1 = f"{url1}/flask/"
+    package_url2 = f"{url2}/flask/"
     data1 = (
         '<a href="https://files.pythonhosted.org/packages/d4/6a/'
         "93500f2a7089b4e993fb095215979890b6204a5ba3f6b0f63dc6c3c6c827/Flask-0.5.tar.gz#"
@@ -485,7 +485,7 @@ def test_resolvelib_no_links(monkeypatch):
         SkippedDependency(
             name="flask",
             skip_reason='Could not find project "flask" on any of the supplied index URLs: '
-            "['https://pypi.org/simple']",
+            "['https://pypi.org/simple/']",
         )
     ]
     assert req in resolved_deps
