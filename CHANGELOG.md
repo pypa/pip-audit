@@ -16,7 +16,8 @@ All versions prior to 0.0.9 are untracked.
 
 * Fixed a bug in dependency resolution with third-party indices where
   relative URLs were not resolved correctly
-  ([#411](https://github.com/pypa/pip-audit/pull/411))
+  ([#411](https://github.com/pypa/pip-audit/pull/411),
+  [#412](https://github.com/pypa/pip-audit/pull/412))
 
 ## [2.4.5]
 
