@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Union
 
 from packaging.requirements import Requirement as _Requirement
 from pip_api import Requirement as ParsedRequirement
@@ -23,7 +24,8 @@ logger = logging.getLogger(__name__)
 PYPI_URL = "https://pypi.org/simple/"
 
 
-Requirement = _Requirement | ParsedRequirement
+# TODO: Replace with _Requirement | ParsedRequirement once our minimum is 3.10.
+Requirement = Union[_Requirement, ParsedRequirement]
 
 
 class ResolveLibResolver(DependencyResolver):
