@@ -2,10 +2,11 @@
 Resolve a list of dependencies via the `resolvelib` API as well as a custom
 `Resolver` that uses PyPI as an information source.
 """
+from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Union
 
 from packaging.requirements import Requirement as _Requirement
 from pip_api import Requirement as ParsedRequirement
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 PYPI_URL = "https://pypi.org/simple/"
 
 
+# TODO: Replace with _Requirement | ParsedRequirement once our minimum is 3.10.
 Requirement = Union[_Requirement, ParsedRequirement]
 
 
@@ -34,9 +36,9 @@ class ResolveLibResolver(DependencyResolver):
 
     def __init__(
         self,
-        index_urls: List[str] = [PYPI_URL],
-        timeout: Optional[int] = None,
-        cache_dir: Optional[Path] = None,
+        index_urls: list[str] = [PYPI_URL],
+        timeout: int | None = None,
+        cache_dir: Path | None = None,
         skip_editable: bool = False,
         state: AuditState = AuditState(),
     ) -> None:
@@ -56,7 +58,7 @@ class ResolveLibResolver(DependencyResolver):
         self.resolver: Resolver = Resolver(self.provider, self.reporter)
         self._skip_editable = skip_editable
 
-    def resolve(self, req: Requirement) -> List[Dependency]:
+    def resolve(self, req: Requirement) -> list[Dependency]:
         """
         Resolve the given `Requirement` into a `Dependency` list.
         """
@@ -70,7 +72,7 @@ class ResolveLibResolver(DependencyResolver):
                     SkippedDependency(name=req.name, skip_reason="requirement marked as editable")
                 ]
 
-        deps: List[Dependency] = []
+        deps: list[Dependency] = []
         try:
             result = self.resolver.resolve([req])
         except PyPINotFoundError as e:

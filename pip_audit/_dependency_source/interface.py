@@ -2,9 +2,10 @@
 Interfaces for interacting with "dependency sources", i.e. sources
 of fully resolved Python dependency trees.
 """
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Iterator, List, Tuple
+from typing import Iterator, Tuple
 
 from packaging.requirements import Requirement
 
@@ -68,7 +69,7 @@ class DependencyResolver(ABC):
     """
 
     @abstractmethod
-    def resolve(self, req: Requirement) -> List[Dependency]:  # pragma: no cover
+    def resolve(self, req: Requirement) -> list[Dependency]:  # pragma: no cover
         """
         Resolve a single `Requirement` into a list of `Dependency` instances.
         """
@@ -76,7 +77,7 @@ class DependencyResolver(ABC):
 
     def resolve_all(
         self, reqs: Iterator[Requirement]
-    ) -> Iterator[Tuple[Requirement, List[Dependency]]]:
+    ) -> Iterator[Tuple[Requirement, list[Dependency]]]:
         """
         Resolve a collection of `Requirement`s into their respective `Dependency` sets.
 

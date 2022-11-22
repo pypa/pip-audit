@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from email.message import EmailMessage
-from typing import List
 
 import pytest
 import requests
@@ -30,7 +31,7 @@ def get_metadata_mock():
     return EmailMessage()
 
 
-def check_deps(resolved_deps: List[ResolvedDependency], expected_deps: List[ResolvedDependency]):
+def check_deps(resolved_deps: list[ResolvedDependency], expected_deps: list[ResolvedDependency]):
     # We don't want to just check that the two lists are equal because:
     # - Some packages install additional dependencies for specific versions of Python. It's only
     #   practical to check that the resolved dependencies contain all the expected ones (but there

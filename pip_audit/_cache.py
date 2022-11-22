@@ -2,13 +2,15 @@
 Caching middleware for `pip-audit`.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import subprocess
 import sys
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Optional
+from typing import Any
 
 import pip_api
 import requests
@@ -44,7 +46,7 @@ def _get_pip_cache() -> Path:
     return http_cache_dir
 
 
-def _get_cache_dir(custom_cache_dir: Optional[Path], *, use_pip: bool = True) -> Path:
+def _get_cache_dir(custom_cache_dir: Path | None, *, use_pip: bool = True) -> Path:
     """
     Returns a directory path suitable for HTTP caching.
 
@@ -84,7 +86,7 @@ class _SafeFileCache(FileCache):
         self._logged_warning = False
         super().__init__(directory)
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         try:
             return super().get(key)
         except Exception as e:  # pragma: no cover
@@ -95,7 +97,7 @@ class _SafeFileCache(FileCache):
                 self._logged_warning = True
             return None
 
-    def set(self, key: str, value: bytes, expires: Optional[Any] = None) -> None:
+    def set(self, key: str, value: bytes, expires: Any | None = None) -> None:
         try:
             self._set_impl(key, value)
         except Exception as e:  # pragma: no cover
@@ -140,7 +142,7 @@ class _SafeFileCache(FileCache):
                 self._logged_warning = True
 
 
-def caching_session(cache_dir: Optional[Path], *, use_pip: bool = False) -> CacheControl:
+def caching_session(cache_dir: Path | None, *, use_pip: bool = False) -> CacheControl:
     """
     Return a `requests` style session, with suitable caching middleware.
 

@@ -2,11 +2,13 @@
 Create virtual environments with a custom set of packages and inspect their dependencies.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import venv
 from types import SimpleNamespace
-from typing import Iterator, List, Optional, Tuple
+from typing import Iterator, Tuple
 
 from packaging.version import Version
 
@@ -37,7 +39,7 @@ class VirtualEnv(venv.EnvBuilder):
     ```
     """
 
-    def __init__(self, install_args: List[str], state: AuditState = AuditState()):
+    def __init__(self, install_args: list[str], state: AuditState = AuditState()):
         """
         Create a new `VirtualEnv`.
 
@@ -52,7 +54,7 @@ class VirtualEnv(venv.EnvBuilder):
         """
         super().__init__(with_pip=True)
         self._install_args = install_args
-        self._packages: Optional[List[Tuple[str, Version]]] = None
+        self._packages: list[Tuple[str, Version]] | None = None
         self._state = state
 
     def post_setup(self, context: SimpleNamespace) -> None:

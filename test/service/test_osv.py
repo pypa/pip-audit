@@ -1,4 +1,4 @@
-from typing import Dict, List
+from __future__ import annotations
 
 import pretend  # type: ignore
 import pytest
@@ -23,7 +23,7 @@ def get_mock_session(func):
 def test_osv():
     osv = service.OsvService()
     dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
-    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+    results: dict[service.Dependency, list[service.VulnerabilityResult]] = dict(
         osv.query_all(iter([dep]))
     )
 
@@ -51,7 +51,7 @@ def test_osv_version_ranges():
     # version
     osv = service.OsvService()
     dep = service.ResolvedDependency("ansible", Version("2.8.0"))
-    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+    results: dict[service.Dependency, list[service.VulnerabilityResult]] = dict(
         osv.query_all(iter([dep]))
     )
 
@@ -65,11 +65,11 @@ def test_osv_version_ranges():
 @pytest.mark.online
 def test_osv_multiple_pkg():
     osv = service.OsvService()
-    deps: List[service.Dependency] = [
+    deps: list[service.Dependency] = [
         service.ResolvedDependency("jinja2", Version("2.4.1")),
         service.ResolvedDependency("flask", Version("0.5")),
     ]
-    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+    results: dict[service.Dependency, list[service.VulnerabilityResult]] = dict(
         osv.query_all(iter(deps))
     )
 
@@ -84,7 +84,7 @@ def test_osv_multiple_pkg():
 def test_osv_no_vuln():
     osv = service.OsvService()
     dep = service.ResolvedDependency("foo", Version("1.0.0"))
-    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+    results: dict[service.Dependency, list[service.VulnerabilityResult]] = dict(
         osv.query_all(iter([dep]))
     )
 
@@ -127,7 +127,7 @@ def test_osv_error_response(monkeypatch):
 def test_osv_skipped_dep():
     osv = service.OsvService()
     dep = service.SkippedDependency(name="foo", skip_reason="skip-reason")
-    results: Dict[service.Dependency, List[service.VulnerabilityResult]] = dict(
+    results: dict[service.Dependency, list[service.VulnerabilityResult]] = dict(
         osv.query_all(iter([dep]))
     )
 

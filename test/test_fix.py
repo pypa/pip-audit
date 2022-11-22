@@ -1,4 +1,4 @@
-from typing import Dict, List
+from __future__ import annotations
 
 from packaging.version import Version
 
@@ -13,7 +13,7 @@ from pip_audit._service import (
 
 def test_fix(vuln_service):
     dep = ResolvedDependency(name="foo", version=Version("0.5.0"))
-    result: Dict[Dependency, List[VulnerabilityResult]] = {
+    result: dict[Dependency, list[VulnerabilityResult]] = {
         dep: [
             VulnerabilityResult(
                 id="fake-id",
@@ -31,7 +31,7 @@ def test_fix(vuln_service):
 
 def test_fix_skipped_deps(vuln_service):
     dep = SkippedDependency(name="foo", skip_reason="skip-reason")
-    result: Dict[Dependency, List[VulnerabilityResult]] = {
+    result: dict[Dependency, list[VulnerabilityResult]] = {
         dep: [
             VulnerabilityResult(
                 id="fake-id",
@@ -47,14 +47,14 @@ def test_fix_skipped_deps(vuln_service):
 
 def test_fix_no_vulns(vuln_service):
     dep = ResolvedDependency(name="foo", version=Version("0.5.0"))
-    result: Dict[Dependency, List[VulnerabilityResult]] = {dep: list()}
+    result: dict[Dependency, list[VulnerabilityResult]] = {dep: list()}
     fix_versions = list(resolve_fix_versions(vuln_service(), result))
     assert not fix_versions
 
 
 def test_fix_resolution_impossible(vuln_service):
     dep = ResolvedDependency(name="foo", version=Version("0.5.0"))
-    result: Dict[Dependency, List[VulnerabilityResult]] = {
+    result: dict[Dependency, list[VulnerabilityResult]] = {
         dep: [
             VulnerabilityResult(
                 id="fake-id",

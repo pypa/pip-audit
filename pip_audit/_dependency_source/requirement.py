@@ -2,6 +2,8 @@
 Collect dependencies from one or more `requirements.txt`-formatted files.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import re
@@ -9,7 +11,7 @@ import shutil
 from contextlib import ExitStack
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import IO, Dict, Iterator, List, Set, Tuple, cast
+from typing import IO, Iterator, Tuple, cast
 
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
@@ -40,7 +42,7 @@ class RequirementSource(DependencySource):
 
     def __init__(
         self,
-        filenames: List[Path],
+        filenames: list[Path],
         resolver: DependencyResolver,
         *,
         require_hashes: bool = False,
@@ -68,7 +70,7 @@ class RequirementSource(DependencySource):
         self._require_hashes = require_hashes
         self._no_deps = no_deps
         self.state = state
-        self._dep_cache: Dict[Path, Dict[Requirement, Set[Dependency]]] = {}
+        self._dep_cache: dict[Path, dict[Requirement, set[Dependency]]] = {}
 
     def collect(self) -> Iterator[Dependency]:
         """
@@ -76,7 +78,7 @@ class RequirementSource(DependencySource):
 
         Raises a `RequirementSourceError` on any errors.
         """
-        collected: Set[Dependency] = set()
+        collected: set[Dependency] = set()
         for filename in self._filenames:
             try:
                 rf = RequirementsFile.from_file(filename)
@@ -86,8 +88,8 @@ class RequirementSource(DependencySource):
                         f"{str(rf.invalid_lines)}"
                     )
 
-                reqs: List[InstallRequirement] = []
-                req_names: Set[str] = set()
+                reqs: list[InstallRequirement] = []
+                req_names: set[str] = set()
                 for req in rf.requirements:
                     if req.req is None:
                         # For URL requirements that don't have an egg fragment that lists the
@@ -126,7 +128,7 @@ class RequirementSource(DependencySource):
         with ExitStack() as stack:
             # Make temporary copies of the existing requirements files. If anything goes wrong, we
             # want to copy them back into place and undo any partial application of the fix.
-            tmp_files: List[IO[str]] = [
+            tmp_files: list[IO[str]] = [
                 stack.enter_context(NamedTemporaryFile(mode="w")) for _ in self._filenames
             ]
             for (filename, tmp_file) in zip(self._filenames, tmp_files):
@@ -159,7 +161,7 @@ class RequirementSource(DependencySource):
         # Check ahead of time for anything invalid in the requirements file since we don't want to
         # encounter this while writing out the file. Check for duplicate requirements and lines that
         # failed to parse.
-        req_names: Set[str] = set()
+        req_names: set[str] = set()
         for req in reqs:
             if (
                 isinstance(req, InstallRequirement)
@@ -199,10 +201,10 @@ class RequirementSource(DependencySource):
             # another.
             try:
                 if not fixed:
-                    installed_reqs: List[InstallRequirement] = [
+                    installed_reqs: list[InstallRequirement] = [
                         r for r in reqs if isinstance(r, InstallRequirement)
                     ]
-                    origin_reqs: Set[Requirement] = set()
+                    origin_reqs: set[Requirement] = set()
                     for req, dep in self._collect_cached_deps(filename, list(installed_reqs)):
                         if fix_version.dep == dep:
                             origin_reqs.add(req)
@@ -222,7 +224,7 @@ class RequirementSource(DependencySource):
             except DependencyResolverError as dre:
                 raise RequirementFixError from dre
 
-    def _recover_files(self, tmp_files: List[IO[str]]) -> None:
+    def _recover_files(self, tmp_files: list[IO[str]]) -> None:
         for (filename, tmp_file) in zip(self._filenames, tmp_files):
             try:
                 os.replace(tmp_file.name, filename)
@@ -275,12 +277,12 @@ class RequirementSource(DependencySource):
                     self._build_hash_options_mapping(req.hash_options),
                 )
 
-    def _build_hash_options_mapping(self, hash_options: List[str]) -> Dict[str, List[str]]:
+    def _build_hash_options_mapping(self, hash_options: list[str]) -> dict[str, list[str]]:
         """
         A helper that takes a list of hash options and returns a dictionary mapping from hash
         algorithm (e.g. sha256) to a list of values.
         """
-        mapping: Dict[str, List[str]] = {}
+        mapping: dict[str, list[str]] = {}
         for hash_option in hash_options:
             algorithm, hash_ = hash_option.split(":")
             if algorithm not in mapping:
@@ -289,7 +291,7 @@ class RequirementSource(DependencySource):
         return mapping
 
     def _collect_cached_deps(
-        self, filename: Path, reqs: List[InstallRequirement]
+        self, filename: Path, reqs: list[InstallRequirement]
     ) -> Iterator[Tuple[Requirement, Dependency]]:
         """
         Collect resolved dependencies for a given requirements file, retrieving them from the
@@ -302,7 +304,7 @@ class RequirementSource(DependencySource):
                 for dep in deps:
                     yield req, dep
 
-        new_cached_deps_for_file: Dict[Requirement, Set[Dependency]] = dict()
+        new_cached_deps_for_file: dict[Requirement, set[Dependency]] = dict()
 
         # There are three cases where we skip dependency resolution:
         #
@@ -322,7 +324,7 @@ class RequirementSource(DependencySource):
                 yield req, dep
         else:
             # Invoke the dependency resolver to turn requirements into dependencies
-            req_values: List[Requirement] = [r.req for r in reqs]
+            req_values: list[Requirement] = [r.req for r in reqs]
             for req, resolved_deps in self._resolver.resolve_all(iter(req_values)):
                 for dep in resolved_deps:
                     if req not in new_cached_deps_for_file:

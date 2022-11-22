@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
-from typing import List, Optional
 
 import pip_requirements_parser
 import pretend  # type: ignore
@@ -75,7 +76,7 @@ def test_requirement_source_parse_error(monkeypatch):
 def test_requirement_source_resolver_error(monkeypatch):
     # Pass the requirement source a resolver that automatically raises errors
     class MockResolver(DependencyResolver):
-        def resolve(self, req: Requirement) -> List[Dependency]:
+        def resolve(self, req: Requirement) -> list[Dependency]:
             raise DependencyResolverError
 
     source = requirement.RequirementSource([Path("requirements.txt")], MockResolver())
@@ -161,10 +162,10 @@ def test_requirement_source_non_editable_without_egg_fragment(monkeypatch):
 
 
 def _check_fixes(
-    input_reqs: List[str],
-    expected_reqs: List[str],
-    req_paths: List[Path],
-    fixes: List[ResolvedFixVersion],
+    input_reqs: list[str],
+    expected_reqs: list[str],
+    req_paths: list[Path],
+    fixes: list[ResolvedFixVersion],
 ) -> None:
     # Populate the requirements files
     for (input_req, req_path) in zip(input_reqs, req_paths):
@@ -476,7 +477,7 @@ def test_requirement_source_dep_caching(monkeypatch):
     specs = list(source.collect())
 
     class MockResolver(DependencyResolver):
-        def resolve(self, req: Requirement) -> List[Dependency]:
+        def resolve(self, req: Requirement) -> list[Dependency]:
             raise DependencyResolverError
 
     # Now run collect again and check that dependency resolution doesn't get repeated
@@ -496,7 +497,7 @@ def test_requirement_source_fix_explicit_subdep(monkeypatch, req_file):
 
     # Firstly, get a handle on the `jinja2` dependency. The version cannot be hardcoded since it
     # depends what versions are available on PyPI when dependency resolution runs.
-    jinja_dep: Optional[ResolvedDependency] = None
+    jinja_dep: ResolvedDependency | None = None
     for dep in flask_deps:
         if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
             jinja_dep = dep
@@ -524,7 +525,7 @@ def test_requirement_source_fix_explicit_subdep(monkeypatch, req_file):
 def test_requirement_source_fix_explicit_subdep_multiple_reqs(monkeypatch, req_file):
     # Recreate the vulnerable subdependency case.
     flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
-    jinja_dep: Optional[ResolvedDependency] = None
+    jinja_dep: ResolvedDependency | None = None
     for dep in flask_deps:
         if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
             jinja_dep = dep
@@ -554,7 +555,7 @@ def test_requirement_source_fix_explicit_subdep_multiple_reqs(monkeypatch, req_f
 def test_requirement_source_fix_explicit_subdep_resolver_error(req_file):
     # Pass the requirement source a resolver that automatically raises errors
     class MockResolver(DependencyResolver):
-        def resolve(self, req: Requirement) -> List[Dependency]:
+        def resolve(self, req: Requirement) -> list[Dependency]:
             raise DependencyResolverError
 
     req_file_name = req_file()
@@ -563,7 +564,7 @@ def test_requirement_source_fix_explicit_subdep_resolver_error(req_file):
 
     # Recreate the vulnerable subdependency case.
     flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
-    jinja_dep: Optional[ResolvedDependency] = None
+    jinja_dep: ResolvedDependency | None = None
     for dep in flask_deps:
         if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
             jinja_dep = dep
@@ -601,7 +602,7 @@ def test_requirement_source_fix_explicit_subdep_comment_retension(req_file):
 
     # Recreate the vulnerable subdependency case.
     flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
-    jinja_dep: Optional[ResolvedDependency] = None
+    jinja_dep: ResolvedDependency | None = None
     for dep in flask_deps:
         if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
             jinja_dep = dep

@@ -2,6 +2,8 @@
 Command-line entrypoints for `pip-audit`.
 """
 
+from __future__ import annotations
+
 import argparse
 import enum
 import logging
@@ -9,7 +11,7 @@ import os
 import sys
 from contextlib import ExitStack
 from pathlib import Path
-from typing import List, NoReturn, Optional, Type, cast
+from typing import NoReturn, Type, cast
 
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
@@ -79,7 +81,7 @@ class VulnerabilityServiceChoice(str, enum.Enum):
     Osv = "osv"
     Pypi = "pypi"
 
-    def to_service(self, timeout: int, cache_dir: Optional[Path]) -> VulnerabilityService:
+    def to_service(self, timeout: int, cache_dir: Path | None) -> VulnerabilityService:
         if self is VulnerabilityServiceChoice.Osv:
             return OsvService(cache_dir, timeout)
         elif self is VulnerabilityServiceChoice.Pypi:
@@ -390,7 +392,7 @@ def audit() -> None:  # pragma: no cover
         source: DependencySource
         index_urls = [args.index_url] + args.extra_index_urls
         if args.requirements is not None:
-            req_files: List[Path] = [Path(req.name) for req in args.requirements]
+            req_files: list[Path] = [Path(req.name) for req in args.requirements]
             # TODO: This is a leaky abstraction; we should construct the ResolveLibResolver
             # within the RequirementSource instead of in-line here.
             source = RequirementSource(

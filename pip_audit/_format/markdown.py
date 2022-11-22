@@ -2,8 +2,10 @@
 Functionality for formatting vulnerability results as a Markdown table.
 """
 
+from __future__ import annotations
+
 from textwrap import dedent
-from typing import Dict, List, Optional, cast
+from typing import cast
 
 from packaging.version import Version
 
@@ -37,8 +39,8 @@ class MarkdownFormat(VulnerabilityFormat):
 
     def format(
         self,
-        result: Dict[service.Dependency, List[service.VulnerabilityResult]],
-        fixes: List[fix.FixVersion],
+        result: dict[service.Dependency, list[service.VulnerabilityResult]],
+        fixes: list[fix.FixVersion],
     ) -> str:
         """
         Returns a Markdown formatted string representing a set of vulnerability results and applied
@@ -56,8 +58,8 @@ class MarkdownFormat(VulnerabilityFormat):
 
     def _format_vuln_results(
         self,
-        result: Dict[service.Dependency, List[service.VulnerabilityResult]],
-        fixes: List[fix.FixVersion],
+        result: dict[service.Dependency, list[service.VulnerabilityResult]],
+        fixes: list[fix.FixVersion],
     ) -> str:
         header = "Name | Version | ID | Fix Versions"
         border = "--- | --- | --- | ---"
@@ -68,7 +70,7 @@ class MarkdownFormat(VulnerabilityFormat):
             header += " | Description"
             border += " | ---"
 
-        vuln_rows: List[str] = []
+        vuln_rows: list[str] = []
         for dep, vulns in result.items():
             if dep.is_skipped():
                 continue
@@ -94,7 +96,7 @@ class MarkdownFormat(VulnerabilityFormat):
         self,
         dep: service.ResolvedDependency,
         vuln: service.VulnerabilityResult,
-        applied_fix: Optional[fix.FixVersion],
+        applied_fix: fix.FixVersion | None,
     ) -> str:
         vuln_text = (
             f"{dep.canonical_name} | {dep.version} | {vuln.id} | "
@@ -106,7 +108,7 @@ class MarkdownFormat(VulnerabilityFormat):
             vuln_text += f" | {vuln.description}"
         return vuln_text
 
-    def _format_fix_versions(self, fix_versions: List[Version]) -> str:
+    def _format_fix_versions(self, fix_versions: list[Version]) -> str:
         return ",".join([str(version) for version in fix_versions])
 
     def _format_applied_fix(self, applied_fix: fix.FixVersion) -> str:
@@ -123,12 +125,12 @@ class MarkdownFormat(VulnerabilityFormat):
         )
 
     def _format_skipped_deps(
-        self, result: Dict[service.Dependency, List[service.VulnerabilityResult]]
+        self, result: dict[service.Dependency, list[service.VulnerabilityResult]]
     ) -> str:
         header = "Name | Skip Reason"
         border = "--- | ---"
 
-        skipped_dep_rows: List[str] = []
+        skipped_dep_rows: list[str] = []
         for dep, _ in result.items():
             if dep.is_skipped():
                 dep = cast(service.SkippedDependency, dep)

@@ -1,10 +1,11 @@
 """
 Core auditing APIs.
 """
+from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Iterator, List, Set, Tuple
+from typing import Iterator, Tuple
 
 from pip_audit._dependency_source import DependencySource
 from pip_audit._service import Dependency, VulnerabilityResult, VulnerabilityService
@@ -46,7 +47,7 @@ class Auditor:
 
     def audit(
         self, source: DependencySource
-    ) -> Iterator[Tuple[Dependency, List[VulnerabilityResult]]]:
+    ) -> Iterator[Tuple[Dependency, list[VulnerabilityResult]]]:
         """
         Perform the auditing step, collecting dependencies from `source`.
 
@@ -64,8 +65,8 @@ class Auditor:
             return {}
         else:
             for dep, vulns in self._service.query_all(specs):
-                unique_vulns: List[VulnerabilityResult] = []
-                seen_aliases: Set[str] = set()
+                unique_vulns: list[VulnerabilityResult] = []
+                seen_aliases: set[str] = set()
 
                 # First pass, add all PYSEC vulnerabilities and track their
                 # alias sets.

@@ -5,6 +5,8 @@ Closely adapted from `resolvelib`'s examples, which are copyrighted by the `reso
 authors under the ISC license.
 """
 
+from __future__ import annotations
+
 import itertools
 from email.message import EmailMessage, Message
 from email.parser import BytesParser
@@ -13,7 +15,7 @@ from operator import attrgetter
 from pathlib import Path
 from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory
-from typing import Any, BinaryIO, Iterator, List, Mapping, Optional, Set, Union, cast
+from typing import Any, BinaryIO, Iterator, Mapping, cast
 from urllib.parse import urljoin, urlparse
 from zipfile import ZipFile
 
@@ -50,10 +52,10 @@ class Candidate:
         version: Version,
         *,
         url: str,
-        extras: Set[str],
+        extras: set[str],
         is_wheel: bool,
         session: CacheControl,
-        timeout: Optional[int] = None,
+        timeout: int | None = None,
         state: AuditState = AuditState(),
     ) -> None:
         """
@@ -70,8 +72,8 @@ class Candidate:
         self._timeout = timeout
         self._state = state
 
-        self._metadata: Optional[Message] = None
-        self._dependencies: Optional[List[Requirement]] = None
+        self._metadata: Message | None = None
+        self._dependencies: list[Requirement] | None = None
 
     def __repr__(self) -> str:  # pragma: no cover
         """
@@ -100,7 +102,7 @@ class Candidate:
         """
         Computes the dependency set for this candidate.
         """
-        deps: List[str] = self.metadata.get_all("Requires-Dist", [])
+        deps: list[str] = self.metadata.get_all("Requires-Dist", [])
         extras = self.extras if self.extras else [""]
 
         for d in deps:
@@ -113,7 +115,7 @@ class Candidate:
                         yield r  # pragma: no cover
 
     @property
-    def dependencies(self) -> List[Requirement]:
+    def dependencies(self) -> list[Requirement]:
         """
         Returns the list of `Requirement`s for this candidate.
         """
@@ -185,11 +187,11 @@ class Candidate:
 
 
 def get_project_from_indexes(
-    index_urls: List[str],
+    index_urls: list[str],
     session: CacheControl,
     project: str,
-    extras: Set[str],
-    timeout: Optional[int],
+    extras: set[str],
+    timeout: int | None,
     state: AuditState,
 ) -> Iterator[Candidate]:
     """Return candidates from all indexes created from the project name and extras."""
@@ -212,8 +214,8 @@ def get_project_from_index(
     index_url: str,
     session: CacheControl,
     project: str,
-    extras: Set[str],
-    timeout: Optional[int],
+    extras: set[str],
+    timeout: int | None,
     state: AuditState,
 ) -> Iterator[Candidate]:
     """Return candidates from an index created from the project name and extras."""
@@ -287,9 +289,9 @@ class PyPIProvider(AbstractProvider):
 
     def __init__(
         self,
-        index_urls: List[str],
-        timeout: Optional[int] = None,
-        cache_dir: Optional[Path] = None,
+        index_urls: list[str],
+        timeout: int | None = None,
+        cache_dir: Path | None = None,
         state: AuditState = AuditState(),
     ):
         """
@@ -313,7 +315,7 @@ class PyPIProvider(AbstractProvider):
         self.session = caching_session(cache_dir, use_pip=True)
         self._state = state
 
-    def identify(self, requirement_or_candidate: Union[Requirement, Candidate]) -> str:
+    def identify(self, requirement_or_candidate: Requirement | Candidate) -> str:
         """
         See `resolvelib.providers.AbstractProvider.identify`.
         """
@@ -349,7 +351,7 @@ class PyPIProvider(AbstractProvider):
         bad_versions = {c.version for c in incompatibilities[identifier]}
 
         # Accumulate extras
-        extras: Set[str] = set()
+        extras: set[str] = set()
         for r in requirements:
             extras |= r.extras
 

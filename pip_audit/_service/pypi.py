@@ -2,10 +2,11 @@
 Functionality for using the [PyPI](https://warehouse.pypa.io/api-reference/json.html)
 API as a `VulnerabilityService`.
 """
+from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import List, Optional, Tuple, cast
+from typing import Tuple, cast
 
 import requests
 from packaging.version import InvalidVersion, Version
@@ -30,7 +31,7 @@ class PyPIService(VulnerabilityService):
     package vulnerability information.
     """
 
-    def __init__(self, cache_dir: Optional[Path] = None, timeout: Optional[int] = None) -> None:
+    def __init__(self, cache_dir: Path | None = None, timeout: int | None = None) -> None:
         """
         Create a new `PyPIService`.
 
@@ -44,7 +45,7 @@ class PyPIService(VulnerabilityService):
         self.session = caching_session(cache_dir)
         self.timeout = timeout
 
-    def query(self, spec: Dependency) -> Tuple[Dependency, List[VulnerabilityResult]]:
+    def query(self, spec: Dependency) -> Tuple[Dependency, list[VulnerabilityResult]]:
         """
         Queries PyPI for the given `Dependency` specification.
 
@@ -82,7 +83,7 @@ class PyPIService(VulnerabilityService):
             raise ServiceError from http_error
 
         response_json = response.json()
-        results: List[VulnerabilityResult] = []
+        results: list[VulnerabilityResult] = []
 
         # If the dependency has a hash explicitly listed, check it against the PyPI data
         if spec.hashes:
