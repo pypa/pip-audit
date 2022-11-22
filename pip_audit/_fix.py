@@ -1,10 +1,11 @@
 """
 Functionality for resolving fixed versions of dependencies.
 """
+from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, Iterator, List, cast
+from typing import Any, Iterator, cast
 
 from packaging.version import Version
 
@@ -62,7 +63,7 @@ class SkippedFixVersion(FixVersion):
 
 def resolve_fix_versions(
     service: VulnerabilityService,
-    result: Dict[Dependency, List[VulnerabilityResult]],
+    result: dict[Dependency, list[VulnerabilityResult]],
     state: AuditState = AuditState(),
 ) -> Iterator[FixVersion]:
     """
@@ -87,7 +88,7 @@ def resolve_fix_versions(
 def _resolve_fix_version(
     service: VulnerabilityService,
     dep: ResolvedDependency,
-    vulns: List[VulnerabilityResult],
+    vulns: list[VulnerabilityResult],
     state: AuditState,
 ) -> Version:
     # We need to upgrade to a fix version that satisfies all vulnerability results

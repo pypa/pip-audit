@@ -1,8 +1,9 @@
 """
 Interfaces for formatting vulnerability results into a string representation.
 """
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Dict, List
 
 import pip_audit._fix as fix
 import pip_audit._service as service
@@ -29,8 +30,8 @@ class VulnerabilityFormat(ABC):
     @abstractmethod
     def format(
         self,
-        result: Dict[service.Dependency, List[service.VulnerabilityResult]],
-        fixes: List[fix.FixVersion],
+        result: dict[service.Dependency, list[service.VulnerabilityResult]],
+        fixes: list[fix.FixVersion],
     ) -> str:  # pragma: no cover
         """
         Convert a mapping of dependencies to vulnerabilities into a string.

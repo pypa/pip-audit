@@ -1,9 +1,10 @@
 """
 Functionality for formatting vulnerability results as an array of JSON objects.
 """
+from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, cast
+from typing import Any, cast
 
 import pip_audit._fix as fix
 import pip_audit._service as service
@@ -35,8 +36,8 @@ class JsonFormat(VulnerabilityFormat):
 
     def format(
         self,
-        result: Dict[service.Dependency, List[service.VulnerabilityResult]],
-        fixes: List[fix.FixVersion],
+        result: dict[service.Dependency, list[service.VulnerabilityResult]],
+        fixes: list[fix.FixVersion],
     ) -> str:
         """
         Returns a JSON formatted string for a given mapping of dependencies to vulnerability
@@ -56,8 +57,8 @@ class JsonFormat(VulnerabilityFormat):
         return json.dumps(output_json)
 
     def _format_dep(
-        self, dep: service.Dependency, vulns: List[service.VulnerabilityResult]
-    ) -> Dict[str, Any]:
+        self, dep: service.Dependency, vulns: list[service.VulnerabilityResult]
+    ) -> dict[str, Any]:
         if dep.is_skipped():
             dep = cast(service.SkippedDependency, dep)
             return {
@@ -72,7 +73,7 @@ class JsonFormat(VulnerabilityFormat):
             "vulns": [self._format_vuln(vuln) for vuln in vulns],
         }
 
-    def _format_vuln(self, vuln: service.VulnerabilityResult) -> Dict[str, Any]:
+    def _format_vuln(self, vuln: service.VulnerabilityResult) -> dict[str, Any]:
         vuln_json = {
             "id": vuln.id,
             "fix_versions": [str(version) for version in vuln.fix_versions],
@@ -81,7 +82,7 @@ class JsonFormat(VulnerabilityFormat):
             vuln_json["description"] = vuln.description
         return vuln_json
 
-    def _format_fix(self, fix_version: fix.FixVersion) -> Dict[str, Any]:
+    def _format_fix(self, fix_version: fix.FixVersion) -> dict[str, Any]:
         if fix_version.is_skipped():
             fix_version = cast(fix.SkippedFixVersion, fix_version)
             return {

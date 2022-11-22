@@ -2,11 +2,12 @@
 Interfaces for for propagating feedback from the API to provide responsive progress indicators as
 well as a progress spinner implementation for use with CLI applications.
 """
+from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
 from logging.handlers import MemoryHandler
-from typing import Any, List, Sequence
+from typing import Any, Sequence
 
 from rich.console import Console
 
@@ -117,7 +118,7 @@ class AuditSpinner(_StateActor):  # pragma: no cover
         self.log_handler = MemoryHandler(
             0, flushLevel=logging.ERROR, target=None, flushOnClose=False
         )
-        self.prev_handlers: List[logging.Handler] = []
+        self.prev_handlers: list[logging.Handler] = []
 
     def update_state(self, message: str) -> None:
         """

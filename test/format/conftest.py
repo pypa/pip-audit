@@ -1,4 +1,4 @@
-from typing import Dict, List
+from __future__ import annotations
 
 import pytest
 from packaging.version import Version
@@ -10,7 +10,7 @@ _RESOLVED_DEP_FOO = service.ResolvedDependency(name="foo", version=Version("1.0"
 _RESOLVED_DEP_BAR = service.ResolvedDependency(name="bar", version=Version("0.1"))
 _SKIPPED_DEP = service.SkippedDependency(name="bar", skip_reason="skip-reason")
 
-_TEST_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
+_TEST_VULN_DATA: dict[service.Dependency, list[service.VulnerabilityResult]] = {
     _RESOLVED_DEP_FOO: [
         service.VulnerabilityResult(
             id="VULN-0",
@@ -38,7 +38,7 @@ _TEST_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
     ],
 }
 
-_TEST_VULN_DATA_SKIPPED_DEP: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
+_TEST_VULN_DATA_SKIPPED_DEP: dict[service.Dependency, list[service.VulnerabilityResult]] = {
     _RESOLVED_DEP_FOO: [
         service.VulnerabilityResult(
             id="VULN-0",
@@ -53,23 +53,23 @@ _TEST_VULN_DATA_SKIPPED_DEP: Dict[service.Dependency, List[service.Vulnerability
     _SKIPPED_DEP: [],
 }
 
-_TEST_NO_VULN_DATA: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
+_TEST_NO_VULN_DATA: dict[service.Dependency, list[service.VulnerabilityResult]] = {
     _RESOLVED_DEP_FOO: [],
     _RESOLVED_DEP_BAR: [],
 }
 
-_TEST_NO_VULN_DATA_SKIPPED_DEP: Dict[service.Dependency, List[service.VulnerabilityResult]] = {
+_TEST_NO_VULN_DATA_SKIPPED_DEP: dict[service.Dependency, list[service.VulnerabilityResult]] = {
     _RESOLVED_DEP_FOO: [],
     _RESOLVED_DEP_BAR: [],
     _SKIPPED_DEP: [],
 }
 
-_TEST_FIX_DATA: List[fix.FixVersion] = [
+_TEST_FIX_DATA: list[fix.FixVersion] = [
     fix.ResolvedFixVersion(dep=_RESOLVED_DEP_FOO, version=Version("1.8")),
     fix.ResolvedFixVersion(dep=_RESOLVED_DEP_BAR, version=Version("0.3")),
 ]
 
-_TEST_SKIPPED_FIX_DATA: List[fix.FixVersion] = [
+_TEST_SKIPPED_FIX_DATA: list[fix.FixVersion] = [
     fix.ResolvedFixVersion(dep=_RESOLVED_DEP_FOO, version=Version("1.8")),
     fix.SkippedFixVersion(dep=_RESOLVED_DEP_BAR, skip_reason="skip-reason"),
 ]

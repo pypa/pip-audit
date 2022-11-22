@@ -1,10 +1,11 @@
 """
 Functionality for formatting vulnerability results using the CycloneDX SBOM format.
 """
+from __future__ import annotations
 
 import enum
 import logging
-from typing import Dict, List, cast
+from typing import cast
 
 from cyclonedx import output
 from cyclonedx.model.bom import Bom
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class _PipAuditResultParser(BaseParser):
-    def __init__(self, result: Dict[service.Dependency, List[service.VulnerabilityResult]]):
+    def __init__(self, result: dict[service.Dependency, list[service.VulnerabilityResult]]):
         super().__init__()
 
         for (dep, vulns) in result.items():
@@ -77,8 +78,8 @@ class CycloneDxFormat(VulnerabilityFormat):
 
     def format(
         self,
-        result: Dict[service.Dependency, List[service.VulnerabilityResult]],
-        fixes: List[fix.FixVersion],
+        result: dict[service.Dependency, list[service.VulnerabilityResult]],
+        fixes: list[fix.FixVersion],
     ) -> str:
         """
         Returns a CycloneDX formatted string for a given mapping of dependencies to vulnerability

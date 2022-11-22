@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import List
 
 import pretend  # type: ignore
 import pytest
@@ -97,7 +98,7 @@ dependencies = [
 
 def test_pyproject_source_resolver_error(monkeypatch, req_file):
     class MockResolver(DependencyResolver):
-        def resolve(self, req: Requirement) -> List[Dependency]:
+        def resolve(self, req: Requirement) -> list[Dependency]:
             raise DependencyResolverError
 
     source = _init_pyproject(

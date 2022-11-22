@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, cast
+from typing import Any, Tuple, cast
 
 import requests
 from packaging.version import Version
@@ -30,7 +30,7 @@ class OsvService(VulnerabilityService):
     package vulnerability information.
     """
 
-    def __init__(self, cache_dir: Optional[Path] = None, timeout: Optional[int] = None):
+    def __init__(self, cache_dir: Path | None = None, timeout: int | None = None):
         """
         Create a new `OsvService`.
 
@@ -43,7 +43,7 @@ class OsvService(VulnerabilityService):
         self.session = caching_session(cache_dir, use_pip=False)
         self.timeout = timeout
 
-    def query(self, spec: Dependency) -> Tuple[Dependency, List[VulnerabilityResult]]:
+    def query(self, spec: Dependency) -> Tuple[Dependency, list[VulnerabilityResult]]:
         """
         Queries OSV for the given `Dependency` specification.
 
@@ -74,7 +74,7 @@ class OsvService(VulnerabilityService):
         # associated vulnerabilities
         #
         # In that case, return an empty list
-        results: List[VulnerabilityResult] = []
+        results: list[VulnerabilityResult] = []
         response_json = response.json()
         if not response_json:
             return spec, results
@@ -119,7 +119,7 @@ class OsvService(VulnerabilityService):
                 logger.warning(f"OSV vuln entry '{id}' is missing 'affected' list")
                 continue
 
-            fix_versions: List[Version] = []
+            fix_versions: list[Version] = []
             for affected in affecteds:
                 pkg = affected["package"]
                 # We only care about PyPI versions

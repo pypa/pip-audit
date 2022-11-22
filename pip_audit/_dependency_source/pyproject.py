@@ -1,12 +1,13 @@
 """
 Collect dependencies from `pyproject.toml` files.
 """
+from __future__ import annotations
 
 import logging
 import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Iterator, List, Set, cast
+from typing import Iterator, cast
 
 import toml
 from packaging.requirements import Requirement
@@ -54,7 +55,7 @@ class PyProjectSource(DependencySource):
         Raises a `PyProjectSourceError` on any errors.
         """
 
-        collected: Set[Dependency] = set()
+        collected: set[Dependency] = set()
         with self.filename.open("r") as f:
             pyproject_data = toml.load(f)
 
@@ -72,7 +73,7 @@ class PyProjectSource(DependencySource):
                 )
                 return
 
-            reqs: List[Requirement] = [Requirement(dep) for dep in deps]
+            reqs: list[Requirement] = [Requirement(dep) for dep in deps]
             try:
                 for _, deps in self.resolver.resolve_all(iter(reqs)):
                     for dep in deps:
@@ -114,7 +115,7 @@ class PyProjectSource(DependencySource):
                 )
                 return
 
-            reqs: List[Requirement] = [Requirement(dep) for dep in deps]
+            reqs = [Requirement(dep) for dep in deps]
             for i in range(len(reqs)):
                 # When we find a requirement that matches the provided fix version, we need to edit
                 # the requirement's specifier and then write it back to the underlying TOML data.
