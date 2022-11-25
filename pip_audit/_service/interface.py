@@ -163,6 +163,7 @@ class VulnerabilityService(ABC):
         # NOTE: OSV's schema says timestamps are RFC3339 but strptime
         # has no way to indicate an optional field (like `%f`), so
         # we have to try-and-retry with the two different expected formats.
+        # See: https://github.com/google/osv.dev/issues/857
         try:
             return datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S.%fZ")
         except ValueError:
