@@ -205,7 +205,8 @@ optional arguments:
   -o FILE, --output FILE
                         output results to the given file (default: None)
   --ignore-vuln ID      ignore a specific vulnerability by its vulnerability
-                        ID (default: [])
+                        ID; this option can be used multiple times (default:
+                        [])
 ```
 <!-- @end-pip-audit-help@ -->
 
