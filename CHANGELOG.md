@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed a timestamp parsing bug that occurred with some vulnerability
+  reports provided by the OSV service
+  ([#416](https://github.com/pypa/pip-audit/issues/416))
+
 ## [2.4.6]
 
 ### Fixed

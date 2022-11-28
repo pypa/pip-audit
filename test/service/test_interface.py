@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 from packaging.version import Version
 
@@ -6,6 +8,7 @@ from pip_audit._service.interface import (
     ResolvedDependency,
     SkippedDependency,
     VulnerabilityResult,
+    VulnerabilityService,
 )
 
 
@@ -73,3 +76,16 @@ def test_vulnerability_result_has_any_id():
     assert result.has_any_id({"ham", "eggs", "BAZ"})
     assert not result.has_any_id({"zilch"})
     assert not result.has_any_id(set())
+
+
+class TestVulnerabilityService:
+    @pytest.mark.parametrize(
+        ["timestamp", "result"],
+        [
+            (None, None),
+            ("2019-08-24T14:15:22Z", datetime.datetime(2019, 8, 24, 14, 15, 22)),
+            ("2022-10-22T00:00:27.668938Z", datetime.datetime(2022, 10, 22, 0, 0, 27, 668938)),
+        ],
+    )
+    def test_parse_rfc3339(self, timestamp, result):
+        assert VulnerabilityService._parse_rfc3339(timestamp) == result
