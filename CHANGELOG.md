@@ -8,6 +8,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.4.7]
+
 ### Fixed
 
 * Fixed a timestamp parsing bug that occurred with some vulnerability
@@ -61,7 +63,7 @@ All versions prior to 0.0.9 are untracked.
 * Fixed an issue where packages on PyPI with no published versions trigger a
   dependency resolution failure instead of being skipped
   ([#357](https://github.com/pypa/pip-audit/pull/357))
-  
+
 * Fixed an incorrect assertion triggering for non-editable URL requirements that
   don't have an egg fragment
   ([#359](https://github.com/pypa/pip-audit/pull/359))
@@ -370,6 +372,7 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/pypa/pip-audit/compare/v2.0.0...HEAD
+[2.4.7]: https://github.com/pypa/pip-audit/compare/v2.4.6...v2.4.7
 [2.4.6]: https://github.com/pypa/pip-audit/compare/v2.4.5...v2.4.6
 [2.4.5]: https://github.com/pypa/pip-audit/compare/v2.4.4...v2.4.5
 [2.4.4]: https://github.com/pypa/pip-audit/compare/v2.4.3...v2.4.4
