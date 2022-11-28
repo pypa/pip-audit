@@ -374,6 +374,13 @@ The `--ignore-vuln ID` option works with all other dependency resolution
 and auditing options, meaning that it should function correctly with
 requirements-style inputs, alternative vulnerability feeds, and so forth.
 
+It can also be passed multiple times, to ignore multiple reports:
+
+```console
+# Run the audit as normal, but exclude any reports that match these IDs
+$ pip-audit --ignore-vuln CVE-XXX-YYYY --ignore-vuln CVE-ZZZ-AAAA
+```
+
 ### `pip-audit` takes longer than I expect!
 
 Depending on how you're using it, `pip-audit` may have to perform its
