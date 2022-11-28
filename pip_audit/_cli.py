@@ -309,7 +309,10 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         action="append",
         dest="ignore_vulns",
         default=[],
-        help="ignore a specific vulnerability by its vulnerability ID",
+        help=(
+            "ignore a specific vulnerability by its vulnerability ID; "
+            "this option can be used multiple times"
+        ),
     )
     return parser
 
