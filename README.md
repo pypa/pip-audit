@@ -219,6 +219,10 @@ The current codes are:
 * `0`: No known vulnerabilities were detected.
 * `1`: One or more known vulnerabilities were found.
 
+`pip-audit`'s exit code cannot be suppressed.
+See [Suppressing exit codes from `pip-audit`](#suppressing-exit-codes-from-pip-audit)
+for supported alternatives.
+
 ### Dry runs
 
 `pip-audit` supports the `--dry-run` flag, which can be used to control whether
@@ -438,6 +442,34 @@ $ pipenv run pip-audit -r requirements.txt
 
 The `requirements.txt` file needs to be kept up to date with `pipenv` when running
 `pip-audit` locally like this.
+
+### Suppressing exit codes from `pip-audit`
+
+`pip-audit` intentionally does not support internally suppressing its own
+exit codes.
+
+Users who need to suppress a failing `pip-audit` invocation can use
+one of the standard shell idioms for doing so:
+
+```bash
+pip-audit || true
+```
+
+or, to exit entirely:
+
+```bash
+pip-audit || exit 0
+```
+
+The exit code can also be captured and handled explicitly:
+
+```bash
+pip-audit
+exitcode="${?}"
+# do something with ${exitcode}
+```
+
+See [Exit codes](#exit-codes) for a list of potential codes that need handling.
 
 ## Security Model
 
