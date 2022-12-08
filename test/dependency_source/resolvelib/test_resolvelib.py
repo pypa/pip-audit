@@ -109,7 +109,6 @@ def test_resolvelib_sdist():
     assert len(resolved_deps) == 1
     expected_deps = [
         ResolvedDependency("ansible-core", Version("2.11.5")),
-        ResolvedDependency("pyparsing", Version("2.4.7")),
         ResolvedDependency("jinja2", Version("3.0.1")),
         ResolvedDependency("pycparser", Version("2.20")),
         ResolvedDependency("pyyaml", Version("5.4.1")),
