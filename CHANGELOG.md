@@ -8,6 +8,14 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.4.8]
+
+### Fixed
+
+* Pin maximum version of `packaging` dependency to avoid installing the new
+  22.0 version which is incompatible with `pip-requirements-parser`
+  ([#427](https://github.com/pypa/pip-audit/pull/427))
+
 ## [2.4.7]
 
 ### Fixed
@@ -372,6 +380,7 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/pypa/pip-audit/compare/v2.0.0...HEAD
+[2.4.8]: https://github.com/pypa/pip-audit/compare/v2.4.7...v2.4.8
 [2.4.7]: https://github.com/pypa/pip-audit/compare/v2.4.6...v2.4.7
 [2.4.6]: https://github.com/pypa/pip-audit/compare/v2.4.5...v2.4.6
 [2.4.5]: https://github.com/pypa/pip-audit/compare/v2.4.4...v2.4.5
