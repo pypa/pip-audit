@@ -32,7 +32,7 @@ dependencies = [
     # See: https://github.com/CycloneDX/cyclonedx-python-lib/issues/245
     "cyclonedx-python-lib>=2.0.0,!=2.5.0",
     "html5lib>=1.1",
-    "packaging>=21.0.0",
+    "packaging>=21.0.0,<22.0.0",
     "pip-api>=0.0.28",
     "pip-requirements-parser>=31.2.0",
     "resolvelib>=0.8.0",
