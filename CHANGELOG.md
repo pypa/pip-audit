@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* The `--output` flag will no longer produce an empty file in the event
+  of a failure within `pip-audit` itself, making it easier to distinguish
+  between audit failures being reported by `pip-audit` and `pip-audit`'s
+  own errors ([#432](https://github.com/pypa/pip-audit/pull/432))
+
 ## [2.4.8]
 
 ### Fixed

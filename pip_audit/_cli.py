@@ -9,9 +9,9 @@ import enum
 import logging
 import os
 import sys
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import NoReturn, Type, cast
+from typing import IO, Iterator, NoReturn, Type, cast
 
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
@@ -40,6 +40,20 @@ from pip_audit._util import assert_never
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PIP_AUDIT_LOGLEVEL", "INFO").upper())
+
+
+@contextmanager
+def _output_io(name: Path) -> Iterator[IO[str]]:  # pragma: no cover
+    """
+    A context managing wrapper for pip-audit's `--output` flag. This allows us
+    to avoid `argparse.FileType`'s "eager" file creation, which is generally
+    the wrong/unexpected behavior when dealing with fallible processes.
+    """
+    if str(name) in {"stdout", "-"}:
+        yield sys.stdout
+    else:
+        with name.open("w") as io:
+            yield io
 
 
 @enum.unique
@@ -295,12 +309,10 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
     parser.add_argument(
         "-o",
         "--output",
-        type=argparse.FileType("w"),
+        type=Path,
         metavar="FILE",
         help="output results to the given file",
-        # NOTE: Ideally we would set default=sys.stdout here, but
-        # argparse's default renderer uses __repr__ and produces
-        # a pretty unpleasant help message.
+        default="stdout",
     )
     parser.add_argument(
         "--ignore-vuln",
@@ -322,9 +334,6 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragm
 
     if args.verbose:
         logging.root.setLevel("DEBUG")
-
-    if args.output is None:
-        args.output = sys.stdout
 
     logger.debug(f"parsed arguments: {args}")
 
@@ -514,7 +523,8 @@ def audit() -> None:  # pragma: no cover
                 f"{'package' if fixed_pkg_count == 1 else 'packages'}"
             )
         print(summary_msg, file=sys.stderr)
-        print(formatter.format(result, fixes), file=args.output)
+        with _output_io(args.output) as io:
+            print(formatter.format(result, fixes), file=io)
         if pkg_count != fixed_pkg_count:
             sys.exit(1)
     else:
@@ -529,4 +539,5 @@ def audit() -> None:  # pragma: no cover
         # If our output format is a "manifest" format we always emit it,
         # even if nothing other than a dependency summary is present.
         if skip_count > 0 or formatter.is_manifest:
-            print(formatter.format(result, fixes), file=args.output)
+            with _output_io(args.output) as io:
+                print(formatter.format(result, fixes), file=args.output)
