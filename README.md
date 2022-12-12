@@ -203,7 +203,7 @@ optional arguments:
                         requirements are pinned to an exact version (default:
                         False)
   -o FILE, --output FILE
-                        output results to the given file (default: None)
+                        output results to the given file (default: stdout)
   --ignore-vuln ID      ignore a specific vulnerability by its vulnerability
                         ID; this option can be used multiple times (default:
                         [])
