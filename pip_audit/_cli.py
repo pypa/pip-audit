@@ -44,6 +44,11 @@ logging.basicConfig(level=os.environ.get("PIP_AUDIT_LOGLEVEL", "INFO").upper())
 
 @contextmanager
 def _output_io(name: Path) -> Iterator[IO[str]]:
+    """
+    A context managing wrapper for pip-audit's `--output` flag. This allows us
+    to avoid `argparse.FileType`'s "eager" file creation, which is generally
+    the wrong/unexpected behavior when dealing with fallible processes.
+    """
     if str(name) in {"stdout", "-"}:
         yield sys.stdout
     else:
