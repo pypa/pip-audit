@@ -43,7 +43,7 @@ logging.basicConfig(level=os.environ.get("PIP_AUDIT_LOGLEVEL", "INFO").upper())
 
 
 @contextmanager
-def _output_io(name: Path) -> Iterator[IO[str]]:
+def _output_io(name: Path) -> Iterator[IO[str]]:  # pragma: no cover
     """
     A context managing wrapper for pip-audit's `--output` flag. This allows us
     to avoid `argparse.FileType`'s "eager" file creation, which is generally
