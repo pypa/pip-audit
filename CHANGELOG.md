@@ -392,7 +392,7 @@ All versions prior to 0.0.9 are untracked.
 
 <!-- Release URLs -->
 [Unreleased]: https://github.com/pypa/pip-audit/compare/v2.4.9...HEAD
-[2.4.8]: https://github.com/pypa/pip-audit/compare/v2.4.8...v2.4.9
+[2.4.9]: https://github.com/pypa/pip-audit/compare/v2.4.8...v2.4.9
 [2.4.8]: https://github.com/pypa/pip-audit/compare/v2.4.7...v2.4.8
 [2.4.7]: https://github.com/pypa/pip-audit/compare/v2.4.6...v2.4.7
 [2.4.6]: https://github.com/pypa/pip-audit/compare/v2.4.5...v2.4.6
