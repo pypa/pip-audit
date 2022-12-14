@@ -8,12 +8,17 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.4.9]
+
 ### Fixed
 
 * The `--output` flag will no longer produce an empty file in the event
   of a failure within `pip-audit` itself, making it easier to distinguish
   between audit failures being reported by `pip-audit` and `pip-audit`'s
   own errors ([#432](https://github.com/pypa/pip-audit/pull/432))
+
+* Removed pin on `packaging` now that our dependency pins it for us
+  ([#429](https://github.com/pypa/pip-audit/pull/427))
 
 ## [2.4.8]
 
@@ -386,7 +391,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.4.9...HEAD
+[2.4.8]: https://github.com/pypa/pip-audit/compare/v2.4.8...v2.4.9
 [2.4.8]: https://github.com/pypa/pip-audit/compare/v2.4.7...v2.4.8
 [2.4.7]: https://github.com/pypa/pip-audit/compare/v2.4.6...v2.4.7
 [2.4.6]: https://github.com/pypa/pip-audit/compare/v2.4.5...v2.4.6
