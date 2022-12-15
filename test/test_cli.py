@@ -107,3 +107,72 @@ def test_plurals(capsys, monkeypatch, args, vuln_count, pkg_count, expected):
 
     captured = capsys.readouterr()
     assert expected in captured.err
+
+
+@pytest.mark.parametrize(
+    "vuln_count, pkg_count, skip_count, print_format",
+    [
+        (1, 1, 0, True),
+        (2, 1, 0, True),
+        (2, 2, 0, True),
+        (0, 0, 0, False),
+        (0, 1, 0, False),
+        # If there are no vulnerabilities but a dependency has been skipped, we
+        # should print the formatted result
+        (0, 0, 1, True),
+    ],
+)
+def test_print_format(monkeypatch, vuln_count, pkg_count, skip_count, print_format):
+    dummysource = pretend.stub(fix=lambda a: None)
+    monkeypatch.setattr(pip_audit._cli, "PipSource", lambda *a, **kw: dummysource)
+
+    dummyformat = pretend.stub(
+        format=pretend.call_recorder(lambda _result, _fixes: None),
+        is_manifest=False,
+    )
+    monkeypatch.setattr(pip_audit._cli, "ColumnsFormat", lambda *a, **kw: dummyformat)
+
+    parser = pip_audit._cli._parser()
+    monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda x: parser.parse_args([]))
+
+    result = [
+        (
+            pretend.stub(
+                is_skipped=lambda: False,
+                name="something" + str(i),
+                canonical_name="something" + str(i),
+                version=1,
+            ),
+            [pretend.stub(fix_versions=[2], id="foo", aliases=set(), has_any_id=lambda x: False)]
+            * (vuln_count // pkg_count),
+        )
+        for i in range(pkg_count)
+    ]
+    result.extend(
+        (
+            pretend.stub(
+                is_skipped=lambda: True,
+                name="skipped " + str(i),
+                canonical_name="skipped " + str(i),
+                version=1,
+                skip_reason="reason " + str(i),
+            ),
+            [],
+        )
+        for i in range(skip_count)
+    )
+
+    auditor = pretend.stub(audit=lambda a: result)
+    monkeypatch.setattr(pip_audit._cli, "Auditor", lambda *a, **kw: auditor)
+
+    resolve_fix_versions = [
+        pretend.stub(is_skipped=lambda: False, dep=spec, version=2) for spec, _ in result
+    ]
+    monkeypatch.setattr(pip_audit._cli, "resolve_fix_versions", lambda *a: resolve_fix_versions)
+
+    try:
+        pip_audit._cli.audit()
+    except SystemExit:
+        pass
+
+    assert bool(dummyformat.format.calls) == print_format
