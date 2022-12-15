@@ -117,6 +117,8 @@ def test_plurals(capsys, monkeypatch, args, vuln_count, pkg_count, expected):
         (2, 2, 0, True),
         (0, 0, 0, False),
         (0, 1, 0, False),
+        # If there are no vulnerabilities but a dependency has been skipped, we
+        # should print the formatted result
         (0, 0, 1, True),
     ],
 )
