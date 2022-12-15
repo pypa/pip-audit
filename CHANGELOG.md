@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.4.10]
+
+### Fixed
+
+* Fixed a crash triggered when no vulnerabilities are found with some
+  configurations ([#437](https://github.com/pypa/pip-audit/pull/437))
+
 ## [2.4.9]
 
 ### Fixed
@@ -391,7 +398,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.4.9...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.4.10...HEAD
+[2.4.10]: https://github.com/pypa/pip-audit/compare/v2.4.9...v2.4.10
 [2.4.9]: https://github.com/pypa/pip-audit/compare/v2.4.8...v2.4.9
 [2.4.8]: https://github.com/pypa/pip-audit/compare/v2.4.7...v2.4.8
 [2.4.7]: https://github.com/pypa/pip-audit/compare/v2.4.6...v2.4.7
