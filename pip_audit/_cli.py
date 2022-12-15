@@ -540,4 +540,4 @@ def audit() -> None:  # pragma: no cover
         # even if nothing other than a dependency summary is present.
         if skip_count > 0 or formatter.is_manifest:
             with _output_io(args.output) as io:
-                print(formatter.format(result, fixes), file=args.output)
+                print(formatter.format(result, fixes), file=io)
