@@ -111,3 +111,5 @@ reset = true
 
 [tool.ruff]
 line-length = 100
+select = ["E", "F", "W", "UP"]
+target-version = "py37"

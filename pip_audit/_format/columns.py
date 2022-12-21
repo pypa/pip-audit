@@ -5,7 +5,7 @@ Functionality for formatting vulnerability results as a set of human-readable co
 from __future__ import annotations
 
 from itertools import zip_longest
-from typing import Any, Iterable, Tuple, cast
+from typing import Any, Iterable, cast
 
 from packaging.version import Version
 
@@ -15,7 +15,7 @@ import pip_audit._service as service
 from .interface import VulnerabilityFormat
 
 
-def tabulate(rows: Iterable[Iterable[Any]]) -> Tuple[list[str], list[int]]:
+def tabulate(rows: Iterable[Iterable[Any]]) -> tuple[list[str], list[int]]:
     """Return a list of formatted rows and a list of column sizes.
     For example::
     >>> tabulate([['foobar', 2000], [0xdeadbeef]])

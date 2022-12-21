@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Tuple, cast
+from typing import cast
 
 import requests
 from packaging.version import InvalidVersion, Version
@@ -45,7 +45,7 @@ class PyPIService(VulnerabilityService):
         self.session = caching_session(cache_dir)
         self.timeout = timeout
 
-    def query(self, spec: Dependency) -> Tuple[Dependency, list[VulnerabilityResult]]:
+    def query(self, spec: Dependency) -> tuple[Dependency, list[VulnerabilityResult]]:
         """
         Queries PyPI for the given `Dependency` specification.
 

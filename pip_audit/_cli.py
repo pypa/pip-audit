@@ -11,7 +11,7 @@ import os
 import sys
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import IO, Iterator, NoReturn, Type, cast
+from typing import IO, Iterator, NoReturn, cast
 
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
@@ -147,7 +147,7 @@ class ProgressSpinnerChoice(str, enum.Enum):
         return self.value
 
 
-def _enum_help(msg: str, e: Type[enum.Enum]) -> str:  # pragma: no cover
+def _enum_help(msg: str, e: type[enum.Enum]) -> str:  # pragma: no cover
     """
     Render a `--help`-style string for the given enumeration.
     """

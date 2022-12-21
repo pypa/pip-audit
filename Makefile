@@ -50,6 +50,7 @@ lint: env/pyvenv.cfg
 .PHONY: reformat
 reformat:
 	. env/bin/activate && \
+		ruff --fix $(ALL_PY_SRCS) && \
 		black $(ALL_PY_SRCS) && \
 		isort $(ALL_PY_SRCS)
 

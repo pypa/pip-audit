@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Iterator, Tuple
+from typing import Iterator
 
 from pip_audit._dependency_source import DependencySource
 from pip_audit._service import Dependency, VulnerabilityResult, VulnerabilityService
@@ -47,7 +47,7 @@ class Auditor:
 
     def audit(
         self, source: DependencySource
-    ) -> Iterator[Tuple[Dependency, list[VulnerabilityResult]]]:
+    ) -> Iterator[tuple[Dependency, list[VulnerabilityResult]]]:
         """
         Perform the auditing step, collecting dependencies from `source`.
 
