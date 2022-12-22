@@ -8,6 +8,7 @@ authors under the ISC license.
 from __future__ import annotations
 
 import itertools
+import logging
 from email.message import EmailMessage, Message
 from email.parser import BytesParser
 from io import BytesIO
@@ -23,7 +24,7 @@ import html5lib
 import requests
 from cachecontrol import CacheControl
 from packaging.requirements import Requirement
-from packaging.specifiers import SpecifierSet
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel_filename
 from packaging.version import Version
 from resolvelib.providers import AbstractProvider
@@ -33,6 +34,8 @@ from pip_audit._cache import caching_session
 from pip_audit._state import AuditState
 from pip_audit._util import python_version
 from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
+
+logger = logging.getLogger(__name__)
 
 # TODO: Final[Version] when our minimal Python is 3.8.
 PYTHON_VERSION: Version = python_version()
@@ -246,9 +249,19 @@ def get_project_from_index(
         py_req = i.attrib.get("data-requires-python")
         # Skip items that need a different Python version
         if py_req:
-            spec = SpecifierSet(py_req)
-            if PYTHON_VERSION not in spec:
-                continue
+            try:
+                # NOTE: Starting with packaging==22.0, specifier parsing is
+                # stricter: specifier components can only use the wildcard
+                # comparison syntax on exact comparison operators (== and !=),
+                # not on ordered operators like `>=`. There are existing
+                # packages that use the invalid syntax in their metadata
+                # however (like nltk==3.6, which does requires-python >= 3.5.*),
+                # so we follow pip`'s behavior and ignore these specifiers.
+                spec = SpecifierSet(py_req)
+                if PYTHON_VERSION not in spec:
+                    continue
+            except InvalidSpecifier:
+                logger.warning(f"invalid specifier set for Python version: {py_req}")
 
         path = parsed_dist_url.path
         filename = path.rpartition("/")[-1]
