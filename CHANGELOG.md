@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed a crash triggered when a package specifies an invalid version
+  specifier for its `requires-python` version
+  ([#447](https://github.com/pypa/pip-audit/pull/447))
+
 ## [2.4.10]
 
 ### Fixed
