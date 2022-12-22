@@ -8,7 +8,7 @@ import json
 import logging
 import venv
 from types import SimpleNamespace
-from typing import Iterator, Tuple
+from typing import Iterator
 
 from packaging.version import Version
 
@@ -54,7 +54,7 @@ class VirtualEnv(venv.EnvBuilder):
         """
         super().__init__(with_pip=True)
         self._install_args = install_args
-        self._packages: list[Tuple[str, Version]] | None = None
+        self._packages: list[tuple[str, Version]] | None = None
         self._state = state
 
     def post_setup(self, context: SimpleNamespace) -> None:
@@ -124,7 +124,7 @@ class VirtualEnv(venv.EnvBuilder):
             self._packages.append((package["name"], Version(package["version"])))
 
     @property
-    def installed_packages(self) -> Iterator[Tuple[str, Version]]:
+    def installed_packages(self) -> Iterator[tuple[str, Version]]:
         """
         A property to inspect the list of packages installed in the virtual environment.
 

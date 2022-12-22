@@ -26,7 +26,7 @@ def _init_pyproject(filename: Path, contents: str) -> pyproject.PyProjectSource:
 
 
 def _check_file(filename: Path, expected_contents: dict) -> None:
-    with open(filename, mode="r") as f:
+    with open(filename) as f:
         assert toml.load(f) == expected_contents
 
 

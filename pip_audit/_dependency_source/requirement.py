@@ -11,7 +11,7 @@ import shutil
 from contextlib import ExitStack
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import IO, Iterator, Tuple, cast
+from typing import IO, Iterator, cast
 
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
@@ -241,7 +241,7 @@ class RequirementSource(DependencySource):
         self,
         reqs: Iterator[InstallRequirement],
         require_hashes: bool = False,
-    ) -> Iterator[Tuple[Requirement, Dependency]]:
+    ) -> Iterator[tuple[Requirement, Dependency]]:
         """
         Collect pre-resolved (pinned) dependencies, optionally enforcing a
         hash requirement policy.
@@ -292,7 +292,7 @@ class RequirementSource(DependencySource):
 
     def _collect_cached_deps(
         self, filename: Path, reqs: list[InstallRequirement]
-    ) -> Iterator[Tuple[Requirement, Dependency]]:
+    ) -> Iterator[tuple[Requirement, Dependency]]:
         """
         Collect resolved dependencies for a given requirements file, retrieving them from the
         dependency cache if possible.

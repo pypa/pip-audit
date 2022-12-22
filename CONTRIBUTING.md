@@ -45,7 +45,7 @@ make lint
 
 * [`black`](https://github.com/psf/black): Code formatting
 * [`isort`](https://github.com/PyCQA/isort): Import sorting, ordering
-* [`flake8`](https://flake8.pycqa.org/en/latest/): PEP-8 linting, style enforcement
+* [`ruff`](https://github.com/charliermarsh/ruff): PEP-8 linting, style enforcement
 * [`mypy`](https://mypy.readthedocs.io/en/stable/): Static type checking
 * [`interrogate`](https://interrogate.readthedocs.io/en/latest/): Documentation coverage
 

@@ -50,7 +50,7 @@ test = [
 ]
 lint = [
     "black>=22.3.0",
-    "flake8",
+    "ruff",
     "interrogate",
     "isort",
     "mypy",
@@ -108,3 +108,8 @@ warn_unused_ignores = true
 [tool.bump]
 input = "pip_audit/__init__.py"
 reset = true
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "W", "UP"]
+target-version = "py37"

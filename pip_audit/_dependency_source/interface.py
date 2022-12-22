@@ -5,7 +5,7 @@ of fully resolved Python dependency trees.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Iterator, Tuple
+from typing import Iterator
 
 from packaging.requirements import Requirement
 
@@ -77,7 +77,7 @@ class DependencyResolver(ABC):
 
     def resolve_all(
         self, reqs: Iterator[Requirement]
-    ) -> Iterator[Tuple[Requirement, list[Dependency]]]:
+    ) -> Iterator[tuple[Requirement, list[Dependency]]]:
         """
         Resolve a collection of `Requirement`s into their respective `Dependency` sets.
 
