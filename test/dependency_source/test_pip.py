@@ -147,7 +147,7 @@ def test_pip_source_fix_failure(monkeypatch):
 
     def run_mock(args, **kwargs):
         assert " ".join(args) == f"{sys.executable} -m pip install pip-api==1.5"
-        raise subprocess.CalledProcessError(-1, str())
+        raise subprocess.CalledProcessError(-1, "")
 
     monkeypatch.setattr(subprocess, "run", run_mock)
 

@@ -470,7 +470,7 @@ def test_resolvelib_package_missing_on_one_index(monkeypatch):
             return get_package_mock(data1)
         else:
             assert url == package_url2
-            pkg = get_package_mock(str())
+            pkg = get_package_mock("")
             pkg.status_code = 404
             return pkg
 
@@ -504,7 +504,7 @@ def test_resolvelib_skip_editable():
 
 def test_resolvelib_no_links(monkeypatch):
     # Simulate the project page containing no versions
-    data = str()
+    data = ""
 
     monkeypatch.setattr(
         pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()

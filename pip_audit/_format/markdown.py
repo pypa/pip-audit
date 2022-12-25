@@ -80,7 +80,7 @@ class MarkdownFormat(VulnerabilityFormat):
                 vuln_rows.append(self._format_vuln(dep, vuln, applied_fix))
 
         if not vuln_rows:
-            return str()
+            return ""
 
         return (
             dedent(
@@ -137,7 +137,7 @@ class MarkdownFormat(VulnerabilityFormat):
                 skipped_dep_rows.append(self._format_skipped_dep(dep))
 
         if not skipped_dep_rows:
-            return str()
+            return ""
 
         return (
             dedent(

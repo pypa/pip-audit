@@ -37,7 +37,7 @@ def run(args: Sequence[str], *, state: AuditState = AuditState()) -> str:
     pretty_args = " ".join([os.path.basename(args[0]), *args[1:]])
 
     terminated = False
-    stdout = bytes()
+    stdout = b""
 
     # NOTE: We use `poll()` to control this loop instead of the `read()` call
     # to prevent deadlocks. Similarly, `read(size)` will return an empty bytes

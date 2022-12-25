@@ -42,7 +42,7 @@ bar  skip-reason"""
 
 def test_columns_no_vuln_data(no_vuln_data):
     columns_format = format.ColumnsFormat(False)
-    expected_columns = str()
+    expected_columns = ""
     assert columns_format.format(no_vuln_data, list()) == expected_columns
 
 
