@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -32,14 +31,13 @@ def test_pip_source_warns_about_confused_python(monkeypatch):
     monkeypatch.setenv("VIRTUAL_ENV", "/definitely/fake/env")
     logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(pip, "logger", logger)
-    actual_python = shutil.which("python")
 
     pip.PipSource()
 
     assert logger.warning.calls == [
         pretend.call(
             "pip-audit will run pip against /definitely/fake/path/python, but you have "
-            f"a virtual environment loaded at /definitely/fake/env. "
+            "a virtual environment loaded at /definitely/fake/env. "
             "This may result in unintuitive audits, since your local environment will not "
             "be audited. You can forcefully override this behavior by setting "
             "PIPAPI_PYTHON_LOCATION to the location of your virtual environment's Python "
