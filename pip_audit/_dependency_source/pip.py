@@ -75,19 +75,32 @@ class PipSource(DependencySource):
         # a loaded virtual environment, since `pip-audit`'s `sys.executable` will be the global
         # Python and not the virtual environment's Python.
         #
-        # Also note that we don't call `Path.resolve()` on the paths below -- doing so would
-        # follow symlinks to e.g. a `pyenv` managed Python, which in turn would pierce
-        # the virtual environment and render the comparison moot.
-        effective_python = Path(os.environ.get("PIPAPI_PYTHON_LOCATION", sys.executable))
-        path_python = Path(shutil.which("python") or sys.executable)
-        if effective_python != path_python:
+        # To check for this, we check whether the Python that `pip_api` plans to use
+        # matches the active virtual environment's prefix. We do this instead of comparing
+        # against the $PATH-prioritized Python because that might be the same "effective"
+        # Python but with a different symlink (e.g. `<path>/python{,3,3.7}`). We *could*
+        # handle that case by resolving the symlinks, but that would then piece the
+        # virtual environment that we're attempting to detect.
+        effective_python = os.environ.get("PIPAPI_PYTHON_LOCATION", sys.executable)
+        venv_prefix = os.getenv("VIRTUAL_ENV")
+        if venv_prefix is not None and not effective_python.startswith(venv_prefix):
             logger.warning(
                 f"pip-audit will run pip against {effective_python}, but you have "
-                f"{path_python} in your PATH (usually indicating a virtual environment). "
-                "This may result in unintuitive audits, since your local environment "
-                "will not be audited. You can forcefully override this behavior by setting "
-                "PIPAPI_PYTHON_LOCATION to the location of your local Python interpreter."
+                f"a virtual environment loaded at {venv_prefix}. This may result in "
+                "unintuitive audits, since your local environment will not be audited. "
+                "You can forcefully override this behavior by setting PIPAPI_PYTHON_LOCATION "
+                "to the location of your virtual environment's Python interpreter."
             )
+
+        # path_python = Path(shutil.which("python") or sys.executable)
+        # if effective_python != path_python:
+        #     logger.warning(
+        #         f"pip-audit will run pip against {effective_python}, but you have "
+        #         f"{path_python} in your PATH (usually indicating a virtual environment). "
+        #         "This may result in unintuitive audits, since your local environment "
+        #         "will not be audited. You can forcefully override this behavior by setting "
+        #         "PIPAPI_PYTHON_LOCATION to the location of your local Python interpreter."
+        #     )
 
         if _PIP_VERSION < _MINIMUM_RELIABLE_PIP_VERSION:
             logger.warning(

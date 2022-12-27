@@ -29,6 +29,7 @@ def test_pip_source():
 
 def test_pip_source_warns_about_confused_python(monkeypatch):
     monkeypatch.setenv("PIPAPI_PYTHON_LOCATION", "/definitely/fake/path/python")
+    monkeypatch.setenv("VIRTUAL_ENV", "/definitely/fake/env")
     logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(pip, "logger", logger)
     actual_python = shutil.which("python")
@@ -38,10 +39,11 @@ def test_pip_source_warns_about_confused_python(monkeypatch):
     assert logger.warning.calls == [
         pretend.call(
             "pip-audit will run pip against /definitely/fake/path/python, but you have "
-            f"{actual_python} in your PATH (usually indicating a virtual environment). "
+            f"a virtual environment loaded at /definitely/fake/env. "
             "This may result in unintuitive audits, since your local environment will not "
             "be audited. You can forcefully override this behavior by setting "
-            "PIPAPI_PYTHON_LOCATION to the location of your local Python interpreter."
+            "PIPAPI_PYTHON_LOCATION to the location of your virtual environment's Python "
+            "interpreter."
         )
     ]
 
