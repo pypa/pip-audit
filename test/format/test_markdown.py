@@ -46,7 +46,7 @@ bar | skip-reason"""
 
 def test_markdown_no_vuln_data(no_vuln_data):
     markdown_format = format.MarkdownFormat(False)
-    expected_markdown = str()
+    expected_markdown = ""
     assert markdown_format.format(no_vuln_data, list()) == expected_markdown
 
 

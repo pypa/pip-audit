@@ -75,7 +75,7 @@ class ColumnsFormat(VulnerabilityFormat):
             for vuln in vulns:
                 vuln_data.append(self._format_vuln(dep, vuln, applied_fix))
 
-        columns_string = str()
+        columns_string = ""
 
         # If it's just a header, don't bother adding it to the output
         if len(vuln_data) > 1:
