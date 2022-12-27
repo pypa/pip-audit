@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -26,6 +27,25 @@ def test_pip_source():
     assert pytest_spec in specs
 
 
+def test_pip_source_warns_about_confused_python(monkeypatch):
+    monkeypatch.setenv("PIPAPI_PYTHON_LOCATION", "/definitely/fake/path/python")
+    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    monkeypatch.setattr(pip, "logger", logger)
+    actual_python = shutil.which("python")
+
+    pip.PipSource()
+
+    assert logger.warning.calls == [
+        pretend.call(
+            "pip-audit will run pip against /definitely/fake/path/python, but you have "
+            f"{actual_python} in your PATH (usually indicating a virtual environment). "
+            "This may result in unintuitive audits, since your local environment will not "
+            "be audited. You can forcefully override this behavior by setting "
+            "PIPAPI_PYTHON_LOCATION to the location of your local Python interpreter."
+        )
+    ]
+
+
 def test_pip_source_warns_about_old_pip(monkeypatch):
     # Rather than hack around with virtualenvs and install a very old pip,
     # simply lie about how old ours is.
@@ -34,7 +54,12 @@ def test_pip_source_warns_about_old_pip(monkeypatch):
     monkeypatch.setattr(pip, "logger", logger)
 
     pip.PipSource()
-    assert len(logger.warning.calls) == 1
+    assert logger.warning.calls == [
+        pretend.call(
+            "pip 1.0.0 is very old, and may not provide reliable dependency information! "
+            "You are STRONGLY encouraged to upgrade to a newer version of pip."
+        )
+    ]
 
 
 def test_pip_source_pip_api_failure(monkeypatch):

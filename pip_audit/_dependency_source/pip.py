@@ -4,6 +4,8 @@ by `pip-api`.
 """
 
 import logging
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -64,9 +66,32 @@ class PipSource(DependencySource):
         self._skip_editable = skip_editable
         self.state = state
 
+        # NOTE: By default `pip_api` invokes `pip` through `sys.executable`, like so:
+        #
+        #    {sys.executable} -m pip [args ...]
+        #
+        # This is the right decision 99% of the time, but it can result in unintuitive audits
+        # for users who have installed `pip-audit` globally but are trying to audit
+        # a loaded virtual environment, since `pip-audit`'s `sys.executable` will be the global
+        # Python and not the virtual environment's Python.
+        #
+        # Also note that we don't call `Path.resolve()` on the paths below -- doing so would
+        # follow symlinks to e.g. a `pyenv` managed Python, which in turn would pierce
+        # the virtual environment and render the comparison moot.
+        effective_python = Path(os.environ.get("PIPAPI_PYTHON_LOCATION", sys.executable))
+        path_python = Path(shutil.which("python") or sys.executable)
+        if effective_python != path_python:
+            logger.warning(
+                f"pip-audit will run pip against {effective_python}, but you have "
+                f"{path_python} in your PATH (usually indicating a virtual environment). "
+                "This may result in unintuitive audits, since your local environment "
+                "will not be audited. You can forcefully override this behavior by setting "
+                "PIPAPI_PYTHON_LOCATION to the location of your local Python interpreter."
+            )
+
         if _PIP_VERSION < _MINIMUM_RELIABLE_PIP_VERSION:
             logger.warning(
-                f"Warning: pip {_PIP_VERSION} is very old, and may not provide reliable "
+                f"pip {_PIP_VERSION} is very old, and may not provide reliable "
                 "dependency information! You are STRONGLY encouraged to upgrade to a "
                 "newer version of pip."
             )
