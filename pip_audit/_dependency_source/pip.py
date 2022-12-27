@@ -92,16 +92,6 @@ class PipSource(DependencySource):
                 "to the location of your virtual environment's Python interpreter."
             )
 
-        # path_python = Path(shutil.which("python") or sys.executable)
-        # if effective_python != path_python:
-        #     logger.warning(
-        #         f"pip-audit will run pip against {effective_python}, but you have "
-        #         f"{path_python} in your PATH (usually indicating a virtual environment). "
-        #         "This may result in unintuitive audits, since your local environment "
-        #         "will not be audited. You can forcefully override this behavior by setting "
-        #         "PIPAPI_PYTHON_LOCATION to the location of your local Python interpreter."
-        #     )
-
         if _PIP_VERSION < _MINIMUM_RELIABLE_PIP_VERSION:
             logger.warning(
                 f"pip {_PIP_VERSION} is very old, and may not provide reliable "
