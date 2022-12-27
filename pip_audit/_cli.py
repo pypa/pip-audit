@@ -38,8 +38,13 @@ from pip_audit._service.interface import ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditSpinner, AuditState
 from pip_audit._util import assert_never
 
+logging.basicConfig()
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=os.environ.get("PIP_AUDIT_LOGLEVEL", "INFO").upper())
+
+# NOTE: We configure the top package logger, rather than the root logger,
+# to avoid overly verbose logging in third-party code by default.
+package_logger = logging.getLogger("pip_audit")
+package_logger.setLevel(os.environ.get("PIP_AUDIT_LOGLEVEL", "INFO").upper())
 
 
 @contextmanager
@@ -262,10 +267,9 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
     parser.add_argument(
         "-v",
         "--verbose",
-        dest="verbose",
-        action="store_true",
-        help="give more output; this setting overrides the `PIP_AUDIT_LOGLEVEL` variable and is "
-        "equivalent to setting it to `debug`",
+        action="count",
+        default=0,
+        help="run with additional debug logging; supply multiple times to increase verbosity",
     )
     parser.add_argument(
         "--fix",
@@ -332,8 +336,11 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
 def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragma: no cover
     args = parser.parse_args()
 
-    if args.verbose:
-        logging.root.setLevel("DEBUG")
+    # Configure logging upfront, so that we don't miss anything.
+    if args.verbose >= 1:
+        package_logger.setLevel("DEBUG")
+    if args.verbose >= 2:
+        logging.getLogger().setLevel("DEBUG")
 
     logger.debug(f"parsed arguments: {args}")
 
