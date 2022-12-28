@@ -67,7 +67,7 @@ def _get_cache_dir(custom_cache_dir: Path | None, *, use_pip: bool = True) -> Pa
             return pip_cache_dir
         else:
             logger.warning(
-                f"Warning: pip {_PIP_VERSION} doesn't support the `cache dir` subcommand, "
+                f"pip {_PIP_VERSION} doesn't support the `cache dir` subcommand, "
                 f"using {_PIP_AUDIT_INTERNAL_CACHE} instead"
             )
             return _PIP_AUDIT_INTERNAL_CACHE
