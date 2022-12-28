@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed `pip-audit`'s virtual environment creation and upgrade behavior,
+  preventing spurious vulnerability reports
+  ([#454](https://github.com/pypa/pip-audit/pull/454))
+
 ## [2.4.11]
 
 ### Fixed
