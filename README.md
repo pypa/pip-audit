@@ -179,9 +179,8 @@ optional arguments:
   --path PATH           restrict to the specified installation path for
                         auditing packages; this option can be used multiple
                         times (default: [])
-  -v, --verbose         give more output; this setting overrides the
-                        `PIP_AUDIT_LOGLEVEL` variable and is equivalent to
-                        setting it to `debug` (default: False)
+  -v, --verbose         run with additional debug logging; supply multiple
+                        times to increase verbosity (default: 0)
   --fix                 automatically upgrade dependencies with known
                         vulnerabilities (default: False)
   --require-hashes      require a hash to check each requirement against, for
