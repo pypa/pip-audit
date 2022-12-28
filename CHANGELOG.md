@@ -8,6 +8,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.4.11]
+
 ### Fixed
 
 * Fixed a crash triggered when a package specifies an invalid version
@@ -404,7 +406,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.4.10...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.4.11...HEAD
+[2.4.11]: https://github.com/pypa/pip-audit/compare/v2.4.10...v2.4.11
 [2.4.10]: https://github.com/pypa/pip-audit/compare/v2.4.9...v2.4.10
 [2.4.9]: https://github.com/pypa/pip-audit/compare/v2.4.8...v2.4.9
 [2.4.8]: https://github.com/pypa/pip-audit/compare/v2.4.7...v2.4.8
