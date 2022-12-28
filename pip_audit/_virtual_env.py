@@ -86,6 +86,7 @@ class VirtualEnv(venv.EnvBuilder):
             "--upgrade",
             "pip",
             "wheel",
+            "setuptools",
         ]
         try:
             run(pip_upgrade_cmd, state=self._state)
