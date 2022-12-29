@@ -106,7 +106,7 @@ For example, using `pip-audit` via `pre-commit` to audit a requirements file:
 
 ```yaml
   - repo: https://github.com/pypa/pip-audit
-    rev: v2.4.11
+    rev: v2.4.12
     hooks:
       -   id: pip-audit
           args: ["-r", "requirements.txt"]
