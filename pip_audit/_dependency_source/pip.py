@@ -4,6 +4,7 @@ by `pip-api`.
 """
 
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -64,9 +65,35 @@ class PipSource(DependencySource):
         self._skip_editable = skip_editable
         self.state = state
 
+        # NOTE: By default `pip_api` invokes `pip` through `sys.executable`, like so:
+        #
+        #    {sys.executable} -m pip [args ...]
+        #
+        # This is the right decision 99% of the time, but it can result in unintuitive audits
+        # for users who have installed `pip-audit` globally but are trying to audit
+        # a loaded virtual environment, since `pip-audit`'s `sys.executable` will be the global
+        # Python and not the virtual environment's Python.
+        #
+        # To check for this, we check whether the Python that `pip_api` plans to use
+        # matches the active virtual environment's prefix. We do this instead of comparing
+        # against the $PATH-prioritized Python because that might be the same "effective"
+        # Python but with a different symlink (e.g. `<path>/python{,3,3.7}`). We *could*
+        # handle that case by resolving the symlinks, but that would then piece the
+        # virtual environment that we're attempting to detect.
+        effective_python = os.environ.get("PIPAPI_PYTHON_LOCATION", sys.executable)
+        venv_prefix = os.getenv("VIRTUAL_ENV")
+        if venv_prefix is not None and not effective_python.startswith(venv_prefix):
+            logger.warning(
+                f"pip-audit will run pip against {effective_python}, but you have "
+                f"a virtual environment loaded at {venv_prefix}. This may result in "
+                "unintuitive audits, since your local environment will not be audited. "
+                "You can forcefully override this behavior by setting PIPAPI_PYTHON_LOCATION "
+                "to the location of your virtual environment's Python interpreter."
+            )
+
         if _PIP_VERSION < _MINIMUM_RELIABLE_PIP_VERSION:
             logger.warning(
-                f"Warning: pip {_PIP_VERSION} is very old, and may not provide reliable "
+                f"pip {_PIP_VERSION} is very old, and may not provide reliable "
                 "dependency information! You are STRONGLY encouraged to upgrade to a "
                 "newer version of pip."
             )

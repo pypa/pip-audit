@@ -22,6 +22,11 @@ All versions prior to 0.0.9 are untracked.
   specifier for its `requires-python` version
   ([#447](https://github.com/pypa/pip-audit/pull/447))
 
+* Users are now warned if a `pip-audit` invocation is ambiguous, e.g.
+  if they've installed `pip-audit` globally but are asking for an audit
+  of a loaded virtual environment
+  ([#451](https://github.com/pypa/pip-audit/pull/451))
+
 ## [2.4.10]
 
 ### Fixed
