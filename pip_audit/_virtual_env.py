@@ -78,6 +78,8 @@ class VirtualEnv(venv.EnvBuilder):
 
         # Firstly, upgrade our `pip` versions since `ensurepip` can leave us with an old version
         # and install `wheel` in case our package dependencies are offered as wheels
+        # TODO: This is probably replaceable with the `upgrade_deps` option on `EnvBuilder`
+        # itself, starting with Python 3.9.
         pip_upgrade_cmd = [
             context.env_exe,
             "-m",
@@ -86,6 +88,7 @@ class VirtualEnv(venv.EnvBuilder):
             "--upgrade",
             "pip",
             "wheel",
+            "setuptools",
         ]
         try:
             run(pip_upgrade_cmd, state=self._state)
