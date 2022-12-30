@@ -462,6 +462,7 @@ def audit() -> None:  # pragma: no cover
                     skip_count += 1
                 else:
                     spec = cast(ResolvedDependency, spec)
+                    logger.debug(f"Auditing {spec.name} ({spec.version})")
                     state.update_state(f"Auditing {spec.name} ({spec.version})")
                 if vulns_to_ignore:
                     filtered_vulns = [v for v in vulns if not v.has_any_id(vulns_to_ignore)]
