@@ -113,7 +113,7 @@ class _SafeFileCache(FileCache):
         # Make sure the directory exists
         try:
             os.makedirs(os.path.dirname(name), self.dirmode)
-        except (IOError, OSError):  # pragma: no cover
+        except OSError:  # pragma: no cover
             pass
 
         # We don't want to use lock files since `pip` isn't going to recognise those. We should
