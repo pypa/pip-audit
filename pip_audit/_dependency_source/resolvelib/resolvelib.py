@@ -58,7 +58,9 @@ class ResolveLibResolver(DependencyResolver):
         self.resolver: Resolver = Resolver(self.provider, self.reporter)
         self._skip_editable = skip_editable
 
-    def resolve(self, req: Requirement) -> list[Dependency]:
+    def resolve(
+        self, req: Requirement, req_hashes: dict[str, dict[str, list[str]]]
+    ) -> list[Dependency]:
         """
         Resolve the given `Requirement` into a `Dependency` list.
         """
@@ -72,6 +74,9 @@ class ResolveLibResolver(DependencyResolver):
                     SkippedDependency(name=req.name, skip_reason="requirement marked as editable")
                 ]
 
+        # TODO(alex): Figure out a better way to do this
+        self.provider.req_hashes = req_hashes
+
         deps: list[Dependency] = []
         try:
             result = self.resolver.resolve([req])
@@ -82,6 +87,17 @@ class ResolveLibResolver(DependencyResolver):
         except HTTPError as e:
             raise ResolveLibResolverError("failed to resolve dependencies") from e
         for name, candidate in result.mapping.items():
+            # Check hash validity
+            if req_hashes:
+                for alg, hashes in req_hashes[name].items():
+                    for h in hashes:
+                        if h == candidate.dist_hashes[alg]:
+                            break
+                    else:
+                        raise ResolveLibResolverError(
+                            f"Mismatched hash for {name} ({candidate.version}): listed {h} of type "
+                            f"{alg} could not be found"
+                        )
             deps.append(ResolvedDependency(name, candidate.version))
         return deps
 

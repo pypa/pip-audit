@@ -59,6 +59,10 @@ class DependencyFixError(Exception):
     pass
 
 
+# TODO(alex): Make this a class that's more ergonomic to use
+RequirementHashes = dict[str, dict[str, list[str]]]
+
+
 class DependencyResolver(ABC):
     """
     Represents an abstract resolver of Python dependencies that takes a single
@@ -69,14 +73,16 @@ class DependencyResolver(ABC):
     """
 
     @abstractmethod
-    def resolve(self, req: Requirement) -> list[Dependency]:  # pragma: no cover
+    def resolve(
+        self, req: Requirement, req_hashes: RequirementHashes
+    ) -> list[Dependency]:  # pragma: no cover
         """
         Resolve a single `Requirement` into a list of `Dependency` instances.
         """
         raise NotImplementedError
 
     def resolve_all(
-        self, reqs: Iterator[Requirement]
+        self, reqs: Iterator[Requirement], req_hashes: RequirementHashes
     ) -> Iterator[tuple[Requirement, list[Dependency]]]:
         """
         Resolve a collection of `Requirement`s into their respective `Dependency` sets.
@@ -85,7 +91,7 @@ class DependencyResolver(ABC):
         a more optimized one.
         """
         for req in reqs:
-            yield (req, self.resolve(req))
+            yield (req, self.resolve(req, req_hashes))
 
 
 class DependencyResolverError(Exception):

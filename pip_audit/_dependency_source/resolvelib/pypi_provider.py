@@ -7,6 +7,7 @@ authors under the ISC license.
 
 from __future__ import annotations
 
+import hashlib
 import itertools
 import logging
 from email.message import EmailMessage, Message
@@ -31,6 +32,7 @@ from resolvelib.providers import AbstractProvider
 from resolvelib.resolvers import RequirementInformation
 
 from pip_audit._cache import caching_session
+from pip_audit._dependency_source.interface import RequirementHashes
 from pip_audit._state import AuditState
 from pip_audit._util import python_version
 from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
@@ -58,6 +60,7 @@ class Candidate:
         extras: set[str],
         is_wheel: bool,
         session: CacheControl,
+        req_hashes: RequirementHashes,
         timeout: int | None = None,
         state: AuditState = AuditState(),
     ) -> None:
@@ -72,11 +75,13 @@ class Candidate:
         self.extras = extras
         self.is_wheel = is_wheel
         self._session = session
+        self.req_hashes = req_hashes
         self._timeout = timeout
         self._state = state
 
         self._metadata: Message | None = None
         self._dependencies: list[Requirement] | None = None
+        self.dist_hashes = {}
 
     def __repr__(self) -> str:  # pragma: no cover
         """
@@ -131,6 +136,7 @@ class Candidate:
         Extracts the metadata for this candidate, if it's a wheel.
         """
         data = self._session.get(self.url, timeout=self._timeout).content
+        self._generate_dist_hashes(data)
 
         self._state.update_state(f"Extracting wheel for {self.name} ({self.version})")
 
@@ -154,6 +160,7 @@ class Candidate:
         response.raise_for_status()
         sdist_data = response.content
         metadata = EmailMessage()
+        self._generate_dist_hashes(sdist_data)
 
         with TemporaryDirectory() as pkg_dir:
             sdist = Path(pkg_dir) / self.filename.name
@@ -188,12 +195,26 @@ class Candidate:
 
         return metadata
 
+    def _generate_dist_hashes(self, dist_data: bytes) -> None:
+        """
+        Populate a mapping of hash algorithm names to hashes for the candidate.
+        """
+        if self.name not in self.req_hashes:
+            return
+        hash_algorithms = self.req_hashes[self.name].keys()
+        dist_hashes = {}
+        for alg in hash_algorithms:
+            hasher = hashlib.new(alg, dist_data)
+            dist_hashes[alg] = hasher.hexdigest()
+        self.dist_hashes = dist_hashes
+
 
 def get_project_from_indexes(
     index_urls: list[str],
     session: CacheControl,
     project: str,
     extras: set[str],
+    req_hashes: RequirementHashes,
     timeout: int | None,
     state: AuditState,
 ) -> Iterator[Candidate]:
@@ -203,7 +224,9 @@ def get_project_from_indexes(
         # Not all indexes are guaranteed to have the project so this isn't an error
         # We should only return an error if it can't be found on ANY of the supplied index URLs
         try:
-            yield from get_project_from_index(index_url, session, project, extras, timeout, state)
+            yield from get_project_from_index(
+                index_url, session, project, extras, req_hashes, timeout, state
+            )
             project_found = True
         except PyPINotFoundError:
             pass
@@ -218,6 +241,7 @@ def get_project_from_index(
     session: CacheControl,
     project: str,
     extras: set[str],
+    req_hashes: RequirementHashes,
     timeout: int | None,
     state: AuditState,
 ) -> Iterator[Candidate]:
@@ -289,6 +313,7 @@ def get_project_from_index(
                 timeout=timeout,
                 state=state,
                 session=session,
+                req_hashes=req_hashes,
             )
         except Exception:
             continue
@@ -327,6 +352,7 @@ class PyPIProvider(AbstractProvider):
         self.timeout = timeout
         self.session = caching_session(cache_dir, use_pip=True)
         self._state = state
+        self.req_hashes = None
 
     def identify(self, requirement_or_candidate: Requirement | Candidate) -> str:
         """
@@ -375,7 +401,13 @@ class PyPIProvider(AbstractProvider):
             [
                 candidate
                 for candidate in get_project_from_indexes(
-                    self.index_urls, self.session, identifier, extras, self.timeout, self._state
+                    self.index_urls,
+                    self.session,
+                    identifier,
+                    extras,
+                    self.req_hashes,
+                    self.timeout,
+                    self._state,
                 )
                 if candidate.version not in bad_versions
                 and all(candidate.version in r.specifier for r in requirements)
