@@ -14,6 +14,7 @@ from requests.exceptions import HTTPError
 from resolvelib import BaseReporter, Resolver
 
 from pip_audit._dependency_source import DependencyResolver, DependencyResolverError
+from pip_audit._dependency_source.interface import RequirementHashes
 from pip_audit._service.interface import Dependency, ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState
 
@@ -59,7 +60,9 @@ class ResolveLibResolver(DependencyResolver):
         self._skip_editable = skip_editable
 
     def resolve(
-        self, req: Requirement, req_hashes: dict[str, dict[str, list[str]]]
+        self,
+        req: Requirement,
+        req_hashes: RequirementHashes,
     ) -> list[Dependency]:
         """
         Resolve the given `Requirement` into a `Dependency` list.
