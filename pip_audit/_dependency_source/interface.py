@@ -59,7 +59,16 @@ class DependencyFixError(Exception):
     pass
 
 
-class RequirementHashMismatchError(Exception):
+class HashMissingError(Exception):
+    """
+    Raised when `RequirementHashes` fails to find any hashes for a resolved
+    dependency.
+    """
+
+    pass
+
+
+class HashMismatchError(Exception):
     """
     Raised when `RequirementHashes` fails to match a hash for a given
     requirement.
@@ -87,14 +96,14 @@ class RequirementHashes:
 
     def match(self, req_name: str, dist_hashes: dict[str, str]) -> None:
         if req_name not in self.mapping:
-            raise RequirementHashMismatchError(f"No hash found for {req_name}")
+            raise HashMissingError(f"No hashes found for {req_name}")
 
         for algorithm, hashes in self.mapping[req_name].items():
             for hash_ in hashes:
                 if hash_ == dist_hashes[algorithm]:
                     return
-        raise RequirementHashMismatchError(
-            f"Mismatching hash for {req_name}: none of the supplied hashes "
+        raise HashMismatchError(
+            f"Mismatching hash for {req_name}, none of the supplied hashes "
             f"matched {self.mapping[req_name]}"
         )
 

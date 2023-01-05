@@ -14,7 +14,11 @@ from requests.exceptions import HTTPError
 from resolvelib import BaseReporter, Resolver
 
 from pip_audit._dependency_source import DependencyResolver, DependencyResolverError
-from pip_audit._dependency_source.interface import RequirementHashes
+from pip_audit._dependency_source.interface import (
+    HashMismatchError,
+    HashMissingError,
+    RequirementHashes,
+)
 from pip_audit._service.interface import Dependency, ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState
 
@@ -92,7 +96,15 @@ class ResolveLibResolver(DependencyResolver):
         for name, candidate in result.mapping.items():
             # Check hash validity
             if req_hashes:
-                req_hashes.match(name, candidate.dist_hashes)
+                try:
+                    req_hashes.match(name, candidate.dist_hashes)
+                except HashMissingError as e:
+                    raise ResolveLibResolverError(
+                        "Found dependency without an associated requirements "
+                        f"file hash: {str(e)}"
+                    ) from e
+                except HashMismatchError as e:
+                    raise ResolveLibResolverError(str(e)) from e
             deps.append(ResolvedDependency(name, candidate.version))
         return deps
 
