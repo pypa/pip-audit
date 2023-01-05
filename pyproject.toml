@@ -50,7 +50,9 @@ test = [
 ]
 lint = [
     "black>=22.3.0",
-    "ruff",
+    # NOTE(ww): ruff is under active development, so we pin conservatively here
+    # and let Dependabot periodically perform this update.
+    "ruff <= 0.0.209",
     "interrogate",
     "isort",
     "mypy",
