@@ -119,7 +119,7 @@ class RequirementSource(DependencySource):
                     collected.add(dep)
                     yield dep
             except DependencyResolverError as dre:
-                raise RequirementSourceError from dre
+                raise RequirementSourceError(str(dre)) from dre
 
     def fix(self, fix_version: ResolvedFixVersion) -> None:
         """
@@ -222,7 +222,7 @@ class RequirementSource(DependencySource):
                         )
                         print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
             except DependencyResolverError as dre:
-                raise RequirementFixError from dre
+                raise RequirementFixError(str(dre)) from dre
 
     def _recover_files(self, tmp_files: list[IO[str]]) -> None:
         for (filename, tmp_file) in zip(self._filenames, tmp_files):
