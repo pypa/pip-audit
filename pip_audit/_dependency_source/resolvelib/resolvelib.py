@@ -13,8 +13,9 @@ from pip_api import Requirement as ParsedRequirement
 from requests.exceptions import HTTPError
 from resolvelib import BaseReporter, Resolver
 
-from pip_audit._dependency_source import DependencyResolver, DependencyResolverError
-from pip_audit._dependency_source.interface import (
+from pip_audit._dependency_source import (
+    DependencyResolver,
+    DependencyResolverError,
     HashMismatchError,
     HashMissingError,
     RequirementHashes,

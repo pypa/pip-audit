@@ -32,7 +32,7 @@ from resolvelib.providers import AbstractProvider
 from resolvelib.resolvers import RequirementInformation
 
 from pip_audit._cache import caching_session
-from pip_audit._dependency_source.interface import RequirementHashes
+from pip_audit._dependency_source import RequirementHashes
 from pip_audit._state import AuditState
 from pip_audit._util import python_version
 from pip_audit._virtual_env import VirtualEnv, VirtualEnvError

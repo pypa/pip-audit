@@ -24,8 +24,8 @@ from pip_audit._dependency_source import (
     DependencyResolverError,
     DependencySource,
     DependencySourceError,
+    RequirementHashes,
 )
-from pip_audit._dependency_source.interface import RequirementHashes
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency
