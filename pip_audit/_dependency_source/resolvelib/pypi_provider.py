@@ -304,7 +304,7 @@ def get_project_from_index(
 
             # TODO: Handle compatibility tags?
             yield Candidate(
-                name,
+                project,
                 Path(filename),
                 version,
                 url=dist_url,
