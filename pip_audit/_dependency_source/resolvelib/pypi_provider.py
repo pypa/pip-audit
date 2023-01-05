@@ -201,7 +201,7 @@ class Candidate:
         """
         if self.name not in self.req_hashes:
             return
-        hash_algorithms = self.req_hashes[self.name].keys()
+        hash_algorithms = self.req_hashes.supported_algorithms(self.name)
         dist_hashes = {}
         for alg in hash_algorithms:
             hasher = hashlib.new(alg, dist_data)

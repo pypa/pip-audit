@@ -92,15 +92,7 @@ class ResolveLibResolver(DependencyResolver):
         for name, candidate in result.mapping.items():
             # Check hash validity
             if req_hashes:
-                for alg, hashes in req_hashes[name].items():
-                    for h in hashes:
-                        if h == candidate.dist_hashes[alg]:
-                            break
-                    else:
-                        raise ResolveLibResolverError(
-                            f"Mismatched hash for {name} ({candidate.version}): listed {h} of type "
-                            f"{alg} could not be found"
-                        )
+                req_hashes.match(name, candidate.dist_hashes)
             deps.append(ResolvedDependency(name, candidate.version))
         return deps
 

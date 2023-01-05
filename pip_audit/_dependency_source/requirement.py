@@ -25,6 +25,7 @@ from pip_audit._dependency_source import (
     DependencySource,
     DependencySourceError,
 )
+from pip_audit._dependency_source.interface import RequirementHashes
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency
@@ -306,7 +307,7 @@ class RequirementSource(DependencySource):
                 yield req, dep
         else:
             require_hashes = self._require_hashes or any(req.hash_options for req in reqs)
-            req_hashes = {}
+            req_hashes = RequirementHashes()
 
             # If we're requiring hashes, enforce that all requirements are hashed
             if require_hashes:
@@ -316,7 +317,7 @@ class RequirementSource(DependencySource):
                             f"requirement {req.name} does not contain a hash {str(req)}"
                         )
                     assert req.name not in req_hashes
-                    req_hashes[req.name] = self._build_hash_options_mapping(req.hash_options)
+                    req_hashes.add_req(req.name, self._build_hash_options_mapping(req.hash_options))
 
             # Invoke the dependency resolver to turn requirements into dependencies
             req_values: list[Requirement] = [r.req for r in reqs]

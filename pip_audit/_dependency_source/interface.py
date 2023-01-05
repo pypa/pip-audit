@@ -59,8 +59,47 @@ class DependencyFixError(Exception):
     pass
 
 
-# TODO(alex): Make this a class that's more ergonomic to use
-RequirementHashes = dict[str, dict[str, list[str]]]
+class RequirementHashMismatchError(Exception):
+    """
+    Raised when `RequirementHashes` fails to match a hash for a given
+    requirement.
+    """
+
+    pass
+
+
+class RequirementHashes:
+    """
+    Represents the hashes contained within a requirements file.
+    """
+
+    def __init__(self) -> None:
+        self.mapping = {}
+
+    def add_req(self, req_name: str, hash_options_mapping: dict[str, list[str]]) -> None:
+        self.mapping[req_name] = hash_options_mapping
+
+    def __bool__(self) -> bool:
+        return bool(self.mapping)
+
+    def __contains__(self, req_name: str) -> bool:
+        return req_name in self.mapping
+
+    def match(self, req_name: str, dist_hashes: dict[str, str]) -> None:
+        if req_name not in self.mapping:
+            raise RequirementHashMismatchError(f"No hash found for {req_name}")
+
+        for algorithm, hashes in self.mapping[req_name].items():
+            for hash_ in hashes:
+                if hash_ == dist_hashes[algorithm]:
+                    return
+        raise RequirementHashMismatchError(
+            f"Mismatching hash for {req_name}: none of the supplied hashes "
+            f"matched {self.mapping[req_name]}"
+        )
+
+    def supported_algorithms(self, req_name: str) -> list[str]:
+        return self.mapping[req_name].keys()
 
 
 class DependencyResolver(ABC):
