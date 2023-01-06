@@ -78,7 +78,7 @@ package: env/pyvenv.cfg
 		python3 -m build
 
 .PHONY: check-readme
-check-readme:
+check-readme: dev
 	# pip-audit --help
 	@diff \
 	  <( \

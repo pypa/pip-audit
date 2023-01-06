@@ -35,8 +35,5 @@ jobs:
           cache: "pip"
           cache-dependency-path: pyproject.toml
 
-      - name: deps
-        run: make dev
-
       - name: check-readme
-        run: make check-readme PIP_AUDIT_EXTRA=""
+        run: make check-readme
