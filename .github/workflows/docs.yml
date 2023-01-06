@@ -18,6 +18,7 @@ jobs:
         with:
           python-version: ">= 3.7"
           cache: "pip"
+          cache-dependency-path: pyproject.toml
 
       - name: docs
         run: |

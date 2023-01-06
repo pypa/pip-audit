@@ -26,6 +26,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: "pip"
+          cache-dependency-path: pyproject.toml
 
       - name: test
         run: make test PIP_AUDIT_EXTRA=test

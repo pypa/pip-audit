@@ -23,6 +23,8 @@ jobs:
       with:
         python-version: ">= 3.7"
         cache: "pip"
+        cache-dependency-path: pyproject.toml
+
 
     - name: deps
       run: python -m pip install -U setuptools build wheel

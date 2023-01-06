@@ -16,6 +16,7 @@ jobs:
         with:
           python-version: "3.7"
           cache: "pip"
+          cache-dependency-path: pyproject.toml
 
       - name: lint
         run: make lint PIP_AUDIT_EXTRA=lint
@@ -32,6 +33,7 @@ jobs:
         with:
           python-version: "3.7"
           cache: "pip"
+          cache-dependency-path: pyproject.toml
 
       - name: deps
         run: make dev
