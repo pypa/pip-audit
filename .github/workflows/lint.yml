@@ -35,5 +35,8 @@ jobs:
           cache: "pip"
           cache-dependency-path: pyproject.toml
 
+      - name: deps
+        run: make dev
+
       - name: check-readme
         run: make check-readme
