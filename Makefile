@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 PY_MODULE := pip_audit
 
 ALL_PY_SRCS := $(shell find $(PY_MODULE) -name '*.py') \
@@ -31,6 +33,10 @@ all:
 
 .PHONY: dev
 dev: env/pyvenv.cfg
+
+.PHONY: run
+run: env/pyvenv.cfg
+	@. env/bin/activate && pip-audit $(ARGS)
 
 env/pyvenv.cfg: pyproject.toml
 	# Create our Python 3 virtual environment
@@ -70,6 +76,19 @@ doc: env/pyvenv.cfg
 package: env/pyvenv.cfg
 	. env/bin/activate && \
 		python3 -m build
+
+.PHONY: check-readme
+check-readme: dev
+	# pip-audit --help
+	@diff \
+	  <( \
+	    awk '/@begin-pip-audit-help@/{f=1;next} /@end-pip-audit-help@/{f=0} f' \
+	      < README.md | sed '1d;$$d' \
+	  ) \
+	  <( \
+	    $(MAKE) -s run ARGS="--help" \
+	  )
+
 
 .PHONY: edit
 edit:

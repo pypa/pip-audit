@@ -1,0 +1,42 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.7"
+          cache: "pip"
+          cache-dependency-path: pyproject.toml
+
+      - name: lint
+        run: make lint PIP_AUDIT_EXTRA=lint
+
+  check-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        # NOTE(ww): Important: use pip-audit's minimum supported Python version
+        # in this check, since Python can change the `--help` rendering in
+        # `argparse` between major versions.
+        with:
+          python-version: "3.7"
+          cache: "pip"
+          cache-dependency-path: pyproject.toml
+
+      - name: deps
+        run: make dev
+
+      - name: check-readme
+        run: make check-readme
