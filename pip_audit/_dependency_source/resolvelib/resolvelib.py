@@ -12,6 +12,7 @@ from packaging.requirements import Requirement as _Requirement
 from pip_api import Requirement as ParsedRequirement
 from requests.exceptions import HTTPError
 from resolvelib import BaseReporter, Resolver
+from resolvelib.resolvers import ResolutionImpossible
 
 from pip_audit._dependency_source import DependencyResolver, DependencyResolverError
 from pip_audit._service.interface import Dependency, ResolvedDependency, SkippedDependency
@@ -81,6 +82,8 @@ class ResolveLibResolver(DependencyResolver):
             return [SkippedDependency(name=req.name, skip_reason=skip_reason)]
         except HTTPError as e:
             raise ResolveLibResolverError("failed to resolve dependencies") from e
+        except ResolutionImpossible as e:
+            raise ResolveLibResolverError(f"impossible resolution: {e}")
         for name, candidate in result.mapping.items():
             deps.append(ResolvedDependency(name, candidate.version))
         return deps

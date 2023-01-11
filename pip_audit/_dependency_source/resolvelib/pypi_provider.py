@@ -360,6 +360,9 @@ class PyPIProvider(AbstractProvider):
         self._state.update_state(f"Resolving {identifier}")
 
         requirements = list(requirements[identifier])
+        logger.debug(
+            f"{identifier} req specifier constraints: {[r.specifier for r in requirements]}"
+        )
 
         bad_versions = {c.version for c in incompatibilities[identifier]}
 
@@ -390,6 +393,8 @@ class PyPIProvider(AbstractProvider):
             key=attrgetter("version", "is_wheel"),
             reverse=True,
         )
+
+        logger.debug(f"{identifier} has candidates: {candidates}")
 
         # If we have multiple candidates for a single version and some are wheels,
         # yield only the wheels. This keeps us from wasting a large amount of
