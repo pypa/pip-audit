@@ -78,8 +78,7 @@ test tests: $(VENV)/pyvenv.cfg
 .PHONY: doc
 doc: $(VENV)/pyvenv.cfg
 	. $(VENV_BIN)/activate && \
-		command -v pdoc3 && \
-		PYTHONWARNINGS='error::UserWarning' pdoc --force --html $(PY_MODULE)
+		PDOC_ALLOW_EXEC=1 pdoc -o html $(PY_MODULE)
 
 .PHONY: package
 package: $(VENV)/pyvenv.cfg
