@@ -59,9 +59,11 @@ class ResolveLibResolver(DependencyResolver):
 
         `state` is an `AuditState` to use for state callbacks.
         """
-        self.provider = PyPIProvider(index_urls, timeout, cache_dir, state)
+        self.index_urls = index_urls
+        self.timeout = timeout
+        self.cache_dir = cache_dir
+        self.state = state
         self.reporter = BaseReporter()
-        self.resolver: Resolver = Resolver(self.provider, self.reporter)
         self._skip_editable = skip_editable
 
     def resolve(
@@ -82,12 +84,14 @@ class ResolveLibResolver(DependencyResolver):
                     SkippedDependency(name=req.name, skip_reason="requirement marked as editable")
                 ]
 
-        # TODO(alex): Figure out a better way to do this
-        self.provider.req_hashes = req_hashes
+        provider = PyPIProvider(
+            self.index_urls, req_hashes, self.timeout, self.cache_dir, self.state
+        )
+        resolver: Resolver = Resolver(provider, self.reporter)
 
         deps: list[Dependency] = []
         try:
-            result = self.resolver.resolve([req])
+            result = resolver.resolve([req])
         except PyPINotFoundError as e:
             skip_reason = str(e)
             logger.debug(skip_reason)

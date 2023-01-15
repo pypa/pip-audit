@@ -328,6 +328,7 @@ class PyPIProvider(AbstractProvider):
     def __init__(
         self,
         index_urls: list[str],
+        req_hashes: RequirementHashes,
         timeout: int | None = None,
         cache_dir: Path | None = None,
         state: AuditState = AuditState(),
@@ -336,6 +337,9 @@ class PyPIProvider(AbstractProvider):
         Create a new `PyPIProvider`.
 
         `index_urls` is a list of package index URLs.
+
+        `req_hashes` is a `RequirementHashes` to control what package/algorithm combinations we
+        generate hashes for.
 
         `timeout` is an optional argument to control how many seconds the component should wait for
         responses to network requests.
@@ -349,10 +353,10 @@ class PyPIProvider(AbstractProvider):
         index_urls = [url if url.endswith("/") else f"{url}/" for url in index_urls]
 
         self.index_urls = index_urls
+        self.req_hashes = req_hashes
         self.timeout = timeout
         self.session = caching_session(cache_dir, use_pip=True)
         self._state = state
-        self.req_hashes = None
 
     def identify(self, requirement_or_candidate: Requirement | Candidate) -> str:
         """
