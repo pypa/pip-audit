@@ -14,6 +14,7 @@ from pip_audit._dependency_source import (
     DependencyResolver,
     DependencyResolverError,
     DependencySourceError,
+    RequirementHashes,
     ResolveLibResolver,
     requirement,
 )
@@ -76,7 +77,7 @@ def test_requirement_source_parse_error(monkeypatch):
 def test_requirement_source_resolver_error(monkeypatch):
     # Pass the requirement source a resolver that automatically raises errors
     class MockResolver(DependencyResolver):
-        def resolve(self, req: Requirement) -> list[Dependency]:
+        def resolve(self, req: Requirement, req_hashes: RequirementHashes) -> list[Dependency]:
             raise DependencyResolverError
 
     source = requirement.RequirementSource([Path("requirements.txt")], MockResolver())
@@ -353,16 +354,15 @@ def test_requirement_source_require_hashes(monkeypatch):
     monkeypatch.setattr(
         pip_requirements_parser,
         "get_file_content",
-        lambda _: "flask==2.0.1 --hash=sha256:flask-hash",
+        lambda _: "flask==2.0.1 "
+        "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9",
     )
 
     # The hash should be populated in the resolved dependency. Additionally, the source should not
     # calculate and resolve transitive dependencies since requirements files with hashes must
     # explicitly list all dependencies.
     specs = list(source.collect())
-    assert specs == [
-        ResolvedDependency("flask", Version("2.0.1"), hashes={"sha256": ["flask-hash"]})
-    ]
+    assert specs == [ResolvedDependency("flask", Version("2.0.1"))]
 
 
 def test_requirement_source_require_hashes_missing(monkeypatch):
@@ -387,7 +387,9 @@ def test_requirement_source_require_hashes_inferred(monkeypatch):
     monkeypatch.setattr(
         pip_requirements_parser,
         "get_file_content",
-        lambda _: "flask==2.0.1 --hash=sha256:flask-hash\nrequests==2.0",
+        lambda _: "flask==2.0.1 "
+        "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9\n"
+        "requests==2.0",
     )
 
     # If at least one requirement is hashed, this infers `require-hashes`
@@ -403,7 +405,9 @@ def test_requirement_source_require_hashes_unpinned(monkeypatch):
     monkeypatch.setattr(
         pip_requirements_parser,
         "get_file_content",
-        lambda _: "flask==2.0.1 --hash=sha256:flask-hash\nrequests>=1.0 "
+        lambda _: "flask==2.0.1 "
+        "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9\n"
+        "requests>=1.0 "
         "--hash=sha256:requests-hash",
     )
 
@@ -425,7 +429,7 @@ def test_requirement_source_no_deps(monkeypatch):
     )
 
     specs = list(source.collect())
-    assert specs == [ResolvedDependency("flask", Version("2.0.1"), hashes={})]
+    assert specs == [ResolvedDependency("flask", Version("2.0.1"))]
 
 
 def test_requirement_source_no_deps_unpinned(monkeypatch):
@@ -477,7 +481,7 @@ def test_requirement_source_dep_caching(monkeypatch):
     specs = list(source.collect())
 
     class MockResolver(DependencyResolver):
-        def resolve(self, req: Requirement) -> list[Dependency]:
+        def resolve(self, req: Requirement, req_hashes: RequirementHashes) -> list[Dependency]:
             raise DependencyResolverError
 
     # Now run collect again and check that dependency resolution doesn't get repeated
@@ -493,7 +497,7 @@ def test_requirement_source_fix_explicit_subdep(monkeypatch, req_file):
 
     # We're going to simulate the situation where a subdependency of `flask` has a vulnerability.
     # In this case, we're choosing `jinja2`.
-    flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
+    flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"), RequirementHashes())
 
     # Firstly, get a handle on the `jinja2` dependency. The version cannot be hardcoded since it
     # depends what versions are available on PyPI when dependency resolution runs.
@@ -524,7 +528,7 @@ def test_requirement_source_fix_explicit_subdep(monkeypatch, req_file):
 
 def test_requirement_source_fix_explicit_subdep_multiple_reqs(monkeypatch, req_file):
     # Recreate the vulnerable subdependency case.
-    flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
+    flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"), RequirementHashes())
     jinja_dep: ResolvedDependency | None = None
     for dep in flask_deps:
         if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
@@ -555,7 +559,7 @@ def test_requirement_source_fix_explicit_subdep_multiple_reqs(monkeypatch, req_f
 def test_requirement_source_fix_explicit_subdep_resolver_error(req_file):
     # Pass the requirement source a resolver that automatically raises errors
     class MockResolver(DependencyResolver):
-        def resolve(self, req: Requirement) -> list[Dependency]:
+        def resolve(self, req: Requirement, req_hashes: RequirementHashes) -> list[Dependency]:
             raise DependencyResolverError
 
     req_file_name = req_file()
@@ -563,7 +567,7 @@ def test_requirement_source_fix_explicit_subdep_resolver_error(req_file):
         f.write("flask==2.0.1")
 
     # Recreate the vulnerable subdependency case.
-    flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
+    flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"), RequirementHashes())
     jinja_dep: ResolvedDependency | None = None
     for dep in flask_deps:
         if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
@@ -601,7 +605,7 @@ def test_requirement_source_fix_explicit_subdep_comment_retension(req_file):
     # Since we've switching `pip-requirements-parser`, we should no longer have this issue.
 
     # Recreate the vulnerable subdependency case.
-    flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"))
+    flask_deps = ResolveLibResolver().resolve(Requirement("flask==2.0.1"), RequirementHashes())
     jinja_dep: ResolvedDependency | None = None
     for dep in flask_deps:
         if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":

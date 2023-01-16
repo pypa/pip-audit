@@ -13,6 +13,7 @@ from pip_api import Requirement as ParsedRequirement
 from requests.exceptions import HTTPError
 from resolvelib import BaseReporter, Resolver
 
+from pip_audit._cache import caching_session
 from pip_audit._dependency_source import (
     DependencyResolver,
     DependencyResolverError,
@@ -61,7 +62,7 @@ class ResolveLibResolver(DependencyResolver):
         """
         self.index_urls = index_urls
         self.timeout = timeout
-        self.cache_dir = cache_dir
+        self.session = caching_session(cache_dir, use_pip=True)
         self.state = state
         self.reporter = BaseReporter()
         self._skip_editable = skip_editable
@@ -84,9 +85,7 @@ class ResolveLibResolver(DependencyResolver):
                     SkippedDependency(name=req.name, skip_reason="requirement marked as editable")
                 ]
 
-        provider = PyPIProvider(
-            self.index_urls, req_hashes, self.timeout, self.cache_dir, self.state
-        )
+        provider = PyPIProvider(self.index_urls, req_hashes, self.session, self.timeout, self.state)
         resolver: Resolver = Resolver(provider, self.reporter)
 
         deps: list[Dependency] = []

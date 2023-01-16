@@ -31,7 +31,6 @@ from packaging.version import Version
 from resolvelib.providers import AbstractProvider
 from resolvelib.resolvers import RequirementInformation
 
-from pip_audit._cache import caching_session
 from pip_audit._dependency_source import RequirementHashes
 from pip_audit._state import AuditState
 from pip_audit._util import python_version
@@ -329,8 +328,8 @@ class PyPIProvider(AbstractProvider):
         self,
         index_urls: list[str],
         req_hashes: RequirementHashes,
+        session: requests.Session,
         timeout: int | None = None,
-        cache_dir: Path | None = None,
         state: AuditState = AuditState(),
     ):
         """
@@ -354,8 +353,8 @@ class PyPIProvider(AbstractProvider):
 
         self.index_urls = index_urls
         self.req_hashes = req_hashes
+        self.session = session
         self.timeout = timeout
-        self.session = caching_session(cache_dir, use_pip=True)
         self._state = state
 
     def identify(self, requirement_or_candidate: Requirement | Candidate) -> str:

@@ -5,6 +5,7 @@ import pretend
 import pytest
 from packaging.version import Version
 
+from pip_audit._dependency_source import RequirementHashes
 from pip_audit._dependency_source.resolvelib import pypi_provider
 from pip_audit._dependency_source.resolvelib.pypi_provider import Candidate
 from pip_audit._virtual_env import VirtualEnvError
@@ -37,6 +38,7 @@ class TestCandidate:
             session=session,
             timeout=None,
             state=state,
+            req_hashes=RequirementHashes(),
         )
 
         with pytest.raises(
@@ -71,6 +73,7 @@ def test_get_project_from_index_relative_url():
             session=session,
             project="Flask",
             extras=set(),
+            req_hashes=RequirementHashes(),
             timeout=None,
             state=state,
         )

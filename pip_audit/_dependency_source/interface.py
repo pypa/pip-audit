@@ -103,11 +103,13 @@ class RequirementHashes:
                 if hash_ == dist_hashes[algorithm]:
                     return
         raise HashMismatchError(
-            f"Mismatching hash for {req_name}, none of the supplied hashes "
-            f"matched {self.mapping[req_name]}"
+            f"Mismatching hash for {req_name}, none of the calculated hashes ({dist_hashes}) "
+            f"matched expected ({self.mapping[req_name]})"
         )
 
     def supported_algorithms(self, req_name: str) -> list[str]:
+        if req_name not in self.mapping:
+            return []
         return self.mapping[req_name].keys()
 
 
