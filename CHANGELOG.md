@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.4.13]
+
+### Fixed
+
+* Added a lower bound on `packaging` to ensure that non-normalized versions
+  are handled correctly ([#471](https://github.com/pypa/pip-audit/pull/471))
+
 ## [2.4.12]
 
 ### Fixed
@@ -419,7 +426,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.4.12...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.4.13...HEAD
+[2.4.13]: https://github.com/pypa/pip-audit/compare/v2.4.12...v2.4.13
 [2.4.12]: https://github.com/pypa/pip-audit/compare/v2.4.11...v2.4.12
 [2.4.11]: https://github.com/pypa/pip-audit/compare/v2.4.10...v2.4.11
 [2.4.10]: https://github.com/pypa/pip-audit/compare/v2.4.9...v2.4.10
