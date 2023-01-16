@@ -208,7 +208,7 @@ class Candidate:
                 raise UnsupportedHashAlgorithm(
                     f"encountered hash with unknown algorithm: {algorithm}"
                 )
-            if algorithm not in hashlib.algorithms_guaranteed:
+            if algorithm not in hashlib.algorithms_guaranteed:  # pragma: no cover
                 raise UnsupportedHashAlgorithm(
                     f"encountered hash with known but non-guaranteed algorithm: {algorithm}, this "
                     "won't necessarily work on other platforms"

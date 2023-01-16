@@ -17,6 +17,7 @@ from pip_audit._dependency_source import (
     DependencySourceError,
     RequirementHashes,
     ResolveLibResolver,
+    UnsupportedHashAlgorithm,
     requirement,
 )
 from pip_audit._dependency_source.resolvelib import pypi_provider
@@ -456,6 +457,26 @@ def test_requirement_source_require_hashes_not_fully_resolved(monkeypatch):
     # Flask's dependencies. When it finds dependencies that aren't listed in the requirements file,
     # it will raise an error.
     with pytest.raises(DependencySourceError):
+        list(source.collect())
+
+
+def test_requirement_source_require_hashes_unknown_algorithm(monkeypatch):
+    source = requirement.RequirementSource(
+        [Path("requirements.txt")], ResolveLibResolver(), require_hashes=True
+    )
+
+    monkeypatch.setattr(
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==2.0.1 "
+        "--hash=mystery-hash:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9",
+    )
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
+    )
+
+    # If we supply a hash algorithm that `hashlib` doesn't recognize, we should raise an error.
+    with pytest.raises(UnsupportedHashAlgorithm):
         list(source.collect())
 
 
