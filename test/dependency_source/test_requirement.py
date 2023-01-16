@@ -479,10 +479,28 @@ def test_requirement_source_no_deps_unpinned(monkeypatch):
         [Path("requirements.txt")], ResolveLibResolver(), no_deps=True
     )
 
+    # `flask` is not pinned so we expect `pip-audit` to fail.
     monkeypatch.setattr(
         pip_requirements_parser,
         "get_file_content",
-        lambda _: "flask\nrequests>=1.0",
+        lambda _: "flask\nrequests==1.0",
+    )
+
+    # When dependency resolution is disabled, all requirements must be pinned.
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
+
+
+def test_requirement_source_no_deps_not_exact_version(monkeypatch):
+    source = requirement.RequirementSource(
+        [Path("requirements.txt")], ResolveLibResolver(), no_deps=True
+    )
+
+    # In this case, `requests` is not pinned to an exact version so we expect `pip-audit` to fail.
+    monkeypatch.setattr(
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==1.0\nrequests>=1.0",
     )
 
     # When dependency resolution is disabled, all requirements must be pinned.

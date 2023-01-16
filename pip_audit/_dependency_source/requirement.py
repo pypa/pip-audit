@@ -262,7 +262,7 @@ class RequirementSource(DependencySource):
                 pinned_specifier = PINNED_SPECIFIER_RE.match(str(req.specifier))
                 if pinned_specifier is None:
                     raise RequirementSourceError(
-                        f"requirement {req.name} is not pinned: {str(req)}"
+                        f"requirement {req.name} is not pinned to an exact version: {str(req)}"
                     )
 
                 yield req.req, ResolvedDependency(
