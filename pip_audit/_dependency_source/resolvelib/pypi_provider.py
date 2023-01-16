@@ -52,6 +52,7 @@ class Candidate:
     def __init__(
         self,
         name: str,
+        project: str,
         filename: Path,
         version: Version,
         *,
@@ -68,6 +69,7 @@ class Candidate:
         """
 
         self.name = canonicalize_name(name)
+        self.project = project
         self.filename = filename
         self.version = version
         self.url = url
@@ -198,9 +200,9 @@ class Candidate:
         """
         Populate a mapping of hash algorithm names to hashes for the candidate.
         """
-        if self.name not in self.req_hashes:
+        if self.project not in self.req_hashes:
             return
-        hash_algorithms = self.req_hashes.supported_algorithms(self.name)
+        hash_algorithms = self.req_hashes.supported_algorithms(self.project)
         dist_hashes = {}
         for alg in hash_algorithms:
             hasher = hashlib.new(alg, dist_data)
@@ -292,17 +294,18 @@ def get_project_from_index(
         # Handle wheels and source distributions
         try:
             if filename.endswith(".whl"):
-                (_, version, _, _) = parse_wheel_filename(filename)
+                (name, version, _, _) = parse_wheel_filename(filename)
                 is_wheel = True
             else:
                 # If it doesn't look like a wheel, try to parse it as an
                 # sdist. This will raise for incorrect looking filenames,
                 # which we'll then skip via the exception handler.
-                (_, version) = parse_sdist_filename(filename)
+                (name, version) = parse_sdist_filename(filename)
                 is_wheel = False
 
             # TODO: Handle compatibility tags?
             yield Candidate(
+                name,
                 project,
                 Path(filename),
                 version,

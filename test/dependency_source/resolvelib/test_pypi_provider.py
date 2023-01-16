@@ -39,6 +39,7 @@ class TestCandidate:
             timeout=None,
             state=state,
             req_hashes=RequirementHashes(),
+            project="fakepkg",
         )
 
         with pytest.raises(
