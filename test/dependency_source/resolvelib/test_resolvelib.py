@@ -249,8 +249,8 @@ def test_resolvelib_wheel_python_version_invalid_specifier(monkeypatch):
 
 
 def test_resolvelib_wheel_canonical_name_mismatch(monkeypatch):
-    # Call the underlying wheel, Mask instead of Flask. This should throw an `ResolutionImpossible`
-    # error.
+    # Call the underlying wheel, Mask instead of Flask. We name candidates after the project name
+    # rather than looking at the wheel filename, so this should still work.
     data = (
         '<a href="https://files.pythonhosted.org/packages/54/4f/'
         "1b294c1a4ab7b2ad5ca5fc4a9a65a22ef1ac48be126289d97668852d4ab3/Mask-2.0.1-py3-none-any.whl#"
@@ -266,8 +266,9 @@ def test_resolvelib_wheel_canonical_name_mismatch(monkeypatch):
     monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_package_mock(data))
 
     req = Requirement("flask==2.0.1")
-    with pytest.raises(ResolutionImpossible):
-        dict(resolver.resolve_all(iter([req]), RequirementHashes()))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
+    assert req in resolved_deps
+    assert resolved_deps[req] == [ResolvedDependency("flask", Version("2.0.1"))]
 
 
 def test_resolvelib_wheel_invalid_version(monkeypatch):

@@ -292,13 +292,13 @@ def get_project_from_index(
         # Handle wheels and source distributions
         try:
             if filename.endswith(".whl"):
-                (name, version, _, _) = parse_wheel_filename(filename)
+                (_, version, _, _) = parse_wheel_filename(filename)
                 is_wheel = True
             else:
                 # If it doesn't look like a wheel, try to parse it as an
                 # sdist. This will raise for incorrect looking filenames,
                 # which we'll then skip via the exception handler.
-                (name, version) = parse_sdist_filename(filename)
+                (_, version) = parse_sdist_filename(filename)
                 is_wheel = False
 
             # TODO: Handle compatibility tags?
