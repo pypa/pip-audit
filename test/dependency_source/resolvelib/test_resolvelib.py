@@ -136,7 +136,7 @@ def test_resolvelib_wheel_patched(monkeypatch):
 
     # monkeypatch.setattr(requests, "get", lambda _url, **kwargs: get_package_mock(data))
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
@@ -157,7 +157,7 @@ def test_resolvelib_sdist_patched(monkeypatch, suffix):
     data = f'<a href="https://example.com/Flask-2.0.1.{suffix}">Flask-2.0.1.{suffix}</a><br/>'
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
@@ -184,7 +184,7 @@ def test_resolvelib_sdist_vexing_parse(monkeypatch):
     )
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
@@ -232,7 +232,7 @@ def test_resolvelib_wheel_python_version_invalid_specifier(monkeypatch):
     monkeypatch.setattr(pypi_provider, "logger", logger)
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
@@ -259,7 +259,7 @@ def test_resolvelib_wheel_canonical_name_mismatch(monkeypatch):
     )
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
@@ -281,7 +281,7 @@ def test_resolvelib_wheel_invalid_version(monkeypatch):
     )
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
@@ -297,7 +297,7 @@ def test_resolvelib_sdist_invalid_suffix(monkeypatch):
     data = '<a href="https://example.com/Flask-2.0.1.foo">Flask-2.0.1.foo</a><br/>'
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
@@ -317,7 +317,7 @@ def test_resolvelib_relative_url(monkeypatch):
     """
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver(
@@ -396,15 +396,16 @@ def test_resolvelib_multiple_indexes(monkeypatch):
     )
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _, _data: get_metadata_mock()
     )
 
     def get_multiple_index_package_mock(url):
         if url == package_url1:
             return get_package_mock(data1)
-        else:
-            assert url == package_url2
+        elif url == package_url2:
             return get_package_mock(data2)
+        else:
+            return requests.get(url)
 
     resolver = resolvelib.ResolveLibResolver([url1, url2])
     monkeypatch.setattr(
@@ -439,18 +440,19 @@ def test_resolvelib_package_missing_on_one_index(monkeypatch):
     )
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _, _data: get_metadata_mock()
     )
 
     # Simulate the package not existing on the second index
     def get_multiple_index_package_mock(url):
         if url == package_url1:
             return get_package_mock(data1)
-        else:
-            assert url == package_url2
+        elif url == package_url2:
             pkg = get_package_mock("")
             pkg.status_code = 404
             return pkg
+        else:
+            return requests.get(url)
 
     resolver = resolvelib.ResolveLibResolver([url1, url2])
     monkeypatch.setattr(
@@ -485,7 +487,7 @@ def test_resolvelib_no_links(monkeypatch):
     data = ""
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()

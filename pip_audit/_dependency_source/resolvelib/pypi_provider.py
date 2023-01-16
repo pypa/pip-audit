@@ -101,10 +101,15 @@ class Candidate:
         if self._metadata is None:
             self._state.update_state(f"Fetching metadata for {self.name} ({self.version})")
 
+            response = self._session.get(self.url, timeout=self._timeout)
+            response.raise_for_status()
+            candidate_data = response.content
+            self._generate_dist_hashes(candidate_data)
+
             if self.is_wheel:
-                self._metadata = self._get_metadata_for_wheel()
+                self._metadata = self._get_metadata_for_wheel(candidate_data)
             else:
-                self._metadata = self._get_metadata_for_sdist()
+                self._metadata = self._get_metadata_for_sdist(candidate_data)
         return self._metadata
 
     def _get_dependencies(self) -> Iterator[Requirement]:
@@ -132,16 +137,13 @@ class Candidate:
             self._dependencies = list(self._get_dependencies())
         return self._dependencies
 
-    def _get_metadata_for_wheel(self) -> Message:
+    def _get_metadata_for_wheel(self, wheel_data: bytes) -> Message:
         """
         Extracts the metadata for this candidate, if it's a wheel.
         """
-        data = self._session.get(self.url, timeout=self._timeout).content
-        self._generate_dist_hashes(data)
-
         self._state.update_state(f"Extracting wheel for {self.name} ({self.version})")
 
-        with ZipFile(BytesIO(data)) as z:
+        with ZipFile(BytesIO(wheel_data)) as z:
             for n in z.namelist():
                 if n.endswith(".dist-info/METADATA"):
                     p = BytesParser()
@@ -152,14 +154,11 @@ class Candidate:
         # If we didn't find the metadata, return an empty dict
         return EmailMessage()  # pragma: no cover
 
-    def _get_metadata_for_sdist(self) -> Message:
+    def _get_metadata_for_sdist(self, sdist_data: bytes) -> Message:
         """
         Extracts the metadata for this candidate, if it's a source distribution.
         """
 
-        response: requests.Response = self._session.get(self.url, timeout=self._timeout)
-        response.raise_for_status()
-        sdist_data = response.content
         metadata = EmailMessage()
         self._generate_dist_hashes(sdist_data)
 

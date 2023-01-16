@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from email.message import EmailMessage
 from pathlib import Path
 
 import pip_requirements_parser
@@ -18,6 +19,7 @@ from pip_audit._dependency_source import (
     ResolveLibResolver,
     requirement,
 )
+from pip_audit._dependency_source.resolvelib import pypi_provider
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency, SkippedDependency
 
@@ -351,11 +353,17 @@ def test_requirement_source_require_hashes(monkeypatch):
         [Path("requirements.txt")], ResolveLibResolver(), require_hashes=True
     )
 
+    def get_metadata_mock():
+        return EmailMessage()
+
     monkeypatch.setattr(
         pip_requirements_parser,
         "get_file_content",
         lambda _: "flask==2.0.1 "
         "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9",
+    )
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     # The hash should be populated in the resolved dependency. Additionally, the source should not
