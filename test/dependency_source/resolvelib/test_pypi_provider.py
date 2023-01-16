@@ -30,6 +30,7 @@ class TestCandidate:
 
         candidate = Candidate(
             "fakepkg",
+            "fakepkg",
             Path("fakepath"),
             Version("1.0.0"),
             url="hxxps://fake.url",
@@ -39,7 +40,6 @@ class TestCandidate:
             timeout=None,
             state=state,
             req_hashes=RequirementHashes(),
-            project="fakepkg",
         )
 
         with pytest.raises(
