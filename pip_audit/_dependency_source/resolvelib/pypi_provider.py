@@ -31,7 +31,7 @@ from packaging.version import Version
 from resolvelib.providers import AbstractProvider
 from resolvelib.resolvers import RequirementInformation
 
-from pip_audit._dependency_source import RequirementHashes
+from pip_audit._dependency_source import RequirementHashes, UnsupportedHashAlgorithm
 from pip_audit._state import AuditState
 from pip_audit._util import python_version
 from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
@@ -203,9 +203,18 @@ class Candidate:
             return
         hash_algorithms = self.req_hashes.supported_algorithms(self.project)
         dist_hashes = {}
-        for alg in hash_algorithms:
-            hasher = hashlib.new(alg, dist_data)
-            dist_hashes[alg] = hasher.hexdigest()
+        for algorithm in hash_algorithms:
+            if algorithm not in hashlib.algorithms_available:
+                raise UnsupportedHashAlgorithm(
+                    f"encountered hash with unknown algorithm: {algorithm}"
+                )
+            if algorithm not in hashlib.algorithms_guaranteed:
+                raise UnsupportedHashAlgorithm(
+                    f"encountered hash with known but non-guaranteed algorithm: {algorithm}, this "
+                    "won't necessarily work on other platforms"
+                )
+            hasher = hashlib.new(algorithm, dist_data)
+            dist_hashes[algorithm] = hasher.hexdigest()
         self.dist_hashes = dist_hashes
 
 

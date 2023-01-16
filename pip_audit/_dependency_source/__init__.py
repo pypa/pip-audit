@@ -11,6 +11,7 @@ from .interface import (
     HashMismatchError,
     HashMissingError,
     RequirementHashes,
+    UnsupportedHashAlgorithm,
 )
 from .pip import PipSource, PipSourceError
 from .pyproject import PyProjectSource
@@ -32,4 +33,5 @@ __all__ = [
     "RequirementHashes",
     "RequirementSource",
     "ResolveLibResolver",
+    "UnsupportedHashAlgorithm",
 ]

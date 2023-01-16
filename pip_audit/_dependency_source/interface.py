@@ -77,6 +77,15 @@ class HashMismatchError(Exception):
     pass
 
 
+class UnsupportedHashAlgorithm(Exception):
+    """
+    Raised when a `DependencyResolver` encounters an unsupported hash algorithm
+    in the supplied `RequirementHashes`.
+    """
+
+    pass
+
+
 class RequirementHashes:
     """
     Represents the hashes contained within a requirements file.
