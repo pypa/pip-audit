@@ -24,6 +24,10 @@ from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency, SkippedDependency
 
 
+def get_metadata_mock():
+    return EmailMessage()
+
+
 @pytest.mark.online
 def test_requirement_source(monkeypatch):
     source = requirement.RequirementSource([Path("requirements.txt")], ResolveLibResolver())
@@ -353,22 +357,24 @@ def test_requirement_source_require_hashes(monkeypatch):
         [Path("requirements.txt")], ResolveLibResolver(), require_hashes=True
     )
 
-    def get_metadata_mock():
-        return EmailMessage()
-
     monkeypatch.setattr(
         pip_requirements_parser,
         "get_file_content",
         lambda _: "flask==2.0.1 "
         "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9",
     )
+
+    # When using hashes, all dependencies must be fully resolved. `pip-audit` will flag any
+    # dependencies that are found during dependency resolution that weren't found in the
+    # requirement file.
+    #
+    # For expediency's sake, let's short-circuit dependency resolution by patching this metadata
+    # function. This will test the case where we have a requirements file with a fully resolved set
+    # of dependencies.
     monkeypatch.setattr(
         pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
-    # The hash should be populated in the resolved dependency. Additionally, the source should not
-    # calculate and resolve transitive dependencies since requirements files with hashes must
-    # explicitly list all dependencies.
     specs = list(source.collect())
     assert specs == [ResolvedDependency("flask", Version("2.0.1"))]
 
@@ -382,6 +388,9 @@ def test_requirement_source_require_hashes_missing(monkeypatch):
         pip_requirements_parser,
         "get_file_content",
         lambda _: "flask==2.0.1",
+    )
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     # All requirements must be hashed when collecting with `require-hashes`
@@ -398,6 +407,9 @@ def test_requirement_source_require_hashes_inferred(monkeypatch):
         lambda _: "flask==2.0.1 "
         "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9\n"
         "requests==2.0",
+    )
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     # If at least one requirement is hashed, this infers `require-hashes`
@@ -418,9 +430,31 @@ def test_requirement_source_require_hashes_unpinned(monkeypatch):
         "requests>=1.0 "
         "--hash=sha256:requests-hash",
     )
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
+    )
 
     # When hashed dependencies are provided, all dependencies must be explicitly pinned to an exact
     # version number
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
+
+
+def test_requirement_source_require_hashes_not_fully_resolved(monkeypatch):
+    source = requirement.RequirementSource(
+        [Path("requirements.txt")], ResolveLibResolver(), require_hashes=True
+    )
+
+    monkeypatch.setattr(
+        pip_requirements_parser,
+        "get_file_content",
+        lambda _: "flask==2.0.1 "
+        "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9",
+    )
+
+    # Deliberately **don't** patch the metadata function so that our dependency resolver finds
+    # Flask's dependencies. When it finds dependencies that aren't listed in the requirements file,
+    # it will raise an error.
     with pytest.raises(DependencySourceError):
         list(source.collect())
 
