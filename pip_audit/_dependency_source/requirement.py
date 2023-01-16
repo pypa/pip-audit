@@ -311,13 +311,15 @@ class RequirementSource(DependencySource):
 
             # If we're requiring hashes, enforce that all requirements are hashed
             if require_hashes:
-                for req in reqs:
-                    if not req.hash_options:
+                for hash_req in reqs:
+                    if not hash_req.hash_options:
                         raise RequirementSourceError(
-                            f"requirement {req.name} does not contain a hash {str(req)}"
+                            f"requirement {hash_req.name} does not contain a hash {str(hash_req)}"
                         )
-                    assert req.name not in req_hashes
-                    req_hashes.add_req(req.name, self._build_hash_options_mapping(req.hash_options))
+                    assert hash_req.name not in req_hashes
+                    req_hashes.add_req(
+                        hash_req.name, self._build_hash_options_mapping(hash_req.hash_options)
+                    )
 
             # Invoke the dependency resolver to turn requirements into dependencies
             req_values: list[Requirement] = [r.req for r in reqs]

@@ -83,7 +83,7 @@ class RequirementHashes:
     """
 
     def __init__(self) -> None:
-        self.mapping = {}
+        self.mapping: dict[str, dict[str, list[str]]] = {}
 
     def add_req(self, req_name: str, hash_options_mapping: dict[str, list[str]]) -> None:
         self.mapping[req_name] = hash_options_mapping
@@ -110,7 +110,7 @@ class RequirementHashes:
     def supported_algorithms(self, req_name: str) -> list[str]:
         if req_name not in self.mapping:
             return []
-        return self.mapping[req_name].keys()
+        return list(self.mapping[req_name].keys())
 
 
 class DependencyResolver(ABC):

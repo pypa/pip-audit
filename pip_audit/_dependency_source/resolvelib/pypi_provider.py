@@ -82,7 +82,7 @@ class Candidate:
 
         self._metadata: Message | None = None
         self._dependencies: list[Requirement] | None = None
-        self.dist_hashes = {}
+        self.dist_hashes: dict[str, str] = {}
 
     def __repr__(self) -> str:  # pragma: no cover
         """
