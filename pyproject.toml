@@ -56,15 +56,17 @@ lint = [
     "interrogate",
     "isort",
     "mypy",
-    "pdoc3",
     "types-html5lib",
     "types-requests",
     "types-toml",
 ]
+doc = [
+    "pdoc",
+]
 dev = [
     "build",
     "bump>=1.3.2",
-    "pip-audit[test,lint]",
+    "pip-audit[doc,test,lint]",
 ]
 
 [project.scripts]
