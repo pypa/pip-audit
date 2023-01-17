@@ -17,7 +17,7 @@ from pip_audit._dependency_source import DependencyResolver, DependencyResolverE
 from pip_audit._service.interface import Dependency, ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState
 
-from .pypi_provider import PyPINotFoundError, PyPIProvider
+from .pypi_provider import PyPIProvider
 
 logger = logging.getLogger(__name__)
 
@@ -58,29 +58,36 @@ class ResolveLibResolver(DependencyResolver):
         self.resolver: Resolver = Resolver(self.provider, self.reporter)
         self._skip_editable = skip_editable
 
-    def resolve(self, req: Requirement) -> list[Dependency]:
+    def resolve(self, reqs: list[Requirement]) -> list[Dependency]:
         """
         Resolve the given `Requirement` into a `Dependency` list.
         """
 
-        # HACK: `resolve` takes both `packaging.Requirement` and `pip_api.Requirement`,
-        # since the latter is a subclass. But only the latter knows whether the
-        # requirement is editable, so we need to check for it here.
-        if isinstance(req, ParsedRequirement):
-            if req.editable and self._skip_editable:
-                return [
-                    SkippedDependency(name=req.name, skip_reason="requirement marked as editable")
-                ]
-
         deps: list[Dependency] = []
+
+        reqs_to_resolve: list[Requirement] = []
+        for req in reqs:
+            # HACK: `resolve` takes both `packaging.Requirement` and `pip_api.Requirement`,
+            # since the latter is a subclass. But only the latter knows whether the
+            # requirement is editable, so we need to check for it here.
+            if isinstance(req, ParsedRequirement):
+                if req.editable and self._skip_editable:
+                    deps.append(
+                        SkippedDependency(
+                            name=req.name, skip_reason="requirement marked as editable"
+                        )
+                    )
+                continue
+            reqs_to_resolve.append(req)
+
         try:
-            result = self.resolver.resolve([req])
-        except PyPINotFoundError as e:
-            skip_reason = str(e)
-            logger.debug(skip_reason)
-            return [SkippedDependency(name=req.name, skip_reason=skip_reason)]
+            result = self.resolver.resolve(reqs_to_resolve)
         except HTTPError as e:
             raise ResolveLibResolverError("failed to resolve dependencies") from e
+
+        # If the provider encountered any dependencies it couldn't find on PyPI, they'll be here.
+        deps.extend(self.provider.skip_deps)
+
         for name, candidate in result.mapping.items():
             deps.append(ResolvedDependency(name, candidate.version))
         return deps

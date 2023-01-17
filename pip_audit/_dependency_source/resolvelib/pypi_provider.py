@@ -31,6 +31,7 @@ from resolvelib.providers import AbstractProvider
 from resolvelib.resolvers import RequirementInformation
 
 from pip_audit._cache import caching_session
+from pip_audit._service import SkippedDependency
 from pip_audit._state import AuditState
 from pip_audit._util import python_version
 from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
@@ -327,6 +328,7 @@ class PyPIProvider(AbstractProvider):
         self.timeout = timeout
         self.session = caching_session(cache_dir, use_pip=True)
         self._state = state
+        self.skip_deps: list[SkippedDependency] = []
 
     def identify(self, requirement_or_candidate: Requirement | Candidate) -> str:
         """
@@ -371,25 +373,31 @@ class PyPIProvider(AbstractProvider):
         # Need to pass the extras to the search, so they
         # are added to the candidate at creation - we
         # treat candidates as immutable once created.
-        candidates = sorted(
-            [
-                candidate
-                for candidate in get_project_from_indexes(
-                    self.index_urls, self.session, identifier, extras, self.timeout, self._state
-                )
-                if candidate.version not in bad_versions
-                and all(candidate.version in r.specifier for r in requirements)
-                # HACK(ww): Additionally check that each candidate's name matches the
-                # expected project name (identifier).
-                # This technically shouldn't be required, but parsing distribution names
-                # from package indices is imprecise/unreliable when distribution filenames
-                # are PEP 440 compliant but not normalized.
-                # See: https://github.com/pypa/packaging/issues/527
-                and candidate.name == identifier
-            ],
-            key=attrgetter("version", "is_wheel"),
-            reverse=True,
-        )
+        try:
+            candidates = sorted(
+                [
+                    candidate
+                    for candidate in get_project_from_indexes(
+                        self.index_urls, self.session, identifier, extras, self.timeout, self._state
+                    )
+                    if candidate.version not in bad_versions
+                    and all(candidate.version in r.specifier for r in requirements)
+                    # HACK(ww): Additionally check that each candidate's name matches the
+                    # expected project name (identifier).
+                    # This technically shouldn't be required, but parsing distribution names
+                    # from package indices is imprecise/unreliable when distribution filenames
+                    # are PEP 440 compliant but not normalized.
+                    # See: https://github.com/pypa/packaging/issues/527
+                    and candidate.name == identifier
+                ],
+                key=attrgetter("version", "is_wheel"),
+                reverse=True,
+            )
+        except PyPINotFoundError as e:
+            skip_reason = str(e)
+            logger.debug(skip_reason)
+            self.skip_deps.append(SkippedDependency(name=identifier, skip_reason=skip_reason))
+            return
 
         # If we have multiple candidates for a single version and some are wheels,
         # yield only the wheels. This keeps us from wasting a large amount of

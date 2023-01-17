@@ -61,31 +61,19 @@ class DependencyFixError(Exception):
 
 class DependencyResolver(ABC):
     """
-    Represents an abstract resolver of Python dependencies that takes a single
-    dependency and returns all of its transitive dependencies.
+    Represents an abstract resolver of Python dependencies that takes a list of
+    dependencies and returns all of their transitive dependencies.
 
     Concrete dependency sources may use a resolver as part of their
     implementation.
     """
 
     @abstractmethod
-    def resolve(self, req: Requirement) -> list[Dependency]:  # pragma: no cover
+    def resolve(self, reqs: list[Requirement]) -> list[Dependency]:
         """
-        Resolve a single `Requirement` into a list of `Dependency` instances.
+        Resolve a list of `Requirement`s into a list of resolved `Dependency`s.
         """
         raise NotImplementedError
-
-    def resolve_all(
-        self, reqs: Iterator[Requirement]
-    ) -> Iterator[tuple[Requirement, list[Dependency]]]:
-        """
-        Resolve a collection of `Requirement`s into their respective `Dependency` sets.
-
-        `DependencyResolver` implementations can override this implementation with
-        a more optimized one.
-        """
-        for req in reqs:
-            yield (req, self.resolve(req))
 
 
 class DependencyResolverError(Exception):

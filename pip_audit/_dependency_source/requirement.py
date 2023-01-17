@@ -70,7 +70,7 @@ class RequirementSource(DependencySource):
         self._require_hashes = require_hashes
         self._no_deps = no_deps
         self.state = state
-        self._dep_cache: dict[Path, dict[Requirement, set[Dependency]]] = {}
+        self._dep_cache: dict[Path, set[Dependency]] = {}
 
     def collect(self) -> Iterator[Dependency]:
         """
@@ -113,7 +113,7 @@ class RequirementSource(DependencySource):
                         req_names.add(req.name)
                         reqs.append(req)
 
-                for _, dep in self._collect_cached_deps(filename, reqs):
+                for dep in self._collect_cached_deps(filename, reqs):
                     if dep in collected:
                         continue
                     collected.add(dep)
@@ -205,9 +205,12 @@ class RequirementSource(DependencySource):
                         r for r in reqs if isinstance(r, InstallRequirement)
                     ]
                     origin_reqs: set[Requirement] = set()
-                    for req, dep in self._collect_cached_deps(filename, list(installed_reqs)):
+                    for dep in self._collect_cached_deps(filename, list(installed_reqs)):
+                        # NOTE(alex): Now we can't map requirements to dependencies, this is broken.
+                        # We'll have to figure out to reconstruct this information.
                         if fix_version.dep == dep:
-                            origin_reqs.add(req)
+                            # origin_reqs.add(req)
+                            pass
                     if origin_reqs:
                         logger.warning(
                             "added fixed subdependency explicitly to requirements file "
@@ -292,7 +295,7 @@ class RequirementSource(DependencySource):
 
     def _collect_cached_deps(
         self, filename: Path, reqs: list[InstallRequirement]
-    ) -> Iterator[tuple[Requirement, Dependency]]:
+    ) -> Iterator[Dependency]:
         """
         Collect resolved dependencies for a given requirements file, retrieving them from the
         dependency cache if possible.
@@ -300,11 +303,9 @@ class RequirementSource(DependencySource):
         # See if we've already have cached dependencies for this file
         cached_deps_for_file = self._dep_cache.get(filename, None)
         if cached_deps_for_file is not None:
-            for req, deps in cached_deps_for_file.items():
-                for dep in deps:
-                    yield req, dep
+            yield from cached_deps_for_file
 
-        new_cached_deps_for_file: dict[Requirement, set[Dependency]] = dict()
+        new_cached_deps_for_file: set[Dependency] = set()
 
         # There are three cases where we skip dependency resolution:
         #
@@ -318,27 +319,22 @@ class RequirementSource(DependencySource):
             for req, dep in self._collect_preresolved_deps(
                 iter(reqs), require_hashes=require_hashes
             ):
-                if req not in new_cached_deps_for_file:
-                    new_cached_deps_for_file[req] = set()
-                new_cached_deps_for_file[req].add(dep)
-                yield req, dep
+                new_cached_deps_for_file.add(dep)
+                yield dep
         else:
             # Invoke the dependency resolver to turn requirements into dependencies
             req_values: list[Requirement] = [r.req for r in reqs]
-            for req, resolved_deps in self._resolver.resolve_all(iter(req_values)):
-                for dep in resolved_deps:
-                    if req not in new_cached_deps_for_file:
-                        new_cached_deps_for_file[req] = set()
-                    new_cached_deps_for_file[req].add(dep)
+            for dep in self._resolver.resolve(req_values):
+                new_cached_deps_for_file.add(dep)
 
-                    if dep.is_skipped():  # pragma: no cover
-                        dep = cast(SkippedDependency, dep)
-                        self.state.update_state(f"Skipping {dep.name}: {dep.skip_reason}")
-                    else:
-                        dep = cast(ResolvedDependency, dep)
-                        self.state.update_state(f"Collecting {dep.name} ({dep.version})")
+                if dep.is_skipped():  # pragma: no cover
+                    dep = cast(SkippedDependency, dep)
+                    self.state.update_state(f"Skipping {dep.name}: {dep.skip_reason}")
+                else:
+                    dep = cast(ResolvedDependency, dep)
+                    self.state.update_state(f"Collecting {dep.name} ({dep.version})")
 
-                    yield req, dep
+                yield dep
 
         # Cache the collected dependencies
         self._dep_cache[filename] = new_cached_deps_for_file
