@@ -14,10 +14,11 @@ from requests.exceptions import HTTPError
 from resolvelib import BaseReporter, Resolver
 
 from pip_audit._dependency_source import DependencyResolver, DependencyResolverError
-from pip_audit._service.interface import Dependency, ResolvedDependency, SkippedDependency
+from pip_audit._dependency_source.requirement import RequirementDependency
+from pip_audit._service.interface import Dependency, SkippedDependency
 from pip_audit._state import AuditState
 
-from .pypi_provider import PyPIProvider
+from .pypi_provider import Candidate, PyPIProvider
 
 logger = logging.getLogger(__name__)
 
@@ -88,8 +89,13 @@ class ResolveLibResolver(DependencyResolver):
         # If the provider encountered any dependencies it couldn't find on PyPI, they'll be here.
         deps.extend(self.provider.skip_deps)
 
+        # Construct dependee mapping to figure out what top-level requirements correspond to what
+        # dependencies.
+        dependee_map = _build_dependee_map(result.mapping.values())
+
         for name, candidate in result.mapping.items():
-            deps.append(ResolvedDependency(name, candidate.version))
+            origin_reqs = _find_origin_reqs(candidate, dependee_map, reqs)
+            deps.append(RequirementDependency(name, candidate.version, origin_reqs=origin_reqs))
         return deps
 
 
@@ -99,3 +105,48 @@ class ResolveLibResolverError(DependencyResolverError):
     """
 
     pass
+
+
+def _build_dependee_map(candidates: list[Candidate]) -> dict[_Requirement, list[_Requirement]]:
+    """
+    Build a mapping of dependee `Requirement`s to dependers. This is needed to find the top-level
+    requirements that each subdependency originates from.
+    """
+    dependee_map = {}
+    for c in candidates:
+        for dep in c.dependencies:
+            if dep not in dependee_map:
+                dependee_map[dep] = []
+            dependee_map[dep].extend(c.reqs)
+    return dependee_map
+
+
+def _find_origin_reqs(
+    candidate: Candidate,
+    dependee_map: dict[_Requirement, list[_Requirement]],
+    reqs: list[_Requirement],
+) -> set[_Requirement]:
+    """
+    Find the set of top-level `Requirement`s that a given candidate originates from.
+    """
+    # Make sure we don't get stuck in a loop if the requirements file has cyclical dependencies.
+    seen: list[_Requirement] = list()
+
+    def find_dependees(req: _Requirement) -> set[_Requirement]:
+        if req in seen:
+            return set()
+        if req in reqs:
+            return {req}
+        seen.append(req)
+        if req in dependee_map:
+            dependees = set()
+            for r in dependee_map[req]:
+                dependees |= find_dependees(r)
+            return dependees
+        seen.pop()
+        return set()
+
+    origin_reqs = set()
+    for req in candidate.reqs:
+        origin_reqs |= find_dependees(req)
+    return origin_reqs

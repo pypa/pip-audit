@@ -58,6 +58,7 @@ class Candidate:
         url: str,
         extras: set[str],
         is_wheel: bool,
+        reqs: list[Requirement],
         session: CacheControl,
         timeout: int | None = None,
         state: AuditState = AuditState(),
@@ -72,6 +73,7 @@ class Candidate:
         self.url = url
         self.extras = extras
         self.is_wheel = is_wheel
+        self.reqs = reqs
         self._session = session
         self._timeout = timeout
         self._state = state
@@ -194,6 +196,7 @@ def get_project_from_indexes(
     index_urls: list[str],
     session: CacheControl,
     project: str,
+    reqs: list[Requirement],
     extras: set[str],
     timeout: int | None,
     state: AuditState,
@@ -204,7 +207,9 @@ def get_project_from_indexes(
         # Not all indexes are guaranteed to have the project so this isn't an error
         # We should only return an error if it can't be found on ANY of the supplied index URLs
         try:
-            yield from get_project_from_index(index_url, session, project, extras, timeout, state)
+            yield from get_project_from_index(
+                index_url, session, project, reqs, extras, timeout, state
+            )
             project_found = True
         except PyPINotFoundError:
             pass
@@ -218,6 +223,7 @@ def get_project_from_index(
     index_url: str,
     session: CacheControl,
     project: str,
+    reqs: list[Requirement],
     extras: set[str],
     timeout: int | None,
     state: AuditState,
@@ -287,6 +293,7 @@ def get_project_from_index(
                 url=dist_url,
                 extras=extras,
                 is_wheel=is_wheel,
+                reqs=reqs,
                 timeout=timeout,
                 state=state,
                 session=session,
@@ -378,7 +385,13 @@ class PyPIProvider(AbstractProvider):
                 [
                     candidate
                     for candidate in get_project_from_indexes(
-                        self.index_urls, self.session, identifier, extras, self.timeout, self._state
+                        self.index_urls,
+                        self.session,
+                        identifier,
+                        requirements,
+                        extras,
+                        self.timeout,
+                        self._state,
                     )
                     if candidate.version not in bad_versions
                     and all(candidate.version in r.specifier for r in requirements)

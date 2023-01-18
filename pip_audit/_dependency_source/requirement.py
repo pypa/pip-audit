@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 from contextlib import ExitStack
+from dataclasses import dataclass, field
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import IO, Iterator, cast
@@ -350,3 +351,12 @@ class RequirementFixError(DependencyFixError):
     """A requirements-fixing specific `DependencyFixError`."""
 
     pass
+
+
+@dataclass(frozen=True)
+class RequirementDependency(ResolvedDependency):
+    """
+    Represents a fully resolved Python package from a requirements file.
+    """
+
+    origin_reqs: set[Requirement] = field(default_factory=set, hash=False)
