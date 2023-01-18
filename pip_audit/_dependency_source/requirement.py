@@ -202,23 +202,17 @@ class RequirementSource(DependencySource):
             # another.
             try:
                 if not fixed:
-                    installed_reqs: list[InstallRequirement] = [
-                        r for r in reqs if isinstance(r, InstallRequirement)
-                    ]
-                    origin_reqs: set[Requirement] = set()
-                    for dep in self._collect_cached_deps(filename, list(installed_reqs)):
-                        # NOTE(alex): Now we can't map requirements to dependencies, this is broken.
-                        # We'll have to figure out to reconstruct this information.
-                        if fix_version.dep == dep:
-                            # origin_reqs.add(req)
-                            pass
-                    if origin_reqs:
+                    req_dep = cast(RequirementDependency, fix_version.dep)
+                    if req_dep.origin_reqs:
                         logger.warning(
                             "added fixed subdependency explicitly to requirements file "
                             f"{filename}: {fix_version.dep.canonical_name}"
                         )
                         origin_reqs_formatted = ",".join(
-                            [str(req) for req in sorted(list(origin_reqs), key=lambda x: x.name)]
+                            [
+                                str(req)
+                                for req in sorted(list(req_dep.origin_reqs), key=lambda x: x.name)
+                            ]
                         )
                         print(
                             f"    # pip-audit: subdependency fixed via {origin_reqs_formatted}",
