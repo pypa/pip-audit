@@ -1,4 +1,4 @@
-name: docs-deploy
+name: Deploy Documentation
 
 on:
   push:
@@ -6,37 +6,45 @@ on:
       - main
 
 jobs:
-  docs:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      # NOTE: Needed to push to the repository.
-      contents: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
         with:
-          python-version: ">= 3.7"
+          # NOTE: We use 3.10+ typing syntax via future, which pdoc only
+          # understands if it's actually run with Python 3.10 or newer.
+          python-version: ">= 3.10"
           cache: "pip"
           cache-dependency-path: pyproject.toml
 
-      - name: docs
+      - name: setup
+        run: |
+          make dev PIP_AUDIT_EXTRA=doc
+      - name: build docs
         run: |
           make doc
-          mv ./html/pip_audit /tmp/pip_audit
+      - name: upload docs artifact
+        uses: actions/upload-pages-artifact@253fd476ed429e83b7aae64a92a75b4ceb1a17cf # v1.0.7
+        with:
+          path: ./html/
 
-      - name: deploy
-        run: |
-          # Configure git, checkout a new orphan branch for the docs.
-          git config --global user.name 'github.actions'
-          git config --global user.email 'github-actions@github.com'
-          git checkout --orphan gh-pages
-
-          # Clear out all repo state, copy in the docs built in the previous step.
-          git rm -rf . && git clean -fd
-          mv /tmp/pip_audit ./docs
-
-          # Check in the docs, push.
-          git add --all .
-          git commit -m "[docs] deploy: ${GITHUB_SHA}"
-          git push --force origin gh-pages
+  # This is copied from the official `pdoc` example:
+  #   https://github.com/mitmproxy/pdoc/blob/main/.github/workflows/docs.yml
+  #
+  # Deploy the artifact to GitHub pages.
+  # This is a separate job so that only actions/deploy-pages has the necessary permissions.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      # NOTE: Needed to push to the repository.
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@20a4baa1095bad40ba7d6ca0d9abbc220b76603f # v1.2.3
