@@ -9,10 +9,10 @@ from packaging.requirements import Requirement
 from packaging.version import Version
 from pip_api import Requirement as ParsedRequirement
 from requests.exceptions import HTTPError
-from resolvelib.resolvers import ResolutionImpossible
 
 from pip_audit._dependency_source import resolvelib
 from pip_audit._dependency_source.resolvelib import pypi_provider
+from pip_audit._dependency_source.resolvelib.resolvelib import ResolveLibResolverError
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency
 
 
@@ -173,6 +173,32 @@ def test_resolvelib_sdist_patched(monkeypatch, suffix):
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("2.0.1"))]
 
 
+def test_resolvelib_only_prereleases(monkeypatch):
+    # PEP 440 stipulates that a prerelease should be accepted if only
+    # prereleases are available.
+    # See: https://peps.python.org/pep-0440/#handling-of-pre-releases
+    data = (
+        '<a href="https://example.com/sqlalchemy2_stubs-0.0.2a31-py3-none-any.whl">'
+        "sqlalchemy2_stubs-0.0.2a31-py3-none-any.whl</a><br/>"
+        '<a href="https://example.com/sqlalchemy2_stubs-0.0.2a32-py3-none-any.whl">'
+        "sqlalchemy2_stubs-0.0.2a32-py3-none-any.whl</a><br/>"
+    )
+
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+    )
+
+    resolver = resolvelib.ResolveLibResolver()
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
+    )
+
+    req = Requirement("sqlalchemy2-stubs")
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    assert req in resolved_deps
+    assert resolved_deps[req] == [ResolvedDependency("sqlalchemy2-stubs", Version("0.0.2a32"))]
+
+
 def test_resolvelib_sdist_vexing_parse(monkeypatch):
     # Some sdist filenames have ambiguous parses: `cffi-1.0.2-2.tar.gz`
     # could be parsed as `(cffi, 1.0.2.post2)` or `(cffi-1-0-2, 2)`.
@@ -197,7 +223,7 @@ def test_resolvelib_sdist_vexing_parse(monkeypatch):
     )
 
     req = Requirement("cffi")
-    with pytest.raises(ResolutionImpossible):
+    with pytest.raises(ResolveLibResolverError):
         dict(resolver.resolve_all(iter([req])))
 
 
@@ -218,7 +244,7 @@ def test_resolvelib_wheel_python_version(monkeypatch):
     )
 
     req = Requirement("flask==2.0.1")
-    with pytest.raises(ResolutionImpossible):
+    with pytest.raises(ResolveLibResolverError):
         dict(resolver.resolve_all(iter([req])))
 
 
@@ -236,7 +262,9 @@ def test_resolvelib_wheel_python_version_invalid_specifier(monkeypatch):
         'data-requires-python="&lt;=3.5.*">Flask-2.0.1-py3-none-any.whl</a><br/>'
     )
 
-    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    logger = pretend.stub(
+        warning=pretend.call_recorder(lambda s: None), debug=pretend.call_recorder(lambda s: None)
+    )
     monkeypatch.setattr(pypi_provider, "logger", logger)
 
     monkeypatch.setattr(
@@ -260,7 +288,7 @@ def test_resolvelib_wheel_python_version_invalid_specifier(monkeypatch):
 
 def test_resolvelib_wheel_canonical_name_mismatch(monkeypatch):
     # Call the underlying wheel, Mask instead of Flask. This should throw an `ResolutionImpossible`
-    # error.
+    # error, which we'll surface as a `ResolveLibResolverError`.
     data = (
         '<a href="https://files.pythonhosted.org/packages/54/4f/'
         "1b294c1a4ab7b2ad5ca5fc4a9a65a22ef1ac48be126289d97668852d4ab3/Mask-2.0.1-py3-none-any.whl#"
@@ -278,7 +306,7 @@ def test_resolvelib_wheel_canonical_name_mismatch(monkeypatch):
     )
 
     req = Requirement("flask==2.0.1")
-    with pytest.raises(ResolutionImpossible):
+    with pytest.raises(ResolveLibResolverError):
         dict(resolver.resolve_all(iter([req])))
 
 
@@ -302,7 +330,7 @@ def test_resolvelib_wheel_invalid_version(monkeypatch):
     )
 
     req = Requirement("flask==2.0.1")
-    with pytest.raises(ResolutionImpossible):
+    with pytest.raises(ResolveLibResolverError):
         dict(resolver.resolve_all(iter([req])))
 
 
@@ -320,7 +348,7 @@ def test_resolvelib_sdist_invalid_suffix(monkeypatch):
     )
 
     req = Requirement("flask==2.0.1")
-    with pytest.raises(ResolutionImpossible):
+    with pytest.raises(ResolveLibResolverError):
         dict(resolver.resolve_all(iter([req])))
 
 

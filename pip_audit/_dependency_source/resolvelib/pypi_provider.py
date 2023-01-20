@@ -360,6 +360,9 @@ class PyPIProvider(AbstractProvider):
         self._state.update_state(f"Resolving {identifier}")
 
         requirements = list(requirements[identifier])
+        logger.debug(
+            f"{identifier} req specifier constraints: {[r.specifier for r in requirements]}"
+        )
 
         bad_versions = {c.version for c in incompatibilities[identifier]}
 
@@ -371,14 +374,22 @@ class PyPIProvider(AbstractProvider):
         # Need to pass the extras to the search, so they
         # are added to the candidate at creation - we
         # treat candidates as immutable once created.
+        all_candidates = get_project_from_indexes(
+            self.index_urls, self.session, identifier, extras, self.timeout, self._state
+        )
+
         candidates = sorted(
             [
                 candidate
-                for candidate in get_project_from_indexes(
-                    self.index_urls, self.session, identifier, extras, self.timeout, self._state
-                )
+                for candidate in all_candidates
                 if candidate.version not in bad_versions
-                and all(candidate.version in r.specifier for r in requirements)
+                # NOTE(ww): We use `filter(...)` instead of checking
+                # `candidate.version in r.specifier` because the former has subtle (and PEP 440
+                # mandated) behavior around prereleases. Specifically, `filter(...)`
+                # returns prereleases even if not explicitly configured, but only if
+                # there are no non-prereleases.
+                # See: https://github.com/pypa/pip-audit/issues/472
+                and all([any(r.specifier.filter((candidate.version,))) for r in requirements])
                 # HACK(ww): Additionally check that each candidate's name matches the
                 # expected project name (identifier).
                 # This technically shouldn't be required, but parsing distribution names
@@ -390,6 +401,8 @@ class PyPIProvider(AbstractProvider):
             key=attrgetter("version", "is_wheel"),
             reverse=True,
         )
+
+        logger.debug(f"{identifier} has candidates: {candidates}")
 
         # If we have multiple candidates for a single version and some are wheels,
         # yield only the wheels. This keeps us from wasting a large amount of
@@ -406,7 +419,14 @@ class PyPIProvider(AbstractProvider):
         """
         See `resolvelib.providers.AbstractProvider.is_satisfied_by`.
         """
-        return candidate.version in requirement.specifier
+
+        # See the NOTE in find_matches: we use `filter(...)` because of its
+        # special casing around prereleases.
+        return any(
+            requirement.specifier.filter(
+                (candidate.version,),
+            )
+        )
 
     def get_dependencies(self, candidate: Any) -> Any:
         """

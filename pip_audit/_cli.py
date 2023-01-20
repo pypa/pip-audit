@@ -23,7 +23,7 @@ from pip_audit._dependency_source import (
     RequirementSource,
     ResolveLibResolver,
 )
-from pip_audit._dependency_source.interface import DependencySourceError
+from pip_audit._dependency_source.interface import DependencyResolverError, DependencySourceError
 from pip_audit._fix import ResolvedFixVersion, SkippedFixVersion, resolve_fix_versions
 from pip_audit._format import (
     ColumnsFormat,
@@ -472,7 +472,7 @@ def audit() -> None:  # pragma: no cover
                 if len(vulns) > 0:
                     pkg_count += 1
                     vuln_count += len(vulns)
-        except DependencySourceError as e:
+        except (DependencySourceError, DependencyResolverError) as e:
             _fatal(str(e))
         except VulnServiceConnectionError as e:
             # The most common source of connection errors is corporate blocking,
