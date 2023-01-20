@@ -8,6 +8,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.4.14]
+
 ### Fixed
 
 * Fixed a dependency resolution failure caused by incorrect handling of
@@ -432,7 +434,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.4.13...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.4.14...HEAD
+[2.4.14]: https://github.com/pypa/pip-audit/compare/v2.4.13...v2.4.14
 [2.4.13]: https://github.com/pypa/pip-audit/compare/v2.4.12...v2.4.13
 [2.4.12]: https://github.com/pypa/pip-audit/compare/v2.4.11...v2.4.12
 [2.4.11]: https://github.com/pypa/pip-audit/compare/v2.4.10...v2.4.11
