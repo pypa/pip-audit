@@ -374,20 +374,22 @@ class PyPIProvider(AbstractProvider):
         # Need to pass the extras to the search, so they
         # are added to the candidate at creation - we
         # treat candidates as immutable once created.
+        all_candidates = get_project_from_indexes(
+            self.index_urls, self.session, identifier, extras, self.timeout, self._state
+        )
+
         candidates = sorted(
             [
                 candidate
-                for candidate in get_project_from_indexes(
-                    self.index_urls, self.session, identifier, extras, self.timeout, self._state
-                )
+                for candidate in all_candidates
                 if candidate.version not in bad_versions
-                # NOTE(ww): We use `filter(...)`` instead of checking
+                # NOTE(ww): We use `filter(...)` instead of checking
                 # `candidate.version in r.specifier` because the former has subtle (and PEP 440
                 # mandated) behavior around prereleases. Specifically, `filter(...)`
                 # returns prereleases even if not explicitly configured, but only if
                 # there are no non-prereleases.
                 # See: https://github.com/pypa/pip-audit/issues/472
-                and all(r.specifier.filter((candidate.version,)) for r in requirements)
+                and all([any(r.specifier.filter((candidate.version,))) for r in requirements])
                 # HACK(ww): Additionally check that each candidate's name matches the
                 # expected project name (identifier).
                 # This technically shouldn't be required, but parsing distribution names
