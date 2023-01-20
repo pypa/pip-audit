@@ -428,19 +428,12 @@ $ pip-audit --require-hashes -r requirements.txt
 `pipenv` uses both a `Pipfile` and `Pipfile.lock` file to track and freeze dependencies
 instead of a `requirements.txt` file. `pip-audit` cannot process the `Pipfile[.lock]`
 files directly, however, these can be converted to a supported `requirements.txt` file
-that `pip-audit` can run against. Use a Python tool, such as
-[`pipfile-requirements`](https://github.com/frostming/pipfile-requirements), to
-convert your `Pipfile[.lock]` to a `requirements.txt` file and then run
-`pip-audit` against the generated requirements file.
+that `pip-audit` can run against. `pipenv` has a built-in command to convert dependencies
+to a `requirements.txt` file (as of [`v2022.4.8`](https://pipenv.pypa.io/en/latest/changelog/#id206)):
 
 ```console
-$ pipenv install --dev pipfile-requirements
-$ pipenv run pipfile2req Pipfile.lock > requirements.txt
-$ pipenv run pip-audit -r requirements.txt
+$ pipenv run pip-audit -r <(pipenv requirements)
 ```
-
-The `requirements.txt` file needs to be kept up to date with `pipenv` when running
-`pip-audit` locally like this.
 
 ### Suppressing exit codes from `pip-audit`
 
