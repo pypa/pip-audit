@@ -173,6 +173,32 @@ def test_resolvelib_sdist_patched(monkeypatch, suffix):
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("2.0.1"))]
 
 
+def test_resolvelib_only_prereleases(monkeypatch):
+    # PEP 440 stipulates that a prerelease should be accepted if only
+    # prereleases are available.
+    # See: https://peps.python.org/pep-0440/#handling-of-pre-releases
+    data = (
+        '<a href="https://example.com/sqlalchemy2_stubs-0.0.2a31-py3-none-any.whl">'
+        "sqlalchemy2_stubs-0.0.2a31-py3-none-any.whl</a><br/>"
+        '<a href="https://example.com/sqlalchemy2_stubs-0.0.2a32-py3-none-any.whl">'
+        "sqlalchemy2_stubs-0.0.2a32-py3-none-any.whl</a><br/>"
+    )
+
+    monkeypatch.setattr(
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+    )
+
+    resolver = resolvelib.ResolveLibResolver()
+    monkeypatch.setattr(
+        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
+    )
+
+    req = Requirement("sqlalchemy2-stubs")
+    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    assert req in resolved_deps
+    assert resolved_deps[req] == [ResolvedDependency("sqlalchemy2-stubs", Version("0.0.2a32"))]
+
+
 def test_resolvelib_sdist_vexing_parse(monkeypatch):
     # Some sdist filenames have ambiguous parses: `cffi-1.0.2-2.tar.gz`
     # could be parsed as `(cffi, 1.0.2.post2)` or `(cffi-1-0-2, 2)`.
