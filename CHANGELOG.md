@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed a dependency resolution failure caused by incorrect handling of
+  a PEP 440 edge case around prerelease versions
+  ([#477](https://github.com/pypa/pip-audit/pull/477))
+
 ## [2.4.13]
 
 ### Fixed
