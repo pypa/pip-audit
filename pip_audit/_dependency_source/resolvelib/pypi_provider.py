@@ -381,7 +381,7 @@ class PyPIProvider(AbstractProvider):
                     self.index_urls, self.session, identifier, extras, self.timeout, self._state
                 )
                 if candidate.version not in bad_versions
-                and all(candidate.version in r.specifier for r in requirements)
+                and all(r.specifier.filter((candidate.version,)) for r in requirements)
                 # HACK(ww): Additionally check that each candidate's name matches the
                 # expected project name (identifier).
                 # This technically shouldn't be required, but parsing distribution names
