@@ -6,11 +6,11 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Union
 
-from packaging.requirements import Requirement as _Requirement
-from pip_api import Requirement as ParsedRequirement
+from packaging.requirements import Requirement
 from requests.exceptions import HTTPError
+from resolvelib import BaseReporter, Resolver
+from resolvelib.resolvers import ResolutionImpossible
 
 from pip_audit._cache import caching_session
 from pip_audit._dependency_source import (
@@ -21,20 +21,14 @@ from pip_audit._dependency_source import (
     RequirementHashes,
 )
 from pip_audit._dependency_source.requirement import RequirementDependency
-from pip_audit._service.interface import Dependency, SkippedDependency
+from pip_audit._service.interface import Dependency
 from pip_audit._state import AuditState
-from resolvelib import BaseReporter, Resolver
-from resolvelib.resolvers import ResolutionImpossible
 
 from .pypi_provider import Candidate, PyPIProvider
 
 logger = logging.getLogger(__name__)
 
 PYPI_URL = "https://pypi.org/simple/"
-
-
-# TODO: Replace with _Requirement | ParsedRequirement once our minimum is 3.10.
-Requirement = Union[_Requirement, ParsedRequirement]
 
 
 class ResolveLibResolver(DependencyResolver):
@@ -48,7 +42,6 @@ class ResolveLibResolver(DependencyResolver):
         index_urls: list[str] = [PYPI_URL],
         timeout: int | None = None,
         cache_dir: Path | None = None,
-        skip_editable: bool = False,
         state: AuditState = AuditState(),
     ) -> None:
         """
@@ -56,9 +49,6 @@ class ResolveLibResolver(DependencyResolver):
 
         `timeout` and `cache_dir` are optional arguments for HTTP timeouts
         and caching, respectively.
-
-        `skip_editable` controls whether requirements marked as "editable" are skipped.
-        By default, editable requirements are not skipped.
 
         `state` is an `AuditState` to use for state callbacks.
         """
@@ -69,7 +59,6 @@ class ResolveLibResolver(DependencyResolver):
         self.session = caching_session(cache_dir, use_pip=True)
         self.state = state
         self.reporter = BaseReporter()
-        self._skip_editable = skip_editable
 
     def resolve(self, reqs: list[Requirement], req_hashes: RequirementHashes) -> list[Dependency]:
         """
@@ -78,26 +67,11 @@ class ResolveLibResolver(DependencyResolver):
 
         deps: list[Dependency] = []
 
-        reqs_to_resolve: list[Requirement] = []
-        for req in reqs:
-            # HACK: `resolve` takes both `packaging.Requirement` and `pip_api.Requirement`,
-            # since the latter is a subclass. But only the latter knows whether the
-            # requirement is editable, so we need to check for it here.
-            if isinstance(req, ParsedRequirement):
-                if req.editable and self._skip_editable:
-                    deps.append(
-                        SkippedDependency(
-                            name=req.name, skip_reason="requirement marked as editable"
-                        )
-                    )
-                continue
-            reqs_to_resolve.append(req)
-
         provider = PyPIProvider(self.index_urls, req_hashes, self.session, self.timeout, self.state)
         resolver: Resolver = Resolver(provider, self.reporter)
 
         try:
-            result = resolver.resolve(reqs_to_resolve)
+            result = resolver.resolve(reqs)
         except HTTPError as e:
             raise ResolveLibResolverError("failed to resolve dependencies") from e
         except ResolutionImpossible as e:
@@ -136,7 +110,7 @@ class ResolveLibResolverError(DependencyResolverError):
     pass
 
 
-def _build_dependee_map(candidates: list[Candidate]) -> dict[_Requirement, list[_Requirement]]:
+def _build_dependee_map(candidates: list[Candidate]) -> dict[Requirement, list[Requirement]]:
     """
     Build a mapping of dependee `Requirement`s to dependers. This is needed to find the top-level
     requirements that each subdependency originates from.
@@ -152,16 +126,16 @@ def _build_dependee_map(candidates: list[Candidate]) -> dict[_Requirement, list[
 
 def _find_origin_reqs(
     candidate: Candidate,
-    dependee_map: dict[_Requirement, list[_Requirement]],
-    reqs: list[_Requirement],
-) -> set[_Requirement]:
+    dependee_map: dict[Requirement, list[Requirement]],
+    reqs: list[Requirement],
+) -> set[Requirement]:
     """
     Find the set of top-level `Requirement`s that a given candidate originates from.
     """
     # Make sure we don't get stuck in a loop if the requirements file has cyclical dependencies.
-    seen: list[_Requirement] = list()
+    seen: list[Requirement] = list()
 
-    def find_dependees(req: _Requirement) -> set[_Requirement]:
+    def find_dependees(req: Requirement) -> set[Requirement]:
         if req in seen:
             return set()
         if req in reqs:

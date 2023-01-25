@@ -28,14 +28,14 @@ from packaging.requirements import Requirement
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel_filename
 from packaging.version import Version
+from resolvelib.providers import AbstractProvider
+from resolvelib.resolvers import RequirementInformation
 
 from pip_audit._dependency_source import RequirementHashes, UnsupportedHashAlgorithm
 from pip_audit._service import SkippedDependency
 from pip_audit._state import AuditState
 from pip_audit._util import python_version
 from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
-from resolvelib.providers import AbstractProvider
-from resolvelib.resolvers import RequirementInformation
 
 logger = logging.getLogger(__name__)
 
