@@ -10,7 +10,7 @@ from packaging.version import Version
 from pip_api import Requirement as ParsedRequirement
 from requests.exceptions import HTTPError
 
-from pip_audit._dependency_source import resolvelib
+from pip_audit._dependency_source import RequirementHashes, resolvelib
 from pip_audit._dependency_source.resolvelib import pypi_provider
 from pip_audit._dependency_source.resolvelib.resolvelib import ResolveLibResolverError
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency
@@ -54,7 +54,7 @@ def check_deps(resolved_deps: list[ResolvedDependency], expected_deps: list[Reso
 def test_resolvelib():
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("flask==2.0.1")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert len(resolved_deps) == 1
     expected_deps = [
         ResolvedDependency("flask", Version("2.0.1")),
@@ -76,7 +76,7 @@ def test_resolvelib_extras():
 
     # First check the dependencies without extras and as a basis for comparison
     req = Requirement("requests>=2.8.1")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert len(resolved_deps) == 1
     expected_deps = [
         ResolvedDependency("requests", Version("2.26.0")),
@@ -90,7 +90,7 @@ def test_resolvelib_extras():
 
     # Check that using the `socks` and `use_chardet_on_py3` extras pulls in additional dependencies
     req = Requirement("requests[socks,use_chardet_on_py3]>=2.8.1")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert len(resolved_deps) == 1
     expected_deps.extend(
         [
@@ -106,7 +106,7 @@ def test_resolvelib_extras():
 def test_resolvelib_sdist():
     resolver = resolvelib.ResolveLibResolver()
     req = Requirement("ansible-core==2.11.5")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert len(resolved_deps) == 1
     expected_deps = [
         ResolvedDependency("ansible-core", Version("2.11.5")),
@@ -136,16 +136,14 @@ def test_resolvelib_wheel_patched(monkeypatch):
 
     # monkeypatch.setattr(requests, "get", lambda _url, **kwargs: get_package_mock(data))
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
-    monkeypatch.setattr(
-        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
-    )
+    monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_package_mock(data))
 
     req = Requirement("flask==2.0.1")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert req in resolved_deps
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("2.0.1"))]
 
@@ -159,16 +157,14 @@ def test_resolvelib_sdist_patched(monkeypatch, suffix):
     data = f'<a href="https://example.com/Flask-2.0.1.{suffix}">Flask-2.0.1.{suffix}</a><br/>'
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
-    monkeypatch.setattr(
-        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
-    )
+    monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_package_mock(data))
 
     req = Requirement("flask==2.0.1")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert req in resolved_deps
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("2.0.1"))]
 
@@ -185,16 +181,14 @@ def test_resolvelib_only_prereleases(monkeypatch):
     )
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
-    monkeypatch.setattr(
-        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
-    )
+    monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_package_mock(data))
 
     req = Requirement("sqlalchemy2-stubs")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert req in resolved_deps
     assert resolved_deps[req] == [ResolvedDependency("sqlalchemy2-stubs", Version("0.0.2a32"))]
 
@@ -214,17 +208,15 @@ def test_resolvelib_sdist_vexing_parse(monkeypatch):
     )
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
-    monkeypatch.setattr(
-        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
-    )
+    monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_package_mock(data))
 
     req = Requirement("cffi")
     with pytest.raises(ResolveLibResolverError):
-        dict(resolver.resolve_all(iter([req])))
+        dict(resolver.resolve_all(iter([req]), RequirementHashes()))
 
 
 def test_resolvelib_wheel_python_version(monkeypatch):
@@ -239,13 +231,11 @@ def test_resolvelib_wheel_python_version(monkeypatch):
     )
 
     resolver = resolvelib.ResolveLibResolver()
-    monkeypatch.setattr(
-        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
-    )
+    monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_package_mock(data))
 
     req = Requirement("flask==2.0.1")
     with pytest.raises(ResolveLibResolverError):
-        dict(resolver.resolve_all(iter([req])))
+        dict(resolver.resolve_all(iter([req]), RequirementHashes()))
 
 
 def test_resolvelib_wheel_python_version_invalid_specifier(monkeypatch):
@@ -268,16 +258,14 @@ def test_resolvelib_wheel_python_version_invalid_specifier(monkeypatch):
     monkeypatch.setattr(pypi_provider, "logger", logger)
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
-    monkeypatch.setattr(
-        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
-    )
+    monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_package_mock(data))
 
     req = Requirement("flask==2.0.1")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert req in resolved_deps
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("2.0.1"))]
 
@@ -297,17 +285,15 @@ def test_resolvelib_wheel_canonical_name_mismatch(monkeypatch):
     )
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
-    monkeypatch.setattr(
-        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
-    )
+    monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_package_mock(data))
 
     req = Requirement("flask==2.0.1")
     with pytest.raises(ResolveLibResolverError):
-        dict(resolver.resolve_all(iter([req])))
+        dict(resolver.resolve_all(iter([req]), RequirementHashes()))
 
 
 def test_resolvelib_wheel_invalid_version(monkeypatch):
@@ -321,17 +307,15 @@ def test_resolvelib_wheel_invalid_version(monkeypatch):
     )
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
-    monkeypatch.setattr(
-        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
-    )
+    monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_package_mock(data))
 
     req = Requirement("flask==2.0.1")
     with pytest.raises(ResolveLibResolverError):
-        dict(resolver.resolve_all(iter([req])))
+        dict(resolver.resolve_all(iter([req]), RequirementHashes()))
 
 
 def test_resolvelib_sdist_invalid_suffix(monkeypatch):
@@ -339,17 +323,15 @@ def test_resolvelib_sdist_invalid_suffix(monkeypatch):
     data = '<a href="https://example.com/Flask-2.0.1.foo">Flask-2.0.1.foo</a><br/>'
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
-    monkeypatch.setattr(
-        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
-    )
+    monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_package_mock(data))
 
     req = Requirement("flask==2.0.1")
     with pytest.raises(ResolveLibResolverError):
-        dict(resolver.resolve_all(iter([req])))
+        dict(resolver.resolve_all(iter([req]), RequirementHashes()))
 
 
 def test_resolvelib_relative_url(monkeypatch):
@@ -361,18 +343,16 @@ def test_resolvelib_relative_url(monkeypatch):
     """
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver(
         index_urls=["https://fake-index.example.com/api/pypi/pypi-all/simple/"]
     )
-    monkeypatch.setattr(
-        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
-    )
+    monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_package_mock(data))
 
     req = Requirement("flask==2.0.1")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert req in resolved_deps
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("2.0.1"))]
 
@@ -391,13 +371,11 @@ def test_resolvelib_http_error(monkeypatch):
     monkeypatch.setattr(requests, "get", lambda _url, **kwargs: get_http_error_mock())
 
     resolver = resolvelib.ResolveLibResolver()
-    monkeypatch.setattr(
-        resolver.provider.session, "get", lambda _url, **kwargs: get_http_error_mock()
-    )
+    monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_http_error_mock())
 
     req = Requirement("flask==2.0.1")
     with pytest.raises(resolvelib.ResolveLibResolverError):
-        dict(resolver.resolve_all(iter([req])))
+        dict(resolver.resolve_all(iter([req]), RequirementHashes()))
 
 
 def test_resolvelib_http_notfound(monkeypatch):
@@ -409,12 +387,10 @@ def test_resolvelib_http_notfound(monkeypatch):
         return Doc()
 
     resolver = resolvelib.ResolveLibResolver()
-    monkeypatch.setattr(
-        resolver.provider.session, "get", lambda _url, **kwargs: get_http_not_found_mock()
-    )
+    monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_http_not_found_mock())
 
     req = Requirement("flask==2.0.1")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert len(resolved_deps) == 1
     expected_deps = [
         SkippedDependency(
@@ -446,32 +422,33 @@ def test_resolvelib_multiple_indexes(monkeypatch):
     )
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _, _data: get_metadata_mock()
     )
 
     def get_multiple_index_package_mock(url):
         if url == package_url1:
             return get_package_mock(data1)
-        else:
-            assert url == package_url2
+        elif url == package_url2:
             return get_package_mock(data2)
+        else:
+            return requests.get(url)
 
     resolver = resolvelib.ResolveLibResolver([url1, url2])
     monkeypatch.setattr(
-        resolver.provider.session, "get", lambda url, **kwargs: get_multiple_index_package_mock(url)
+        resolver.session, "get", lambda url, **kwargs: get_multiple_index_package_mock(url)
     )
 
     # We want to check that dependency resolution is considering packages found on both indexes
     #
     # Test with a requirement that will resolve to a package on the first index
     req = Requirement("flask<=0.5")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert req in resolved_deps
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("0.5"))]
 
     # Now test with a requirement that will resolve to a package on the second index
     req = Requirement("flask<=0.6")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert req in resolved_deps
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("0.6"))]
 
@@ -489,34 +466,35 @@ def test_resolvelib_package_missing_on_one_index(monkeypatch):
     )
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_sdist", lambda _, _data: get_metadata_mock()
     )
 
     # Simulate the package not existing on the second index
     def get_multiple_index_package_mock(url):
         if url == package_url1:
             return get_package_mock(data1)
-        else:
-            assert url == package_url2
+        elif url == package_url2:
             pkg = get_package_mock("")
             pkg.status_code = 404
             return pkg
+        else:
+            return requests.get(url)
 
     resolver = resolvelib.ResolveLibResolver([url1, url2])
     monkeypatch.setattr(
-        resolver.provider.session, "get", lambda url, **kwargs: get_multiple_index_package_mock(url)
+        resolver.session, "get", lambda url, **kwargs: get_multiple_index_package_mock(url)
     )
 
     # If a package doesn't exist on one index, we shouldn't expect an error. We should just skip it
     # and only use the other index for finding candidates.
     req = Requirement("flask<=0.5")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert req in resolved_deps
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("0.5"))]
 
     # Now test with a requirement that will resolve to a package on the second index
     req = Requirement("flask<=0.6")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert req in resolved_deps
     assert resolved_deps[req] == [ResolvedDependency("flask", Version("0.5"))]
 
@@ -525,7 +503,7 @@ def test_resolvelib_skip_editable():
     resolver = resolvelib.ResolveLibResolver(skip_editable=True)
     req = ParsedRequirement("foo==1.0.0", editable=True, filename="stub", lineno=1)
 
-    deps = resolver.resolve(req)  # type: ignore
+    deps = resolver.resolve(req, RequirementHashes())  # type: ignore
     assert len(deps) == 1
     assert deps[0] == SkippedDependency(name="foo", skip_reason="requirement marked as editable")
 
@@ -535,16 +513,14 @@ def test_resolvelib_no_links(monkeypatch):
     data = ""
 
     monkeypatch.setattr(
-        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _: get_metadata_mock()
+        pypi_provider.Candidate, "_get_metadata_for_wheel", lambda _, _data: get_metadata_mock()
     )
 
     resolver = resolvelib.ResolveLibResolver()
-    monkeypatch.setattr(
-        resolver.provider.session, "get", lambda _url, **kwargs: get_package_mock(data)
-    )
+    monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_package_mock(data))
 
     req = Requirement("flask==2.0.1")
-    resolved_deps = dict(resolver.resolve_all(iter([req])))
+    resolved_deps = dict(resolver.resolve_all(iter([req]), RequirementHashes()))
     assert len(resolved_deps) == 1
     expected_deps = [
         SkippedDependency(

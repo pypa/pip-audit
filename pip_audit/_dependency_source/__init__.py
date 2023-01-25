@@ -8,6 +8,10 @@ from .interface import (
     DependencyResolverError,
     DependencySource,
     DependencySourceError,
+    HashMismatchError,
+    HashMissingError,
+    RequirementHashes,
+    UnsupportedHashAlgorithm,
 )
 from .pip import PipSource, PipSourceError
 from .pyproject import PyProjectSource
@@ -21,9 +25,13 @@ __all__ = [
     "DependencyResolverError",
     "DependencySource",
     "DependencySourceError",
+    "HashMismatchError",
+    "HashMissingError",
     "PipSource",
     "PipSourceError",
     "PyProjectSource",
+    "RequirementHashes",
     "RequirementSource",
     "ResolveLibResolver",
+    "UnsupportedHashAlgorithm",
 ]
