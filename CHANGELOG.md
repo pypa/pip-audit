@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed an issue where hash checking would fail when using third-party indices
+  ([#462](https://github.com/pypa/pip-audit/pull/462))
+
 ## [2.4.14]
 
 ### Fixed
