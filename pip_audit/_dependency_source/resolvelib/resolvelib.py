@@ -6,10 +6,8 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Union
 
-from packaging.requirements import Requirement as _Requirement
-from pip_api import Requirement as ParsedRequirement
+from packaging.requirements import Requirement
 from requests.exceptions import HTTPError
 from resolvelib import BaseReporter, Resolver
 from resolvelib.resolvers import ResolutionImpossible
@@ -32,10 +30,6 @@ logger = logging.getLogger(__name__)
 PYPI_URL = "https://pypi.org/simple/"
 
 
-# TODO: Replace with _Requirement | ParsedRequirement once our minimum is 3.10.
-Requirement = Union[_Requirement, ParsedRequirement]
-
-
 class ResolveLibResolver(DependencyResolver):
     """
     An implementation of `DependencyResolver` that uses `resolvelib` as its
@@ -47,7 +41,6 @@ class ResolveLibResolver(DependencyResolver):
         index_urls: list[str] = [PYPI_URL],
         timeout: int | None = None,
         cache_dir: Path | None = None,
-        skip_editable: bool = False,
         state: AuditState = AuditState(),
     ) -> None:
         """
@@ -55,9 +48,6 @@ class ResolveLibResolver(DependencyResolver):
 
         `timeout` and `cache_dir` are optional arguments for HTTP timeouts
         and caching, respectively.
-
-        `skip_editable` controls whether requirements marked as "editable" are skipped.
-        By default, editable requirements are not skipped.
 
         `state` is an `AuditState` to use for state callbacks.
         """
@@ -68,7 +58,6 @@ class ResolveLibResolver(DependencyResolver):
         self.session = caching_session(cache_dir, use_pip=True)
         self.state = state
         self.reporter = BaseReporter()
-        self._skip_editable = skip_editable
 
     def resolve(
         self,
@@ -78,15 +67,6 @@ class ResolveLibResolver(DependencyResolver):
         """
         Resolve the given `Requirement` into a `Dependency` list.
         """
-
-        # HACK: `resolve` takes both `packaging.Requirement` and `pip_api.Requirement`,
-        # since the latter is a subclass. But only the latter knows whether the
-        # requirement is editable, so we need to check for it here.
-        if isinstance(req, ParsedRequirement):
-            if req.editable and self._skip_editable:
-                return [
-                    SkippedDependency(name=req.name, skip_reason="requirement marked as editable")
-                ]
 
         provider = PyPIProvider(self.index_urls, req_hashes, self.session, self.timeout, self.state)
         resolver: Resolver = Resolver(provider, self.reporter)

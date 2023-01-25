@@ -13,6 +13,10 @@ All versions prior to 0.0.9 are untracked.
 * Fixed an issue where hash checking would fail when using third-party indices
   ([#462](https://github.com/pypa/pip-audit/pull/462))
 
+* Fixed the behavior of the `--skip-editable` flag, which had regressed
+  with an internal API change
+  ([#499](https://github.com/pypa/pip-audit/pull/499))
+
 ## [2.4.14]
 
 ### Fixed

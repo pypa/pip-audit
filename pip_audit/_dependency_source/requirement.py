@@ -48,6 +48,7 @@ class RequirementSource(DependencySource):
         *,
         require_hashes: bool = False,
         no_deps: bool = False,
+        skip_editable: bool = False,
         state: AuditState = AuditState(),
     ) -> None:
         """
@@ -64,12 +65,16 @@ class RequirementSource(DependencySource):
         dependency resolution is not performed and the inputs are checked
         and treated as "frozen".
 
+        `skip_editable` controls whether requirements marked as "editable" are skipped.
+        By default, editable requirements are not skipped.
+
         `state` is an `AuditState` to use for state callbacks.
         """
         self._filenames = filenames
         self._resolver = resolver
         self._require_hashes = require_hashes
         self._no_deps = no_deps
+        self._skip_editable = skip_editable
         self.state = state
         self._dep_cache: dict[Path, dict[Requirement, set[Dependency]]] = {}
 
@@ -105,6 +110,10 @@ class RequirementSource(DependencySource):
                             "please specify them with #egg=your_package_name==your_package_version",
                         )
                         continue
+                    if self._skip_editable and req.is_editable:
+                        yield SkippedDependency(
+                            name=req.name, skip_reason="requirement marked as editable"
+                        )
                     if req.marker is None or req.marker.evaluate():
                         # This means we have a duplicate requirement for the same package
                         if req.name in req_names:
