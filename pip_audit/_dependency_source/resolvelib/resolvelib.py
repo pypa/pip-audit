@@ -11,12 +11,20 @@ from typing import Union
 from packaging.requirements import Requirement as _Requirement
 from pip_api import Requirement as ParsedRequirement
 from requests.exceptions import HTTPError
-from resolvelib import BaseReporter, Resolver
 
-from pip_audit._dependency_source import DependencyResolver, DependencyResolverError
+from pip_audit._cache import caching_session
+from pip_audit._dependency_source import (
+    DependencyResolver,
+    DependencyResolverError,
+    HashMismatchError,
+    HashMissingError,
+    RequirementHashes,
+)
 from pip_audit._dependency_source.requirement import RequirementDependency
 from pip_audit._service.interface import Dependency, SkippedDependency
 from pip_audit._state import AuditState
+from resolvelib import BaseReporter, Resolver
+from resolvelib.resolvers import ResolutionImpossible
 
 from .pypi_provider import Candidate, PyPIProvider
 
@@ -54,12 +62,16 @@ class ResolveLibResolver(DependencyResolver):
 
         `state` is an `AuditState` to use for state callbacks.
         """
-        self.provider = PyPIProvider(index_urls, timeout, cache_dir, state)
+        self.index_urls = index_urls
+        self.timeout = timeout
+        # We keep the session here rather than create it within the provider. This is easier to mock
+        # since we're creating a new provider on every `resolve` call.
+        self.session = caching_session(cache_dir, use_pip=True)
+        self.state = state
         self.reporter = BaseReporter()
-        self.resolver: Resolver = Resolver(self.provider, self.reporter)
         self._skip_editable = skip_editable
 
-    def resolve(self, reqs: list[Requirement]) -> list[Dependency]:
+    def resolve(self, reqs: list[Requirement], req_hashes: RequirementHashes) -> list[Dependency]:
         """
         Resolve the given `Requirement` into a `Dependency` list.
         """
@@ -81,19 +93,36 @@ class ResolveLibResolver(DependencyResolver):
                 continue
             reqs_to_resolve.append(req)
 
+        provider = PyPIProvider(self.index_urls, req_hashes, self.session, self.timeout, self.state)
+        resolver: Resolver = Resolver(provider, self.reporter)
+
         try:
-            result = self.resolver.resolve(reqs_to_resolve)
+            result = resolver.resolve(reqs_to_resolve)
         except HTTPError as e:
             raise ResolveLibResolverError("failed to resolve dependencies") from e
+        except ResolutionImpossible as e:
+            raise ResolveLibResolverError(f"impossible resolution: {e}")
 
         # If the provider encountered any dependencies it couldn't find on PyPI, they'll be here.
-        deps.extend(self.provider.skip_deps)
+        deps.extend(provider.skip_deps)
 
         # Construct dependee mapping to figure out what top-level requirements correspond to what
         # dependencies.
         dependee_map = _build_dependee_map(result.mapping.values())
 
         for name, candidate in result.mapping.items():
+            # Check hash validity
+            if req_hashes:
+                try:
+                    req_hashes.match(name, candidate.dist_hashes)
+                except HashMissingError as e:
+                    raise ResolveLibResolverError(
+                        "Found dependency without an associated requirements "
+                        f"file hash: {str(e)}"
+                    ) from e
+                except HashMismatchError as e:
+                    raise ResolveLibResolverError(str(e)) from e
+
             origin_reqs = _find_origin_reqs(candidate, dependee_map, reqs)
             deps.append(RequirementDependency(name, candidate.version, origin_reqs=origin_reqs))
         return deps

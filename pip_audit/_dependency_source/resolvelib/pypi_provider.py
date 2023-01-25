@@ -7,6 +7,7 @@ authors under the ISC license.
 
 from __future__ import annotations
 
+import hashlib
 import itertools
 import logging
 from email.message import EmailMessage, Message
@@ -27,14 +28,14 @@ from packaging.requirements import Requirement
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel_filename
 from packaging.version import Version
-from resolvelib.providers import AbstractProvider
-from resolvelib.resolvers import RequirementInformation
 
-from pip_audit._cache import caching_session
+from pip_audit._dependency_source import RequirementHashes, UnsupportedHashAlgorithm
 from pip_audit._service import SkippedDependency
 from pip_audit._state import AuditState
 from pip_audit._util import python_version
 from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
+from resolvelib.providers import AbstractProvider
+from resolvelib.resolvers import RequirementInformation
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,7 @@ class Candidate:
     def __init__(
         self,
         name: str,
+        project: str,
         filename: Path,
         version: Version,
         *,
@@ -60,6 +62,7 @@ class Candidate:
         is_wheel: bool,
         reqs: list[Requirement],
         session: CacheControl,
+        req_hashes: RequirementHashes,
         timeout: int | None = None,
         state: AuditState = AuditState(),
     ) -> None:
@@ -68,6 +71,7 @@ class Candidate:
         """
 
         self.name = canonicalize_name(name)
+        self.project = project
         self.filename = filename
         self.version = version
         self.url = url
@@ -75,11 +79,13 @@ class Candidate:
         self.is_wheel = is_wheel
         self.reqs = reqs
         self._session = session
+        self.req_hashes = req_hashes
         self._timeout = timeout
         self._state = state
 
         self._metadata: Message | None = None
         self._dependencies: list[Requirement] | None = None
+        self.dist_hashes: dict[str, str] = {}
 
     def __repr__(self) -> str:  # pragma: no cover
         """
@@ -98,10 +104,15 @@ class Candidate:
         if self._metadata is None:
             self._state.update_state(f"Fetching metadata for {self.name} ({self.version})")
 
+            response = self._session.get(self.url, timeout=self._timeout)
+            response.raise_for_status()
+            candidate_data = response.content
+            self._generate_dist_hashes(candidate_data)
+
             if self.is_wheel:
-                self._metadata = self._get_metadata_for_wheel()
+                self._metadata = self._get_metadata_for_wheel(candidate_data)
             else:
-                self._metadata = self._get_metadata_for_sdist()
+                self._metadata = self._get_metadata_for_sdist(candidate_data)
         return self._metadata
 
     def _get_dependencies(self) -> Iterator[Requirement]:
@@ -129,15 +140,13 @@ class Candidate:
             self._dependencies = list(self._get_dependencies())
         return self._dependencies
 
-    def _get_metadata_for_wheel(self) -> Message:
+    def _get_metadata_for_wheel(self, wheel_data: bytes) -> Message:
         """
         Extracts the metadata for this candidate, if it's a wheel.
         """
-        data = self._session.get(self.url, timeout=self._timeout).content
-
         self._state.update_state(f"Extracting wheel for {self.name} ({self.version})")
 
-        with ZipFile(BytesIO(data)) as z:
+        with ZipFile(BytesIO(wheel_data)) as z:
             for n in z.namelist():
                 if n.endswith(".dist-info/METADATA"):
                     p = BytesParser()
@@ -148,15 +157,13 @@ class Candidate:
         # If we didn't find the metadata, return an empty dict
         return EmailMessage()  # pragma: no cover
 
-    def _get_metadata_for_sdist(self) -> Message:
+    def _get_metadata_for_sdist(self, sdist_data: bytes) -> Message:
         """
         Extracts the metadata for this candidate, if it's a source distribution.
         """
 
-        response: requests.Response = self._session.get(self.url, timeout=self._timeout)
-        response.raise_for_status()
-        sdist_data = response.content
         metadata = EmailMessage()
+        self._generate_dist_hashes(sdist_data)
 
         with TemporaryDirectory() as pkg_dir:
             sdist = Path(pkg_dir) / self.filename.name
@@ -191,6 +198,28 @@ class Candidate:
 
         return metadata
 
+    def _generate_dist_hashes(self, dist_data: bytes) -> None:
+        """
+        Populate a mapping of hash algorithm names to hashes for the candidate.
+        """
+        if self.project not in self.req_hashes:
+            return
+        hash_algorithms = self.req_hashes.supported_algorithms(self.project)
+        dist_hashes = {}
+        for algorithm in hash_algorithms:
+            if algorithm not in hashlib.algorithms_available:
+                raise UnsupportedHashAlgorithm(
+                    f"encountered hash with unknown algorithm: {algorithm}"
+                )
+            if algorithm not in hashlib.algorithms_guaranteed:  # pragma: no cover
+                raise UnsupportedHashAlgorithm(
+                    f"encountered hash with known but non-guaranteed algorithm: {algorithm}, this "
+                    "won't necessarily work on other platforms"
+                )
+            hasher = hashlib.new(algorithm, dist_data)
+            dist_hashes[algorithm] = hasher.hexdigest()
+        self.dist_hashes = dist_hashes
+
 
 def get_project_from_indexes(
     index_urls: list[str],
@@ -198,6 +227,7 @@ def get_project_from_indexes(
     project: str,
     reqs: list[Requirement],
     extras: set[str],
+    req_hashes: RequirementHashes,
     timeout: int | None,
     state: AuditState,
 ) -> Iterator[Candidate]:
@@ -208,7 +238,7 @@ def get_project_from_indexes(
         # We should only return an error if it can't be found on ANY of the supplied index URLs
         try:
             yield from get_project_from_index(
-                index_url, session, project, reqs, extras, timeout, state
+                index_url, session, project, reqs, extras, req_hashes, timeout, state
             )
             project_found = True
         except PyPINotFoundError:
@@ -225,6 +255,7 @@ def get_project_from_index(
     project: str,
     reqs: list[Requirement],
     extras: set[str],
+    req_hashes: RequirementHashes,
     timeout: int | None,
     state: AuditState,
 ) -> Iterator[Candidate]:
@@ -288,6 +319,7 @@ def get_project_from_index(
             # TODO: Handle compatibility tags?
             yield Candidate(
                 name,
+                project,
                 Path(filename),
                 version,
                 url=dist_url,
@@ -297,6 +329,7 @@ def get_project_from_index(
                 timeout=timeout,
                 state=state,
                 session=session,
+                req_hashes=req_hashes,
             )
         except Exception:
             continue
@@ -311,14 +344,18 @@ class PyPIProvider(AbstractProvider):
     def __init__(
         self,
         index_urls: list[str],
+        req_hashes: RequirementHashes,
+        session: requests.Session,
         timeout: int | None = None,
-        cache_dir: Path | None = None,
         state: AuditState = AuditState(),
     ):
         """
         Create a new `PyPIProvider`.
 
         `index_urls` is a list of package index URLs.
+
+        `req_hashes` is a `RequirementHashes` to control what package/algorithm combinations we
+        generate hashes for.
 
         `timeout` is an optional argument to control how many seconds the component should wait for
         responses to network requests.
@@ -332,8 +369,9 @@ class PyPIProvider(AbstractProvider):
         index_urls = [url if url.endswith("/") else f"{url}/" for url in index_urls]
 
         self.index_urls = index_urls
+        self.req_hashes = req_hashes
+        self.session = session
         self.timeout = timeout
-        self.session = caching_session(cache_dir, use_pip=True)
         self._state = state
         self.skip_deps: list[SkippedDependency] = []
 
@@ -369,6 +407,9 @@ class PyPIProvider(AbstractProvider):
         self._state.update_state(f"Resolving {identifier}")
 
         requirements = list(requirements[identifier])
+        logger.debug(
+            f"{identifier} req specifier constraints: {[r.specifier for r in requirements]}"
+        )
 
         bad_versions = {c.version for c in incompatibilities[identifier]}
 
@@ -381,36 +422,47 @@ class PyPIProvider(AbstractProvider):
         # are added to the candidate at creation - we
         # treat candidates as immutable once created.
         try:
-            candidates = sorted(
-                [
-                    candidate
-                    for candidate in get_project_from_indexes(
-                        self.index_urls,
-                        self.session,
-                        identifier,
-                        requirements,
-                        extras,
-                        self.timeout,
-                        self._state,
-                    )
-                    if candidate.version not in bad_versions
-                    and all(candidate.version in r.specifier for r in requirements)
-                    # HACK(ww): Additionally check that each candidate's name matches the
-                    # expected project name (identifier).
-                    # This technically shouldn't be required, but parsing distribution names
-                    # from package indices is imprecise/unreliable when distribution filenames
-                    # are PEP 440 compliant but not normalized.
-                    # See: https://github.com/pypa/packaging/issues/527
-                    and candidate.name == identifier
-                ],
-                key=attrgetter("version", "is_wheel"),
-                reverse=True,
+            all_candidates = get_project_from_indexes(
+                self.index_urls,
+                self.session,
+                identifier,
+                requirements,
+                extras,
+                self.req_hashes,
+                self.timeout,
+                self._state,
             )
         except PyPINotFoundError as e:
             skip_reason = str(e)
             logger.debug(skip_reason)
             self.skip_deps.append(SkippedDependency(name=identifier, skip_reason=skip_reason))
             return
+
+        candidates = sorted(
+            [
+                candidate
+                for candidate in all_candidates
+                if candidate.version not in bad_versions
+                # NOTE(ww): We use `filter(...)` instead of checking
+                # `candidate.version in r.specifier` because the former has subtle (and PEP 440
+                # mandated) behavior around prereleases. Specifically, `filter(...)`
+                # returns prereleases even if not explicitly configured, but only if
+                # there are no non-prereleases.
+                # See: https://github.com/pypa/pip-audit/issues/472
+                and all([any(r.specifier.filter((candidate.version,))) for r in requirements])
+                # HACK(ww): Additionally check that each candidate's name matches the
+                # expected project name (identifier).
+                # This technically shouldn't be required, but parsing distribution names
+                # from package indices is imprecise/unreliable when distribution filenames
+                # are PEP 440 compliant but not normalized.
+                # See: https://github.com/pypa/packaging/issues/527
+                and candidate.name == identifier
+            ],
+            key=attrgetter("version", "is_wheel"),
+            reverse=True,
+        )
+
+        logger.debug(f"{identifier} has candidates: {candidates}")
 
         # If we have multiple candidates for a single version and some are wheels,
         # yield only the wheels. This keeps us from wasting a large amount of
@@ -427,7 +479,14 @@ class PyPIProvider(AbstractProvider):
         """
         See `resolvelib.providers.AbstractProvider.is_satisfied_by`.
         """
-        return candidate.version in requirement.specifier
+
+        # See the NOTE in find_matches: we use `filter(...)` because of its
+        # special casing around prereleases.
+        return any(
+            requirement.specifier.filter(
+                (candidate.version,),
+            )
+        )
 
     def get_dependencies(self, candidate: Any) -> Any:
         """

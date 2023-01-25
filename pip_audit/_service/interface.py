@@ -6,7 +6,7 @@ of vulnerability information for fully resolved Python packages.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any, Iterator, NewType
 
@@ -59,7 +59,6 @@ class ResolvedDependency(Dependency):
     """
 
     version: Version
-    hashes: dict[str, list[str]] = field(default_factory=dict, hash=False)
 
 
 @dataclass(frozen=True)
