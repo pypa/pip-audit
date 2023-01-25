@@ -2,4 +2,4 @@
 The `pip_audit` APIs.
 """
 
-__version__ = "2.4.13"
+__version__ = "2.4.14"

@@ -120,7 +120,7 @@ class RequirementSource(DependencySource):
                     collected.add(dep)
                     yield dep
             except DependencyResolverError as dre:
-                raise RequirementSourceError(str(dre)) from dre
+                raise RequirementSourceError(str(dre))
 
     def fix(self, fix_version: ResolvedFixVersion) -> None:
         """
