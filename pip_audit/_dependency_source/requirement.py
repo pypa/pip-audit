@@ -316,7 +316,6 @@ class RequirementSource(DependencySource):
                         raise RequirementSourceError(
                             f"requirement {hash_req.name} does not contain a hash {str(hash_req)}"
                         )
-                    assert hash_req.name not in req_hashes
                     req_hashes.add_req(
                         hash_req.name, self._build_hash_options_mapping(hash_req.hash_options)
                     )
