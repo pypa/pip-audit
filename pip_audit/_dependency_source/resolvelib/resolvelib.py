@@ -82,7 +82,7 @@ class ResolveLibResolver(DependencyResolver):
 
         # Construct dependee mapping to figure out what top-level requirements correspond to what
         # dependencies.
-        dependee_map = _build_dependee_map(result.mapping.values())
+        dependee_map = _build_dependee_map(list(result.mapping.values()))
 
         for name, candidate in result.mapping.items():
             # Check hash validity
@@ -115,7 +115,7 @@ def _build_dependee_map(candidates: list[Candidate]) -> dict[Requirement, list[R
     Build a mapping of dependee `Requirement`s to dependers. This is needed to find the top-level
     requirements that each subdependency originates from.
     """
-    dependee_map = {}
+    dependee_map: dict[Requirement, list[Requirement]] = {}
     for c in candidates:
         for dep in c.dependencies:
             if dep not in dependee_map:
