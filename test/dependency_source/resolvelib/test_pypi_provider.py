@@ -5,6 +5,7 @@ import pretend
 import pytest
 from packaging.version import Version
 
+from pip_audit._dependency_source import RequirementHashes
 from pip_audit._dependency_source.resolvelib import pypi_provider
 from pip_audit._dependency_source.resolvelib.pypi_provider import Candidate
 from pip_audit._virtual_env import VirtualEnvError
@@ -29,6 +30,7 @@ class TestCandidate:
 
         candidate = Candidate(
             "fakepkg",
+            "fakepkg",
             Path("fakepath"),
             Version("1.0.0"),
             url="hxxps://fake.url",
@@ -37,19 +39,18 @@ class TestCandidate:
             session=session,
             timeout=None,
             state=state,
+            req_hashes=RequirementHashes(),
         )
 
         with pytest.raises(
             VirtualEnvError, match=r"virtual environment creation failed internally"
         ):
-            candidate._get_metadata_for_sdist()
+            _ = candidate.metadata
 
         assert len(virtualenv_obj.create.calls) == 1
-        assert state.update_state.calls == [
-            pretend.call(
-                "Installing source distribution in isolated environment for fakepkg (1.0.0)"
-            ),
-        ]
+        assert state.update_state.calls[1] == pretend.call(
+            "Installing source distribution in isolated environment for fakepkg (1.0.0)"
+        )
 
 
 def test_get_project_from_index_relative_url():
@@ -71,6 +72,7 @@ def test_get_project_from_index_relative_url():
             session=session,
             project="Flask",
             extras=set(),
+            req_hashes=RequirementHashes(),
             timeout=None,
             state=state,
         )

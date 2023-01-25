@@ -24,6 +24,7 @@ from pip_audit._dependency_source import (
     DependencyResolverError,
     DependencySource,
     DependencySourceError,
+    RequirementHashes,
 )
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
@@ -222,7 +223,7 @@ class RequirementSource(DependencySource):
                         )
                         print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
             except DependencyResolverError as dre:
-                raise RequirementFixError from dre
+                raise RequirementFixError(str(dre)) from dre
 
     def _recover_files(self, tmp_files: list[IO[str]]) -> None:
         for (filename, tmp_file) in zip(self._filenames, tmp_files):
@@ -240,18 +241,11 @@ class RequirementSource(DependencySource):
     def _collect_preresolved_deps(
         self,
         reqs: Iterator[InstallRequirement],
-        require_hashes: bool = False,
     ) -> Iterator[tuple[Requirement, Dependency]]:
         """
-        Collect pre-resolved (pinned) dependencies, optionally enforcing a
-        hash requirement policy.
+        Collect pre-resolved (pinned) dependencies.
         """
         for req in reqs:
-            if require_hashes and not req.hash_options:
-                raise RequirementSourceError(
-                    f"requirement {req.name} does not contain a hash {str(req)}"
-                )
-
             # NOTE: URL dependencies cannot be pinned, so skipping them
             # makes sense (under the same principle of skipping dependencies
             # that can't be found on PyPI). This is also consistent with
@@ -268,13 +262,11 @@ class RequirementSource(DependencySource):
                 pinned_specifier = PINNED_SPECIFIER_RE.match(str(req.specifier))
                 if pinned_specifier is None:
                     raise RequirementSourceError(
-                        f"requirement {req.name} is not pinned: {str(req)}"
+                        f"requirement {req.name} is not pinned to an exact version: {str(req)}"
                     )
 
                 yield req.req, ResolvedDependency(
-                    req.name,
-                    Version(pinned_specifier.group("version")),
-                    self._build_hash_options_mapping(req.hash_options),
+                    req.name, Version(pinned_specifier.group("version"))
                 )
 
     def _build_hash_options_mapping(self, hash_options: list[str]) -> dict[str, list[str]]:
@@ -306,26 +298,31 @@ class RequirementSource(DependencySource):
 
         new_cached_deps_for_file: dict[Requirement, set[Dependency]] = dict()
 
-        # There are three cases where we skip dependency resolution:
-        #
-        # 1. The user has explicitly specified `--require-hashes`.
-        # 2. One or more parsed requirements has hashes specified, enabling
-        #    hash checking for all requirements.
-        # 3. The user has explicitly specified `--no-deps`.
-        require_hashes = self._require_hashes or any(req.hash_options for req in reqs)
-        skip_deps = require_hashes or self._no_deps
-        if skip_deps:
-            for req, dep in self._collect_preresolved_deps(
-                iter(reqs), require_hashes=require_hashes
-            ):
+        # Skip dependency resolution if the user has specified `--no-deps`
+        if self._no_deps:
+            for req, dep in self._collect_preresolved_deps(iter(reqs)):
                 if req not in new_cached_deps_for_file:
                     new_cached_deps_for_file[req] = set()
                 new_cached_deps_for_file[req].add(dep)
                 yield req, dep
         else:
+            require_hashes = self._require_hashes or any(req.hash_options for req in reqs)
+            req_hashes = RequirementHashes()
+
+            # If we're requiring hashes, enforce that all requirements are hashed
+            if require_hashes:
+                for hash_req in reqs:
+                    if not hash_req.hash_options:
+                        raise RequirementSourceError(
+                            f"requirement {hash_req.name} does not contain a hash {str(hash_req)}"
+                        )
+                    req_hashes.add_req(
+                        hash_req.name, self._build_hash_options_mapping(hash_req.hash_options)
+                    )
+
             # Invoke the dependency resolver to turn requirements into dependencies
             req_values: list[Requirement] = [r.req for r in reqs]
-            for req, resolved_deps in self._resolver.resolve_all(iter(req_values)):
+            for req, resolved_deps in self._resolver.resolve_all(iter(req_values), req_hashes):
                 for dep in resolved_deps:
                     if req not in new_cached_deps_for_file:
                         new_cached_deps_for_file[req] = set()

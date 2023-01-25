@@ -15,7 +15,11 @@ from pip_audit._dependency_source import (
     ResolveLibResolver,
     pyproject,
 )
-from pip_audit._dependency_source.interface import DependencyFixError, ResolvedFixVersion
+from pip_audit._dependency_source.interface import (
+    DependencyFixError,
+    RequirementHashes,
+    ResolvedFixVersion,
+)
 from pip_audit._service import Dependency, ResolvedDependency
 
 
@@ -98,7 +102,7 @@ dependencies = [
 
 def test_pyproject_source_resolver_error(monkeypatch, req_file):
     class MockResolver(DependencyResolver):
-        def resolve(self, req: Requirement) -> list[Dependency]:
+        def resolve(self, req: Requirement, req_hashes: RequirementHashes) -> list[Dependency]:
             raise DependencyResolverError
 
     source = _init_pyproject(

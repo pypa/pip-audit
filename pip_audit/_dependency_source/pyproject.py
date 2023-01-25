@@ -19,6 +19,7 @@ from pip_audit._dependency_source import (
     DependencyResolverError,
     DependencySource,
     DependencySourceError,
+    RequirementHashes,
 )
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency, SkippedDependency
@@ -74,8 +75,9 @@ class PyProjectSource(DependencySource):
                 return
 
             reqs: list[Requirement] = [Requirement(dep) for dep in deps]
+            req_hashes = RequirementHashes()
             try:
-                for _, deps in self.resolver.resolve_all(iter(reqs)):
+                for _, deps in self.resolver.resolve_all(iter(reqs), req_hashes):
                     for dep in deps:
                         # Don't allow duplicate dependencies to be returned
                         if dep in collected:
