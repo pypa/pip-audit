@@ -416,11 +416,10 @@ def audit() -> None:  # pragma: no cover
             # within the RequirementSource instead of in-line here.
             source = RequirementSource(
                 req_files,
-                ResolveLibResolver(
-                    index_urls, args.timeout, args.cache_dir, args.skip_editable, state
-                ),
+                ResolveLibResolver(index_urls, args.timeout, args.cache_dir, state),
                 require_hashes=args.require_hashes,
                 no_deps=args.no_deps,
+                skip_editable=args.skip_editable,
                 state=state,
             )
         elif args.project_path is not None:
@@ -430,9 +429,7 @@ def audit() -> None:  # pragma: no cover
             # Determine which kind of project file exists in the project path
             source = _dep_source_from_project_path(
                 args.project_path,
-                ResolveLibResolver(
-                    index_urls, args.timeout, args.cache_dir, args.skip_editable, state
-                ),
+                ResolveLibResolver(index_urls, args.timeout, args.cache_dir, state),
                 state,
             )
         else:

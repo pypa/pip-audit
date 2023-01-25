@@ -169,6 +169,20 @@ def test_requirement_source_non_editable_without_egg_fragment(monkeypatch):
     )
 
 
+@pytest.mark.online
+def test_requirement_source_editable_skip(monkeypatch):
+    source = requirement.RequirementSource(
+        [Path("requirements1.txt")], ResolveLibResolver(), skip_editable=True
+    )
+
+    monkeypatch.setattr(
+        pip_requirements_parser, "get_file_content", lambda _: "-e file:flask.py#egg=flask==2.0.1"
+    )
+
+    specs = list(source.collect())
+    assert SkippedDependency(name="flask", skip_reason="requirement marked as editable") in specs
+
+
 def _check_fixes(
     input_reqs: list[str],
     expected_reqs: list[str],
