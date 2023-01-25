@@ -62,6 +62,8 @@ class ResolveLibResolver(DependencyResolver):
         """
         self.index_urls = index_urls
         self.timeout = timeout
+        # We keep the session here rather than create it within the provider. This is easier to mock
+        # since we're creating a new provider on every `resolve` call.
         self.session = caching_session(cache_dir, use_pip=True)
         self.state = state
         self.reporter = BaseReporter()
