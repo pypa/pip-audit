@@ -213,19 +213,19 @@ class RequirementSource(DependencySource):
             try:
                 if not fixed:
                     req_dep = cast(RequirementDependency, fix_version.dep)
-                    if req_dep.origin_reqs:
+                    if req_dep.dependee_reqs:
                         logger.warning(
                             "added fixed subdependency explicitly to requirements file "
                             f"{filename}: {fix_version.dep.canonical_name}"
                         )
-                        origin_reqs_formatted = ",".join(
+                        dependee_reqs_formatted = ",".join(
                             [
                                 str(req)
-                                for req in sorted(list(req_dep.origin_reqs), key=lambda x: x.name)
+                                for req in sorted(list(req_dep.dependee_reqs), key=lambda x: x.name)
                             ]
                         )
                         print(
-                            f"    # pip-audit: subdependency fixed via {origin_reqs_formatted}",
+                            f"    # pip-audit: subdependency fixed via {dependee_reqs_formatted}",
                             file=f,
                         )
                         print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
@@ -359,4 +359,4 @@ class RequirementDependency(ResolvedDependency):
     Represents a fully resolved Python package from a requirements file.
     """
 
-    origin_reqs: set[Requirement] = field(default_factory=set, hash=False)
+    dependee_reqs: set[Requirement] = field(default_factory=set, hash=False)

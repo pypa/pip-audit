@@ -97,8 +97,8 @@ class ResolveLibResolver(DependencyResolver):
                 except HashMismatchError as e:
                     raise ResolveLibResolverError(str(e)) from e
 
-            origin_reqs = _find_origin_reqs(candidate, dependee_map, reqs)
-            deps.append(RequirementDependency(name, candidate.version, origin_reqs=origin_reqs))
+            dependee_reqs = _dependee_reqs_for_candidate(candidate, dependee_map, reqs)
+            deps.append(RequirementDependency(name, candidate.version, dependee_reqs=dependee_reqs))
         return deps
 
 
@@ -124,7 +124,7 @@ def _build_dependee_map(candidates: list[Candidate]) -> dict[Requirement, list[R
     return dependee_map
 
 
-def _find_origin_reqs(
+def _dependee_reqs_for_candidate(
     candidate: Candidate,
     dependee_map: dict[Requirement, list[Requirement]],
     reqs: list[Requirement],
@@ -149,7 +149,7 @@ def _find_origin_reqs(
         seen.pop()
         return set()
 
-    origin_reqs = set()
+    dependee_reqs = set()
     for req in candidate.reqs:
-        origin_reqs |= find_dependees(req)
-    return origin_reqs
+        dependee_reqs |= find_dependees(req)
+    return dependee_reqs
