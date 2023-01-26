@@ -421,46 +421,47 @@ class PyPIProvider(AbstractProvider):
         # Need to pass the extras to the search, so they
         # are added to the candidate at creation - we
         # treat candidates as immutable once created.
+        all_candidates = get_project_from_indexes(
+            self.index_urls,
+            self.session,
+            identifier,
+            requirements,
+            extras,
+            self.req_hashes,
+            self.timeout,
+            self._state,
+        )
+
+        candidates: list[Candidate]
         try:
-            all_candidates = get_project_from_indexes(
-                self.index_urls,
-                self.session,
-                identifier,
-                requirements,
-                extras,
-                self.req_hashes,
-                self.timeout,
-                self._state,
+            candidates = sorted(
+                [
+                    candidate
+                    for candidate in all_candidates
+                    if candidate.version not in bad_versions
+                    # NOTE(ww): We use `filter(...)` instead of checking
+                    # `candidate.version in r.specifier` because the former has subtle (and PEP 440
+                    # mandated) behavior around prereleases. Specifically, `filter(...)`
+                    # returns prereleases even if not explicitly configured, but only if
+                    # there are no non-prereleases.
+                    # See: https://github.com/pypa/pip-audit/issues/472
+                    and all([any(r.specifier.filter((candidate.version,))) for r in requirements])
+                    # HACK(ww): Additionally check that each candidate's name matches the
+                    # expected project name (identifier).
+                    # This technically shouldn't be required, but parsing distribution names
+                    # from package indices is imprecise/unreliable when distribution filenames
+                    # are PEP 440 compliant but not normalized.
+                    # See: https://github.com/pypa/packaging/issues/527
+                    and candidate.name == identifier
+                ],
+                key=attrgetter("version", "is_wheel"),
+                reverse=True,
             )
         except PyPINotFoundError as e:
             skip_reason = str(e)
             logger.debug(skip_reason)
             self.skip_deps.append(SkippedDependency(name=identifier, skip_reason=skip_reason))
             return
-
-        candidates = sorted(
-            [
-                candidate
-                for candidate in all_candidates
-                if candidate.version not in bad_versions
-                # NOTE(ww): We use `filter(...)` instead of checking
-                # `candidate.version in r.specifier` because the former has subtle (and PEP 440
-                # mandated) behavior around prereleases. Specifically, `filter(...)`
-                # returns prereleases even if not explicitly configured, but only if
-                # there are no non-prereleases.
-                # See: https://github.com/pypa/pip-audit/issues/472
-                and all([any(r.specifier.filter((candidate.version,))) for r in requirements])
-                # HACK(ww): Additionally check that each candidate's name matches the
-                # expected project name (identifier).
-                # This technically shouldn't be required, but parsing distribution names
-                # from package indices is imprecise/unreliable when distribution filenames
-                # are PEP 440 compliant but not normalized.
-                # See: https://github.com/pypa/packaging/issues/527
-                and candidate.name == identifier
-            ],
-            key=attrgetter("version", "is_wheel"),
-            reverse=True,
-        )
 
         logger.debug(f"{identifier} has candidates: {candidates}")
 
