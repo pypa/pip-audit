@@ -169,7 +169,6 @@ def test_requirement_source_non_editable_without_egg_fragment(monkeypatch):
     )
 
 
-@pytest.mark.online
 def test_requirement_source_editable_skip(monkeypatch):
     source = requirement.RequirementSource(
         [Path("requirements1.txt")], ResolveLibResolver(), skip_editable=True
