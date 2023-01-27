@@ -132,6 +132,9 @@ class RequirementSource(DependencySource):
                         ):
                             continue
 
+                        dep = cast(RequirementDependency, dep)
+                        existing_dep = cast(RequirementDependency, existing_dep)
+
                         # If we have the same dependency generated from multiple files, we need to
                         # merge the dependee requirements.
                         combined_dep = RequirementDependency(

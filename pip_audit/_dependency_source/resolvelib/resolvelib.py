@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import cast
 
 from packaging.requirements import Requirement
 from requests.exceptions import HTTPError
@@ -126,6 +127,7 @@ def _build_dependee_map(
     for c in candidates:
         if isinstance(c, SkippedCandidate):
             continue
+        c = cast(ResolvedCandidate, c)
         for dep in c.dependencies:
             if dep not in dependee_map:
                 dependee_map[dep] = []
