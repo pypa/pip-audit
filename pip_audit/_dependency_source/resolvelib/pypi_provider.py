@@ -10,6 +10,8 @@ from __future__ import annotations
 import hashlib
 import itertools
 import logging
+from abc import ABC
+from dataclasses import dataclass
 from email.message import EmailMessage, Message
 from email.parser import BytesParser
 from io import BytesIO
@@ -43,7 +45,12 @@ logger = logging.getLogger(__name__)
 PYTHON_VERSION: Version = python_version()
 
 
-class Candidate:
+@dataclass
+class Candidate(ABC):
+    name: str
+
+
+class ResolvedCandidate(Candidate):
     """
     Represents a dependency candidate. A dependency being resolved may have
     multiple candidates, which go through a selection process guided by various
@@ -221,6 +228,11 @@ class Candidate:
         self.dist_hashes = dist_hashes
 
 
+@dataclass
+class SkippedCandidate(Candidate):
+    skip_reason: str
+
+
 def get_project_from_indexes(
     index_urls: list[str],
     session: CacheControl,
@@ -230,7 +242,7 @@ def get_project_from_indexes(
     req_hashes: RequirementHashes,
     timeout: int | None,
     state: AuditState,
-) -> Iterator[Candidate]:
+) -> Iterator[ResolvedCandidate]:
     """Return candidates from all indexes created from the project name and extras."""
     project_found = False
     for index_url in index_urls:
@@ -258,7 +270,7 @@ def get_project_from_index(
     req_hashes: RequirementHashes,
     timeout: int | None,
     state: AuditState,
-) -> Iterator[Candidate]:
+) -> Iterator[ResolvedCandidate]:
     """Return candidates from an index created from the project name and extras."""
 
     # NOTE: The trailing slash is important here: without it, the `urljoin`
@@ -317,7 +329,7 @@ def get_project_from_index(
                 is_wheel = False
 
             # TODO: Handle compatibility tags?
-            yield Candidate(
+            yield ResolvedCandidate(
                 name,
                 project,
                 Path(filename),
@@ -432,7 +444,7 @@ class PyPIProvider(AbstractProvider):
             self._state,
         )
 
-        candidates: list[Candidate]
+        candidates: list[ResolvedCandidate]
         try:
             candidates = sorted(
                 [
@@ -458,9 +470,7 @@ class PyPIProvider(AbstractProvider):
                 reverse=True,
             )
         except PyPINotFoundError as e:
-            skip_reason = str(e)
-            logger.debug(skip_reason)
-            self.skip_deps.append(SkippedDependency(name=identifier, skip_reason=skip_reason))
+            yield SkippedCandidate(name=identifier, skip_reason=str(e))
             return
 
         logger.debug(f"{identifier} has candidates: {candidates}")
@@ -480,6 +490,8 @@ class PyPIProvider(AbstractProvider):
         """
         See `resolvelib.providers.AbstractProvider.is_satisfied_by`.
         """
+        if isinstance(candidate, SkippedCandidate):
+            return True
 
         # See the NOTE in find_matches: we use `filter(...)` because of its
         # special casing around prereleases.
@@ -493,6 +505,9 @@ class PyPIProvider(AbstractProvider):
         """
         See `resolvelib.providers.AbstractProvider.get_dependencies`.
         """
+        if isinstance(candidate, SkippedCandidate):
+            return []
+
         return candidate.dependencies
 
 

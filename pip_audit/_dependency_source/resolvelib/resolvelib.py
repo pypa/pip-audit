@@ -21,10 +21,10 @@ from pip_audit._dependency_source import (
     RequirementHashes,
 )
 from pip_audit._dependency_source.requirement import RequirementDependency
-from pip_audit._service.interface import Dependency
+from pip_audit._service.interface import Dependency, SkippedDependency
 from pip_audit._state import AuditState
 
-from .pypi_provider import Candidate, PyPIProvider
+from .pypi_provider import PyPIProvider, ResolvedCandidate, SkippedCandidate
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +85,11 @@ class ResolveLibResolver(DependencyResolver):
         dependee_map = _build_dependee_map(list(result.mapping.values()))
 
         for name, candidate in result.mapping.items():
+            # Check whether the candidate was skipped
+            if isinstance(candidate, SkippedCandidate):
+                deps.append(SkippedDependency(candidate.name, candidate.skip_reason))
+                continue
+
             # Check hash validity
             if req_hashes:
                 try:
@@ -110,13 +115,17 @@ class ResolveLibResolverError(DependencyResolverError):
     pass
 
 
-def _build_dependee_map(candidates: list[Candidate]) -> dict[Requirement, list[Requirement]]:
+def _build_dependee_map(
+    candidates: list[Candidate],
+) -> dict[Requirement, list[Requirement]]:
     """
     Build a mapping of dependee `Requirement`s to dependers. This is needed to find the top-level
     requirements that each subdependency originates from.
     """
     dependee_map: dict[Requirement, list[Requirement]] = {}
     for c in candidates:
+        if isinstance(c, SkippedCandidate):
+            continue
         for dep in c.dependencies:
             if dep not in dependee_map:
                 dependee_map[dep] = []
@@ -125,7 +134,7 @@ def _build_dependee_map(candidates: list[Candidate]) -> dict[Requirement, list[R
 
 
 def _dependee_reqs_for_candidate(
-    candidate: Candidate,
+    candidate: ResolvedCandidate,
     dependee_map: dict[Requirement, list[Requirement]],
     reqs: list[Requirement],
 ) -> set[Requirement]:
