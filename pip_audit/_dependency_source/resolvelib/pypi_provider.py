@@ -47,13 +47,17 @@ PYTHON_VERSION: Version = python_version()
 
 @dataclass
 class Candidate(ABC):
+    """
+    Represents a dependency candidate.
+    """
+
     name: str
 
 
 class ResolvedCandidate(Candidate):
     """
-    Represents a dependency candidate. A dependency being resolved may have
-    multiple candidates, which go through a selection process guided by various
+    Represents a resolved dependency candidate that has been retrieved from PyPI. A dependency being
+    resolved may have multiple candidates, which go through a selection process guided by various
     weights (version, `sdist` vs. `wheel`, etc.)
     """
 
@@ -230,6 +234,12 @@ class ResolvedCandidate(Candidate):
 
 @dataclass
 class SkippedCandidate(Candidate):
+    """
+    Represents a skipped dependency candidate. When a project can't be found on PyPI, we propagate a
+    `SkippedCandidate` to satisfy the dependency resolver and to signal to the caller that the
+    candidate couldn't be resolved properly.
+    """
+
     skip_reason: str
 
 
