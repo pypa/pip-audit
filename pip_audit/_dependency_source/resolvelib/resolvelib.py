@@ -24,7 +24,7 @@ from pip_audit._dependency_source.requirement import RequirementDependency
 from pip_audit._service.interface import Dependency, SkippedDependency
 from pip_audit._state import AuditState
 
-from .pypi_provider import PyPIProvider, ResolvedCandidate, SkippedCandidate
+from .pypi_provider import Candidate, PyPIProvider, ResolvedCandidate, SkippedCandidate
 
 logger = logging.getLogger(__name__)
 

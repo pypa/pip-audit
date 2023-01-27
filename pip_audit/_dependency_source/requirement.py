@@ -85,7 +85,7 @@ class RequirementSource(DependencySource):
 
         Raises a `RequirementSourceError` on any errors.
         """
-        collected: set[Dependency] = set()
+        collected: dict[str, Dependency] = dict()
         for filename in self._filenames:
             try:
                 rf = RequirementsFile.from_file(filename)
@@ -125,12 +125,29 @@ class RequirementSource(DependencySource):
                         reqs.append(req)
 
                 for dep in self._collect_cached_deps(filename, reqs):
-                    if dep in collected:
+                    if dep.canonical_name in collected:
+                        existing_dep = collected[dep.canonical_name]
+                        if isinstance(dep, SkippedDependency) or isinstance(
+                            existing_dep, SkippedDependency
+                        ):
+                            continue
+
+                        # If we have the same dependency generated from multiple files, we need to
+                        # merge the dependee requirements.
+                        combined_dep = RequirementDependency(
+                            name=dep.name,
+                            version=dep.version,
+                            dependee_reqs=(dep.dependee_reqs | existing_dep.dependee_reqs),
+                        )
+
+                        collected[dep.canonical_name] = combined_dep
                         continue
-                    collected.add(dep)
-                    yield dep
+
+                    collected[dep.canonical_name] = dep
             except DependencyResolverError as dre:
                 raise RequirementSourceError(str(dre))
+
+        yield from collected.values()
 
     def fix(self, fix_version: ResolvedFixVersion) -> None:
         """
@@ -272,7 +289,7 @@ class RequirementSource(DependencySource):
                         f"requirement {req.name} is not pinned to an exact version: {str(req)}"
                     )
 
-                yield req.req, ResolvedDependency(
+                yield req.req, RequirementDependency(
                     req.name, Version(pinned_specifier.group("version"))
                 )
 
