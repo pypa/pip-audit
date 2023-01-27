@@ -165,7 +165,9 @@ class DependencyResolver(ABC):
     """
 
     @abstractmethod
-    def resolve(self, reqs: list[Requirement], req_hashes: RequirementHashes) -> list[Dependency]:
+    def resolve(
+        self, reqs: list[Requirement], req_hashes: RequirementHashes
+    ) -> list[Dependency]:  # pragma: no cover
         """
         Resolve a list of `Requirement`s into a list of resolved `Dependency`s.
         """
