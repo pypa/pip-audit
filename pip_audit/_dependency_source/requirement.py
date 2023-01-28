@@ -130,7 +130,15 @@ class RequirementSource(DependencySource):
                         if isinstance(dep, SkippedDependency) or isinstance(
                             existing_dep, SkippedDependency
                         ):
-                            continue
+                            # The `continue` statement is incorrectly flagged as uncovered for
+                            # Python <= 3.9.
+                            #
+                            # Let's add a `pass` here as a way to make sure this branch gets tested
+                            # and then mark the `continue` with `no cover`.
+                            #
+                            # See: https://github.com/pytest-dev/pytest-cov/issues/546
+                            pass
+                            continue  # pragma: no cover
 
                         dep = cast(RequirementDependency, dep)
                         existing_dep = cast(RequirementDependency, existing_dep)
