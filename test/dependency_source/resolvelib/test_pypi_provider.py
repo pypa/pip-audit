@@ -7,7 +7,7 @@ from packaging.version import Version
 
 from pip_audit._dependency_source import RequirementHashes
 from pip_audit._dependency_source.resolvelib import pypi_provider
-from pip_audit._dependency_source.resolvelib.pypi_provider import Candidate
+from pip_audit._dependency_source.resolvelib.pypi_provider import ResolvedCandidate
 from pip_audit._virtual_env import VirtualEnvError
 
 
@@ -28,7 +28,7 @@ class TestCandidate:
 
         state = pretend.stub(update_state=pretend.call_recorder(lambda s: None))
 
-        candidate = Candidate(
+        candidate = ResolvedCandidate(
             "fakepkg",
             "fakepkg",
             Path("fakepath"),
@@ -36,6 +36,7 @@ class TestCandidate:
             url="hxxps://fake.url",
             extras=set(),
             is_wheel=False,
+            reqs=[],
             session=session,
             timeout=None,
             state=state,
@@ -71,6 +72,7 @@ def test_get_project_from_index_relative_url():
             index_url="https://fake-index.example.com/api/pypi/pypi-all/simple/",
             session=session,
             project="Flask",
+            reqs=[],
             extras=set(),
             req_hashes=RequirementHashes(),
             timeout=None,

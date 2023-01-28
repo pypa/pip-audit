@@ -77,21 +77,16 @@ class PyProjectSource(DependencySource):
             reqs: list[Requirement] = [Requirement(dep) for dep in deps]
             req_hashes = RequirementHashes()
             try:
-                for _, deps in self.resolver.resolve_all(iter(reqs), req_hashes):
-                    for dep in deps:
-                        # Don't allow duplicate dependencies to be returned
-                        if dep in collected:
-                            continue
+                for dep in self.resolver.resolve(reqs, req_hashes):
+                    if dep.is_skipped():  # pragma: no cover
+                        dep = cast(SkippedDependency, dep)
+                        self.state.update_state(f"Skipping {dep.name}: {dep.skip_reason}")
+                    else:
+                        dep = cast(ResolvedDependency, dep)
+                        self.state.update_state(f"Collecting {dep.name} ({dep.version})")
 
-                        if dep.is_skipped():  # pragma: no cover
-                            dep = cast(SkippedDependency, dep)
-                            self.state.update_state(f"Skipping {dep.name}: {dep.skip_reason}")
-                        else:
-                            dep = cast(ResolvedDependency, dep)
-                            self.state.update_state(f"Collecting {dep.name} ({dep.version})")
-
-                        collected.add(dep)
-                        yield dep
+                    collected.add(dep)
+                    yield dep
             except DependencyResolverError as dre:
                 raise PyProjectSourceError("dependency resolver raised an error") from dre
 

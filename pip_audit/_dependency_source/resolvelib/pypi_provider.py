@@ -10,6 +10,8 @@ from __future__ import annotations
 import hashlib
 import itertools
 import logging
+from abc import ABC
+from dataclasses import dataclass
 from email.message import EmailMessage, Message
 from email.parser import BytesParser
 from io import BytesIO
@@ -32,6 +34,7 @@ from resolvelib.providers import AbstractProvider
 from resolvelib.resolvers import RequirementInformation
 
 from pip_audit._dependency_source import RequirementHashes, UnsupportedHashAlgorithm
+from pip_audit._service import SkippedDependency
 from pip_audit._state import AuditState
 from pip_audit._util import python_version
 from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
@@ -42,10 +45,19 @@ logger = logging.getLogger(__name__)
 PYTHON_VERSION: Version = python_version()
 
 
-class Candidate:
+@dataclass
+class Candidate(ABC):
     """
-    Represents a dependency candidate. A dependency being resolved may have
-    multiple candidates, which go through a selection process guided by various
+    Represents a dependency candidate.
+    """
+
+    name: str
+
+
+class ResolvedCandidate(Candidate):
+    """
+    Represents a resolved dependency candidate that has been retrieved from PyPI. A dependency being
+    resolved may have multiple candidates, which go through a selection process guided by various
     weights (version, `sdist` vs. `wheel`, etc.)
     """
 
@@ -59,6 +71,7 @@ class Candidate:
         url: str,
         extras: set[str],
         is_wheel: bool,
+        reqs: list[Requirement],
         session: CacheControl,
         req_hashes: RequirementHashes,
         timeout: int | None = None,
@@ -75,6 +88,7 @@ class Candidate:
         self.url = url
         self.extras = extras
         self.is_wheel = is_wheel
+        self.reqs = reqs
         self._session = session
         self.req_hashes = req_hashes
         self._timeout = timeout
@@ -218,15 +232,27 @@ class Candidate:
         self.dist_hashes = dist_hashes
 
 
+@dataclass
+class SkippedCandidate(Candidate):
+    """
+    Represents a skipped dependency candidate. When a project can't be found on PyPI, we propagate a
+    `SkippedCandidate` to satisfy the dependency resolver and to signal to the caller that the
+    candidate couldn't be resolved properly.
+    """
+
+    skip_reason: str
+
+
 def get_project_from_indexes(
     index_urls: list[str],
     session: CacheControl,
     project: str,
+    reqs: list[Requirement],
     extras: set[str],
     req_hashes: RequirementHashes,
     timeout: int | None,
     state: AuditState,
-) -> Iterator[Candidate]:
+) -> Iterator[ResolvedCandidate]:
     """Return candidates from all indexes created from the project name and extras."""
     project_found = False
     for index_url in index_urls:
@@ -234,7 +260,7 @@ def get_project_from_indexes(
         # We should only return an error if it can't be found on ANY of the supplied index URLs
         try:
             yield from get_project_from_index(
-                index_url, session, project, extras, req_hashes, timeout, state
+                index_url, session, project, reqs, extras, req_hashes, timeout, state
             )
             project_found = True
         except PyPINotFoundError:
@@ -249,11 +275,12 @@ def get_project_from_index(
     index_url: str,
     session: CacheControl,
     project: str,
+    reqs: list[Requirement],
     extras: set[str],
     req_hashes: RequirementHashes,
     timeout: int | None,
     state: AuditState,
-) -> Iterator[Candidate]:
+) -> Iterator[ResolvedCandidate]:
     """Return candidates from an index created from the project name and extras."""
 
     # NOTE: The trailing slash is important here: without it, the `urljoin`
@@ -312,7 +339,7 @@ def get_project_from_index(
                 is_wheel = False
 
             # TODO: Handle compatibility tags?
-            yield Candidate(
+            yield ResolvedCandidate(
                 name,
                 project,
                 Path(filename),
@@ -320,6 +347,7 @@ def get_project_from_index(
                 url=dist_url,
                 extras=extras,
                 is_wheel=is_wheel,
+                reqs=reqs,
                 timeout=timeout,
                 state=state,
                 session=session,
@@ -367,6 +395,7 @@ class PyPIProvider(AbstractProvider):
         self.session = session
         self.timeout = timeout
         self._state = state
+        self.skip_deps: list[SkippedDependency] = []
 
     def identify(self, requirement_or_candidate: Requirement | Candidate) -> str:
         """
@@ -418,35 +447,41 @@ class PyPIProvider(AbstractProvider):
             self.index_urls,
             self.session,
             identifier,
+            requirements,
             extras,
             self.req_hashes,
             self.timeout,
             self._state,
         )
 
-        candidates = sorted(
-            [
-                candidate
-                for candidate in all_candidates
-                if candidate.version not in bad_versions
-                # NOTE(ww): We use `filter(...)` instead of checking
-                # `candidate.version in r.specifier` because the former has subtle (and PEP 440
-                # mandated) behavior around prereleases. Specifically, `filter(...)`
-                # returns prereleases even if not explicitly configured, but only if
-                # there are no non-prereleases.
-                # See: https://github.com/pypa/pip-audit/issues/472
-                and all([any(r.specifier.filter((candidate.version,))) for r in requirements])
-                # HACK(ww): Additionally check that each candidate's name matches the
-                # expected project name (identifier).
-                # This technically shouldn't be required, but parsing distribution names
-                # from package indices is imprecise/unreliable when distribution filenames
-                # are PEP 440 compliant but not normalized.
-                # See: https://github.com/pypa/packaging/issues/527
-                and candidate.name == identifier
-            ],
-            key=attrgetter("version", "is_wheel"),
-            reverse=True,
-        )
+        candidates: list[ResolvedCandidate]
+        try:
+            candidates = sorted(
+                [
+                    candidate
+                    for candidate in all_candidates
+                    if candidate.version not in bad_versions
+                    # NOTE(ww): We use `filter(...)` instead of checking
+                    # `candidate.version in r.specifier` because the former has subtle (and PEP 440
+                    # mandated) behavior around prereleases. Specifically, `filter(...)`
+                    # returns prereleases even if not explicitly configured, but only if
+                    # there are no non-prereleases.
+                    # See: https://github.com/pypa/pip-audit/issues/472
+                    and all([any(r.specifier.filter((candidate.version,))) for r in requirements])
+                    # HACK(ww): Additionally check that each candidate's name matches the
+                    # expected project name (identifier).
+                    # This technically shouldn't be required, but parsing distribution names
+                    # from package indices is imprecise/unreliable when distribution filenames
+                    # are PEP 440 compliant but not normalized.
+                    # See: https://github.com/pypa/packaging/issues/527
+                    and candidate.name == identifier
+                ],
+                key=attrgetter("version", "is_wheel"),
+                reverse=True,
+            )
+        except PyPINotFoundError as e:
+            yield SkippedCandidate(name=identifier, skip_reason=str(e))
+            return
 
         logger.debug(f"{identifier} has candidates: {candidates}")
 
@@ -465,6 +500,8 @@ class PyPIProvider(AbstractProvider):
         """
         See `resolvelib.providers.AbstractProvider.is_satisfied_by`.
         """
+        if isinstance(candidate, SkippedCandidate):
+            return True
 
         # See the NOTE in find_matches: we use `filter(...)` because of its
         # special casing around prereleases.
@@ -478,6 +515,9 @@ class PyPIProvider(AbstractProvider):
         """
         See `resolvelib.providers.AbstractProvider.get_dependencies`.
         """
+        if isinstance(candidate, SkippedCandidate):
+            return []
+
         return candidate.dependencies
 
 

@@ -17,6 +17,10 @@ All versions prior to 0.0.9 are untracked.
   with an internal API change
   ([#499](https://github.com/pypa/pip-audit/pull/499))
 
+* Fixed a dependency resolution bug that can potentially be triggered when
+  multiple packages have the same subdependency
+  ([#488](https://github.com/pypa/pip-audit/pull/488))
+
 ## [2.4.14]
 
 ### Fixed
