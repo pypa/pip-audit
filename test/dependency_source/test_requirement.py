@@ -139,6 +139,44 @@ def test_requirement_source_duplicate_dependencies(monkeypatch):
     assert len(specs) == len(set(specs))
 
 
+def test_requirement_source_duplicate_skipped_dependencies(monkeypatch):
+    req0 = Requirement("dep0==1.0")
+    req1 = Requirement("dep1==0.2")
+    req2 = Requirement("dep2==2.0")
+
+    dep0 = RequirementDependency("dep0", Version("1.0"))
+    dep1 = RequirementDependency("dep1", Version("0.2"))
+    dep2 = RequirementDependency("dep2", Version("2.0"))
+    skip_dep = SkippedDependency("dep3", "skipped for some reason")
+
+    class MockResolver(DependencyResolver):
+        def resolve(
+            self, reqs: list[Requirement], req_hashes: RequirementHashes
+        ) -> list[Dependency]:
+            if reqs == [req0, req1]:
+                return [dep0, dep1, skip_dep]
+            else:
+                assert reqs == [req2]
+                return [dep2, skip_dep]
+
+    path0 = Path("requirements0.txt")
+    path1 = Path("requirements1.txt")
+
+    def get_file_content_mock(filename: Path) -> str:
+        if filename == path0:
+            return "dep0==1.0\ndep1==0.2"
+        else:
+            assert filename == path1
+            return "dep2==2.0"
+
+    source = requirement.RequirementSource([path0, path1], MockResolver())
+
+    monkeypatch.setattr(pip_requirements_parser, "get_file_content", get_file_content_mock)
+
+    specs = set(source.collect())
+    assert specs == {dep0, dep1, dep2, skip_dep}
+
+
 @pytest.mark.online
 def test_requirement_source_invalid_lines(monkeypatch):
     source = requirement.RequirementSource([Path("requirements1.txt")], ResolveLibResolver())

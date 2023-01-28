@@ -230,27 +230,24 @@ class RequirementSource(DependencySource):
             # To know whether this is the case, we'll need to resolve dependencies if we haven't
             # already in order to figure out whether this subdependency belongs to this file or
             # another.
-            try:
-                if not fixed:
-                    req_dep = cast(RequirementDependency, fix_version.dep)
-                    if req_dep.dependee_reqs:
-                        logger.warning(
-                            "added fixed subdependency explicitly to requirements file "
-                            f"{filename}: {fix_version.dep.canonical_name}"
-                        )
-                        dependee_reqs_formatted = ",".join(
-                            [
-                                str(req)
-                                for req in sorted(list(req_dep.dependee_reqs), key=lambda x: x.name)
-                            ]
-                        )
-                        print(
-                            f"    # pip-audit: subdependency fixed via {dependee_reqs_formatted}",
-                            file=f,
-                        )
-                        print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
-            except DependencyResolverError as dre:
-                raise RequirementFixError(str(dre)) from dre
+            if not fixed:
+                req_dep = cast(RequirementDependency, fix_version.dep)
+                if req_dep.dependee_reqs:
+                    logger.warning(
+                        "added fixed subdependency explicitly to requirements file "
+                        f"{filename}: {fix_version.dep.canonical_name}"
+                    )
+                    dependee_reqs_formatted = ",".join(
+                        [
+                            str(req)
+                            for req in sorted(list(req_dep.dependee_reqs), key=lambda x: x.name)
+                        ]
+                    )
+                    print(
+                        f"    # pip-audit: subdependency fixed via {dependee_reqs_formatted}",
+                        file=f,
+                    )
+                    print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
 
     def _recover_files(self, tmp_files: list[IO[str]]) -> None:
         for (filename, tmp_file) in zip(self._filenames, tmp_files):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from email.message import EmailMessage
+from typing import Iterator
 
 import pretend
 import pytest
@@ -527,3 +528,40 @@ def test_resolvelib_no_links(monkeypatch):
         )
     ]
     assert resolved_deps == expected_deps
+
+
+def test_resolvelib_circular_dependency(monkeypatch):
+    data = (
+        '<a href="https://foobar.org/foo-1.0-py3-none-any.whl">foo-1.0-py3-none-any.whl</a><br/>'
+        '<a href="https://foobar.org/bar-0.1-py3-none-any.whl">bar-0.1-py3-none-any.whl</a><br/>'
+        '<a href="https://foobar.org/test-2.0-py3-none-any.whl">test-2.0-py3-none-any.whl</a><br/>'
+    )
+
+    foo = Requirement("foo==1.0")
+    bar = Requirement("bar==0.1")
+    test = Requirement("test==2.0")
+
+    # Simulate a situation where we have circular dependencies. We have some code that detects
+    # cycle when we backtrack the dependency tree to figure out what dependee requirements map to
+    # what dependencies.
+    def mock_dependencies(candidate: pypi_provider.ResolvedCandidate) -> Iterator[Requirement]:
+        if candidate.name == "foo":
+            yield bar
+        elif candidate.name == "bar":
+            yield test
+        else:
+            assert candidate.name == "test"
+            yield bar
+
+    monkeypatch.setattr(pypi_provider.ResolvedCandidate, "_get_dependencies", mock_dependencies)
+
+    resolver = resolvelib.ResolveLibResolver()
+    monkeypatch.setattr(resolver.session, "get", lambda _url, **kwargs: get_package_mock(data))
+
+    reqs = [foo]
+    resolved_deps = resolver.resolve(reqs, RequirementHashes())
+    assert resolved_deps == [
+        RequirementDependency("foo", Version("1.0"), dependee_reqs={foo}),
+        RequirementDependency("bar", Version("0.1"), dependee_reqs={foo}),
+        RequirementDependency("test", Version("2.0"), dependee_reqs={foo}),
+    ]

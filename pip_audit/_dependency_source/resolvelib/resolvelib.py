@@ -152,13 +152,11 @@ def _dependee_reqs_for_candidate(
         if req in reqs:
             return {req}
         seen.append(req)
-        if req in dependee_map:
-            dependees = set()
-            for r in dependee_map[req]:
-                dependees |= find_dependees(r)
-            return dependees
+        dependees = set()
+        for r in dependee_map[req]:
+            dependees |= find_dependees(r)
         seen.pop()
-        return set()
+        return dependees
 
     dependee_reqs = set()
     for req in candidate.reqs:

@@ -78,10 +78,6 @@ class PyProjectSource(DependencySource):
             req_hashes = RequirementHashes()
             try:
                 for dep in self.resolver.resolve(reqs, req_hashes):
-                    # Don't allow duplicate dependencies to be returned
-                    if dep in collected:
-                        continue
-
                     if dep.is_skipped():  # pragma: no cover
                         dep = cast(SkippedDependency, dep)
                         self.state.update_state(f"Skipping {dep.name}: {dep.skip_reason}")
