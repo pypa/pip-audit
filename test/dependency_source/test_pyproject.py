@@ -20,6 +20,7 @@ from pip_audit._dependency_source.interface import (
     RequirementHashes,
     ResolvedFixVersion,
 )
+from pip_audit._dependency_source.requirement import RequirementDependency
 from pip_audit._service import Dependency, ResolvedDependency
 
 
@@ -46,7 +47,12 @@ dependencies = [
     """,
     )
     specs = list(source.collect())
-    assert ResolvedDependency("flask", Version("2.0.1")) in specs
+    assert (
+        RequirementDependency(
+            "flask", Version("2.0.1"), dependee_reqs={Requirement("flask==2.0.1")}
+        )
+        in specs
+    )
 
 
 def test_pyproject_source_no_project_section(req_file):
