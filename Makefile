@@ -65,7 +65,6 @@ lint: $(VENV)/pyvenv.cfg
 .PHONY: reformat
 reformat:
 	. $(VENV_BIN)/activate && \
-		black $(ALL_PY_SRCS) && \
 		ruff --fix $(ALL_PY_SRCS) && \
 		black $(ALL_PY_SRCS) && \
 		isort $(ALL_PY_SRCS)
