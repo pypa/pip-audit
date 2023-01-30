@@ -25,8 +25,8 @@ from pip_audit._dependency_source import (
     DependencyResolverError,
     DependencySource,
     DependencySourceError,
-    RequirementHashes,
     InvalidRequirementSpecifier,
+    RequirementHashes,
 )
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
