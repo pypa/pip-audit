@@ -86,6 +86,13 @@ class UnsupportedHashAlgorithm(Exception):
     pass
 
 
+class InvalidRequirementSpecifier(DependencySourceError):
+    """
+    A `DependencySourceError` specialized for the case of a non-PEP 440 requirements
+    specifier.
+    """
+
+
 class RequirementHashes:
     """
     Represents the hashes contained within a requirements file.

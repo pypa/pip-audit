@@ -10,6 +10,7 @@ from .interface import (
     DependencySourceError,
     HashMismatchError,
     HashMissingError,
+    InvalidRequirementSpecifier,
     RequirementHashes,
     UnsupportedHashAlgorithm,
 )
@@ -27,6 +28,7 @@ __all__ = [
     "DependencySourceError",
     "HashMismatchError",
     "HashMissingError",
+    "InvalidRequirementSpecifier",
     "PipSource",
     "PipSourceError",
     "PyProjectSource",

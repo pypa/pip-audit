@@ -33,8 +33,11 @@ from packaging.version import Version
 from resolvelib.providers import AbstractProvider
 from resolvelib.resolvers import RequirementInformation
 
-from pip_audit._dependency_source import RequirementHashes, UnsupportedHashAlgorithm
-from pip_audit._dependency_source.interface import DependencySourceError
+from pip_audit._dependency_source import (
+    InvalidRequirementSpecifier,
+    RequirementHashes,
+    UnsupportedHashAlgorithm,
+)
 from pip_audit._service import SkippedDependency
 from pip_audit._state import AuditState
 from pip_audit._util import python_version
@@ -141,7 +144,9 @@ class ResolvedCandidate(Candidate):
             try:
                 r = Requirement(d)
             except InvalidRequirement as exc:
-                raise DependencySourceError(f"{self.name} has invalid requirement {d}: {exc}")
+                raise InvalidRequirementSpecifier(
+                    f"{self.name} has invalid requirement '{d}': {exc}"
+                )
 
             if r.marker is None:
                 yield r
@@ -449,18 +454,21 @@ class PyPIProvider(AbstractProvider):
             extras |= r.extras
 
         try:
-            # Need to pass the extras to the search, so they
-            # are added to the candidate at creation - we
-            # treat candidates as immutable once created.
-            all_candidates = get_project_from_indexes(
-                self.index_urls,
-                self.session,
-                identifier,
-                requirements,
-                extras,
-                self.req_hashes,
-                self.timeout,
-                self._state,
+            # Need to pass the extras to the search, so that  they are added to the candidate at
+            # creation, since we treat candidates as immutable once created.
+            # We also eagerly collect the candidate list here, to pull any "not found"
+            # exceptions out before doing candidate filtering below.
+            all_candidates = list(
+                get_project_from_indexes(
+                    self.index_urls,
+                    self.session,
+                    identifier,
+                    requirements,
+                    extras,
+                    self.req_hashes,
+                    self.timeout,
+                    self._state,
+                )
             )
         except PyPINotFoundError as exc:
             yield SkippedCandidate(name=identifier, skip_reason=str(exc))
