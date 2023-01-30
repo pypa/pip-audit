@@ -26,6 +26,7 @@ from pip_audit._dependency_source import (
     DependencySource,
     DependencySourceError,
     RequirementHashes,
+    InvalidRequirementSpecifier,
 )
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
@@ -89,10 +90,11 @@ class RequirementSource(DependencySource):
         for filename in self._filenames:
             try:
                 rf = RequirementsFile.from_file(filename)
-                if rf.invalid_lines:
-                    raise RequirementSourceError(
-                        f"requirement file {filename} contains invalid lines: "
-                        f"{str(rf.invalid_lines)}"
+                if len(rf.invalid_lines) > 0:
+                    invalid = rf.invalid_lines[0]
+                    raise InvalidRequirementSpecifier(
+                        f"requirement file {filename} contains invalid specifier at "
+                        f"line {invalid.line_number}: {invalid.error_message}"
                     )
 
                 reqs: list[InstallRequirement] = []
