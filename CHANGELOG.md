@@ -8,6 +8,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.4.15]
+
 ### Fixed
 
 * Fixed an issue where hash checking would fail when using third-party indices
@@ -447,7 +449,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.4.14...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.4.15...HEAD
+[2.4.15]: https://github.com/pypa/pip-audit/compare/v2.4.14...v2.4.15
 [2.4.14]: https://github.com/pypa/pip-audit/compare/v2.4.13...v2.4.14
 [2.4.13]: https://github.com/pypa/pip-audit/compare/v2.4.12...v2.4.13
 [2.4.12]: https://github.com/pypa/pip-audit/compare/v2.4.11...v2.4.12
