@@ -1,3 +1,4 @@
+from email.message import Message
 from pathlib import Path
 from subprocess import CalledProcessError
 
@@ -6,12 +7,13 @@ import pytest
 from packaging.version import Version
 
 from pip_audit._dependency_source import RequirementHashes
+from pip_audit._dependency_source.interface import InvalidRequirementSpecifier
 from pip_audit._dependency_source.resolvelib import pypi_provider
 from pip_audit._dependency_source.resolvelib.pypi_provider import ResolvedCandidate
 from pip_audit._virtual_env import VirtualEnvError
 
 
-class TestCandidate:
+class TestResolvedCandidate:
     def test_get_metadata_for_sdist_venv_create_fails(self, monkeypatch):
         virtualenv_obj = pretend.stub(
             create=pretend.call_recorder(
@@ -52,6 +54,30 @@ class TestCandidate:
         assert state.update_state.calls[1] == pretend.call(
             "Installing source distribution in isolated environment for fakepkg (1.0.0)"
         )
+
+    @pytest.mark.parametrize("invalid", ["pytz (>dev)", "fakedep>=3.*"])
+    def test_get_dependencies_invalid_req_specifer(self, invalid, monkeypatch):
+        candidate = ResolvedCandidate(
+            "fakepkg",
+            "fakepkg",
+            Path("fakepath"),
+            Version("1.0.0"),
+            url="hxxps://fake.url",
+            extras=set(),
+            is_wheel=False,
+            reqs=[],
+            session=pretend.stub(),
+            timeout=None,
+            state=pretend.stub(),
+            req_hashes=RequirementHashes(),
+        )
+
+        metadata = Message()
+        metadata["Requires-Dist"] = invalid
+        monkeypatch.setattr(candidate, "_metadata", metadata)
+
+        with pytest.raises(InvalidRequirementSpecifier):
+            list(candidate._get_dependencies())
 
 
 def test_get_project_from_index_relative_url():

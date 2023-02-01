@@ -26,14 +26,18 @@ from zipfile import ZipFile
 import html5lib
 import requests
 from cachecontrol import CacheControl
-from packaging.requirements import Requirement
+from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel_filename
 from packaging.version import Version
 from resolvelib.providers import AbstractProvider
 from resolvelib.resolvers import RequirementInformation
 
-from pip_audit._dependency_source import RequirementHashes, UnsupportedHashAlgorithm
+from pip_audit._dependency_source import (
+    InvalidRequirementSpecifier,
+    RequirementHashes,
+    UnsupportedHashAlgorithm,
+)
 from pip_audit._service import SkippedDependency
 from pip_audit._state import AuditState
 from pip_audit._util import python_version
@@ -134,7 +138,16 @@ class ResolvedCandidate(Candidate):
         extras = self.extras if self.extras else [""]
 
         for d in deps:
-            r = Requirement(d)
+            # NOTE: packaging 22 and later are more strict about PEP 440 requirements,
+            # meaning that pre-existing packages might have invalid requirements
+            # specifiers in their dependency sets (e.g. `pytz (>dev)`).
+            try:
+                r = Requirement(d)
+            except InvalidRequirement as exc:
+                raise InvalidRequirementSpecifier(
+                    f"{self.name} has invalid requirement '{d}': {exc}"
+                )
+
             if r.marker is None:
                 yield r
             else:
@@ -440,48 +453,50 @@ class PyPIProvider(AbstractProvider):
         for r in requirements:
             extras |= r.extras
 
-        # Need to pass the extras to the search, so they
-        # are added to the candidate at creation - we
-        # treat candidates as immutable once created.
-        all_candidates = get_project_from_indexes(
-            self.index_urls,
-            self.session,
-            identifier,
-            requirements,
-            extras,
-            self.req_hashes,
-            self.timeout,
-            self._state,
-        )
-
-        candidates: list[ResolvedCandidate]
         try:
-            candidates = sorted(
-                [
-                    candidate
-                    for candidate in all_candidates
-                    if candidate.version not in bad_versions
-                    # NOTE(ww): We use `filter(...)` instead of checking
-                    # `candidate.version in r.specifier` because the former has subtle (and PEP 440
-                    # mandated) behavior around prereleases. Specifically, `filter(...)`
-                    # returns prereleases even if not explicitly configured, but only if
-                    # there are no non-prereleases.
-                    # See: https://github.com/pypa/pip-audit/issues/472
-                    and all([any(r.specifier.filter((candidate.version,))) for r in requirements])
-                    # HACK(ww): Additionally check that each candidate's name matches the
-                    # expected project name (identifier).
-                    # This technically shouldn't be required, but parsing distribution names
-                    # from package indices is imprecise/unreliable when distribution filenames
-                    # are PEP 440 compliant but not normalized.
-                    # See: https://github.com/pypa/packaging/issues/527
-                    and candidate.name == identifier
-                ],
-                key=attrgetter("version", "is_wheel"),
-                reverse=True,
+            # Need to pass the extras to the search, so that  they are added to the candidate at
+            # creation, since we treat candidates as immutable once created.
+            # We also eagerly collect the candidate list here, to pull any "not found"
+            # exceptions out before doing candidate filtering below.
+            all_candidates = list(
+                get_project_from_indexes(
+                    self.index_urls,
+                    self.session,
+                    identifier,
+                    requirements,
+                    extras,
+                    self.req_hashes,
+                    self.timeout,
+                    self._state,
+                )
             )
-        except PyPINotFoundError as e:
-            yield SkippedCandidate(name=identifier, skip_reason=str(e))
+        except PyPINotFoundError as exc:
+            yield SkippedCandidate(name=identifier, skip_reason=str(exc))
             return
+
+        candidates: list[ResolvedCandidate] = sorted(
+            [
+                candidate
+                for candidate in all_candidates
+                if candidate.version not in bad_versions
+                # NOTE(ww): We use `filter(...)` instead of checking
+                # `candidate.version in r.specifier` because the former has subtle (and PEP 440
+                # mandated) behavior around prereleases. Specifically, `filter(...)`
+                # returns prereleases even if not explicitly configured, but only if
+                # there are no non-prereleases.
+                # See: https://github.com/pypa/pip-audit/issues/472
+                and all([any(r.specifier.filter((candidate.version,))) for r in requirements])
+                # HACK(ww): Additionally check that each candidate's name matches the
+                # expected project name (identifier).
+                # This technically shouldn't be required, but parsing distribution names
+                # from package indices is imprecise/unreliable when distribution filenames
+                # are PEP 440 compliant but not normalized.
+                # See: https://github.com/pypa/packaging/issues/527
+                and candidate.name == identifier
+            ],
+            key=attrgetter("version", "is_wheel"),
+            reverse=True,
+        )
 
         logger.debug(f"{identifier} has candidates: {candidates}")
 

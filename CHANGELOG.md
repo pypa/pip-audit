@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Changed
+
+* Improved error messaging when a requirements input or indirect dependency
+  has an invalid (non-PEP 440) requirements specifier
+  ([#507](https://github.com/pypa/pip-audit/pull/507))
+
 ## [2.4.15]
 
 ### Fixed
