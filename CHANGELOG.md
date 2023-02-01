@@ -16,6 +16,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [2.4.15]
 
+**YANKED**
+
 ### Fixed
 
 * Fixed an issue where hash checking would fail when using third-party indices
