@@ -172,7 +172,7 @@ class RequirementSource(DependencySource):
             tmp_files: list[IO[str]] = [
                 stack.enter_context(NamedTemporaryFile(mode="w")) for _ in self._filenames
             ]
-            for (filename, tmp_file) in zip(self._filenames, tmp_files):
+            for filename, tmp_file in zip(self._filenames, tmp_files):
                 with filename.open("r") as f:
                     shutil.copyfileobj(f, tmp_file)
 
@@ -260,7 +260,7 @@ class RequirementSource(DependencySource):
                     print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
 
     def _recover_files(self, tmp_files: list[IO[str]]) -> None:
-        for (filename, tmp_file) in zip(self._filenames, tmp_files):
+        for filename, tmp_file in zip(self._filenames, tmp_files):
             try:
                 os.replace(tmp_file.name, filename)
                 # We need to tinker with the internals to prevent the file wrapper from attempting

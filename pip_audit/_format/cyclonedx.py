@@ -25,7 +25,7 @@ class _PipAuditResultParser(BaseParser):
     def __init__(self, result: dict[service.Dependency, list[service.VulnerabilityResult]]):
         super().__init__()
 
-        for (dep, vulns) in result.items():
+        for dep, vulns in result.items():
             # TODO(alex): Is there anything interesting we can do with skipped dependencies in
             # the CycloneDX format?
             if dep.is_skipped():
