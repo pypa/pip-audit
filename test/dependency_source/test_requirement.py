@@ -260,7 +260,7 @@ def _check_fixes(
     fixes: list[ResolvedFixVersion],
 ) -> None:
     # Populate the requirements files
-    for (input_req, req_path) in zip(input_reqs, req_paths):
+    for input_req, req_path in zip(input_reqs, req_paths):
         with open(req_path, "w") as f:
             print(input_req, file=f)
 
@@ -269,7 +269,7 @@ def _check_fixes(
         source.fix(fix)
 
     # Check the requirements files
-    for (expected_req, req_path) in zip(expected_reqs, req_paths):
+    for expected_req, req_path in zip(expected_reqs, req_paths):
         with open(req_path) as f:
             # NOTE: We don't make any guarantees about non-semantic whitespace
             # preservation, hence the strip.
@@ -379,7 +379,7 @@ def test_requirement_source_fix_parse_failure(monkeypatch, req_file):
     req_paths = [req_file(), req_file()]
 
     # Populate the requirements files
-    for (input_req, req_path) in zip(input_reqs, req_paths):
+    for input_req, req_path in zip(input_reqs, req_paths):
         with open(req_path, "w") as f:
             f.write(input_req)
 
@@ -394,7 +394,7 @@ def test_requirement_source_fix_parse_failure(monkeypatch, req_file):
 
     # Check that the requirements files remain unchanged
     # If we encounter a failure while applying a fix, the fix should be rolled back from all files
-    for (expected_req, req_path) in zip(input_reqs, req_paths):
+    for expected_req, req_path in zip(input_reqs, req_paths):
         with open(req_path) as f:
             assert expected_req == f.read().strip()
 
@@ -409,7 +409,7 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
     req_paths = [req_file(), req_file()]
 
     # Populate the requirements files
-    for (input_req, req_path) in zip(input_reqs, req_paths):
+    for input_req, req_path in zip(input_reqs, req_paths):
         with open(req_path, "w") as f:
             f.write(input_req)
 
@@ -433,7 +433,7 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
     # fix. The first requirements file contains the fix, while the second one doesn't since we were
     # in the process of writing it out and didn't flush.
     expected_reqs = ["flask==1.0", "flask==0.5\nrequests==2.0\nflask==0.3"]
-    for (expected_req, req_path) in zip(expected_reqs, req_paths):
+    for expected_req, req_path in zip(expected_reqs, req_paths):
         with open(req_path) as f:
             assert expected_req == f.read().strip()
 
