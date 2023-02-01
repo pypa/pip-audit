@@ -70,7 +70,7 @@ def resolve_fix_versions(
     Resolves a mapping of dependencies to known vulnerabilities to a series of fix versions without
     known vulnerabilities.
     """
-    for (dep, vulns) in result.items():
+    for dep, vulns in result.items():
         if dep.is_skipped():
             continue
         if not vulns:
