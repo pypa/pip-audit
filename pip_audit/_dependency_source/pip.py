@@ -108,7 +108,7 @@ class PipSource(DependencySource):
         # The `pip list` call that underlies `pip_api` could fail for myriad reasons.
         # We collect them all into a single well-defined error.
         try:
-            for (_, dist) in pip_api.installed_distributions(
+            for _, dist in pip_api.installed_distributions(
                 local=self._local, paths=list(self._paths)
             ).items():
                 dep: Dependency

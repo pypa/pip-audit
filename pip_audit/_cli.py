@@ -449,7 +449,7 @@ def audit() -> None:  # pragma: no cover
         vuln_ignore_count = 0
         vulns_to_ignore = set(args.ignore_vulns)
         try:
-            for (spec, vulns) in auditor.audit(source):
+            for spec, vulns in auditor.audit(source):
                 if spec.is_skipped():
                     spec = cast(SkippedDependency, spec)
                     if args.strict:
