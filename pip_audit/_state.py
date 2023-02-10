@@ -23,7 +23,7 @@ class AuditState:
     user requests.
     """
 
-    def __init__(self, *, members: Sequence["_StateActor"] = []):
+    def __init__(self, *, members: Sequence[_StateActor] = []):
         """
         Create a new `AuditState` with the given member list.
         """
@@ -56,7 +56,7 @@ class AuditState:
         for member in self._members:
             member.finalize()
 
-    def __enter__(self) -> "AuditState":  # pragma: no cover
+    def __enter__(self) -> AuditState:  # pragma: no cover
         """
         Create an instance of the `pip-audit` state for usage within a `with` statement.
         """
