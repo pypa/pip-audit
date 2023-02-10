@@ -60,7 +60,7 @@ class CycloneDxFormat(VulnerabilityFormat):
         Json = output.OutputFormat.JSON
         Xml = output.OutputFormat.XML
 
-    def __init__(self, inner_format: "CycloneDxFormat.InnerFormat"):
+    def __init__(self, inner_format: CycloneDxFormat.InnerFormat):
         """
         Create a new `CycloneDxFormat`.
 
