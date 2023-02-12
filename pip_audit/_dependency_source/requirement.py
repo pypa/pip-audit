@@ -11,7 +11,8 @@ import shutil
 from contextlib import ExitStack
 from dataclasses import dataclass, field
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from subprocess import CalledProcessError
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import IO, Iterator, cast
 
 from packaging.requirements import Requirement
@@ -22,16 +23,15 @@ from pip_requirements_parser import InstallRequirement, InvalidRequirementLine, 
 from pip_audit._dependency_source import (
     DependencyFixError,
     DependencyResolver,
-    DependencyResolverError,
     DependencySource,
     DependencySourceError,
-    InvalidRequirementSpecifier,
     RequirementHashes,
 )
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState
+from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
 
 logger = logging.getLogger(__name__)
 
@@ -86,81 +86,23 @@ class RequirementSource(DependencySource):
 
         Raises a `RequirementSourceError` on any errors.
         """
-        collected: dict[str, Dependency] = dict()
+        ve_args = []
         for filename in self._filenames:
-            try:
-                rf = RequirementsFile.from_file(filename)
-                if len(rf.invalid_lines) > 0:
-                    invalid = rf.invalid_lines[0]
-                    raise InvalidRequirementSpecifier(
-                        f"requirement file {filename} contains invalid specifier at "
-                        f"line {invalid.line_number}: {invalid.error_message}"
-                    )
+            ve_args.extend(["-r", str(filename)])
 
-                reqs: list[InstallRequirement] = []
-                req_names: set[str] = set()
-                for req in rf.requirements:
-                    if req.req is None:
-                        # For URL requirements that don't have an egg fragment that lists the
-                        # package name and version, `pip-requirements-parser` won't attach a
-                        # `Requirement` object to the `InstallRequirement`.
-                        #
-                        # In this case, we can't audit the dependency so we should signal to the
-                        # caller that we're skipping it.
-                        yield SkippedDependency(
-                            name=req.requirement_line.line,
-                            skip_reason="could not deduce package/specifier pair from requirement, "
-                            "please specify them with #egg=your_package_name==your_package_version",
-                        )
-                        continue
-                    if self._skip_editable and req.is_editable:
-                        yield SkippedDependency(
-                            name=req.name, skip_reason="requirement marked as editable"
-                        )
-                    if req.marker is None or req.marker.evaluate():
-                        # This means we have a duplicate requirement for the same package
-                        if req.name in req_names:
-                            raise RequirementSourceError(
-                                f"package {req.name} has duplicate requirements: {str(req)}"
-                            )
-                        req_names.add(req.name)
-                        reqs.append(req)
+        # Try to install the supplied requirements files.
+        ve = VirtualEnv(ve_args, self.state)
+        try:
+            with TemporaryDirectory() as ve_dir:
+                ve.create(ve_dir)
+        except CalledProcessError as exc:
+            raise RequirementSourceError(str(exc)) from exc
+        except VirtualEnvError as exc:
+            raise RequirementSourceError(str(exc)) from exc
 
-                for dep in self._collect_cached_deps(filename, reqs):
-                    if dep.canonical_name in collected:
-                        existing_dep = collected[dep.canonical_name]
-                        if isinstance(dep, SkippedDependency) or isinstance(
-                            existing_dep, SkippedDependency
-                        ):
-                            # The `continue` statement is incorrectly flagged as uncovered for
-                            # Python <= 3.9.
-                            #
-                            # Let's add a `pass` here as a way to make sure this branch gets tested
-                            # and then mark the `continue` with `no cover`.
-                            #
-                            # See: https://github.com/pytest-dev/pytest-cov/issues/546
-                            pass
-                            continue  # pragma: no cover
-
-                        dep = cast(RequirementDependency, dep)
-                        existing_dep = cast(RequirementDependency, existing_dep)
-
-                        # If we have the same dependency generated from multiple files, we need to
-                        # merge the dependee requirements.
-                        combined_dep = RequirementDependency(
-                            name=dep.name,
-                            version=dep.version,
-                            dependee_reqs=(dep.dependee_reqs | existing_dep.dependee_reqs),
-                        )
-
-                        collected[dep.canonical_name] = combined_dep
-                        continue
-
-                    collected[dep.canonical_name] = dep
-            except DependencyResolverError as dre:
-                raise RequirementSourceError(str(dre))
-
-        yield from collected.values()
+        # Now query the installed packages.
+        for name, version in ve.installed_packages:
+            yield ResolvedDependency(name=name, version=version)
 
     def fix(self, fix_version: ResolvedFixVersion) -> None:
         """
