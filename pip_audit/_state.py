@@ -9,7 +9,11 @@ from abc import ABC, abstractmethod
 from logging.handlers import MemoryHandler
 from typing import Any, Sequence
 
-from rich.console import Console
+from rich.align import StyleType
+from rich.console import Console, Group, RenderableType
+from rich.live import Live
+from rich.panel import Panel
+from rich.status import Spinner
 
 
 class AuditState:
@@ -30,7 +34,7 @@ class AuditState:
 
         self._members = members
 
-    def update_state(self, message: str) -> None:
+    def update_state(self, message: str, logs: str | None = None) -> None:
         """
         Called whenever `pip_audit`'s internal state changes in a way that's meaningful to
         expose to a user.
@@ -39,7 +43,7 @@ class AuditState:
         """
 
         for member in self._members:
-            member.update_state(message)
+            member.update_state(message, logs)
 
     def initialize(self) -> None:
         """
@@ -76,7 +80,7 @@ class AuditState:
 
 class _StateActor(ABC):
     @abstractmethod
-    def update_state(self, message: str) -> None:
+    def update_state(self, message: str, logs: str | None = None) -> None:
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
@@ -98,6 +102,96 @@ class _StateActor(ABC):
         raise NotImplementedError  # pragma: no cover
 
 
+class StatusLog:
+    """
+    Displays a status indicator with an optional log panel to display logs
+    for external processes.
+
+    This code is based off of Rich's `Status` component:
+        https://github.com/Textualize/rich/blob/master/rich/status.py
+    """
+
+    def __init__(
+        self,
+        status: str,
+        *,
+        console: Console | None = None,
+        spinner: str = "dots",
+        spinner_style: StyleType = "status.spinner",
+        speed: float = 1.0,
+        refresh_per_second: float = 12.5,
+    ):
+        """
+        Construct a new `StatusLog`.
+
+        `status` is the status message to display next to the spinner.
+        `console` is the Rich console to display the log status in.
+        `spinner` is the name of the spinner animation (see python -m rich.spinner). Defaults to `dots`.
+        `spinner_style` is the style of the spinner. Defaults to `status.spinner`.
+        `speed` is the speed factor for the spinner animation. Defaults to 1.0.
+        `refresh_per_second` is the number of refreshes per second. Defaults to 12.5.
+        """
+
+        self._spinner = Spinner(spinner, text=status, style=spinner_style, speed=speed)
+        self._log_panel = Panel(None, height=10)
+        self._live = Live(
+            self.renderable,
+            console=console,
+            refresh_per_second=refresh_per_second,
+            transient=True,
+        )
+
+    @property
+    def renderable(self) -> RenderableType:
+        """
+        Create a Rich renderable type for the log panel.
+
+        If the log panel contains text, we should create a group and place the
+        log panel underneath the spinner.
+        """
+
+        if self._log_panel.renderable:
+            return Group(self._spinner, self._log_panel)
+        return self._spinner
+
+    def update(
+        self,
+        status: str,
+        logs: str | None,
+    ) -> None:
+        """
+        Update status and logs.
+        """
+
+        # Limit the logging output to the 10 most recent lines.
+        if logs is not None:
+            logs = "\n".join(logs.splitlines()[-10:])
+        self._spinner.update(text=status)
+        self._log_panel.renderable = logs
+        self._live.update(self.renderable, refresh=True)
+
+    def start(self) -> None:
+        """
+        Start the status animation.
+        """
+
+        self._live.start()
+
+    def stop(self) -> None:
+        """
+        Stop the spinner animation.
+        """
+
+        self._live.stop()
+
+    def __rich__(self) -> RenderableType:
+        """
+        Convert to a Rich renderable type.
+        """
+
+        return self.renderable
+
+
 class AuditSpinner(_StateActor):  # pragma: no cover
     """
     A progress spinner for `pip-audit`, using `rich.status`'s spinner support
@@ -111,7 +205,9 @@ class AuditSpinner(_StateActor):  # pragma: no cover
 
         self._console = Console()
         # NOTE: audits can be quite fast, so we need a pretty high refresh rate here.
-        self._spinner = self._console.status(message, spinner="line", refresh_per_second=30)
+        self._spinner = StatusLog(
+            message, console=self._console, spinner="line", refresh_per_second=30
+        )
 
         # Keep the target set to `None` to ensure that the logs don't get written until the spinner
         # has finished writing output, regardless of the capacity argument
@@ -120,12 +216,12 @@ class AuditSpinner(_StateActor):  # pragma: no cover
         )
         self.prev_handlers: list[logging.Handler] = []
 
-    def update_state(self, message: str) -> None:
+    def update_state(self, message: str, logs: str | None) -> None:
         """
         Update the spinner's state.
         """
 
-        self._spinner.update(message)
+        self._spinner.update(message, logs)
 
     def initialize(self) -> None:
         """

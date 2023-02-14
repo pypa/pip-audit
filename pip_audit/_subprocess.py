@@ -45,7 +45,7 @@ def run(args: Sequence[str], *, state: AuditState = AuditState()) -> str:
     while not terminated:
         terminated = process.poll() is not None
         stdout += process.stdout.read(4096)  # type: ignore
-        state.update_state(f"Running {pretty_args}")
+        state.update_state(f"Running {pretty_args}", stdout.decode())
 
     if process.returncode != 0:
         raise CalledProcessError(f"{pretty_args} exited with {process.returncode}")
