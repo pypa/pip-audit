@@ -111,6 +111,8 @@ class StatusLog:
         https://github.com/Textualize/rich/blob/master/rich/status.py
     """
 
+    LOG_PANEL_HEIGHT = 10
+
     def __init__(
         self,
         status: str,
@@ -133,7 +135,7 @@ class StatusLog:
         """
 
         self._spinner = Spinner(spinner, text=status, style=spinner_style, speed=speed)
-        self._log_panel = Panel(None, height=10)
+        self._log_panel = Panel("", height=self.LOG_PANEL_HEIGHT)
         self._live = Live(
             self.renderable,
             console=console,
@@ -163,9 +165,11 @@ class StatusLog:
         Update status and logs.
         """
 
-        # Limit the logging output to the 10 most recent lines.
-        if logs is not None:
-            logs = "\n".join(logs.splitlines()[-10:])
+        if logs is None:
+            logs = ""
+        else:
+            # Limit the logging output to the 10 most recent lines.
+            logs = "\n".join(logs.splitlines()[-self.LOG_PANEL_HEIGHT :])
         self._spinner.update(text=status)
         self._log_panel.renderable = logs
         self._live.update(self.renderable, refresh=True)
