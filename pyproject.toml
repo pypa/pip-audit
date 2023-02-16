@@ -35,7 +35,6 @@ dependencies = [
     "packaging>=23.0.0",  # https://github.com/pypa/pip-audit/issues/464
     "pip-api>=0.0.28",
     "pip-requirements-parser>=32.0.0",
-    "resolvelib>=0.8.0",
     "rich>=12.4",
     "toml>=0.10",
 ]
