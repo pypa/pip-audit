@@ -111,6 +111,9 @@ class StatusLog:
         https://github.com/Textualize/rich/blob/master/rich/status.py
     """
 
+    # NOTE(alex): We limit the panel to 10 characters high and display the last 10 log lines.
+    # However, the panel won't display all 10 of those lines if some of the lines are long enough
+    # to wrap in the panel.
     LOG_PANEL_HEIGHT = 10
 
     def __init__(
