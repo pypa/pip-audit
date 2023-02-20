@@ -223,7 +223,7 @@ class AuditSpinner(_StateActor):  # pragma: no cover
         )
         self.prev_handlers: list[logging.Handler] = []
 
-    def update_state(self, message: str, logs: str | None) -> None:
+    def update_state(self, message: str, logs: str | None = None) -> None:
         """
         Update the spinner's state.
         """

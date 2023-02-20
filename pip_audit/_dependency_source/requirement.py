@@ -25,7 +25,6 @@ from pip_audit._dependency_source import (
     DependencyFixError,
     DependencySource,
     DependencySourceError,
-    RequirementHashes,
 )
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
@@ -257,57 +256,6 @@ class RequirementSource(DependencySource):
                 mapping[algorithm] = []
             mapping[algorithm].append(hash_)
         return mapping
-
-    def _collect_cached_deps(
-        self, filename: Path, reqs: list[InstallRequirement]
-    ) -> Iterator[Dependency]:
-        """
-        Collect resolved dependencies for a given requirements file, retrieving them from the
-        dependency cache if possible.
-        """
-        # See if we've already have cached dependencies for this file
-        cached_deps_for_file = self._dep_cache.get(filename, None)
-        if cached_deps_for_file is not None:
-            yield from cached_deps_for_file
-
-        new_cached_deps_for_file: set[Dependency] = set()
-
-        # Skip dependency resolution if the user has specified `--no-deps`
-        if self._no_deps:
-            for req, dep in self._collect_preresolved_deps(iter(reqs)):
-                new_cached_deps_for_file.add(dep)
-                yield dep
-        else:
-            require_hashes = self._require_hashes or any(req.hash_options for req in reqs)
-            req_hashes = RequirementHashes()
-
-            # If we're requiring hashes, enforce that all requirements are hashed
-            if require_hashes:
-                for hash_req in reqs:
-                    if not hash_req.hash_options:
-                        raise RequirementSourceError(
-                            f"requirement {hash_req.name} does not contain a hash {str(hash_req)}"
-                        )
-                    req_hashes.add_req(
-                        hash_req.name, self._build_hash_options_mapping(hash_req.hash_options)
-                    )
-
-            # Invoke the dependency resolver to turn requirements into dependencies
-            req_values: list[Requirement] = [r.req for r in reqs]
-            for dep in self._resolver.resolve(req_values, req_hashes):
-                new_cached_deps_for_file.add(dep)
-
-                if dep.is_skipped():  # pragma: no cover
-                    dep = cast(SkippedDependency, dep)
-                    self.state.update_state(f"Skipping {dep.name}: {dep.skip_reason}")
-                else:
-                    dep = cast(ResolvedDependency, dep)
-                    self.state.update_state(f"Collecting {dep.name} ({dep.version})")
-
-                yield dep
-
-        # Cache the collected dependencies
-        self._dep_cache[filename] = new_cached_deps_for_file
 
 
 class RequirementSourceError(DependencySourceError):
