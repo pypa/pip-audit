@@ -21,8 +21,8 @@ from packaging.version import Version
 from pip_requirements_parser import InstallRequirement, InvalidRequirementLine, RequirementsFile
 
 from pip_audit._dependency_source import (
+    PYPI_URL,
     DependencyFixError,
-    DependencyResolver,
     DependencySource,
     DependencySourceError,
     RequirementHashes,
@@ -46,19 +46,17 @@ class RequirementSource(DependencySource):
     def __init__(
         self,
         filenames: list[Path],
-        resolver: DependencyResolver,
         *,
         require_hashes: bool = False,
         no_deps: bool = False,
         skip_editable: bool = False,
+        index_urls: list[str] = [PYPI_URL],
         state: AuditState = AuditState(),
     ) -> None:
         """
         Create a new `RequirementSource`.
 
         `filenames` provides the list of filepaths to parse.
-
-        `resolver` is the `DependencyResolver` instance to use.
 
         `require_hashes` controls the hash policy: if `True`, dependency collection
         will fail unless all requirements include hashes.
@@ -70,13 +68,15 @@ class RequirementSource(DependencySource):
         `skip_editable` controls whether requirements marked as "editable" are skipped.
         By default, editable requirements are not skipped.
 
+        `index_urls` is a list of of package indices.
+
         `state` is an `AuditState` to use for state callbacks.
         """
         self._filenames = filenames
-        self._resolver = resolver
         self._require_hashes = require_hashes
         self._no_deps = no_deps
         self._skip_editable = skip_editable
+        self._index_urls = index_urls
         self.state = state
         self._dep_cache: dict[Path, set[Dependency]] = {}
 
@@ -91,7 +91,7 @@ class RequirementSource(DependencySource):
             ve_args.extend(["-r", str(filename)])
 
         # Try to install the supplied requirements files.
-        ve = VirtualEnv(ve_args, self.state)
+        ve = VirtualEnv(ve_args, self._index_urls, self.state)
         try:
             with TemporaryDirectory() as ve_dir:
                 ve.create(ve_dir)

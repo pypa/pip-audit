@@ -15,8 +15,8 @@ from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 
 from pip_audit._dependency_source import (
+    PYPI_URL,
     DependencyFixError,
-    DependencyResolver,
     DependencySource,
     DependencySourceError,
 )
@@ -34,19 +34,18 @@ class PyProjectSource(DependencySource):
     """
 
     def __init__(
-        self, filename: Path, resolver: DependencyResolver, state: AuditState = AuditState()
+        self, filename: Path, index_urls: list[str] = [PYPI_URL], state: AuditState = AuditState()
     ) -> None:
         """
         Create a new `PyProjectSource`.
 
         `filename` provides a path to a `pyproject.toml` file
 
-        `resolver` is the `DependencyResolver` to use.
+        `index_urls` is a list of package indices.
 
         `state` is an `AuditState` to use for state callbacks.
         """
         self.filename = filename
-        self.resolver = resolver
         self.state = state
 
     def collect(self) -> Iterator[Dependency]:

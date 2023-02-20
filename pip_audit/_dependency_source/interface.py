@@ -7,10 +7,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Iterator
 
-from packaging.requirements import Requirement
-
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
+
+PYPI_URL = "https://pypi.org/simple/"
 
 
 class DependencySource(ABC):
@@ -160,33 +160,3 @@ class RequirementHashes:
         if req_name not in self.mapping:
             return []
         return list(self.mapping[req_name].keys())
-
-
-class DependencyResolver(ABC):
-    """
-    Represents an abstract resolver of Python dependencies that takes a list of
-    dependencies and returns all of their transitive dependencies.
-
-    Concrete dependency sources may use a resolver as part of their
-    implementation.
-    """
-
-    @abstractmethod
-    def resolve(
-        self, reqs: list[Requirement], req_hashes: RequirementHashes
-    ) -> list[Dependency]:  # pragma: no cover
-        """
-        Resolve a list of `Requirement`s into a list of resolved `Dependency`s.
-        """
-        raise NotImplementedError
-
-
-class DependencyResolverError(Exception):
-    """
-    Raised when a `DependencyResolver` fails to resolve its dependencies.
-
-    Concrete implementations are expected to subclass this exception to
-    provide more context.
-    """
-
-    pass
