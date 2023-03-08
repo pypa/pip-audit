@@ -123,6 +123,8 @@ class VirtualEnv(venv.EnvBuilder):
             try:
                 run(package_install_cmd, log_stdout=True, state=self._state)
             except CalledProcessError as cpe:
+                # TODO: Propagate the subprocess's error output better here.
+                logger.error(f"internal pip failure: {cpe.stderr}")
                 raise VirtualEnvError(f"Failed to install packages: {package_install_cmd}") from cpe
 
             self._state.update_state("Processing package list from isolated environment")

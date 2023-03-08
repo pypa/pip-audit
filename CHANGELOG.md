@@ -14,6 +14,14 @@ All versions prior to 0.0.9 are untracked.
   has an invalid (non-PEP 440) requirements specifier
   ([#507](https://github.com/pypa/pip-audit/pull/507))
 
+* `pip-audit`'s handling of dependency resolution has been significantly
+  refactored and simplified ([#523](https://github.com/pypa/pip-audit/pull/523))
+
+### Fixed
+
+* Fixed a potential crash on invalid unicode in subprocess streams
+  ([#536](https://github.com/pypa/pip-audit/pull/536))
+
 ## [2.4.15]
 
 **YANKED**
