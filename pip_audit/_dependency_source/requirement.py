@@ -232,9 +232,7 @@ class RequirementSource(DependencySource):
         req_names: set[str] = set()
         for req in reqs:
             if not req.hash_options and require_hashes:
-                raise RequirementSourceError(
-                    f"requirement {req.name} does not contain a hash {str(req)}"
-                )
+                raise RequirementSourceError(f"requirement {req.dumps()} does not contain a hash")
             if req.req is None:
                 # For URL requirements that don't have an egg fragment that lists the
                 # package name and version, `pip-requirements-parser` won't attach a
