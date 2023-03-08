@@ -8,8 +8,12 @@ import pretend  # type: ignore
 import pytest
 from packaging.version import Version
 
-from pip_audit._dependency_source import DependencyFixError, DependencySourceError, requirement
-from pip_audit._dependency_source.interface import PYPI_URL
+from pip_audit._dependency_source import (
+    PYPI_URL,
+    DependencyFixError,
+    DependencySourceError,
+    requirement,
+)
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState

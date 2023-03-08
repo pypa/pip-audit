@@ -18,11 +18,11 @@ from pip_audit._audit import AuditOptions, Auditor
 from pip_audit._dependency_source import (
     PYPI_URL,
     DependencySource,
+    DependencySourceError,
     PipSource,
     PyProjectSource,
     RequirementSource,
 )
-from pip_audit._dependency_source.interface import DependencySourceError
 from pip_audit._fix import ResolvedFixVersion, SkippedFixVersion, resolve_fix_versions
 from pip_audit._format import (
     ColumnsFormat,

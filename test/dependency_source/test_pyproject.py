@@ -7,8 +7,8 @@ import pytest
 import toml
 from packaging.version import Version
 
-from pip_audit._dependency_source import DependencySourceError, pyproject
-from pip_audit._dependency_source.interface import DependencyFixError, ResolvedFixVersion
+from pip_audit._dependency_source import DependencyFixError, DependencySourceError, pyproject
+from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import ResolvedDependency
 from pip_audit._state import AuditState
 from pip_audit._virtual_env import VirtualEnvError
