@@ -234,16 +234,15 @@ class RequirementSource(DependencySource):
             if not req.hash_options and require_hashes:
                 raise RequirementSourceError(f"requirement {req.dumps()} does not contain a hash")
             if req.req is None:
-                # For URL requirements that don't have an egg fragment that lists the
-                # package name and version, `pip-requirements-parser` won't attach a
-                # `Requirement` object to the `InstallRequirement`.
+                # PEP 508-style URL requirements don't have a pre-declared version, even
+                # when hashed; the `#egg=name==version` syntax is non-standard and not supported
+                # by `pip` itself.
                 #
                 # In this case, we can't audit the dependency so we should signal to the
                 # caller that we're skipping it.
                 yield SkippedDependency(
                     name=req.requirement_line.line,
-                    skip_reason="could not deduce package/specifier pair from requirement, "
-                    "please specify them with #egg=your_package_name==your_package_version",
+                    skip_reason="could not deduce package version from URL requirement",
                 )
                 continue
             if self._skip_editable and req.is_editable:

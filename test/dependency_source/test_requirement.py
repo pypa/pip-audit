@@ -440,8 +440,7 @@ def test_requirement_source_no_deps_editable_without_egg_fragment(req_file):
     assert (
         SkippedDependency(
             name="-e file:flask.py",
-            skip_reason="could not deduce package/specifier pair from requirement, please specify "
-            "them with #egg=your_package_name==your_package_version",
+            skip_reason="could not deduce package version from URL requirement",
         )
         in specs
     )
@@ -462,8 +461,7 @@ def test_requirement_source_no_deps_non_editable_without_egg_fragment(req_file):
     assert (
         SkippedDependency(
             name="git+https://github.com/unbit/uwsgi.git@1bb9ad77c6d2d310c2d6d1d9ad62de61f725b824",
-            skip_reason="could not deduce package/specifier pair from requirement, please specify "
-            "them with #egg=your_package_name==your_package_version",
+            skip_reason="could not deduce package version from URL requirement",
         )
         in specs
     )
