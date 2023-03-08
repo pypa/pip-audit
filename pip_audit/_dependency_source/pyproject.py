@@ -6,7 +6,6 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from subprocess import CalledProcessError
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Iterator
 
@@ -78,8 +77,7 @@ class PyProjectSource(DependencySource):
             # have a `pyproject.toml`, we can raise an error if the user provides `--fix`.
             with NamedTemporaryFile() as req_file, TemporaryDirectory() as ve_dir:
                 # Write the dependencies to a temporary requirements file.
-                for dep in deps:
-                    req_file.write(dep.encode())
+                req_file.write(os.linesep.join(deps).encode())
                 req_file.flush()
                 os.fsync(req_file)
 
@@ -87,8 +85,6 @@ class PyProjectSource(DependencySource):
                 ve = VirtualEnv(install_args=["-r", req_file.name], state=self.state)
                 try:
                     ve.create(ve_dir)
-                except CalledProcessError as exc:
-                    raise PyProjectSourceError(str(exc)) from exc
                 except VirtualEnvError as exc:
                     raise PyProjectSourceError(str(exc)) from exc
 

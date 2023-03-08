@@ -9,13 +9,10 @@ import os
 import re
 import shutil
 from contextlib import ExitStack
-from dataclasses import dataclass, field
 from pathlib import Path
-from subprocess import CalledProcessError
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from typing import IO, Iterator, cast
+from typing import IO, Iterator
 
-from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 from pip_requirements_parser import InstallRequirement, InvalidRequirementLine, RequirementsFile
@@ -25,6 +22,7 @@ from pip_audit._dependency_source import (
     DependencyFixError,
     DependencySource,
     DependencySourceError,
+    InvalidRequirementSpecifier,
 )
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
@@ -85,6 +83,24 @@ class RequirementSource(DependencySource):
 
         Raises a `RequirementSourceError` on any errors.
         """
+
+        reqs: list[InstallRequirement] = []
+        require_hashes: bool = self._require_hashes
+        for filename in self._filenames:
+            rf = RequirementsFile.from_file(filename)
+            if len(rf.invalid_lines) > 0:
+                invalid = rf.invalid_lines[0]
+                raise InvalidRequirementSpecifier(
+                    f"requirement file {filename} contains invalid specifier at "
+                    f"line {invalid.line_number}: {invalid.error_message}"
+                )
+            require_hashes = require_hashes or any(req.hash_options for req in rf.requirements)
+            reqs.extend(rf.requirements)
+
+        if self._no_deps or require_hashes:
+            yield from self._collect_preresolved_deps(iter(reqs), require_hashes)
+            return
+
         ve_args = []
         for filename in self._filenames:
             ve_args.extend(["-r", str(filename)])
@@ -94,8 +110,6 @@ class RequirementSource(DependencySource):
         try:
             with TemporaryDirectory() as ve_dir:
                 ve.create(ve_dir)
-        except CalledProcessError as exc:
-            raise RequirementSourceError(str(exc)) from exc
         except VirtualEnvError as exc:
             raise RequirementSourceError(str(exc)) from exc
 
@@ -162,16 +176,14 @@ class RequirementSource(DependencySource):
 
         # Now write out the new requirements file
         with filename.open("w") as f:
-            fixed = False
+            found = False
             for req in reqs:
-                if (
-                    isinstance(req, InstallRequirement)
-                    and req.name == fix_version.dep.name
-                    and req.specifier.contains(fix_version.dep.version)
-                    and not req.specifier.contains(fix_version.version)
-                ):
-                    req.req.specifier = SpecifierSet(f"=={fix_version.version}")
-                    fixed = True
+                if isinstance(req, InstallRequirement) and req.name == fix_version.dep.name:
+                    found = True
+                    if req.specifier.contains(
+                        fix_version.dep.version
+                    ) and not req.specifier.contains(fix_version.version):
+                        req.req.specifier = SpecifierSet(f"=={fix_version.version}")
                 print(req.dumps(), file=f)
 
             # The vulnerable dependency may not be explicitly listed in the requirements file if it
@@ -181,24 +193,16 @@ class RequirementSource(DependencySource):
             # To know whether this is the case, we'll need to resolve dependencies if we haven't
             # already in order to figure out whether this subdependency belongs to this file or
             # another.
-            if not fixed:
-                req_dep = cast(RequirementDependency, fix_version.dep)
-                if req_dep.dependee_reqs:
-                    logger.warning(
-                        "added fixed subdependency explicitly to requirements file "
-                        f"{filename}: {fix_version.dep.canonical_name}"
-                    )
-                    dependee_reqs_formatted = ",".join(
-                        [
-                            str(req)
-                            for req in sorted(list(req_dep.dependee_reqs), key=lambda x: x.name)
-                        ]
-                    )
-                    print(
-                        f"    # pip-audit: subdependency fixed via {dependee_reqs_formatted}",
-                        file=f,
-                    )
-                    print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
+            if not found:
+                logger.warning(
+                    "added fixed subdependency explicitly to requirements file "
+                    f"{filename}: {fix_version.dep.canonical_name}"
+                )
+                print(
+                    "    # pip-audit: subdependency explicitly fixed",
+                    file=f,
+                )
+                print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
 
     def _recover_files(self, tmp_files: list[IO[str]]) -> None:
         for filename, tmp_file in zip(self._filenames, tmp_files):
@@ -214,20 +218,49 @@ class RequirementSource(DependencySource):
                 continue
 
     def _collect_preresolved_deps(
-        self,
-        reqs: Iterator[InstallRequirement],
-    ) -> Iterator[tuple[Requirement, Dependency]]:
+        self, reqs: Iterator[InstallRequirement], require_hashes: bool
+    ) -> Iterator[Dependency]:
         """
         Collect pre-resolved (pinned) dependencies.
         """
+        req_names: set[str] = set()
         for req in reqs:
+            if not req.hash_options and require_hashes:
+                raise RequirementSourceError(
+                    f"requirement {req.name} does not contain a hash {str(req)}"
+                )
+            if req.req is None:
+                # For URL requirements that don't have an egg fragment that lists the
+                # package name and version, `pip-requirements-parser` won't attach a
+                # `Requirement` object to the `InstallRequirement`.
+                #
+                # In this case, we can't audit the dependency so we should signal to the
+                # caller that we're skipping it.
+                yield SkippedDependency(
+                    name=req.requirement_line.line,
+                    skip_reason="could not deduce package/specifier pair from requirement, "
+                    "please specify them with #egg=your_package_name==your_package_version",
+                )
+                continue
+            if self._skip_editable and req.is_editable:
+                yield SkippedDependency(name=req.name, skip_reason="requirement marked as editable")
+            if req.marker is not None and not req.marker.evaluate():
+                continue  # pragma: no cover
+
+            # This means we have a duplicate requirement for the same package
+            if req.name in req_names:
+                raise RequirementSourceError(
+                    f"package {req.name} has duplicate requirements: {str(req)}"
+                )
+            req_names.add(req.name)
+
             # NOTE: URL dependencies cannot be pinned, so skipping them
             # makes sense (under the same principle of skipping dependencies
             # that can't be found on PyPI). This is also consistent with
             # what `pip --no-deps` does (installs the URL dependency, but
             # not any subdependencies).
             if req.is_url:
-                yield req.req, SkippedDependency(
+                yield SkippedDependency(
                     name=req.name,
                     skip_reason="URL requirements cannot be pinned to a specific package version",
                 )
@@ -240,22 +273,7 @@ class RequirementSource(DependencySource):
                         f"requirement {req.name} is not pinned to an exact version: {str(req)}"
                     )
 
-                yield req.req, RequirementDependency(
-                    req.name, Version(pinned_specifier.group("version"))
-                )
-
-    def _build_hash_options_mapping(self, hash_options: list[str]) -> dict[str, list[str]]:
-        """
-        A helper that takes a list of hash options and returns a dictionary mapping from hash
-        algorithm (e.g. sha256) to a list of values.
-        """
-        mapping: dict[str, list[str]] = {}
-        for hash_option in hash_options:
-            algorithm, hash_ = hash_option.split(":")
-            if algorithm not in mapping:
-                mapping[algorithm] = []
-            mapping[algorithm].append(hash_)
-        return mapping
+                yield ResolvedDependency(req.name, Version(pinned_specifier.group("version")))
 
 
 class RequirementSourceError(DependencySourceError):
@@ -268,12 +286,3 @@ class RequirementFixError(DependencyFixError):
     """A requirements-fixing specific `DependencyFixError`."""
 
     pass
-
-
-@dataclass(frozen=True)
-class RequirementDependency(ResolvedDependency):
-    """
-    Represents a fully resolved Python package from a requirements file.
-    """
-
-    dependee_reqs: set[Requirement] = field(default_factory=set, hash=False)

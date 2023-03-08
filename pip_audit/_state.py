@@ -102,7 +102,7 @@ class _StateActor(ABC):
         raise NotImplementedError  # pragma: no cover
 
 
-class StatusLog:
+class StatusLog:  # pragma: no cover
     """
     Displays a status indicator with an optional log panel to display logs
     for external processes.
