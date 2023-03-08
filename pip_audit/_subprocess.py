@@ -17,6 +17,9 @@ class CalledProcessError(Exception):
     """
 
     def __init__(self, msg: str, *, stderr: str) -> None:
+        """
+        Create a new `CalledProcessError`.
+        """
         super().__init__(msg)
         self.stderr = stderr
 
