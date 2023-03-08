@@ -18,12 +18,11 @@ from pip_audit._audit import AuditOptions, Auditor
 from pip_audit._dependency_source import (
     PYPI_URL,
     DependencySource,
+    DependencySourceError,
     PipSource,
     PyProjectSource,
     RequirementSource,
-    ResolveLibResolver,
 )
-from pip_audit._dependency_source.interface import DependencyResolverError, DependencySourceError
 from pip_audit._fix import ResolvedFixVersion, SkippedFixVersion, resolve_fix_versions
 from pip_audit._format import (
     ColumnsFormat,
@@ -348,12 +347,12 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragm
 
 
 def _dep_source_from_project_path(
-    project_path: Path, resolver: ResolveLibResolver, state: AuditState
+    project_path: Path, index_urls: list[str], state: AuditState
 ) -> DependencySource:  # pragma: no cover
     # Check for a `pyproject.toml`
     pyproject_path = project_path / "pyproject.toml"
     if pyproject_path.is_file():
-        return PyProjectSource(pyproject_path, resolver, state)
+        return PyProjectSource(pyproject_path, index_urls=index_urls, state=state)
 
     # TODO: Checks for setup.py and other project files will go here.
 
@@ -412,14 +411,12 @@ def audit() -> None:  # pragma: no cover
         index_urls = [args.index_url] + args.extra_index_urls
         if args.requirements is not None:
             req_files: list[Path] = [Path(req.name) for req in args.requirements]
-            # TODO: This is a leaky abstraction; we should construct the ResolveLibResolver
-            # within the RequirementSource instead of in-line here.
             source = RequirementSource(
                 req_files,
-                ResolveLibResolver(index_urls, args.timeout, args.cache_dir, state),
                 require_hashes=args.require_hashes,
                 no_deps=args.no_deps,
                 skip_editable=args.skip_editable,
+                index_urls=index_urls,
                 state=state,
             )
         elif args.project_path is not None:
@@ -429,7 +426,7 @@ def audit() -> None:  # pragma: no cover
             # Determine which kind of project file exists in the project path
             source = _dep_source_from_project_path(
                 args.project_path,
-                ResolveLibResolver(index_urls, args.timeout, args.cache_dir, state),
+                index_urls,
                 state,
             )
         else:
@@ -469,7 +466,7 @@ def audit() -> None:  # pragma: no cover
                 if len(vulns) > 0:
                     pkg_count += 1
                     vuln_count += len(vulns)
-        except (DependencySourceError, DependencyResolverError) as e:
+        except DependencySourceError as e:
             _fatal(str(e))
         except VulnServiceConnectionError as e:
             # The most common source of connection errors is corporate blocking,

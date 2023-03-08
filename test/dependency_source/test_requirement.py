@@ -4,133 +4,96 @@ import os
 from email.message import EmailMessage
 from pathlib import Path
 
-import pip_requirements_parser
 import pretend  # type: ignore
 import pytest
-from packaging.requirements import Requirement
 from packaging.version import Version
 
 from pip_audit._dependency_source import (
+    PYPI_URL,
     DependencyFixError,
-    DependencyResolver,
-    DependencyResolverError,
     DependencySourceError,
-    RequirementHashes,
-    ResolveLibResolver,
-    UnsupportedHashAlgorithm,
     requirement,
 )
-from pip_audit._dependency_source.requirement import RequirementDependency
-from pip_audit._dependency_source.resolvelib import pypi_provider
 from pip_audit._fix import ResolvedFixVersion
-from pip_audit._service import Dependency, ResolvedDependency, SkippedDependency
+from pip_audit._service import ResolvedDependency, SkippedDependency
+from pip_audit._state import AuditState
+from pip_audit._virtual_env import VirtualEnvError
 
 
 def get_metadata_mock():
     return EmailMessage()
 
 
-@pytest.mark.online
-def test_requirement_source(monkeypatch):
-    source = requirement.RequirementSource([Path("requirements.txt")], ResolveLibResolver())
-
-    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "flask==2.0.1")
-
-    specs = list(source.collect())
-    assert (
-        RequirementDependency(
-            "flask", Version("2.0.1"), dependee_reqs={Requirement("flask==2.0.1")}
-        )
-        in specs
-    )
+def _init_requirement(
+    files: list[tuple[Path, str]],
+    **kwargs,
+) -> requirement.RequirementSource:
+    paths: list[Path] = []
+    for path, contents in files:
+        with open(path, mode="w") as f:
+            f.write(contents)
+        paths.append(path)
+    return requirement.RequirementSource(paths, **kwargs)
 
 
 @pytest.mark.online
-def test_requirement_source_multiple_files(monkeypatch):
-    file1 = Path("requirements1.txt")
-    file2 = Path("requirements2.txt")
-    file3 = Path("requirements3.txt")
-
-    source = requirement.RequirementSource(
-        [file1, file2, file3],
-        ResolveLibResolver(),
-    )
-
-    def get_file_content_mock(filename):
-        if filename == file1:
-            return "flask==2.0.1"
-        elif filename == file2:
-            return "requests==2.8.1"
-        else:
-            assert filename == file3
-            return "pip-api==0.0.22\npackaging==21.0"
-
-    monkeypatch.setattr(pip_requirements_parser, "get_file_content", get_file_content_mock)
-
+def test_requirement_source(req_file):
+    source = _init_requirement([(req_file(), "flask==2.0.1")])
     specs = list(source.collect())
-    assert (
-        RequirementDependency(
-            "flask", Version("2.0.1"), dependee_reqs={Requirement("flask==2.0.1")}
-        )
-        in specs
-    )
-    assert (
-        RequirementDependency(
-            "requests", Version("2.8.1"), dependee_reqs={Requirement("requests==2.8.1")}
-        )
-        in specs
-    )
-    assert (
-        RequirementDependency(
-            "pip-api", Version("0.0.22"), dependee_reqs={Requirement("pip-api==0.0.22")}
-        )
-        in specs
-    )
-    assert (
-        RequirementDependency(
-            "packaging", Version("21.0"), dependee_reqs={Requirement("packaging==21.0")}
-        )
-        in specs
-    )
+    assert ResolvedDependency("Flask", Version("2.0.1")) in specs
 
 
-def test_requirement_source_parse_error(monkeypatch):
-    source = requirement.RequirementSource([Path("requirements.txt")], ResolveLibResolver())
-
-    # Duplicate dependencies aren't allowed in a requirements file so we should expect the parser to
-    # raise here
-    monkeypatch.setattr(
-        pip_requirements_parser, "get_file_content", lambda _: "flask==2.0.1\nflask==2.0.0"
+@pytest.mark.online
+def test_requirement_source_multiple_files(req_file):
+    source = _init_requirement(
+        [
+            (req_file(), "flask==2.0.1"),
+            (req_file(), "requests==2.8.1"),
+            (req_file(), "pip-api==0.0.22\npackaging==21.0"),
+        ]
     )
+    specs = list(source.collect())
+    assert ResolvedDependency("Flask", Version("2.0.1")) in specs
+    assert ResolvedDependency("requests", Version("2.8.1")) in specs
+    assert ResolvedDependency("pip-api", Version("0.0.22")) in specs
+    assert ResolvedDependency("packaging", Version("21.0")) in specs
+
+
+def test_requirement_source_impossible_resolution(req_file):
+    source = _init_requirement([(req_file(), "flask==2.0.1\nflask==2.0.0")])
 
     with pytest.raises(DependencySourceError):
         list(source.collect())
 
 
-def test_requirement_source_resolver_error(monkeypatch):
-    # Pass the requirement source a resolver that automatically raises errors
-    class MockResolver(DependencyResolver):
-        def resolve(
-            self, reqs: list[Requirement], req_hashes: RequirementHashes
-        ) -> list[Dependency]:
-            raise DependencyResolverError
+def test_requirement_source_virtualenv_error(monkeypatch, req_file):
+    class MockVirtualEnv:
+        def __init__(
+            self, install_args: list[str], index_urls: list[str], state: AuditState
+        ) -> None:
+            pass
 
-    source = requirement.RequirementSource([Path("requirements.txt")], MockResolver())
+        def create(self, dir: Path) -> None:
+            raise VirtualEnvError
 
-    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "flask==2.0.1")
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "flask==2.0.1",
+            )
+        ]
+    )
+    monkeypatch.setattr(requirement, "VirtualEnv", MockVirtualEnv)
 
     with pytest.raises(DependencySourceError):
         list(source.collect())
 
 
 @pytest.mark.online
-def test_requirement_source_duplicate_dependencies(monkeypatch):
-    source = requirement.RequirementSource(
-        [Path("requirements1.txt"), Path("requirements2.txt")], ResolveLibResolver()
-    )
-
+def test_requirement_source_duplicate_dependencies(req_file):
     # Return the same requirements for both files
-    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "flask==2.0.1")
+    source = _init_requirement([(req_file(), "flask==2.0.1"), (req_file(), "flask==2.0.1")])
 
     specs = list(source.collect())
 
@@ -139,118 +102,35 @@ def test_requirement_source_duplicate_dependencies(monkeypatch):
     assert len(specs) == len(set(specs))
 
 
-def test_requirement_source_duplicate_skipped_dependencies(monkeypatch):
-    req0 = Requirement("dep0==1.0")
-    req1 = Requirement("dep1==0.2")
-    req2 = Requirement("dep2==2.0")
-
-    dep0 = RequirementDependency("dep0", Version("1.0"))
-    dep1 = RequirementDependency("dep1", Version("0.2"))
-    dep2 = RequirementDependency("dep2", Version("2.0"))
-    skip_dep = SkippedDependency("dep3", "skipped for some reason")
-
-    class MockResolver(DependencyResolver):
-        def resolve(
-            self, reqs: list[Requirement], req_hashes: RequirementHashes
-        ) -> list[Dependency]:
-            if reqs == [req0, req1]:
-                return [dep0, dep1, skip_dep]
-            else:
-                assert reqs == [req2]
-                return [dep2, skip_dep]
-
-    path0 = Path("requirements0.txt")
-    path1 = Path("requirements1.txt")
-
-    def get_file_content_mock(filename: Path) -> str:
-        if filename == path0:
-            return "dep0==1.0\ndep1==0.2"
-        else:
-            assert filename == path1
-            return "dep2==2.0"
-
-    source = requirement.RequirementSource([path0, path1], MockResolver())
-
-    monkeypatch.setattr(pip_requirements_parser, "get_file_content", get_file_content_mock)
-
-    specs = set(source.collect())
-    assert specs == {dep0, dep1, dep2, skip_dep}
-
-
-@pytest.mark.online
-def test_requirement_source_invalid_lines(monkeypatch):
-    source = requirement.RequirementSource([Path("requirements1.txt")], ResolveLibResolver())
-
-    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "a#b#c")
+def test_requirement_source_invalid_lines(req_file):
+    source = _init_requirement([(req_file(), "a#b#c")])
 
     with pytest.raises(DependencySourceError):
         list(source.collect())
 
 
 @pytest.mark.online
-def test_requirement_source_editable_with_egg_fragment(monkeypatch):
-    source = requirement.RequirementSource([Path("requirements1.txt")], ResolveLibResolver())
-
-    monkeypatch.setattr(
-        pip_requirements_parser, "get_file_content", lambda _: "-e file:flask.py#egg=flask==2.0.1"
+def test_requirement_source_git(req_file):
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "git+https://github.com/unbit/uwsgi.git@1bb9ad77c6d2d310c2d6d1d9ad62de61f725b824",
+            )
+        ]
     )
 
     specs = list(source.collect())
-    assert (
-        RequirementDependency(
-            "flask", Version("2.0.1"), dependee_reqs={Requirement("flask==2.0.1")}
-        )
-        in specs
+    assert ResolvedDependency(name="uWSGI", version=Version("2.0.20")) in specs
+
+
+@pytest.mark.online
+def test_requirement_source_multiple_indexes(req_file):
+    source = _init_requirement(
+        [(req_file(), "flask==2.0.1")], index_urls=[PYPI_URL, "https://test.pypi.org/simple/"]
     )
-
-
-def test_requirement_source_editable_without_egg_fragment(monkeypatch):
-    source = requirement.RequirementSource([Path("requirements1.txt")], ResolveLibResolver())
-
-    monkeypatch.setattr(pip_requirements_parser, "get_file_content", lambda _: "-e file:flask.py")
-
     specs = list(source.collect())
-    assert (
-        SkippedDependency(
-            name="-e file:flask.py",
-            skip_reason="could not deduce package/specifier pair from requirement, please specify "
-            "them with #egg=your_package_name==your_package_version",
-        )
-        in specs
-    )
-
-
-def test_requirement_source_non_editable_without_egg_fragment(monkeypatch):
-    source = requirement.RequirementSource([Path("requirements1.txt")], ResolveLibResolver())
-
-    monkeypatch.setattr(
-        pip_requirements_parser,
-        "get_file_content",
-        lambda _: "git+https://github.com/unbit/uwsgi.git@1bb9ad77c6d2d310c2d6d1d9ad62de61f725b824",
-    )
-
-    specs = list(source.collect())
-    assert (
-        SkippedDependency(
-            name="git+https://github.com/unbit/uwsgi.git@1bb9ad77c6d2d310c2d6d1d9ad62de61f725b824",
-            skip_reason="could not deduce package/specifier pair from requirement, please specify "
-            "them with #egg=your_package_name==your_package_version",
-        )
-        in specs
-    )
-
-
-def test_requirement_source_editable_skip(monkeypatch):
-    source = requirement.RequirementSource(
-        [Path("requirements1.txt")], ResolveLibResolver(), skip_editable=True
-    )
-
-    monkeypatch.setattr(
-        pip_requirements_parser, "get_file_content", lambda _: "-e file:flask.py#egg=flask==2.0.1"
-    )
-
-    specs = list(source.collect())
-    assert SkippedDependency(name="flask", skip_reason="requirement marked as editable") in specs
+    assert ResolvedDependency("Flask", Version("2.0.1")) in specs
 
 
 def _check_fixes(
@@ -264,7 +144,7 @@ def _check_fixes(
         with open(req_path, "w") as f:
             print(input_req, file=f)
 
-    source = requirement.RequirementSource(req_paths, ResolveLibResolver())
+    source = requirement.RequirementSource(req_paths)
     for fix in fixes:
         source.fix(fix)
 
@@ -325,7 +205,7 @@ def test_requirement_source_fix_specifier_no_match(req_file):
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
-                dep=RequirementDependency(name="flask", version=Version("0.5")),
+                dep=ResolvedDependency(name="flask", version=Version("0.5")),
                 version=Version("1.0"),
             )
         ],
@@ -383,7 +263,7 @@ def test_requirement_source_fix_parse_failure(monkeypatch, req_file):
         with open(req_path, "w") as f:
             f.write(input_req)
 
-    source = requirement.RequirementSource(req_paths, ResolveLibResolver())
+    source = requirement.RequirementSource(req_paths)
     with pytest.raises(DependencyFixError):
         source.fix(
             ResolvedFixVersion(
@@ -419,7 +299,7 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
 
     monkeypatch.setattr(os, "replace", mock_replace)
 
-    source = requirement.RequirementSource(req_paths, ResolveLibResolver())
+    source = requirement.RequirementSource(req_paths)
     with pytest.raises(DependencyFixError):
         source.fix(
             ResolvedFixVersion(
@@ -438,74 +318,40 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
             assert expected_req == f.read().strip()
 
 
-def test_requirement_source_require_hashes(monkeypatch):
-    source = requirement.RequirementSource(
-        [Path("requirements.txt")], ResolveLibResolver(), require_hashes=True
-    )
-
-    monkeypatch.setattr(
-        pip_requirements_parser,
-        "get_file_content",
-        lambda _: "flask==2.0.1 "
-        "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9",
-    )
-
-    # When using hashes, all dependencies must be fully resolved. `pip-audit` will flag any
-    # dependencies that are found during dependency resolution that weren't found in the
-    # requirement file.
-    #
-    # For expediency's sake, let's short-circuit dependency resolution by patching this metadata
-    # function. This will test the case where we have a requirements file with a fully resolved set
-    # of dependencies.
-    monkeypatch.setattr(
-        pypi_provider.ResolvedCandidate,
-        "_get_metadata_for_wheel",
-        lambda _, _data: get_metadata_mock(),
+def test_requirement_source_require_hashes(req_file):
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "flask==2.0.1 "
+                "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9",
+            )
+        ],
+        require_hashes=True,
     )
 
     specs = list(source.collect())
-    assert specs == [
-        RequirementDependency(
-            "flask", Version("2.0.1"), dependee_reqs={Requirement("flask==2.0.1")}
-        )
-    ]
+    assert specs == [ResolvedDependency("flask", Version("2.0.1"))]
 
 
-def test_requirement_source_require_hashes_missing(monkeypatch):
-    source = requirement.RequirementSource(
-        [Path("requirements.txt")], ResolveLibResolver(), require_hashes=True
-    )
-
-    monkeypatch.setattr(
-        pip_requirements_parser,
-        "get_file_content",
-        lambda _: "flask==2.0.1",
-    )
-    monkeypatch.setattr(
-        pypi_provider.ResolvedCandidate,
-        "_get_metadata_for_wheel",
-        lambda _, _data: get_metadata_mock(),
-    )
+def test_requirement_source_require_hashes_missing(req_file):
+    source = _init_requirement([(req_file(), "flask==2.0.1")], require_hashes=True)
 
     # All requirements must be hashed when collecting with `require-hashes`
     with pytest.raises(DependencySourceError):
         list(source.collect())
 
 
-def test_requirement_source_require_hashes_inferred(monkeypatch):
-    source = requirement.RequirementSource([Path("requirements.txt")], ResolveLibResolver())
-
-    monkeypatch.setattr(
-        pip_requirements_parser,
-        "get_file_content",
-        lambda _: "flask==2.0.1 "
-        "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9\n"
-        "requests==2.0",
-    )
-    monkeypatch.setattr(
-        pypi_provider.ResolvedCandidate,
-        "_get_metadata_for_wheel",
-        lambda _, _data: get_metadata_mock(),
+def test_requirement_source_require_hashes_inferred(req_file):
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "flask==2.0.1 "
+                "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9\n"
+                "requests==2.0",
+            )
+        ]
     )
 
     # If at least one requirement is hashed, this infers `require-hashes`
@@ -513,23 +359,17 @@ def test_requirement_source_require_hashes_inferred(monkeypatch):
         list(source.collect())
 
 
-def test_requirement_source_require_hashes_unpinned(monkeypatch):
-    source = requirement.RequirementSource(
-        [Path("requirements.txt")], ResolveLibResolver(), require_hashes=True
-    )
-
-    monkeypatch.setattr(
-        pip_requirements_parser,
-        "get_file_content",
-        lambda _: "flask==2.0.1 "
-        "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9\n"
-        "requests>=1.0 "
-        "--hash=sha256:requests-hash",
-    )
-    monkeypatch.setattr(
-        pypi_provider.ResolvedCandidate,
-        "_get_metadata_for_wheel",
-        lambda _, _data: get_metadata_mock(),
+def test_requirement_source_require_hashes_unpinned(req_file):
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "flask==2.0.1 "
+                "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9\n"
+                "requests>=1.0 "
+                "--hash=sha256:requests-hash",
+            )
+        ]
     )
 
     # When hashed dependencies are provided, all dependencies must be explicitly pinned to an exact
@@ -538,105 +378,38 @@ def test_requirement_source_require_hashes_unpinned(monkeypatch):
         list(source.collect())
 
 
-def test_requirement_source_require_hashes_not_fully_resolved(monkeypatch):
-    source = requirement.RequirementSource(
-        [Path("requirements.txt")], ResolveLibResolver(), require_hashes=True
-    )
-
-    monkeypatch.setattr(
-        pip_requirements_parser,
-        "get_file_content",
-        lambda _: "flask==2.0.1 "
-        "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9",
-    )
-
-    # Deliberately **don't** patch the metadata function so that our dependency resolver finds
-    # Flask's dependencies. When it finds dependencies that aren't listed in the requirements file,
-    # it will raise an error.
-    with pytest.raises(DependencySourceError):
-        list(source.collect())
-
-
-def test_requirement_source_require_hashes_unknown_algorithm(monkeypatch):
-    source = requirement.RequirementSource(
-        [Path("requirements.txt")], ResolveLibResolver(), require_hashes=True
-    )
-
-    monkeypatch.setattr(
-        pip_requirements_parser,
-        "get_file_content",
-        lambda _: "flask==2.0.1 "
-        "--hash=mystery-hash:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9",
-    )
-    monkeypatch.setattr(
-        pypi_provider.ResolvedCandidate,
-        "_get_metadata_for_wheel",
-        lambda _, _data: get_metadata_mock(),
-    )
-
-    # If we supply a hash algorithm that `hashlib` doesn't recognize, we should raise an error.
-    with pytest.raises(UnsupportedHashAlgorithm):
-        list(source.collect())
-
-
-def test_requirement_source_no_deps(monkeypatch):
-    source = requirement.RequirementSource(
-        [Path("requirements.txt")], ResolveLibResolver(), no_deps=True
-    )
-
-    monkeypatch.setattr(
-        pip_requirements_parser,
-        "get_file_content",
-        lambda _: "flask==2.0.1",
-    )
+def test_requirement_source_no_deps(req_file):
+    source = _init_requirement([(req_file(), "flask==2.0.1")], no_deps=True)
 
     specs = list(source.collect())
-    assert specs == [RequirementDependency("flask", Version("2.0.1"))]
+    assert specs == [ResolvedDependency("flask", Version("2.0.1"))]
 
 
-def test_requirement_source_no_deps_unpinned(monkeypatch):
-    source = requirement.RequirementSource(
-        [Path("requirements.txt")], ResolveLibResolver(), no_deps=True
-    )
-
-    # `flask` is not pinned so we expect `pip-audit` to fail.
-    monkeypatch.setattr(
-        pip_requirements_parser,
-        "get_file_content",
-        lambda _: "flask\nrequests==1.0",
-    )
+def test_requirement_source_no_deps_unpinned(req_file):
+    source = _init_requirement([(req_file(), "flask\nrequests==1.0")], no_deps=True)
 
     # When dependency resolution is disabled, all requirements must be pinned.
     with pytest.raises(DependencySourceError):
         list(source.collect())
 
 
-def test_requirement_source_no_deps_not_exact_version(monkeypatch):
-    source = requirement.RequirementSource(
-        [Path("requirements.txt")], ResolveLibResolver(), no_deps=True
-    )
-
-    # In this case, `requests` is not pinned to an exact version so we expect `pip-audit` to fail.
-    monkeypatch.setattr(
-        pip_requirements_parser,
-        "get_file_content",
-        lambda _: "flask==1.0\nrequests>=1.0",
-    )
+def test_requirement_source_no_deps_not_exact_version(req_file):
+    source = _init_requirement([(req_file(), "flask==1.0\nrequests>=1.0")], no_deps=True)
 
     # When dependency resolution is disabled, all requirements must be pinned.
     with pytest.raises(DependencySourceError):
         list(source.collect())
 
 
-def test_requirement_source_no_deps_unpinned_url(monkeypatch):
-    source = requirement.RequirementSource(
-        [Path("requirements.txt")], ResolveLibResolver(), no_deps=True
-    )
-
-    monkeypatch.setattr(
-        pip_requirements_parser,
-        "get_file_content",
-        lambda _: "https://github.com/pallets/flask/archive/refs/tags/2.0.1.tar.gz#egg=flask\n",
+def test_requirement_source_no_deps_unpinned_url(req_file):
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "https://github.com/pallets/flask/archive/refs/tags/2.0.1.tar.gz#egg=flask\n",
+            )
+        ],
+        no_deps=True,
     )
 
     assert list(source.collect()) == [
@@ -647,39 +420,75 @@ def test_requirement_source_no_deps_unpinned_url(monkeypatch):
     ]
 
 
-def test_requirement_source_dep_caching(monkeypatch):
-    source = requirement.RequirementSource(
-        [Path("requirements.txt")], ResolveLibResolver(), no_deps=True
+def test_requirement_source_no_deps_editable_with_egg_fragment(req_file):
+    source = _init_requirement([(req_file(), "-e file:flask.py#egg=flask==2.0.1")], no_deps=True)
+
+    specs = list(source.collect())
+    assert (
+        SkippedDependency(
+            name="flask",
+            skip_reason="URL requirements cannot be pinned to a specific package version",
+        )
+        in specs
     )
 
-    monkeypatch.setattr(
-        pip_requirements_parser,
-        "get_file_content",
-        lambda _: "flask==2.0.1",
+
+def test_requirement_source_no_deps_editable_without_egg_fragment(req_file):
+    source = _init_requirement([(req_file(), "-e file:flask.py")], no_deps=True)
+
+    specs = list(source.collect())
+    assert (
+        SkippedDependency(
+            name="-e file:flask.py",
+            skip_reason="could not deduce package version from URL requirement",
+        )
+        in specs
+    )
+
+
+def test_requirement_source_no_deps_non_editable_without_egg_fragment(req_file):
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "git+https://github.com/unbit/uwsgi.git@1bb9ad77c6d2d310c2d6d1d9ad62de61f725b824",
+            )
+        ],
+        no_deps=True,
     )
 
     specs = list(source.collect())
+    assert (
+        SkippedDependency(
+            name="git+https://github.com/unbit/uwsgi.git@1bb9ad77c6d2d310c2d6d1d9ad62de61f725b824",
+            skip_reason="could not deduce package version from URL requirement",
+        )
+        in specs
+    )
 
-    class MockResolver(DependencyResolver):
-        def resolve(
-            self, reqs: list[Requirement], req_hashes: RequirementHashes
-        ) -> list[Dependency]:
-            raise DependencyResolverError
 
-    # Now run collect again and check that dependency resolution doesn't get repeated
-    source._resolver = MockResolver()
+def test_requirement_source_no_deps_editable_skip(req_file):
+    source = _init_requirement(
+        [(req_file(), "-e file:flask.py#egg=flask==2.0.1")], no_deps=True, skip_editable=True
+    )
 
-    cached_specs = list(source.collect())
-    assert specs == cached_specs
+    specs = list(source.collect())
+    assert SkippedDependency(name="flask", skip_reason="requirement marked as editable") in specs
+
+
+def test_requirement_source_no_deps_duplicate_dependencies(req_file):
+    source = _init_requirement([(req_file(), "flask==1.0\nflask==1.0")], no_deps=True)
+
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
 
 
 def test_requirement_source_fix_explicit_subdep(monkeypatch, req_file):
     logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(requirement, "logger", logger)
 
-    # We're going to simulate the situation where a subdependency of `flask` has a vulnerability.
-    # In this case, we're choosing `jinja2`.
-    flask_deps = ResolveLibResolver().resolve([Requirement("flask==2.0.1")], RequirementHashes())
+    source = _init_requirement([(req_file(), "flask==2.0.1")])
+    flask_deps = source.collect()
 
     # Firstly, get a handle on the `jinja2` dependency. The version cannot be hardcoded since it
     # depends what versions are available on PyPI when dependency resolution runs.
@@ -694,7 +503,7 @@ def test_requirement_source_fix_explicit_subdep(monkeypatch, req_file):
     # associated comment.
     _check_fixes(
         ["flask==2.0.1"],
-        ["flask==2.0.1\n    # pip-audit: subdependency fixed via flask==2.0.1\njinja2==4.0.0"],
+        ["flask==2.0.1\n    # pip-audit: subdependency explicitly fixed\njinja2==4.0.0"],
         [req_file()],
         [
             ResolvedFixVersion(
@@ -710,9 +519,8 @@ def test_requirement_source_fix_explicit_subdep(monkeypatch, req_file):
 
 def test_requirement_source_fix_explicit_subdep_multiple_reqs(monkeypatch, req_file):
     # Recreate the vulnerable subdependency case.
-    flask_deps = ResolveLibResolver().resolve(
-        [Requirement("flask==2.0.1"), Requirement("django-jinja==1.0")], RequirementHashes()
-    )
+    source = _init_requirement([(req_file(), "flask==2.0.1")])
+    flask_deps = source.collect()
     jinja_dep: ResolvedDependency | None = None
     for dep in flask_deps:
         if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
@@ -727,7 +535,7 @@ def test_requirement_source_fix_explicit_subdep_multiple_reqs(monkeypatch, req_f
         ["flask==2.0.1\ndjango-jinja==1.0"],
         [
             "flask==2.0.1\ndjango-jinja==1.0\n"
-            "    # pip-audit: subdependency fixed via django-jinja==1.0,flask==2.0.1\n"
+            "    # pip-audit: subdependency explicitly fixed\n"
             "jinja2==4.0.0"
         ],
         [req_file()],
@@ -741,12 +549,9 @@ def test_requirement_source_fix_explicit_subdep_multiple_reqs(monkeypatch, req_f
 
 
 def test_requirement_source_fix_explicit_subdep_resolver_error(req_file):
-    req_file_name = req_file()
-    with open(req_file_name, "w") as f:
-        f.write("flask==2.0.1")
-
     # Recreate the vulnerable subdependency case.
-    flask_deps = ResolveLibResolver().resolve([Requirement("flask==2.0.1")], RequirementHashes())
+    source = _init_requirement([(req_file(), "flask==2.0.1")])
+    flask_deps = source.collect()
     jinja_dep: ResolvedDependency | None = None
     for dep in flask_deps:
         if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
@@ -757,7 +562,6 @@ def test_requirement_source_fix_explicit_subdep_resolver_error(req_file):
     # Dependee requirements are a attached to each dependency. We no longer resolve dependencies
     # as part of `--fix` so we shouldn't call into dependency resolution.
     mock_resolver = pretend.stub(resolve=pretend.call_recorder(lambda _reqs, _req_hashes: []))
-    source = requirement.RequirementSource([req_file_name], mock_resolver)
     source.fix(
         ResolvedFixVersion(
             dep=jinja_dep,
@@ -783,7 +587,8 @@ def test_requirement_source_fix_explicit_subdep_comment_retension(req_file):
     # Since we've switching `pip-requirements-parser`, we should no longer have this issue.
 
     # Recreate the vulnerable subdependency case.
-    flask_deps = ResolveLibResolver().resolve([Requirement("flask==2.0.1")], RequirementHashes())
+    source = _init_requirement([(req_file(), "flask==2.0.1")])
+    flask_deps = source.collect()
     jinja_dep: ResolvedDependency | None = None
     for dep in flask_deps:
         if isinstance(dep, ResolvedDependency) and dep.canonical_name == "jinja2":
@@ -800,7 +605,7 @@ def test_requirement_source_fix_explicit_subdep_comment_retension(req_file):
     # indented with 4 spaces).
     _check_fixes(
         ["flask==2.0.1"],
-        ["flask==3.0.0\n# pip-audit: subdependency fixed via flask==2.0.1\njinja2==4.0.0"],
+        ["flask==3.0.0\n# pip-audit: subdependency explicitly fixed\njinja2==4.0.0"],
         [req_file()],
         [
             ResolvedFixVersion(
@@ -816,11 +621,7 @@ def test_requirement_source_fix_explicit_subdep_comment_retension(req_file):
 
 
 def test_requirement_source_fix_invalid_lines(req_file):
-    req_file_name = req_file()
-    with open(req_file_name, "w") as f:
-        f.write("a#b#c\nflask==0.5")
-
-    source = requirement.RequirementSource([req_file_name], ResolveLibResolver())
+    source = _init_requirement([(req_file(), "a#b#c\nflask==0.5")])
     with pytest.raises(DependencyFixError):
         source.fix(
             ResolvedFixVersion(

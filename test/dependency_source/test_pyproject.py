@@ -5,29 +5,19 @@ from pathlib import Path
 import pretend  # type: ignore
 import pytest
 import toml
-from packaging.requirements import Requirement
 from packaging.version import Version
 
-from pip_audit._dependency_source import (
-    DependencyResolver,
-    DependencyResolverError,
-    DependencySourceError,
-    ResolveLibResolver,
-    pyproject,
-)
-from pip_audit._dependency_source.interface import (
-    DependencyFixError,
-    RequirementHashes,
-    ResolvedFixVersion,
-)
-from pip_audit._dependency_source.requirement import RequirementDependency
-from pip_audit._service import Dependency, ResolvedDependency
+from pip_audit._dependency_source import DependencyFixError, DependencySourceError, pyproject
+from pip_audit._fix import ResolvedFixVersion
+from pip_audit._service import ResolvedDependency
+from pip_audit._state import AuditState
+from pip_audit._virtual_env import VirtualEnvError
 
 
 def _init_pyproject(filename: Path, contents: str) -> pyproject.PyProjectSource:
     with open(filename, mode="w") as f:
         f.write(contents)
-    return pyproject.PyProjectSource(filename, ResolveLibResolver())
+    return pyproject.PyProjectSource(filename)
 
 
 def _check_file(filename: Path, expected_contents: dict) -> None:
@@ -47,12 +37,7 @@ dependencies = [
     """,
     )
     specs = list(source.collect())
-    assert (
-        RequirementDependency(
-            "flask", Version("2.0.1"), dependee_reqs={Requirement("flask==2.0.1")}
-        )
-        in specs
-    )
+    assert ResolvedDependency("Flask", Version("2.0.1")) in specs
 
 
 def test_pyproject_source_no_project_section(req_file):
@@ -106,10 +91,13 @@ dependencies = [
     assert len(specs) == len(set(specs))
 
 
-def test_pyproject_source_resolver_error(monkeypatch, req_file):
-    class MockResolver(DependencyResolver):
-        def resolve(self, req: Requirement, req_hashes: RequirementHashes) -> list[Dependency]:
-            raise DependencyResolverError
+def test_pyproject_source_virtualenv_error(monkeypatch, req_file):
+    class MockVirtualEnv:
+        def __init__(self, install_args: list[str], state: AuditState) -> None:
+            pass
+
+        def create(self, dir: Path) -> None:
+            raise VirtualEnvError
 
     source = _init_pyproject(
         req_file(),
@@ -120,7 +108,7 @@ dependencies = [
 ]
 """,
     )
-    source.resolver = MockResolver()
+    monkeypatch.setattr(pyproject, "VirtualEnv", MockVirtualEnv)
     with pytest.raises(DependencySourceError):
         list(source.collect())
 

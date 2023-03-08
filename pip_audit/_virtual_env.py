@@ -7,11 +7,13 @@ from __future__ import annotations
 import json
 import logging
 import venv
+from tempfile import NamedTemporaryFile
 from types import SimpleNamespace
 from typing import Iterator
 
 from packaging.version import Version
 
+from ._dependency_source import PYPI_URL
 from ._state import AuditState
 from ._subprocess import CalledProcessError, run
 
@@ -20,11 +22,11 @@ logger = logging.getLogger(__name__)
 
 class VirtualEnv(venv.EnvBuilder):
     """
-    A wrapper around `EnvBuilder` that allows a custom package to be installed, and its resulting
-    dependencies inspected.
+    A wrapper around `EnvBuilder` that allows a custom `pip install` command to be executed, and its
+    resulting dependencies inspected.
 
     The `pip-audit` API uses this functionality internally to deduce what the dependencies are for a
-    given source distribution since this can't be determined statically.
+    given requirements file since this can't be determined statically.
 
     The `create` method MUST be called before inspecting the `installed_packages` property otherwise
     a `VirtualEnvError` will be raised.
@@ -39,7 +41,12 @@ class VirtualEnv(venv.EnvBuilder):
     ```
     """
 
-    def __init__(self, install_args: list[str], state: AuditState = AuditState()):
+    def __init__(
+        self,
+        install_args: list[str],
+        index_urls: list[str] = [PYPI_URL],
+        state: AuditState = AuditState(),
+    ):
         """
         Create a new `VirtualEnv`.
 
@@ -50,10 +57,13 @@ class VirtualEnv(venv.EnvBuilder):
         ve = VirtualEnv(["-e", "/tmp/my_pkg"])
         ```
 
+        `index_urls` is a list of package indices to install from.
+
         `state` is an `AuditState` to use for state callbacks.
         """
         super().__init__(with_pip=True)
         self._install_args = install_args
+        self._index_urls = index_urls
         self._packages: list[tuple[str, Version]] | None = None
         self._state = state
 
@@ -97,34 +107,36 @@ class VirtualEnv(venv.EnvBuilder):
 
         self._state.update_state("Installing package in isolated environment")
 
-        # Install our packages
-        package_install_cmd = [
-            context.env_exe,
-            "-m",
-            "pip",
-            "install",
-            *self._install_args,
-        ]
-        try:
-            run(package_install_cmd, state=self._state)
-        except CalledProcessError as cpe:
-            raise VirtualEnvError(f"Failed to install packages: {package_install_cmd}") from cpe
+        with NamedTemporaryFile() as tmp:
+            # Install our packages
+            package_install_cmd = [
+                context.env_exe,
+                "-m",
+                "pip",
+                "install",
+                *self._index_url_args,
+                "--dry-run",
+                "--report",
+                tmp.name,
+                *self._install_args,
+            ]
+            try:
+                run(package_install_cmd, log_stdout=True, state=self._state)
+            except CalledProcessError as cpe:
+                raise VirtualEnvError(f"Failed to install packages: {package_install_cmd}") from cpe
 
-        self._state.update_state("Processing package list from isolated environment")
+            self._state.update_state("Processing package list from isolated environment")
 
-        # Now parse the `pip list` output to figure out what packages our
-        # environment contains
-        list_cmd = [context.env_exe, "-m", "pip", "list", "-l", "--format", "json"]
-        try:
-            stdout = run(list_cmd, state=self._state)
-        except CalledProcessError as cpe:
-            raise VirtualEnvError(f"Failed to run `pip list`: {list_cmd}") from cpe
-        package_list = json.loads(stdout)
+            install_report = json.load(tmp)
+            package_list = install_report["install"]
 
-        # Convert into a series of name, version pairs
-        self._packages = []
-        for package in package_list:
-            self._packages.append((package["name"], Version(package["version"])))
+            # Convert into a series of name, version pairs
+            self._packages = []
+            for package in package_list:
+                package_metadata = package["metadata"]
+                self._packages.append(
+                    (package_metadata["name"], Version(package_metadata["version"]))
+                )
 
     @property
     def installed_packages(self) -> Iterator[tuple[str, Version]]:
@@ -140,6 +152,13 @@ class VirtualEnv(venv.EnvBuilder):
             )
 
         yield from self._packages
+
+    @property
+    def _index_url_args(self) -> list[str]:
+        args = ["--index-url", self._index_urls[0]]
+        for index_url in self._index_urls[1:]:
+            args.extend(["--extra-index-url", index_url])
+        return args
 
 
 class VirtualEnvError(Exception):

@@ -58,20 +58,3 @@ def test_virtual_env_failed_pip_upgrade(monkeypatch):
         ve = VirtualEnv(["flask==2.0.1"])
         with pytest.raises(VirtualEnvError):
             ve.create(ve_dir)
-
-
-def test_virtual_env_failed_pip_list(monkeypatch):
-    original_run = _subprocess.run
-
-    def run_mock(args, **kwargs):
-        if {"list", "--format", "json"}.issubset(set(args)):
-            raise _subprocess.CalledProcessError("barf")
-        # If it's not a call to `pip list`, then call the original run
-        return original_run(args, **kwargs)
-
-    monkeypatch.setattr(_virtual_env, "run", run_mock)
-
-    with TemporaryDirectory() as ve_dir:
-        ve = VirtualEnv(["flask==2.0.1"])
-        with pytest.raises(VirtualEnvError):
-            ve.create(ve_dir)

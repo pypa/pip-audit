@@ -6,24 +6,23 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from tempfile import NamedTemporaryFile
-from typing import Iterator, cast
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+from typing import Iterator
 
 import toml
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 
 from pip_audit._dependency_source import (
+    PYPI_URL,
     DependencyFixError,
-    DependencyResolver,
-    DependencyResolverError,
     DependencySource,
     DependencySourceError,
-    RequirementHashes,
 )
 from pip_audit._fix import ResolvedFixVersion
-from pip_audit._service import Dependency, ResolvedDependency, SkippedDependency
+from pip_audit._service import Dependency, ResolvedDependency
 from pip_audit._state import AuditState
+from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
 
 logger = logging.getLogger(__name__)
 
@@ -34,19 +33,18 @@ class PyProjectSource(DependencySource):
     """
 
     def __init__(
-        self, filename: Path, resolver: DependencyResolver, state: AuditState = AuditState()
+        self, filename: Path, index_urls: list[str] = [PYPI_URL], state: AuditState = AuditState()
     ) -> None:
         """
         Create a new `PyProjectSource`.
 
         `filename` provides a path to a `pyproject.toml` file
 
-        `resolver` is the `DependencyResolver` to use.
+        `index_urls` is a list of package indices.
 
         `state` is an `AuditState` to use for state callbacks.
         """
         self.filename = filename
-        self.resolver = resolver
         self.state = state
 
     def collect(self) -> Iterator[Dependency]:
@@ -56,7 +54,6 @@ class PyProjectSource(DependencySource):
         Raises a `PyProjectSourceError` on any errors.
         """
 
-        collected: set[Dependency] = set()
         with self.filename.open("r") as f:
             pyproject_data = toml.load(f)
 
@@ -74,21 +71,26 @@ class PyProjectSource(DependencySource):
                 )
                 return
 
-            reqs: list[Requirement] = [Requirement(dep) for dep in deps]
-            req_hashes = RequirementHashes()
-            try:
-                for dep in self.resolver.resolve(reqs, req_hashes):
-                    if dep.is_skipped():  # pragma: no cover
-                        dep = cast(SkippedDependency, dep)
-                        self.state.update_state(f"Skipping {dep.name}: {dep.skip_reason}")
-                    else:
-                        dep = cast(ResolvedDependency, dep)
-                        self.state.update_state(f"Collecting {dep.name} ({dep.version})")
+            # NOTE(alex): This is probably due for a redesign. Since we're leaning on `pip` for
+            # dependency resolution now, we can think about doing `pip install <local-project-dir>`
+            # regardless of whether the project has a `pyproject.toml` or not. And if it doesn't
+            # have a `pyproject.toml`, we can raise an error if the user provides `--fix`.
+            with NamedTemporaryFile() as req_file, TemporaryDirectory() as ve_dir:
+                # Write the dependencies to a temporary requirements file.
+                req_file.write(os.linesep.join(deps).encode())
+                req_file.flush()
+                os.fsync(req_file)
 
-                    collected.add(dep)
-                    yield dep
-            except DependencyResolverError as dre:
-                raise PyProjectSourceError("dependency resolver raised an error") from dre
+                # Try to install the generated requirements file.
+                ve = VirtualEnv(install_args=["-r", req_file.name], state=self.state)
+                try:
+                    ve.create(ve_dir)
+                except VirtualEnvError as exc:
+                    raise PyProjectSourceError(str(exc)) from exc
+
+                # Now query the installed packages.
+                for name, version in ve.installed_packages:
+                    yield ResolvedDependency(name=name, version=version)
 
     def fix(self, fix_version: ResolvedFixVersion) -> None:
         """
