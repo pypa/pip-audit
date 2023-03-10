@@ -15,7 +15,8 @@ All versions prior to 0.0.9 are untracked.
   ([#507](https://github.com/pypa/pip-audit/pull/507))
 
 * `pip-audit`'s handling of dependency resolution has been significantly
-  refactored and simplified ([#523](https://github.com/pypa/pip-audit/pull/523))
+  refactored and simplified ([#523](https://github.com/pypa/pip-audit/pull/523)
+  and [#540](https://github.com/pypa/pip-audit/pull/540))
 
 ### Fixed
 
