@@ -427,6 +427,24 @@ def test_requirement_source_require_hashes_unpinned(req_file):
         list(source.collect())
 
 
+def test_requirement_source_require_hashes_incorrect_hash(req_file):
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "wheel==0.38.1 "
+                "--hash=sha256:7a95f9a8dc0924ef318bd55b616112c70903192f524d120acc614f59547a9e1f\n"
+                "setuptools<=67.0.0 "
+                "--hash=sha256:setuptools-hash",
+            )
+        ]
+    )
+
+    # The `setuptools` hash is incorrect.
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
+
+
 @pytest.mark.online
 def test_requirement_source_no_deps(req_file):
     source = _init_requirement([(req_file(), "flask==2.0.1")], no_deps=True)
