@@ -22,7 +22,6 @@ from pip_audit._dependency_source import (
     DependencyFixError,
     DependencySource,
     DependencySourceError,
-    InvalidRequirementSpecifier,
 )
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
@@ -84,30 +83,11 @@ class RequirementSource(DependencySource):
         Raises a `RequirementSourceError` on any errors.
         """
 
-        # Figure out whether we have a fully resolved set of dependencies.
-        reqs: list[InstallRequirement] = []
-        require_hashes: bool = self._require_hashes
-        for filename in self._filenames:
-            rf = RequirementsFile.from_file(filename)
-            if len(rf.invalid_lines) > 0:
-                invalid = rf.invalid_lines[0]
-                raise InvalidRequirementSpecifier(
-                    f"requirement file {filename} contains invalid specifier at "
-                    f"line {invalid.line_number}: {invalid.error_message}"
-                )
-
-            # If one or more requirements have a hash, this implies `--require-hashes`.
-            require_hashes = require_hashes or any(req.hash_options for req in rf.requirements)
-            reqs.extend(rf.requirements)
-
-        # If the user has supplied `--no-deps` or there are hashed requirements, we should assume
-        # that we have a fully resolved set of dependencies and we should waste time by invoking
-        # `pip`.
-        if self._no_deps or require_hashes:
-            yield from self._collect_preresolved_deps(iter(reqs), require_hashes)
-            return
-
         ve_args = []
+        if self._no_deps:
+            ve_args.append("--no-deps")
+        if self._require_hashes:
+            ve_args.append("--require-hashes")
         for filename in self._filenames:
             ve_args.extend(["-r", str(filename)])
 
