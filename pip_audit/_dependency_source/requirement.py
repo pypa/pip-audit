@@ -14,7 +14,6 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import IO, Iterator
 
 from packaging.specifiers import SpecifierSet
-from packaging.version import Version
 from pip_requirements_parser import InstallRequirement, InvalidRequirementLine, RequirementsFile
 
 from pip_audit._dependency_source import (
@@ -25,7 +24,7 @@ from pip_audit._dependency_source import (
 )
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
-from pip_audit._service.interface import ResolvedDependency, SkippedDependency
+from pip_audit._service.interface import ResolvedDependency
 from pip_audit._state import AuditState
 from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
 
@@ -202,61 +201,6 @@ class RequirementSource(DependencySource):
                 # log the error and try to recover the rest of the files.
                 logger.warning(f"encountered an exception during file recovery: {e}")
                 continue
-
-    def _collect_preresolved_deps(
-        self, reqs: Iterator[InstallRequirement], require_hashes: bool
-    ) -> Iterator[Dependency]:
-        """
-        Collect pre-resolved (pinned) dependencies.
-        """
-        req_names: set[str] = set()
-        for req in reqs:
-            if not req.hash_options and require_hashes:
-                raise RequirementSourceError(f"requirement {req.dumps()} does not contain a hash")
-            if req.req is None:
-                # PEP 508-style URL requirements don't have a pre-declared version, even
-                # when hashed; the `#egg=name==version` syntax is non-standard and not supported
-                # by `pip` itself.
-                #
-                # In this case, we can't audit the dependency so we should signal to the
-                # caller that we're skipping it.
-                yield SkippedDependency(
-                    name=req.requirement_line.line,
-                    skip_reason="could not deduce package version from URL requirement",
-                )
-                continue
-            if self._skip_editable and req.is_editable:
-                yield SkippedDependency(name=req.name, skip_reason="requirement marked as editable")
-            if req.marker is not None and not req.marker.evaluate():
-                continue  # pragma: no cover
-
-            # This means we have a duplicate requirement for the same package
-            if req.name in req_names:
-                raise RequirementSourceError(
-                    f"package {req.name} has duplicate requirements: {str(req)}"
-                )
-            req_names.add(req.name)
-
-            # NOTE: URL dependencies cannot be pinned, so skipping them
-            # makes sense (under the same principle of skipping dependencies
-            # that can't be found on PyPI). This is also consistent with
-            # what `pip --no-deps` does (installs the URL dependency, but
-            # not any subdependencies).
-            if req.is_url:
-                yield SkippedDependency(
-                    name=req.name,
-                    skip_reason="URL requirements cannot be pinned to a specific package version",
-                )
-            elif not req.specifier:
-                raise RequirementSourceError(f"requirement {req.name} is not pinned: {str(req)}")
-            else:
-                pinned_specifier = PINNED_SPECIFIER_RE.match(str(req.specifier))
-                if pinned_specifier is None:
-                    raise RequirementSourceError(
-                        f"requirement {req.name} is not pinned to an exact version: {str(req)}"
-                    )
-
-                yield ResolvedDependency(req.name, Version(pinned_specifier.group("version")))
 
 
 class RequirementSourceError(DependencySourceError):
