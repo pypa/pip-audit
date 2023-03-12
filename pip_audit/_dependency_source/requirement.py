@@ -107,7 +107,6 @@ class RequirementSource(DependencySource):
                 with filename.open("r") as f:
                     shutil.copyfileobj(f, tmp_file)
                     tmp_file.flush()
-                    os.fsync(tmp_file)
 
             # Now pass the list of temporary filenames into the rest of our
             # logic.
