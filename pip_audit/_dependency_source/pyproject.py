@@ -79,7 +79,6 @@ class PyProjectSource(DependencySource):
                 # Write the dependencies to a temporary requirements file.
                 req_file.write(os.linesep.join(deps).encode())
                 req_file.flush()
-                os.fsync(req_file)
 
                 # Try to install the generated requirements file.
                 ve = VirtualEnv(install_args=["-r", req_file.name], state=self.state)

@@ -84,10 +84,39 @@ class RequirementSource(DependencySource):
         Raises a `RequirementSourceError` on any errors.
         """
 
+        with ExitStack() as stack:
+            # We need to handle process substitution inputs so we can invoke
+            # `pip-audit` like so:
+            #
+            #   pip-audit -r <(echo 'something')
+            #
+            # Since `/dev/fd/<n>` inputs are unique to the parent process, we
+            # can't pass these file names to `pip` and expect `pip` to able to
+            # read them.
+            #
+            # In order to get around this, we're going to copy each input into a
+            # a corresponding temporary file and then pass that set of files
+            # into `pip`.
+            tmp_files = []
+
+            # For each input file, copy it to one of our temporary files.
+            # Ensure we flush so our writes are visible to `pip`.
+            for filename in self._filenames:
+                tmp_file = stack.enter_context(NamedTemporaryFile(mode="w"))
+                with filename.open("r") as f:
+                    shutil.copyfileobj(f, tmp_file)
+                    tmp_file.flush()
+                tmp_files.append(tmp_file)
+
+            # Now pass the list of temporary filenames into the rest of our
+            # logic.
+            yield from self._collect_from_files([Path(f.name) for f in tmp_files])
+
+    def _collect_from_files(self, filenames: list[os.PathLike]) -> Iterator[Dependency]:
         # Figure out whether we have a fully resolved set of dependencies.
         reqs: list[InstallRequirement] = []
         require_hashes: bool = self._require_hashes
-        for filename in self._filenames:
+        for filename in filenames:
             rf = RequirementsFile.from_file(filename)
             if len(rf.invalid_lines) > 0:
                 invalid = rf.invalid_lines[0]
@@ -108,7 +137,7 @@ class RequirementSource(DependencySource):
             return
 
         ve_args = []
-        for filename in self._filenames:
+        for filename in filenames:
             ve_args.extend(["-r", str(filename)])
 
         # Try to install the supplied requirements files.
