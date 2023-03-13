@@ -97,16 +97,16 @@ class RequirementSource(DependencySource):
             # In order to get around this, we're going to copy each input into a
             # a corresponding temporary file and then pass that set of files
             # into `pip`.
-            tmp_files: list[IO[str]] = [
-                stack.enter_context(NamedTemporaryFile(mode="w")) for _ in self._filenames
-            ]
+            tmp_files = []
 
             # For each input file, copy it to one of our temporary files.
-            # Ensure we flush and fsync so our writes are visible to `pip`.
-            for filename, tmp_file in zip(self._filenames, tmp_files):
+            # Ensure we flush so our writes are visible to `pip`.
+            for filename in self._filenames:
+                tmp_file = stack.enter_context(NamedTemporaryFile(mode="w"))
                 with filename.open("r") as f:
                     shutil.copyfileobj(f, tmp_file)
                     tmp_file.flush()
+                tmp_files.append(tmp_file)
 
             # Now pass the list of temporary filenames into the rest of our
             # logic.
