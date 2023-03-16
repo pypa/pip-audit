@@ -8,6 +8,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.5.0]
+
 ### Changed
 
 * Improved error messaging when a requirements input or indirect dependency
@@ -465,7 +467,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.4.15...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.5.0...HEAD
+[2.4.15]: https://github.com/pypa/pip-audit/compare/v2.4.15...v2.5.0
 [2.4.15]: https://github.com/pypa/pip-audit/compare/v2.4.14...v2.4.15
 [2.4.14]: https://github.com/pypa/pip-audit/compare/v2.4.13...v2.4.14
 [2.4.13]: https://github.com/pypa/pip-audit/compare/v2.4.12...v2.4.13
