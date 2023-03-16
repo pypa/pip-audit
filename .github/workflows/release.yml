@@ -36,8 +36,6 @@ jobs:
 
     - name: publish
       uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
 
     - name: sign
       uses: sigstore/gh-action-sigstore-python@v1.2.1
