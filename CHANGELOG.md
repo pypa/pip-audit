@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed a crash on Windows caused by multiple open file handles to
+  input requirements ([#551](https://github.com/pypa/pip-audit/pull/551))
+
 ## [2.5.0]
 
 ### Changed
