@@ -116,8 +116,8 @@ class RequirementSource(DependencySource):
         finally:
             # Since we disabled automatically deletion for these temporary files, we need to
             # manually delete them on the way out.
-            for f in tmp_files:
-                os.unlink(f)
+            for t in tmp_files:
+                os.unlink(t)
 
     def _collect_from_files(self, filenames: list[os.PathLike]) -> Iterator[Dependency]:
         # Figure out whether we have a fully resolved set of dependencies.
