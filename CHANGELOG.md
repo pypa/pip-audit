@@ -8,6 +8,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.5.1]
+
 ### Fixed
 
 * Fixed a crash on Windows caused by multiple open file handles to
@@ -472,8 +474,9 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.5.0...HEAD
-[2.4.15]: https://github.com/pypa/pip-audit/compare/v2.4.15...v2.5.0
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.5.1...HEAD
+[2.5.1]: https://github.com/pypa/pip-audit/compare/v2.5.0...v2.5.1
+[2.5.0]: https://github.com/pypa/pip-audit/compare/v2.4.15...v2.5.0
 [2.4.15]: https://github.com/pypa/pip-audit/compare/v2.4.14...v2.4.15
 [2.4.14]: https://github.com/pypa/pip-audit/compare/v2.4.13...v2.4.14
 [2.4.13]: https://github.com/pypa/pip-audit/compare/v2.4.12...v2.4.13
