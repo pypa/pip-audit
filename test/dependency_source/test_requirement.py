@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from email.message import EmailMessage
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import pretend  # type: ignore
 import pytest
@@ -17,7 +18,7 @@ from pip_audit._dependency_source import (
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState
-from pip_audit._virtual_env import VirtualEnvError
+from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
 
 
 def get_metadata_mock():
@@ -481,6 +482,38 @@ def test_requirement_source_no_deps_duplicate_dependencies(req_file):
 
     with pytest.raises(DependencySourceError):
         list(source.collect())
+
+
+def test_requirement_source_no_double_open(monkeypatch, req_file):
+    source = _init_requirement([(req_file(), "flask==2.0.1")])
+
+    # Intercept the calls to `NamedTemporaryFile` to get a handle on each file object.
+    tmp_files = []
+
+    def named_temp_file(*args, **kwargs):
+        tmp_file = NamedTemporaryFile(*args, **kwargs)
+        tmp_files.append(tmp_file)
+        return tmp_file
+
+    monkeypatch.setattr(
+        requirement,
+        "NamedTemporaryFile",
+        named_temp_file,
+    )
+
+    # Intercept the `VirtualEnv` constructor to check that all file handles are closed prior to
+    # the `pip` invocation.
+    #
+    # `pip` will open the file so we need to ensure that we've closed it.
+    def virtual_env(*args, **kwargs):
+        for tmp_file in tmp_files:
+            assert tmp_file.closed
+        return VirtualEnv(*args, **kwargs)
+
+    monkeypatch.setattr(requirement, "VirtualEnv", virtual_env)
+
+    specs = list(source.collect())
+    assert ResolvedDependency("Flask", Version("2.0.1")) in specs
 
 
 def test_requirement_source_fix_explicit_subdep(monkeypatch, req_file):
