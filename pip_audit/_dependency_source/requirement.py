@@ -84,7 +84,8 @@ class RequirementSource(DependencySource):
         Raises a `RequirementSourceError` on any errors.
         """
 
-        with ExitStack() as stack:
+        tmp_files = []
+        try:
             # We need to handle process substitution inputs so we can invoke
             # `pip-audit` like so:
             #
@@ -97,20 +98,26 @@ class RequirementSource(DependencySource):
             # In order to get around this, we're going to copy each input into a
             # a corresponding temporary file and then pass that set of files
             # into `pip`.
-            tmp_files = []
-
-            # For each input file, copy it to one of our temporary files.
-            # Ensure we flush so our writes are visible to `pip`.
             for filename in self._filenames:
-                tmp_file = stack.enter_context(NamedTemporaryFile(mode="w"))
+                # Deliberately pass `delete=False` so that our temporary file doesn't get
+                # automatically deleted on close. We need to close it so that `pip` can
+                # use it however, we obviously want it to persist.
+                tmp_file = NamedTemporaryFile(mode="w", delete=False)
                 with filename.open("r") as f:
                     shutil.copyfileobj(f, tmp_file)
-                    tmp_file.flush()
-                tmp_files.append(tmp_file)
+
+                # Close the file since it's going to get re-opened by `pip`
+                tmp_file.close()
+                tmp_files.append(tmp_file.name)
 
             # Now pass the list of temporary filenames into the rest of our
             # logic.
-            yield from self._collect_from_files([Path(f.name) for f in tmp_files])
+            yield from self._collect_from_files([Path(f) for f in tmp_files])
+        finally:
+            # Since we disabled automatically deletion for these temporary files, we need to
+            # manually delete them on the way out.
+            for t in tmp_files:
+                os.unlink(t)
 
     def _collect_from_files(self, filenames: list[os.PathLike]) -> Iterator[Dependency]:
         # Figure out whether we have a fully resolved set of dependencies.
