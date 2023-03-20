@@ -30,9 +30,9 @@ dependencies = [
     "CacheControl[filecache]>=0.12.10",
     # NOTE(ww): Release 2.5.0 is broken, subsequent 2.5.x releases fix it.
     # See: https://github.com/CycloneDX/cyclonedx-python-lib/issues/245
-    "cyclonedx-python-lib~=2,!=2.5.0",
+    "cyclonedx-python-lib~=2.0.0,!=2.5.0",
     "html5lib>=1.1",
-    "packaging>=23.0.0",               # https://github.com/pypa/pip-audit/issues/464
+    "packaging>=23.0.0",                   # https://github.com/pypa/pip-audit/issues/464
     "pip-api>=0.0.28",
     "pip-requirements-parser>=32.0.0",
     "rich>=12.4",
