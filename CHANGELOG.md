@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.5.2]
+
+### Fixed
+
+* Fixed a loose dependency constraint for CycloneDX SBOM generation
+  ([#558](https://github.com/pypa/pip-audit/pull/558))
+
 ## [2.5.1]
 
 ### Fixed
@@ -474,7 +481,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.5.1...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.5.2...HEAD
+[2.5.2]: https://github.com/pypa/pip-audit/compare/v2.5.1...v2.5.2
 [2.5.1]: https://github.com/pypa/pip-audit/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/pypa/pip-audit/compare/v2.4.15...v2.5.0
 [2.4.15]: https://github.com/pypa/pip-audit/compare/v2.4.14...v2.4.15
