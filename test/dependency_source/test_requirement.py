@@ -70,7 +70,11 @@ def test_requirement_source_impossible_resolution(req_file):
 def test_requirement_source_virtualenv_error(monkeypatch, req_file):
     class MockVirtualEnv:
         def __init__(
-            self, install_args: list[str], index_urls: list[str], state: AuditState
+            self,
+            install_args: list[str],
+            index_url: str,
+            extra_index_url: list[str],
+            state: AuditState,
         ) -> None:
             pass
 
@@ -149,7 +153,9 @@ def test_requirement_source_url(req_file):
 @pytest.mark.online
 def test_requirement_source_multiple_indexes(req_file):
     source = _init_requirement(
-        [(req_file(), "flask==2.0.1")], index_urls=[PYPI_URL, "https://test.pypi.org/simple/"]
+        [(req_file(), "flask==2.0.1")],
+        index_url=PYPI_URL,
+        extra_index_urls=["https://test.pypi.org/simple/"],
     )
     specs = list(source.collect())
     assert ResolvedDependency("Flask", Version("2.0.1")) in specs
