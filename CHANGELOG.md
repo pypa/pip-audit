@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Changed
+
+* Further simplified `pip-audit`'s dependency resolution to remove inconsistent
+  behaviour when using hashed requirements or the `--no-deps` flag
+  ([#540](https://github.com/pypa/pip-audit/pull/540))
+
 ## [2.5.2]
 
 ### Fixed
