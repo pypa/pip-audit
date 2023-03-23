@@ -43,7 +43,7 @@ class VirtualEnv(venv.EnvBuilder):
     def __init__(
         self,
         install_args: list[str],
-        index_url: str = "",
+        index_url: str | None = None,
         extra_index_urls: list[str] = [],
         state: AuditState = AuditState(),
     ):

@@ -30,7 +30,7 @@ class PyProjectSource(DependencySource):
     def __init__(
         self,
         filename: Path,
-        index_url: str = "",
+        index_url: str | None = None,
         extra_index_urls: list[str] = [],
         state: AuditState = AuditState(),
     ) -> None:

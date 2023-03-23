@@ -44,7 +44,7 @@ class RequirementSource(DependencySource):
         require_hashes: bool = False,
         no_deps: bool = False,
         skip_editable: bool = False,
-        index_url: str = "",
+        index_url: str | None = None,
         extra_index_urls: list[str] = [],
         state: AuditState = AuditState(),
     ) -> None:
