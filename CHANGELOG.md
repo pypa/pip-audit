@@ -14,6 +14,11 @@ All versions prior to 0.0.9 are untracked.
   behaviour when using hashed requirements or the `--no-deps` flag
   ([#540](https://github.com/pypa/pip-audit/pull/540))
 
+### Fixed
+
+* Fixed a crash caused by invalid UTF-8 sequences in subprocess outputs
+  ([#572](https://github.com/pypa/pip-audit/pull/572))
+
 ## [2.5.2]
 
 ### Fixed
