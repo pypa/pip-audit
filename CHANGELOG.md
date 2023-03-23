@@ -28,6 +28,10 @@ All versions prior to 0.0.9 are untracked.
 * Fixed a crash on Windows caused by multiple open file handles to
   input requirements ([#551](https://github.com/pypa/pip-audit/pull/551))
 
+* Fixed an issue where the log window that we use to display `pip-audit`'s
+  dependency resolution progress was not showing anything
+  ([#567](https://github.com/pypa/pip-audit/pull/567))
+
 ## [2.5.0]
 
 ### Changed
