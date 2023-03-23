@@ -45,7 +45,6 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
 
     terminated = False
     stdout = b""
-    stderr = b""
 
     # NOTE: We use `poll()` to control this loop instead of the `read()` call
     # to prevent deadlocks. Similarly, `read(size)` will return an empty bytes
@@ -54,11 +53,11 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
         terminated = process.poll() is not None
         # NOTE(ww): Buffer size chosen arbitrarily here and below.
         stdout += process.stdout.read(4096)  # type: ignore
-        stderr += process.stderr.read(4096)  # type: ignore
         state.update_state(
             f"Running {pretty_args}", stdout.decode(errors="replace") if log_stdout else None
         )
 
+    stderr = process.stderr.read()  # type: ignore
     if process.returncode != 0:
         raise CalledProcessError(
             f"{pretty_args} exited with {process.returncode}",
