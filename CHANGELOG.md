@@ -14,6 +14,9 @@ All versions prior to 0.0.9 are untracked.
   behaviour when using hashed requirements or the `--no-deps` flag
   ([#540](https://github.com/pypa/pip-audit/pull/540))
 
+* Fixed a crash caused by auditing requirements files that refer to other
+  requirements files ([#568](https://github.com/pypa/pip-audit/pull/568))
+
 ## [2.5.2]
 
 ### Fixed
