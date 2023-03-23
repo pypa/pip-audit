@@ -284,7 +284,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         "--index-url",
         type=str,
         help="base URL of the Python Package Index; this should point to a repository compliant "
-        "with PEP 503 (the simple repository API)",
+        "with PEP 503 (the simple repository API); this will be resolved by pip if not specified",
     )
     parser.add_argument(
         "--extra-index-url",
