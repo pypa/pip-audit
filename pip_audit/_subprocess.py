@@ -57,6 +57,9 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
             f"Running {pretty_args}", stdout.decode(errors="replace") if log_stdout else None
         )
 
+    # NOTE(alex): For reasons I'm unsure about, reading the stderr stream in
+    # real time seems to interfere with stdout and cause us to read nothing.
+    # Let's wait until the process is terminated before reading stderr.
     stderr = process.stderr.read()  # type: ignore
     if process.returncode != 0:
         raise CalledProcessError(
