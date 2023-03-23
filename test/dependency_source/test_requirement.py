@@ -16,7 +16,7 @@ from pip_audit._dependency_source import (
     requirement,
 )
 from pip_audit._fix import ResolvedFixVersion
-from pip_audit._service import ResolvedDependency, SkippedDependency
+from pip_audit._service import ResolvedDependency
 from pip_audit._state import AuditState
 from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
 
@@ -123,6 +123,27 @@ def test_requirement_source_git(req_file):
 
     specs = list(source.collect())
     assert ResolvedDependency(name="uWSGI", version=Version("2.0.20")) in specs
+
+
+@pytest.mark.online
+def test_requirement_source_url(req_file):
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "https://github.com/pallets/flask/archive/refs/tags/2.0.1.tar.gz\n",
+            )
+        ],
+    )
+
+    specs = list(source.collect())
+    assert (
+        ResolvedDependency(
+            name="Flask",
+            version=Version("2.0.1"),
+        )
+        in specs
+    )
 
 
 @pytest.mark.online
@@ -319,7 +340,35 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
             assert expected_req == f.read().strip()
 
 
+@pytest.mark.online
 def test_requirement_source_require_hashes(req_file):
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "wheel==0.38.1 "
+                "--hash=sha256:7a95f9a8dc0924ef318bd55b616112c70903192f524d120acc614f59547a9e1f\n"
+                "setuptools==67.0.0 "
+                "--hash=sha256:9d790961ba6219e9ff7d9557622d2fe136816a264dd01d5997cfc057d804853d",
+            )
+        ],
+        require_hashes=True,
+    )
+
+    specs = list(source.collect())
+    assert specs == [
+        ResolvedDependency(name="wheel", version=Version("0.38.1")),
+        ResolvedDependency(name="setuptools", version=Version("67.0.0")),
+    ]
+
+
+@pytest.mark.online
+def test_requirement_source_require_hashes_not_fully_resolved(req_file):
+    # When using `--require-hashes`, `pip` requires a fully resolved list of requirements. If it
+    # finds a subdependency that is not listed in the requirements file, it will raise an error.
+    #
+    # In the case of Flask, this package has lots of subdependencies that aren't listed here so we
+    # expect an error.
     source = _init_requirement(
         [
             (
@@ -331,12 +380,12 @@ def test_requirement_source_require_hashes(req_file):
         require_hashes=True,
     )
 
-    specs = list(source.collect())
-    assert specs == [ResolvedDependency("flask", Version("2.0.1"))]
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
 
 
 def test_requirement_source_require_hashes_missing(req_file):
-    source = _init_requirement([(req_file(), "flask==2.0.1")], require_hashes=True)
+    source = _init_requirement([(req_file(), "wheel==0.38.1")], require_hashes=True)
 
     # All requirements must be hashed when collecting with `require-hashes`
     with pytest.raises(DependencySourceError):
@@ -348,9 +397,9 @@ def test_requirement_source_require_hashes_inferred(req_file):
         [
             (
                 req_file(),
-                "flask==2.0.1 "
-                "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9\n"
-                "requests==2.0",
+                "wheel==0.38.1 "
+                "--hash=sha256:7a95f9a8dc0924ef318bd55b616112c70903192f524d120acc614f59547a9e1f\n"
+                "setuptools==67.0.0",
             )
         ]
     )
@@ -365,10 +414,10 @@ def test_requirement_source_require_hashes_unpinned(req_file):
         [
             (
                 req_file(),
-                "flask==2.0.1 "
-                "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9\n"
-                "requests>=1.0 "
-                "--hash=sha256:requests-hash",
+                "wheel==0.38.1 "
+                "--hash=sha256:7a95f9a8dc0924ef318bd55b616112c70903192f524d120acc614f59547a9e1f\n"
+                "setuptools<=67.0.0 "
+                "--hash=sha256:9d790961ba6219e9ff7d9557622d2fe136816a264dd01d5997cfc057d804853d",
             )
         ]
     )
@@ -379,109 +428,30 @@ def test_requirement_source_require_hashes_unpinned(req_file):
         list(source.collect())
 
 
+def test_requirement_source_require_hashes_incorrect_hash(req_file):
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "wheel==0.38.1 "
+                "--hash=sha256:7a95f9a8dc0924ef318bd55b616112c70903192f524d120acc614f59547a9e1f\n"
+                "setuptools<=67.0.0 "
+                "--hash=sha256:setuptools-hash",
+            )
+        ]
+    )
+
+    # The `setuptools` hash is incorrect.
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
+
+
+@pytest.mark.online
 def test_requirement_source_no_deps(req_file):
     source = _init_requirement([(req_file(), "flask==2.0.1")], no_deps=True)
 
     specs = list(source.collect())
-    assert specs == [ResolvedDependency("flask", Version("2.0.1"))]
-
-
-def test_requirement_source_no_deps_unpinned(req_file):
-    source = _init_requirement([(req_file(), "flask\nrequests==1.0")], no_deps=True)
-
-    # When dependency resolution is disabled, all requirements must be pinned.
-    with pytest.raises(DependencySourceError):
-        list(source.collect())
-
-
-def test_requirement_source_no_deps_not_exact_version(req_file):
-    source = _init_requirement([(req_file(), "flask==1.0\nrequests>=1.0")], no_deps=True)
-
-    # When dependency resolution is disabled, all requirements must be pinned.
-    with pytest.raises(DependencySourceError):
-        list(source.collect())
-
-
-def test_requirement_source_no_deps_unpinned_url(req_file):
-    source = _init_requirement(
-        [
-            (
-                req_file(),
-                "https://github.com/pallets/flask/archive/refs/tags/2.0.1.tar.gz#egg=flask\n",
-            )
-        ],
-        no_deps=True,
-    )
-
-    assert list(source.collect()) == [
-        SkippedDependency(
-            name="flask",
-            skip_reason="URL requirements cannot be pinned to a specific package version",
-        )
-    ]
-
-
-def test_requirement_source_no_deps_editable_with_egg_fragment(req_file):
-    source = _init_requirement([(req_file(), "-e file:flask.py#egg=flask==2.0.1")], no_deps=True)
-
-    specs = list(source.collect())
-    assert (
-        SkippedDependency(
-            name="flask",
-            skip_reason="URL requirements cannot be pinned to a specific package version",
-        )
-        in specs
-    )
-
-
-def test_requirement_source_no_deps_editable_without_egg_fragment(req_file):
-    source = _init_requirement([(req_file(), "-e file:flask.py")], no_deps=True)
-
-    specs = list(source.collect())
-    assert (
-        SkippedDependency(
-            name="-e file:flask.py",
-            skip_reason="could not deduce package version from URL requirement",
-        )
-        in specs
-    )
-
-
-def test_requirement_source_no_deps_non_editable_without_egg_fragment(req_file):
-    source = _init_requirement(
-        [
-            (
-                req_file(),
-                "git+https://github.com/unbit/uwsgi.git@1bb9ad77c6d2d310c2d6d1d9ad62de61f725b824",
-            )
-        ],
-        no_deps=True,
-    )
-
-    specs = list(source.collect())
-    assert (
-        SkippedDependency(
-            name="git+https://github.com/unbit/uwsgi.git@1bb9ad77c6d2d310c2d6d1d9ad62de61f725b824",
-            skip_reason="could not deduce package version from URL requirement",
-        )
-        in specs
-    )
-
-
-def test_requirement_source_no_deps_editable_skip(req_file):
-    source = _init_requirement(
-        [(req_file(), "-e file:flask.py#egg=flask==2.0.1")], no_deps=True, skip_editable=True
-    )
-
-    specs = list(source.collect())
-    assert SkippedDependency(name="flask", skip_reason="requirement marked as editable") in specs
-
-
-def test_requirement_source_no_deps_duplicate_dependencies(req_file):
-    source = _init_requirement([(req_file(), "flask==1.0\nflask==1.0")], no_deps=True)
-
-    with pytest.raises(DependencySourceError):
-        list(source.collect())
+    assert specs == [ResolvedDependency("Flask", Version("2.0.1"))]
 
 
 def test_requirement_source_no_double_open(monkeypatch, req_file):
@@ -550,7 +520,7 @@ def test_requirement_source_fix_explicit_subdep(monkeypatch, req_file):
     assert len(logger.warning.calls) == 1
 
 
-def test_requirement_source_fix_explicit_subdep_multiple_reqs(monkeypatch, req_file):
+def test_requirement_source_fix_explicit_subdep_multiple_reqs(req_file):
     # Recreate the vulnerable subdependency case.
     source = _init_requirement([(req_file(), "flask==2.0.1")])
     flask_deps = source.collect()

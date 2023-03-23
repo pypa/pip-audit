@@ -8,6 +8,19 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.5.3]
+
+### Changed
+
+* Further simplified `pip-audit`'s dependency resolution to remove inconsistent
+  behaviour when using hashed requirements or the `--no-deps` flag
+  ([#540](https://github.com/pypa/pip-audit/pull/540))
+
+### Fixed
+
+* Fixed a crash caused by invalid UTF-8 sequences in subprocess outputs
+  ([#572](https://github.com/pypa/pip-audit/pull/572))
+
 ## [2.5.2]
 
 ### Fixed
@@ -481,7 +494,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.5.2...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.5.3...HEAD
+[2.5.3]: https://github.com/pypa/pip-audit/compare/v2.5.2...v2.5.3
 [2.5.2]: https://github.com/pypa/pip-audit/compare/v2.5.1...v2.5.2
 [2.5.1]: https://github.com/pypa/pip-audit/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/pypa/pip-audit/compare/v2.4.15...v2.5.0
