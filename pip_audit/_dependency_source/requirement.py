@@ -110,7 +110,7 @@ class RequirementSource(DependencySource):
                     # Close the file since it's going to get re-opened by `pip`.
                     tmp_file.close()
                     tmp_files.append(tmp_file.name)
-                    filename = tmp_file.name
+                    filename = Path(tmp_file.name)
 
                 collect_files.append(filename)
 
