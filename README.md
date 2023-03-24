@@ -144,7 +144,7 @@ positional arguments:
   project_path          audit a local Python project at the given path
                         (default: None)
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   -V, --version         show program's version number and exit
   -l, --local           show only results for dependencies in the local
