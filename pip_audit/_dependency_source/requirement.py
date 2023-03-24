@@ -198,7 +198,10 @@ class RequirementSource(DependencySource):
         with filename.open("w") as f:
             found = False
             for req in reqs:
-                if isinstance(req, InstallRequirement) and req.name == fix_version.dep.name:
+                if (
+                    isinstance(req, InstallRequirement)
+                    and req.name == fix_version.dep.canonical_name
+                ):
                     found = True
                     if req.specifier.contains(
                         fix_version.dep.version
