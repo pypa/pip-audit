@@ -65,4 +65,4 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
             stderr=stderr.decode(errors="replace"),
         )
 
-    return stdout.decode("utf-8")
+    return stdout.decode("utf-8", errors="replace")
