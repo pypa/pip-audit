@@ -16,11 +16,7 @@ from typing import IO, Iterator
 from packaging.specifiers import SpecifierSet
 from pip_requirements_parser import InstallRequirement, InvalidRequirementLine, RequirementsFile
 
-from pip_audit._dependency_source import (
-    DependencyFixError,
-    DependencySource,
-    DependencySourceError,
-)
+from pip_audit._dependency_source import DependencyFixError, DependencySource, DependencySourceError
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
 from pip_audit._service.interface import ResolvedDependency
