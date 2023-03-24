@@ -109,18 +109,18 @@ class RequirementSource(DependencySource):
 
                     # Close the file since it's going to get re-opened by `pip`.
                     tmp_file.close()
-                    tmp_files.append(tmp_file.name)
                     filename = Path(tmp_file.name)
+                    tmp_files.append(filename)
 
                 collect_files.append(filename)
 
             # Now pass the list of filenames into the rest of our logic.
-            yield from self._collect_from_files([Path(f) for f in collect_files])
+            yield from self._collect_from_files(collect_files)
         finally:
             # Since we disabled automatically deletion for these temporary
             # files, we need to manually delete them on the way out.
             for t in tmp_files:
-                os.unlink(t)
+                os.unlink(str(t))
 
     def _collect_from_files(self, filenames: list[os.PathLike]) -> Iterator[Dependency]:
         ve_args = []
