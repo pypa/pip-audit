@@ -16,12 +16,7 @@ from typing import IO, Iterator
 from packaging.specifiers import SpecifierSet
 from pip_requirements_parser import InstallRequirement, InvalidRequirementLine, RequirementsFile
 
-from pip_audit._dependency_source import (
-    PYPI_URL,
-    DependencyFixError,
-    DependencySource,
-    DependencySourceError,
-)
+from pip_audit._dependency_source import DependencyFixError, DependencySource, DependencySourceError
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
 from pip_audit._service.interface import ResolvedDependency
@@ -45,7 +40,8 @@ class RequirementSource(DependencySource):
         require_hashes: bool = False,
         no_deps: bool = False,
         skip_editable: bool = False,
-        index_urls: list[str] = [PYPI_URL],
+        index_url: str | None = None,
+        extra_index_urls: list[str] = [],
         state: AuditState = AuditState(),
     ) -> None:
         """
@@ -63,7 +59,9 @@ class RequirementSource(DependencySource):
         `skip_editable` controls whether requirements marked as "editable" are skipped.
         By default, editable requirements are not skipped.
 
-        `index_urls` is a list of of package indices.
+        `index_url` is the base URL of the package index.
+
+        `extra_index_urls` are the extra URLs of package indexes.
 
         `state` is an `AuditState` to use for state callbacks.
         """
@@ -71,7 +69,8 @@ class RequirementSource(DependencySource):
         self._require_hashes = require_hashes
         self._no_deps = no_deps
         self._skip_editable = skip_editable
-        self._index_urls = index_urls
+        self._index_url = index_url
+        self._extra_index_urls = extra_index_urls
         self.state = state
         self._dep_cache: dict[Path, set[Dependency]] = {}
 
@@ -127,7 +126,7 @@ class RequirementSource(DependencySource):
             ve_args.extend(["-r", str(filename)])
 
         # Try to install the supplied requirements files.
-        ve = VirtualEnv(ve_args, self._index_urls, self.state)
+        ve = VirtualEnv(ve_args, self._index_url, self._extra_index_urls, self.state)
         try:
             with TemporaryDirectory() as ve_dir:
                 ve.create(ve_dir)
