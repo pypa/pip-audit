@@ -122,7 +122,7 @@ class RequirementSource(DependencySource):
             for t in tmp_files:
                 os.unlink(str(t))
 
-    def _collect_from_files(self, filenames: list[os.PathLike]) -> Iterator[Dependency]:
+    def _collect_from_files(self, filenames: list[Path]) -> Iterator[Dependency]:
         ve_args = []
         if self._no_deps:
             ve_args.append("--no-deps")
