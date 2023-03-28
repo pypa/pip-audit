@@ -119,7 +119,7 @@ class RequirementSource(DependencySource):
             # Since we disabled automatically deletion for these temporary
             # files, we need to manually delete them on the way out.
             for t in tmp_files:
-                os.unlink(str(t))
+                t.unlink()
 
     def _collect_from_files(self, filenames: list[Path]) -> Iterator[Dependency]:
         ve_args = []
