@@ -10,8 +10,13 @@ All versions prior to 0.0.9 are untracked.
 
 ### Changed
 
-* Refactored `index-url` option to not override user pip config by default, 
+* Refactored `index-url` option to not override user pip config by default,
   unless specified ([#565](https://github.com/pypa/pip-audit/pull/565))
+
+### Fixed
+
+* Fixed a crash caused by auditing requirements files that refer to other
+  requirements files ([#568](https://github.com/pypa/pip-audit/pull/568))
 
 ## [2.5.3]
 
@@ -25,9 +30,6 @@ All versions prior to 0.0.9 are untracked.
 
 * Fixed a crash caused by invalid UTF-8 sequences in subprocess outputs
   ([#572](https://github.com/pypa/pip-audit/pull/572))
-
-* Fixed a crash caused by auditing requirements files that refer to other
-  requirements files ([#568](https://github.com/pypa/pip-audit/pull/568))
 
 ## [2.5.2]
 
