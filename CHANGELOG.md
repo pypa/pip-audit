@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Changed
+
+* Refactored `index-url` option to not override user pip config by default, 
+  unless specified ([#565](https://github.com/pypa/pip-audit/pull/565))
+
 ## [2.5.3]
 
 ### Changed

@@ -16,7 +16,6 @@ from typing import IO, Iterator, NoReturn, cast
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
 from pip_audit._dependency_source import (
-    PYPI_URL,
     DependencySource,
     DependencySourceError,
     PipSource,
@@ -285,8 +284,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         "--index-url",
         type=str,
         help="base URL of the Python Package Index; this should point to a repository compliant "
-        "with PEP 503 (the simple repository API)",
-        default=PYPI_URL,
+        "with PEP 503 (the simple repository API); this will be resolved by pip if not specified",
     )
     parser.add_argument(
         "--extra-index-url",
@@ -347,12 +345,14 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragm
 
 
 def _dep_source_from_project_path(
-    project_path: Path, index_urls: list[str], state: AuditState
+    project_path: Path, index_url: str, extra_index_urls: list[str], state: AuditState
 ) -> DependencySource:  # pragma: no cover
     # Check for a `pyproject.toml`
     pyproject_path = project_path / "pyproject.toml"
     if pyproject_path.is_file():
-        return PyProjectSource(pyproject_path, index_urls=index_urls, state=state)
+        return PyProjectSource(
+            pyproject_path, index_url=index_url, extra_index_urls=extra_index_urls, state=state
+        )
 
     # TODO: Checks for setup.py and other project files will go here.
 
@@ -374,7 +374,7 @@ def audit() -> None:  # pragma: no cover
     if args.requirements is None:
         if args.require_hashes:
             parser.error("The --require-hashes flag can only be used with --requirement (-r)")
-        elif args.index_url != PYPI_URL:
+        elif args.index_url:
             parser.error("The --index-url flag can only be used with --requirement (-r)")
         elif args.extra_index_urls:
             parser.error("The --extra-index-url flag can only be used with --requirement (-r)")
@@ -408,7 +408,6 @@ def audit() -> None:  # pragma: no cover
         state = stack.enter_context(AuditState(members=actors))
 
         source: DependencySource
-        index_urls = [args.index_url] + args.extra_index_urls
         if args.requirements is not None:
             req_files: list[Path] = [Path(req.name) for req in args.requirements]
             source = RequirementSource(
@@ -416,7 +415,8 @@ def audit() -> None:  # pragma: no cover
                 require_hashes=args.require_hashes,
                 no_deps=args.no_deps,
                 skip_editable=args.skip_editable,
-                index_urls=index_urls,
+                index_url=args.index_url,
+                extra_index_urls=args.extra_index_urls,
                 state=state,
             )
         elif args.project_path is not None:
@@ -426,7 +426,8 @@ def audit() -> None:  # pragma: no cover
             # Determine which kind of project file exists in the project path
             source = _dep_source_from_project_path(
                 args.project_path,
-                index_urls,
+                args.index_url,
+                args.extra_index_urls,
                 state,
             )
         else:

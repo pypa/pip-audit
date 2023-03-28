@@ -13,12 +13,7 @@ import toml
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 
-from pip_audit._dependency_source import (
-    PYPI_URL,
-    DependencyFixError,
-    DependencySource,
-    DependencySourceError,
-)
+from pip_audit._dependency_source import DependencyFixError, DependencySource, DependencySourceError
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency
 from pip_audit._state import AuditState
@@ -33,14 +28,20 @@ class PyProjectSource(DependencySource):
     """
 
     def __init__(
-        self, filename: Path, index_urls: list[str] = [PYPI_URL], state: AuditState = AuditState()
+        self,
+        filename: Path,
+        index_url: str | None = None,
+        extra_index_urls: list[str] = [],
+        state: AuditState = AuditState(),
     ) -> None:
         """
         Create a new `PyProjectSource`.
 
         `filename` provides a path to a `pyproject.toml` file
 
-        `index_urls` is a list of package indices.
+        `index_url` is the base URL of the package index.
+
+        `extra_index_urls` are the extra URLs of package indexes.
 
         `state` is an `AuditState` to use for state callbacks.
         """
