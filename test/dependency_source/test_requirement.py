@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 from email.message import EmailMessage
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+from threading import Thread
 
 import pretend  # type: ignore
 import pytest
@@ -489,6 +490,28 @@ def test_requirement_source_no_double_open(monkeypatch, req_file):
     monkeypatch.setattr(requirement, "VirtualEnv", virtual_env)
 
     specs = list(source.collect())
+    assert ResolvedDependency("Flask", Version("2.0.1")) in specs
+
+
+def test_requirement_source_fifo():
+    with TemporaryDirectory() as tmp_dir:
+        fifo_path = Path(os.path.join(tmp_dir, "fifo"))
+        os.mkfifo(fifo_path)
+
+        def write_to_fifo():
+            with open(fifo_path, "w") as f:
+                f.write("flask==2.0.1")
+
+        # Make sure we wait for the thread to be done regardless of whether an
+        # error gets thrown
+        t = Thread(target=write_to_fifo)
+        t.start()
+        try:
+            source = requirement.RequirementSource([fifo_path])
+            specs = list(source.collect())
+        finally:
+            t.join()
+
     assert ResolvedDependency("Flask", Version("2.0.1")) in specs
 
 
