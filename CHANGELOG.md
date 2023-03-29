@@ -15,6 +15,10 @@ All versions prior to 0.0.9 are untracked.
 
 ### Fixed
 
+* Fixed bug with the `--fix` flag where new requirements were sometimes being
+  appended to requirement files instead of patching the existing requirement
+  ([#577](https://github.com/pypa/pip-audit/pull/577))
+
 * Fixed a crash caused by auditing requirements files that refer to other
   requirements files ([#568](https://github.com/pypa/pip-audit/pull/568))
 

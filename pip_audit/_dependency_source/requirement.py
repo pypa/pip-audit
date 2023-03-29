@@ -14,6 +14,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import IO, Iterator
 
 from packaging.specifiers import SpecifierSet
+from packaging.utils import canonicalize_name
 from pip_requirements_parser import InstallRequirement, InvalidRequirementLine, RequirementsFile
 
 from pip_audit._dependency_source import DependencyFixError, DependencySource, DependencySourceError
@@ -203,7 +204,10 @@ class RequirementSource(DependencySource):
         with filename.open("w") as f:
             found = False
             for req in reqs:
-                if isinstance(req, InstallRequirement) and req.name == fix_version.dep.name:
+                if (
+                    isinstance(req, InstallRequirement)
+                    and canonicalize_name(req.name) == fix_version.dep.canonical_name
+                ):
                     found = True
                     if req.specifier.contains(
                         fix_version.dep.version

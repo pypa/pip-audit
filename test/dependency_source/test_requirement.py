@@ -198,6 +198,52 @@ def test_requirement_source_fix(req_file):
     )
 
 
+def test_requirement_source_fix_roundtrip(req_file):
+    req_path = req_file()
+    with open(req_path, "w") as f:
+        f.write("flask==0.5")
+
+    source = requirement.RequirementSource([req_path])
+    specs = list(source.collect())
+
+    flask_dep: ResolvedDependency | None = None
+    for spec in specs:
+        if isinstance(spec, ResolvedDependency) and spec.canonical_name == "flask":
+            flask_dep = spec
+            break
+    assert flask_dep is not None
+    assert flask_dep == ResolvedDependency(name="Flask", version=Version("0.5"))
+
+    flask_fix = ResolvedFixVersion(dep=flask_dep, version=Version("1.0"))
+    source.fix(flask_fix)
+
+    with open(req_path) as f:
+        assert f.read().strip() == "flask==1.0"
+
+
+def test_requirement_source_fix_roundtrip_non_canonical_name(req_file):
+    req_path = req_file()
+    with open(req_path, "w") as f:
+        f.write("Flask==0.5")
+
+    source = requirement.RequirementSource([req_path])
+    specs = list(source.collect())
+
+    flask_dep: ResolvedDependency | None = None
+    for spec in specs:
+        if isinstance(spec, ResolvedDependency) and spec.canonical_name == "flask":
+            flask_dep = spec
+            break
+    assert flask_dep is not None
+    assert flask_dep == ResolvedDependency(name="Flask", version=Version("0.5"))
+
+    flask_fix = ResolvedFixVersion(dep=flask_dep, version=Version("1.0"))
+    source.fix(flask_fix)
+
+    with open(req_path) as f:
+        assert f.read().strip() == "Flask==1.0"
+
+
 def test_requirement_source_fix_multiple_files(req_file):
     _check_fixes(
         ["flask==0.5", "requests==2.0\nflask==0.5"],
