@@ -13,7 +13,6 @@ from typing import Iterator
 
 from packaging.version import Version
 
-from ._dependency_source import PYPI_URL
 from ._state import AuditState
 from ._subprocess import CalledProcessError, run
 
@@ -44,7 +43,8 @@ class VirtualEnv(venv.EnvBuilder):
     def __init__(
         self,
         install_args: list[str],
-        index_urls: list[str] = [PYPI_URL],
+        index_url: str | None = None,
+        extra_index_urls: list[str] = [],
         state: AuditState = AuditState(),
     ):
         """
@@ -57,13 +57,16 @@ class VirtualEnv(venv.EnvBuilder):
         ve = VirtualEnv(["-e", "/tmp/my_pkg"])
         ```
 
-        `index_urls` is a list of package indices to install from.
+        `index_url` is the base URL of the package index.
+
+        `extra_index_urls` are the extra URLs of package indexes.
 
         `state` is an `AuditState` to use for state callbacks.
         """
         super().__init__(with_pip=True)
         self._install_args = install_args
-        self._index_urls = index_urls
+        self._index_url = index_url
+        self._extra_index_urls = extra_index_urls
         self._packages: list[tuple[str, Version]] | None = None
         self._state = state
 
@@ -157,8 +160,10 @@ class VirtualEnv(venv.EnvBuilder):
 
     @property
     def _index_url_args(self) -> list[str]:
-        args = ["--index-url", self._index_urls[0]]
-        for index_url in self._index_urls[1:]:
+        args = []
+        if self._index_url:
+            args.extend(["--index-url", self._index_url])
+        for index_url in self._extra_index_urls:
             args.extend(["--extra-index-url", index_url])
         return args
 

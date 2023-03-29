@@ -9,6 +9,7 @@ jobs:
   pypi:
     name: upload release to PyPI
     runs-on: ubuntu-latest
+    environment: release
 
     permissions:
       # Used to authenticate to PyPI via OIDC.
@@ -38,7 +39,7 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
 
     - name: sign
-      uses: sigstore/gh-action-sigstore-python@v1.2.1
+      uses: sigstore/gh-action-sigstore-python@v1.2.3
       with:
         inputs: ./dist/*.tar.gz ./dist/*.whl
         release-signing-artifacts: true

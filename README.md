@@ -106,7 +106,7 @@ For example, using `pip-audit` via `pre-commit` to audit a requirements file:
 
 ```yaml
   - repo: https://github.com/pypa/pip-audit
-    rev: v2.5.2
+    rev: v2.5.4
     hooks:
       -   id: pip-audit
           args: ["-r", "requirements.txt"]
@@ -190,8 +190,8 @@ optional arguments:
   --index-url INDEX_URL
                         base URL of the Python Package Index; this should
                         point to a repository compliant with PEP 503 (the
-                        simple repository API) (default:
-                        https://pypi.org/simple/)
+                        simple repository API); this will be resolved by pip
+                        if not specified (default: None)
   --extra-index-url URL
                         extra URLs of package indexes to use in addition to
                         `--index-url`; should follow the same rules as
