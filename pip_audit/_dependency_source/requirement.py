@@ -81,42 +81,47 @@ class RequirementSource(DependencySource):
         Raises a `RequirementSourceError` on any errors.
         """
 
+        collect_files = []
         tmp_files = []
         try:
-            # We need to handle process substitution inputs so we can invoke
-            # `pip-audit` like so:
-            #
-            #   pip-audit -r <(echo 'something')
-            #
-            # Since `/dev/fd/<n>` inputs are unique to the parent process, we
-            # can't pass these file names to `pip` and expect `pip` to able to
-            # read them.
-            #
-            # In order to get around this, we're going to copy each input into a
-            # a corresponding temporary file and then pass that set of files
-            # into `pip`.
             for filename in self._filenames:
-                # Deliberately pass `delete=False` so that our temporary file doesn't get
-                # automatically deleted on close. We need to close it so that `pip` can
-                # use it however, we obviously want it to persist.
-                tmp_file = NamedTemporaryFile(mode="w", delete=False)
-                with filename.open("r") as f:
-                    shutil.copyfileobj(f, tmp_file)
+                # We need to handle process substitution inputs so we can invoke
+                # `pip-audit` like so:
+                #
+                #   pip-audit -r <(echo 'something')
+                #
+                # Since `/dev/fd/<n>` inputs are unique to the parent process,
+                # we can't pass these file names to `pip` and expect `pip` to
+                # able to read them.
+                #
+                # In order to get around this, we're going to copy each input
+                # into a corresponding temporary file and then pass that set of
+                # files into `pip`.
+                if filename.is_fifo():
+                    # Deliberately pass `delete=False` so that our temporary
+                    # file doesn't get automatically deleted on close. We need
+                    # to close it so that `pip` can use it however, we
+                    # obviously want it to persist.
+                    tmp_file = NamedTemporaryFile(mode="w", delete=False)
+                    with filename.open("r") as f:
+                        shutil.copyfileobj(f, tmp_file)
 
-                # Close the file since it's going to get re-opened by `pip`
-                tmp_file.close()
-                tmp_files.append(tmp_file.name)
+                    # Close the file since it's going to get re-opened by `pip`.
+                    tmp_file.close()
+                    filename = Path(tmp_file.name)
+                    tmp_files.append(filename)
 
-            # Now pass the list of temporary filenames into the rest of our
-            # logic.
-            yield from self._collect_from_files([Path(f) for f in tmp_files])
+                collect_files.append(filename)
+
+            # Now pass the list of filenames into the rest of our logic.
+            yield from self._collect_from_files(collect_files)
         finally:
-            # Since we disabled automatically deletion for these temporary files, we need to
-            # manually delete them on the way out.
+            # Since we disabled automatically deletion for these temporary
+            # files, we need to manually delete them on the way out.
             for t in tmp_files:
-                os.unlink(t)
+                t.unlink()
 
-    def _collect_from_files(self, filenames: list[os.PathLike]) -> Iterator[Dependency]:
+    def _collect_from_files(self, filenames: list[Path]) -> Iterator[Dependency]:
         ve_args = []
         if self._no_deps:
             ve_args.append("--no-deps")
