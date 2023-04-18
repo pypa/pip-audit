@@ -6,25 +6,30 @@ on:
       - main
   pull_request:
   schedule:
-    - cron: '0 12 * * *'
+    - cron: "0 12 * * *"
 
 jobs:
   test:
     strategy:
       matrix:
-        python:
-          - "3.7"
-          - "3.8"
-          - "3.9"
-          - "3.10"
-          - "3.11"
-    runs-on: ubuntu-latest
+        conf:
+          - { py: "3.7", os: "ubuntu-latest" }
+          - { py: "3.8", os: "ubuntu-latest" }
+          - { py: "3.9", os: "ubuntu-latest" }
+          - { py: "3.10", os: "ubuntu-latest" }
+          - { py: "3.11", os: "ubuntu-latest" }
+          # NOTE: We only test Windows and macOS on the latest Python;
+          # these primarily exist to ensure that we don't accidentally
+          # introduce Linux-isms into the development tooling.
+          - { py: "3.11", os: "windows-latest" }
+          - { py: "3.11", os: "macos-latest" }
+    runs-on: ${{ matrix.conf.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@83b7061638ee4956cf7545a6f7efe594e5ad0247 # v3.5.1
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435
         with:
-          python-version: ${{ matrix.python }}
+          python-version: ${{ matrix.conf.py }}
           cache: "pip"
           cache-dependency-path: pyproject.toml
 
