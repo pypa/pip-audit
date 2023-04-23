@@ -25,7 +25,7 @@ jobs:
           - { py: "3.11", os: "macos-latest" }
     runs-on: ${{ matrix.conf.os }}
     steps:
-      - uses: actions/checkout@83b7061638ee4956cf7545a6f7efe594e5ad0247 # v3.5.1
+      - uses: actions/checkout@v3
 
       - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435
         with:
