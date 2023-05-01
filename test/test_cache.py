@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pretend  # type: ignore
@@ -9,15 +10,15 @@ from pip_audit._cache import _get_cache_dir, _get_pip_cache
 
 def test_get_cache_dir(monkeypatch):
     # When we supply a cache directory, always use that
-    cache_dir = _get_cache_dir(Path("/tmp/foo/cache_dir"))
-    assert str(cache_dir) == "/tmp/foo/cache_dir"
+    cache_dir = _get_cache_dir(os.path.join("tmp", "foo", "cache_dir"))
+    assert str(cache_dir) == os.path.join("tmp", "foo", "cache_dir")
 
-    get_pip_cache = pretend.call_recorder(lambda: "/fake/pip/cache/dir")
+    get_pip_cache = pretend.call_recorder(lambda: os.path.join("fake", "pip", "cache", "dir"))
     monkeypatch.setattr(cache, "_get_pip_cache", get_pip_cache)
 
     # When `pip cache dir` works, we use it. In this case, it's mocked.
     cache_dir = _get_cache_dir(None, use_pip=True)
-    assert str(cache_dir) == "/fake/pip/cache/dir"
+    assert str(cache_dir) == os.path.join("fake", "pip", "cache", "dir")
 
 
 def test_get_pip_cache():
@@ -44,8 +45,8 @@ def test_get_cache_dir_old_pip(monkeypatch):
     monkeypatch.setattr(cache, "_PIP_VERSION", Version("1.0.0"))
 
     # When we supply a cache directory, always use that
-    cache_dir = _get_cache_dir(Path("/tmp/foo/cache_dir"))
-    assert str(cache_dir) == "/tmp/foo/cache_dir"
+    cache_dir = _get_cache_dir(os.path.join("tmp", "foo", "cache_dir"))
+    assert str(cache_dir) == os.path.join("tmp", "foo", "cache_dir")
 
     # In this case, we can't query `pip` to figure out where its HTTP cache is
     # Instead, we use `~/.pip-audit-cache`
