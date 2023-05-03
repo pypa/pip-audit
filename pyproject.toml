@@ -37,7 +37,7 @@ dependencies = [
     "pip-requirements-parser>=32.0.0",
     # NOTE(ww): requests 2.30.0 and higher are incompatible with CacheControl;
     # See: https://github.com/psf/requests/issues/6437
-    "requests==2.29.*",
+    "requests<2.30",
     "rich>=12.4",
     "toml>=0.10",
 ]
