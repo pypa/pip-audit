@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.5.5]
+
+### Fixed
+
+* Fixed a crash caused by auditing requirements files that refer to other
+requirements files ([#568](https://github.com/pypa/pip-audit/pull/568))
+
 ## [2.5.4]
 
 ### Changed
@@ -20,9 +27,6 @@ All versions prior to 0.0.9 are untracked.
 * Fixed bug with the `--fix` flag where new requirements were sometimes being
   appended to requirement files instead of patching the existing requirement
   ([#577](https://github.com/pypa/pip-audit/pull/577))
-
-* Fixed a crash caused by auditing requirements files that refer to other
-  requirements files ([#568](https://github.com/pypa/pip-audit/pull/568))
 
 ## [2.5.3]
 
@@ -513,7 +517,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.5.4...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.5.5...HEAD
+[2.5.5]: https://github.com/pypa/pip-audit/compare/v2.5.4...v2.5.5
 [2.5.4]: https://github.com/pypa/pip-audit/compare/v2.5.3...v2.5.4
 [2.5.3]: https://github.com/pypa/pip-audit/compare/v2.5.2...v2.5.3
 [2.5.2]: https://github.com/pypa/pip-audit/compare/v2.5.1...v2.5.2
