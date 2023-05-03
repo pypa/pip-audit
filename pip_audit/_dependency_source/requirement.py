@@ -14,14 +14,10 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import IO, Iterator
 
 from packaging.specifiers import SpecifierSet
+from packaging.utils import canonicalize_name
 from pip_requirements_parser import InstallRequirement, InvalidRequirementLine, RequirementsFile
 
-from pip_audit._dependency_source import (
-    PYPI_URL,
-    DependencyFixError,
-    DependencySource,
-    DependencySourceError,
-)
+from pip_audit._dependency_source import DependencyFixError, DependencySource, DependencySourceError
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency
 from pip_audit._service.interface import ResolvedDependency
@@ -45,7 +41,8 @@ class RequirementSource(DependencySource):
         require_hashes: bool = False,
         no_deps: bool = False,
         skip_editable: bool = False,
-        index_urls: list[str] = [PYPI_URL],
+        index_url: str | None = None,
+        extra_index_urls: list[str] = [],
         state: AuditState = AuditState(),
     ) -> None:
         """
@@ -63,7 +60,9 @@ class RequirementSource(DependencySource):
         `skip_editable` controls whether requirements marked as "editable" are skipped.
         By default, editable requirements are not skipped.
 
-        `index_urls` is a list of of package indices.
+        `index_url` is the base URL of the package index.
+
+        `extra_index_urls` are the extra URLs of package indexes.
 
         `state` is an `AuditState` to use for state callbacks.
         """
@@ -71,7 +70,8 @@ class RequirementSource(DependencySource):
         self._require_hashes = require_hashes
         self._no_deps = no_deps
         self._skip_editable = skip_editable
-        self._index_urls = index_urls
+        self._index_url = index_url
+        self._extra_index_urls = extra_index_urls
         self.state = state
         self._dep_cache: dict[Path, set[Dependency]] = {}
 
@@ -82,42 +82,47 @@ class RequirementSource(DependencySource):
         Raises a `RequirementSourceError` on any errors.
         """
 
+        collect_files = []
         tmp_files = []
         try:
-            # We need to handle process substitution inputs so we can invoke
-            # `pip-audit` like so:
-            #
-            #   pip-audit -r <(echo 'something')
-            #
-            # Since `/dev/fd/<n>` inputs are unique to the parent process, we
-            # can't pass these file names to `pip` and expect `pip` to able to
-            # read them.
-            #
-            # In order to get around this, we're going to copy each input into a
-            # a corresponding temporary file and then pass that set of files
-            # into `pip`.
             for filename in self._filenames:
-                # Deliberately pass `delete=False` so that our temporary file doesn't get
-                # automatically deleted on close. We need to close it so that `pip` can
-                # use it however, we obviously want it to persist.
-                tmp_file = NamedTemporaryFile(mode="w", delete=False)
-                with filename.open("r") as f:
-                    shutil.copyfileobj(f, tmp_file)
+                # We need to handle process substitution inputs so we can invoke
+                # `pip-audit` like so:
+                #
+                #   pip-audit -r <(echo 'something')
+                #
+                # Since `/dev/fd/<n>` inputs are unique to the parent process,
+                # we can't pass these file names to `pip` and expect `pip` to
+                # able to read them.
+                #
+                # In order to get around this, we're going to copy each input
+                # into a corresponding temporary file and then pass that set of
+                # files into `pip`.
+                if filename.is_fifo():
+                    # Deliberately pass `delete=False` so that our temporary
+                    # file doesn't get automatically deleted on close. We need
+                    # to close it so that `pip` can use it however, we
+                    # obviously want it to persist.
+                    tmp_file = NamedTemporaryFile(mode="w", delete=False)
+                    with filename.open("r") as f:
+                        shutil.copyfileobj(f, tmp_file)
 
-                # Close the file since it's going to get re-opened by `pip`
-                tmp_file.close()
-                tmp_files.append(tmp_file.name)
+                    # Close the file since it's going to get re-opened by `pip`.
+                    tmp_file.close()
+                    filename = Path(tmp_file.name)
+                    tmp_files.append(filename)
 
-            # Now pass the list of temporary filenames into the rest of our
-            # logic.
-            yield from self._collect_from_files([Path(f) for f in tmp_files])
+                collect_files.append(filename)
+
+            # Now pass the list of filenames into the rest of our logic.
+            yield from self._collect_from_files(collect_files)
         finally:
-            # Since we disabled automatically deletion for these temporary files, we need to
-            # manually delete them on the way out.
+            # Since we disabled automatically deletion for these temporary
+            # files, we need to manually delete them on the way out.
             for t in tmp_files:
-                os.unlink(t)
+                t.unlink()
 
-    def _collect_from_files(self, filenames: list[os.PathLike]) -> Iterator[Dependency]:
+    def _collect_from_files(self, filenames: list[Path]) -> Iterator[Dependency]:
         ve_args = []
         if self._no_deps:
             ve_args.append("--no-deps")
@@ -127,7 +132,7 @@ class RequirementSource(DependencySource):
             ve_args.extend(["-r", str(filename)])
 
         # Try to install the supplied requirements files.
-        ve = VirtualEnv(ve_args, self._index_urls, self.state)
+        ve = VirtualEnv(ve_args, self._index_url, self._extra_index_urls, self.state)
         try:
             with TemporaryDirectory() as ve_dir:
                 ve.create(ve_dir)
@@ -199,7 +204,10 @@ class RequirementSource(DependencySource):
         with filename.open("w") as f:
             found = False
             for req in reqs:
-                if isinstance(req, InstallRequirement) and req.name == fix_version.dep.name:
+                if (
+                    isinstance(req, InstallRequirement)
+                    and canonicalize_name(req.name) == fix_version.dep.canonical_name
+                ):
                     found = True
                     if req.specifier.contains(
                         fix_version.dep.version

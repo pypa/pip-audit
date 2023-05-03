@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 from email.message import EmailMessage
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+from threading import Thread
 
 import pretend  # type: ignore
 import pytest
@@ -70,7 +71,11 @@ def test_requirement_source_impossible_resolution(req_file):
 def test_requirement_source_virtualenv_error(monkeypatch, req_file):
     class MockVirtualEnv:
         def __init__(
-            self, install_args: list[str], index_urls: list[str], state: AuditState
+            self,
+            install_args: list[str],
+            index_url: str,
+            extra_index_url: list[str],
+            state: AuditState,
         ) -> None:
             pass
 
@@ -149,7 +154,9 @@ def test_requirement_source_url(req_file):
 @pytest.mark.online
 def test_requirement_source_multiple_indexes(req_file):
     source = _init_requirement(
-        [(req_file(), "flask==2.0.1")], index_urls=[PYPI_URL, "https://test.pypi.org/simple/"]
+        [(req_file(), "flask==2.0.1")],
+        index_url=PYPI_URL,
+        extra_index_urls=["https://test.pypi.org/simple/"],
     )
     specs = list(source.collect())
     assert ResolvedDependency("Flask", Version("2.0.1")) in specs
@@ -189,6 +196,52 @@ def test_requirement_source_fix(req_file):
             )
         ],
     )
+
+
+def test_requirement_source_fix_roundtrip(req_file):
+    req_path = req_file()
+    with open(req_path, "w") as f:
+        f.write("flask==0.5")
+
+    source = requirement.RequirementSource([req_path])
+    specs = list(source.collect())
+
+    flask_dep: ResolvedDependency | None = None
+    for spec in specs:
+        if isinstance(spec, ResolvedDependency) and spec.canonical_name == "flask":
+            flask_dep = spec
+            break
+    assert flask_dep is not None
+    assert flask_dep == ResolvedDependency(name="Flask", version=Version("0.5"))
+
+    flask_fix = ResolvedFixVersion(dep=flask_dep, version=Version("1.0"))
+    source.fix(flask_fix)
+
+    with open(req_path) as f:
+        assert f.read().strip() == "flask==1.0"
+
+
+def test_requirement_source_fix_roundtrip_non_canonical_name(req_file):
+    req_path = req_file()
+    with open(req_path, "w") as f:
+        f.write("Flask==0.5")
+
+    source = requirement.RequirementSource([req_path])
+    specs = list(source.collect())
+
+    flask_dep: ResolvedDependency | None = None
+    for spec in specs:
+        if isinstance(spec, ResolvedDependency) and spec.canonical_name == "flask":
+            flask_dep = spec
+            break
+    assert flask_dep is not None
+    assert flask_dep == ResolvedDependency(name="Flask", version=Version("0.5"))
+
+    flask_fix = ResolvedFixVersion(dep=flask_dep, version=Version("1.0"))
+    source.fix(flask_fix)
+
+    with open(req_path) as f:
+        assert f.read().strip() == "Flask==1.0"
 
 
 def test_requirement_source_fix_multiple_files(req_file):
@@ -483,6 +536,28 @@ def test_requirement_source_no_double_open(monkeypatch, req_file):
     monkeypatch.setattr(requirement, "VirtualEnv", virtual_env)
 
     specs = list(source.collect())
+    assert ResolvedDependency("Flask", Version("2.0.1")) in specs
+
+
+def test_requirement_source_fifo():
+    with TemporaryDirectory() as tmp_dir:
+        fifo_path = Path(os.path.join(tmp_dir, "fifo"))
+        os.mkfifo(fifo_path)
+
+        def write_to_fifo():
+            with open(fifo_path, "w") as f:
+                f.write("flask==2.0.1")
+
+        # Make sure we wait for the thread to be done regardless of whether an
+        # error gets thrown
+        t = Thread(target=write_to_fifo)
+        t.start()
+        try:
+            source = requirement.RequirementSource([fifo_path])
+            specs = list(source.collect())
+        finally:
+            t.join()
+
     assert ResolvedDependency("Flask", Version("2.0.1")) in specs
 
 
