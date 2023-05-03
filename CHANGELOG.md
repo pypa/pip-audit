@@ -37,6 +37,9 @@ All versions prior to 0.0.9 are untracked.
 * Fixed a crash caused by invalid UTF-8 sequences in subprocess outputs
   ([#572](https://github.com/pypa/pip-audit/pull/572))
 
+* Fixed a crash caused by incompatible dependency changes
+  ([#605](https://github.com/pypa/pip-audit/pull/605))
+
 ## [2.5.2]
 
 ### Fixed

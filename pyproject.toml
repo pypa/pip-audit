@@ -35,6 +35,10 @@ dependencies = [
     "packaging>=23.0.0",                     # https://github.com/pypa/pip-audit/issues/464
     "pip-api>=0.0.28",
     "pip-requirements-parser>=32.0.0",
+    # NOTE(ww): urllib3 2.0 and higher are incompatible with CacheControl;
+    # we prevent its use by using a version of requests that uses urllib3 < 2.0.
+    # See: https://github.com/psf/requests/issues/6437
+    "requests<2.30",
     "rich>=12.4",
     "toml>=0.10",
 ]
