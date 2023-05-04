@@ -38,7 +38,7 @@ dependencies = [
     # NOTE(ww): urllib3 2.0 and higher are incompatible with CacheControl;
     # we prevent its use by using a version of requests that uses urllib3 < 2.0.
     # See: https://github.com/psf/requests/issues/6437
-    "requests<2.30",
+    "requests<2.31",
     "rich>=12.4",
     "toml>=0.10",
 ]
