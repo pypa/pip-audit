@@ -12,8 +12,8 @@ All versions prior to 0.0.9 are untracked.
 
 ### Fixed
 
-* Fixed a crash caused by auditing requirements files that refer to other
-requirements files ([#568](https://github.com/pypa/pip-audit/pull/568))
+* Fixed a crash caused by incompatible dependency changes
+  ([#605](https://github.com/pypa/pip-audit/pull/605))
 
 ## [2.5.4]
 
@@ -28,6 +28,9 @@ requirements files ([#568](https://github.com/pypa/pip-audit/pull/568))
   appended to requirement files instead of patching the existing requirement
   ([#577](https://github.com/pypa/pip-audit/pull/577))
 
+* Fixed a crash caused by auditing requirements files that refer to other
+  requirements files ([#568](https://github.com/pypa/pip-audit/pull/568))
+
 ## [2.5.3]
 
 ### Changed
@@ -40,9 +43,6 @@ requirements files ([#568](https://github.com/pypa/pip-audit/pull/568))
 
 * Fixed a crash caused by invalid UTF-8 sequences in subprocess outputs
   ([#572](https://github.com/pypa/pip-audit/pull/572))
-
-* Fixed a crash caused by incompatible dependency changes
-  ([#605](https://github.com/pypa/pip-audit/pull/605))
 
 ## [2.5.2]
 
