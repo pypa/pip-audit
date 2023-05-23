@@ -8,6 +8,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.5.6]
+
 ### Fixed
 
 * Fixed a crash caused by incompatible dependency changes
@@ -522,7 +524,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.5.5...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.5.6...HEAD
+[2.5.5]: https://github.com/pypa/pip-audit/compare/v2.5.5...v2.5.6
 [2.5.5]: https://github.com/pypa/pip-audit/compare/v2.5.4...v2.5.5
 [2.5.4]: https://github.com/pypa/pip-audit/compare/v2.5.3...v2.5.4
 [2.5.3]: https://github.com/pypa/pip-audit/compare/v2.5.2...v2.5.3
