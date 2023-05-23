@@ -39,7 +39,7 @@ dependencies = [
     # NOTE(ww): We constrain this subdepency because of CacheControl's incompatibility
     # with urllib3 ~= 2.0 by way of requests.
     # See: https://github.com/ionrock/cachecontrol/issues/292
-    "urllib3 ~= 1.26",
+    "urllib3 >= 1.26,< 2.0",
     "rich>=12.4",
     "toml>=0.10",
 ]
