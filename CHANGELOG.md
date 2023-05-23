@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed a crash caused by incompatible dependency changes
+  ([#617](https://github.com/pypa/pip-audit/pull/617))
+
 ## [2.5.5]
 
 ### Fixed
