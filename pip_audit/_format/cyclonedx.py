@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 class _PipAuditResultParser(BaseParser):
     def __init__(self, result: dict[service.Dependency, list[service.VulnerabilityResult]]):
         super().__init__()
+        self.vulnerabilities = []
 
         for dep, vulns in result.items():
             # TODO(alex): Is there anything interesting we can do with skipped dependencies in
@@ -34,7 +35,7 @@ class _PipAuditResultParser(BaseParser):
 
             c = Component(name=dep.name, version=str(dep.version))
             for vuln in vulns:
-                c.add_vulnerability(
+                self.vulnerabilities.append(
                     Vulnerability(
                         id=vuln.id,
                         description=vuln.description,
@@ -92,6 +93,7 @@ class CycloneDxFormat(VulnerabilityFormat):
 
         parser = _PipAuditResultParser(result)
         bom = Bom.from_parser(parser)
+        bom.vulnerabilities = parser.vulnerabilities
 
         formatter = output.get_instance(
             bom=bom,
