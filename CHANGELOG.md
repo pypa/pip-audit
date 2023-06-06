@@ -10,6 +10,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [2.5.5]
 
+### Changed
+
+* Reintroduce the preresolved dependency optimization
+  ([#610](https://github.com/pypa/pip-audit/pull/610))
+
 ### Fixed
 
 * Fixed a crash caused by incompatible dependency changes
