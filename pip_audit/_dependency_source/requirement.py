@@ -16,11 +16,7 @@ from typing import IO, Iterator
 from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name
 from packaging.version import Version
-from pip_requirements_parser import (
-    InstallRequirement,
-    InvalidRequirementLine,
-    RequirementsFile,
-)
+from pip_requirements_parser import InstallRequirement, InvalidRequirementLine, RequirementsFile
 
 from pip_audit._dependency_source import (
     DependencyFixError,
@@ -274,7 +270,6 @@ class RequirementSource(DependencySource):
                 # log the error and try to recover the rest of the files.
                 logger.warning(f"encountered an exception during file recovery: {e}")
                 continue
-
 
     def _collect_preresolved_deps(
         self, reqs: Iterator[InstallRequirement], require_hashes: bool

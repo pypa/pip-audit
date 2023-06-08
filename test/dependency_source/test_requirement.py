@@ -436,6 +436,7 @@ def test_requirement_source_require_hashes_not_fully_resolved(req_file):
     specs = list(source.collect())
     assert specs == [ResolvedDependency("flask", Version("2.0.1"))]
 
+
 def test_requirement_source_require_hashes_missing(req_file):
     source = _init_requirement([(req_file(), "wheel==0.38.1")], require_hashes=True)
 
