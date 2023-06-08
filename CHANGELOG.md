@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Changed
+
+* Reintroduce the preresolved dependency optimization
+  ([#610](https://github.com/pypa/pip-audit/pull/610))
+
 ## [2.5.6]
 
 ### Fixed
@@ -16,11 +21,6 @@ All versions prior to 0.0.9 are untracked.
   ([#617](https://github.com/pypa/pip-audit/pull/617))
 
 ## [2.5.5]
-
-### Changed
-
-* Reintroduce the preresolved dependency optimization
-  ([#610](https://github.com/pypa/pip-audit/pull/610))
 
 ### Fixed
 
