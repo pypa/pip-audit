@@ -27,18 +27,19 @@ classifiers = [
     "Topic :: Security",
 ]
 dependencies = [
-    "CacheControl[filecache]>=0.12.10",
+    "CacheControl[filecache] >= 0.12.0",
     # NOTE(ww): Release 2.5.0 is broken, subsequent 2.5.x releases fix it.
     # See: https://github.com/CycloneDX/cyclonedx-python-lib/issues/245
-    "cyclonedx-python-lib ~= 2.0, != 2.5.0",
+    "cyclonedx-python-lib ~= 4.0",
     "html5lib>=1.1",
     "packaging>=23.0.0",                     # https://github.com/pypa/pip-audit/issues/464
     "pip-api>=0.0.28",
     "pip-requirements-parser>=32.0.0",
-    # NOTE(ww): urllib3 2.0 and higher are incompatible with CacheControl;
-    # we prevent its use by using a version of requests that uses urllib3 < 2.0.
-    # See: https://github.com/psf/requests/issues/6437
-    "requests<2.30",
+    "requests >= 2.31.0",
+    # NOTE(ww): We constrain this subdepency because of CacheControl's incompatibility
+    # with urllib3 ~= 2.0 by way of requests.
+    # See: https://github.com/ionrock/cachecontrol/issues/292
+    "urllib3 >= 1.26,< 2.0",
     "rich>=12.4",
     "toml>=0.10",
 ]
@@ -50,7 +51,7 @@ lint = [
     "black>=22.3.0",
     # NOTE(ww): ruff is under active development, so we pin conservatively here
     # and let Dependabot periodically perform this update.
-    "ruff < 0.0.270",
+    "ruff < 0.0.271",
     "interrogate",
     "isort",
     "mypy",
