@@ -46,6 +46,7 @@ class RequirementSource(DependencySource):
         *,
         require_hashes: bool = False,
         no_deps: bool = False,
+        disable_pip: bool = False,
         skip_editable: bool = False,
         index_url: str | None = None,
         extra_index_urls: list[str] = [],
@@ -59,9 +60,13 @@ class RequirementSource(DependencySource):
         `require_hashes` controls the hash policy: if `True`, dependency collection
         will fail unless all requirements include hashes.
 
-        `no_deps` controls the dependency resolution policy: if `True`,
+        `disable_pip` controls the dependency resolution policy: if `True`,
         dependency resolution is not performed and the inputs are checked
         and treated as "frozen".
+
+        `no_deps` controls whether dependency resolution can be disabled even without
+        hashed requirements (which implies a fully resolved requirements file): if `True`,
+        `disable_pip` is allowed without a hashed requirements file.
 
         `skip_editable` controls whether requirements marked as "editable" are skipped.
         By default, editable requirements are not skipped.
@@ -75,6 +80,7 @@ class RequirementSource(DependencySource):
         self._filenames = filenames
         self._require_hashes = require_hashes
         self._no_deps = no_deps
+        self._disable_pip = disable_pip
         self._skip_editable = skip_editable
         self._index_url = index_url
         self._extra_index_urls = extra_index_urls
@@ -148,7 +154,12 @@ class RequirementSource(DependencySource):
         # If the user has supplied `--no-deps` or there are hashed requirements, we should assume
         # that we have a fully resolved set of dependencies and we should waste time by invoking
         # `pip`.
-        if self._no_deps or require_hashes:
+        if self._disable_pip:
+            if not self._no_deps and not require_hashes:
+                raise RequirementSourceError(
+                    "the --disable-pip flag can only be used with hashed requirements files or if "
+                    "the --no-deps flag has been provided"
+                )
             yield from self._collect_preresolved_deps(iter(reqs), require_hashes)
             return
 
