@@ -157,8 +157,8 @@ class RequirementSource(DependencySource):
         if self._disable_pip:
             if not self._no_deps and not require_hashes:
                 raise RequirementSourceError(
-                    "the --disable-pip flag can only be used with hashed requirements files or if "
-                    "the --no-deps flag has been provided"
+                    "the --disable-pip flag can only be used with a hashed requirements files or "
+                    "if the --no-deps flag has been provided"
                 )
             yield from self._collect_preresolved_deps(iter(reqs), require_hashes)
             return
