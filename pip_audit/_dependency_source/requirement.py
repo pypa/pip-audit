@@ -164,6 +164,8 @@ class RequirementSource(DependencySource):
             return
 
         ve_args = []
+        if self._require_hashes:
+            ve_args.append("--require-hashes")
         for filename in filenames:
             ve_args.extend(["-r", str(filename)])
 
