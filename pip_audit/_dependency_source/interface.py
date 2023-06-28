@@ -57,3 +57,12 @@ class DependencyFixError(Exception):
     """
 
     pass
+
+
+class InvalidRequirementSpecifier(DependencySourceError):
+    """
+    A `DependencySourceError` specialized for the case of a non-PEP 440 requirements
+    specifier.
+    """
+
+    pass

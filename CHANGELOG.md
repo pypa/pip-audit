@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Changed
+
+* Added option to skip dependency resolution via `pip` with the `--disable-pip`
+  flag. This option can only be used with hashed requirements files or when the
+  `--no-deps` flag has been provided.
+  ([#610](https://github.com/pypa/pip-audit/pull/610))
+
 ## [2.5.6]
 
 ### Fixed

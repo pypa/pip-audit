@@ -136,6 +136,7 @@ usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENT] [-f FORMAT] [-s SERVICE] [-d]
                  [--path PATH] [-v] [--fix] [--require-hashes]
                  [--index-url INDEX_URL] [--extra-index-url URL]
                  [--skip-editable] [--no-deps] [-o FILE] [--ignore-vuln ID]
+                 [--disable-pip]
                  [project_path]
 
 audit the Python environment for dependencies with known vulnerabilities
@@ -206,6 +207,9 @@ optional arguments:
   --ignore-vuln ID      ignore a specific vulnerability by its vulnerability
                         ID; this option can be used multiple times (default:
                         [])
+  --disable-pip         don't use `pip` for dependency resolution; this can
+                        only be used with hashed requirements files or if the
+                        `--no-deps` flag has been provided (default: False)
 ```
 <!-- @end-pip-audit-help@ -->
 

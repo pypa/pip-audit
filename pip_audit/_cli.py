@@ -327,6 +327,13 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
             "this option can be used multiple times"
         ),
     )
+    parser.add_argument(
+        "--disable-pip",
+        action="store_true",
+        help="don't use `pip` for dependency resolution; "
+        "this can only be used with hashed requirements files or if the `--no-deps` flag has been "
+        "provided",
+    )
     return parser
 
 
@@ -380,10 +387,15 @@ def audit() -> None:  # pragma: no cover
             parser.error("The --extra-index-url flag can only be used with --requirement (-r)")
         elif args.no_deps:
             parser.error("The --no-deps flag can only be used with --requirement (-r)")
+        elif args.disable_pip:
+            parser.error("The --disable-pip flag can only be used with --requirement (-r)")
 
     # Nudge users to consider alternate workflows.
     if args.require_hashes and args.no_deps:
         logger.warning("The --no-deps flag is redundant when used with --require-hashes")
+
+    if args.no_deps and args.disable_pip:
+        logger.warning("The --no-deps flag is redundant when used with --disable-pip")
 
     if args.require_hashes and isinstance(service, OsvService):
         logger.warning(
@@ -414,6 +426,7 @@ def audit() -> None:  # pragma: no cover
                 req_files,
                 require_hashes=args.require_hashes,
                 no_deps=args.no_deps,
+                disable_pip=args.disable_pip,
                 skip_editable=args.skip_editable,
                 index_url=args.index_url,
                 extra_index_urls=args.extra_index_urls,

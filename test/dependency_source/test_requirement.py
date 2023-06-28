@@ -17,7 +17,7 @@ from pip_audit._dependency_source import (
     requirement,
 )
 from pip_audit._fix import ResolvedFixVersion
-from pip_audit._service import ResolvedDependency
+from pip_audit._service import ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState
 from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
 
@@ -499,12 +499,25 @@ def test_requirement_source_require_hashes_incorrect_hash(req_file):
         list(source.collect())
 
 
-@pytest.mark.online
-def test_requirement_source_no_deps(req_file):
-    source = _init_requirement([(req_file(), "flask==2.0.1")], no_deps=True)
+def test_requirement_source_disable_pip_editable_skip(req_file):
+    source = _init_requirement(
+        [(req_file(), "-e file:flask.py#egg=flask==2.0.1")],
+        disable_pip=True,
+        no_deps=True,
+        skip_editable=True,
+    )
 
     specs = list(source.collect())
-    assert specs == [ResolvedDependency("Flask", Version("2.0.1"))]
+    assert SkippedDependency(name="flask", skip_reason="requirement marked as editable") in specs
+
+
+def test_requirement_source_disable_pip_duplicate_dependencies(req_file):
+    source = _init_requirement(
+        [(req_file(), "flask==1.0\nflask==1.0")], disable_pip=True, no_deps=True
+    )
+
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
 
 
 def test_requirement_source_no_double_open(monkeypatch, req_file):
@@ -706,3 +719,135 @@ def test_requirement_source_fix_invalid_lines(req_file):
                 dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
             )
         )
+
+
+def test_requirement_source_disable_pip(req_file):
+    source = _init_requirement([(req_file(), "flask==2.0.1")], disable_pip=True, no_deps=True)
+
+    specs = list(source.collect())
+    assert specs == [ResolvedDependency("flask", Version("2.0.1"))]
+
+
+def test_requirement_source_disable_pip_without_no_deps(req_file):
+    # In order to use `--disable-pip`, the requirements file must either be hashed or `--no-deps`
+    # must be provided.
+    #
+    # Since neither is true, we expect a failure.
+    source = _init_requirement(
+        [(req_file(), "flask==2.0.1")],
+        disable_pip=True,
+    )
+
+    with pytest.raises(
+        DependencySourceError,
+        match="the --disable-pip flag can only be used with a hashed requirements files or if the "
+        "--no-deps flag has been provided",
+    ):
+        list(source.collect())
+
+
+def test_requirement_source_disable_pip_hashes_without_no_deps(req_file):
+    # In this case, `--no-deps` is not provided but since the requirements file is hashed, providing
+    # `--disable-pip` is valid.
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "flask==2.0.1 "
+                "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9",
+            )
+        ],
+        disable_pip=True,
+    )
+
+    specs = list(source.collect())
+    assert specs == [ResolvedDependency("flask", Version("2.0.1"))]
+
+
+def test_requirement_source_disable_pip_incomplete_hashes(req_file):
+    # In this case, `--no-deps` is not provided but since the requirements file is hashed, providing
+    # `--disable-pip` is valid.
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "flask==2.0.1 "
+                "--hash=sha256:a6209ca15eb63fc9385f38e452704113d679511d9574d09b2cf9183ae7d20dc9\n"
+                "requests==1.0",
+            )
+        ],
+        disable_pip=True,
+    )
+
+    with pytest.raises(
+        DependencySourceError, match="requirement requests==1.0 does not contain a hash"
+    ):
+        list(source.collect())
+
+
+def test_requirement_source_disable_pip_unpinned(req_file):
+    source = _init_requirement(
+        [(req_file(), "flask\nrequests==1.0")], disable_pip=True, no_deps=True
+    )
+
+    # When dependency resolution is disabled, all requirements must be pinned.
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
+
+
+def test_requirement_source_disable_pip_not_exact_version(req_file):
+    source = _init_requirement(
+        [(req_file(), "flask==1.0\nrequests>=1.0")], disable_pip=True, no_deps=True
+    )
+
+    # When dependency resolution is disabled, all requirements must be pinned.
+    with pytest.raises(DependencySourceError):
+        list(source.collect())
+
+
+def test_requirement_source_disable_pip_unpinned_url(req_file):
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "https://github.com/pallets/flask/archive/refs/tags/2.0.1.tar.gz#egg=flask\n",
+            )
+        ],
+        disable_pip=True,
+        no_deps=True,
+    )
+
+    assert list(source.collect()) == [
+        SkippedDependency(
+            name="flask",
+            skip_reason="URL requirements cannot be pinned to a specific package version",
+        )
+    ]
+
+
+def test_requirement_source_disable_pip_editable_with_egg_fragment(req_file):
+    source = _init_requirement(
+        [(req_file(), "-e file:flask.py#egg=flask==2.0.1")], disable_pip=True, no_deps=True
+    )
+
+    specs = list(source.collect())
+    assert (
+        SkippedDependency(
+            name="flask",
+            skip_reason="URL requirements cannot be pinned to a specific package version",
+        )
+        in specs
+    )
+
+
+def test_requirement_source_disable_pip_editable_without_egg_fragment(req_file):
+    source = _init_requirement([(req_file(), "-e file:flask.py")], disable_pip=True, no_deps=True)
+
+    specs = list(source.collect())
+    assert (
+        SkippedDependency(
+            name="-e file:flask.py",
+            skip_reason="could not deduce package version from URL requirement",
+        )
+        in specs
+    )
