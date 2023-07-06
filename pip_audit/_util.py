@@ -11,6 +11,11 @@ from packaging.version import Version
 
 
 class CustomNamedTemporaryFile:
+    """
+    Workaround for NamedTemporaryFile which also works on Windows. This 
+    version allows the created tempfile to be open and closed multiple times 
+    without losing permissions on the file on Windows file systems.
+    """
     def __init__(self, mode='w+b'):
         self._mode = mode
 
