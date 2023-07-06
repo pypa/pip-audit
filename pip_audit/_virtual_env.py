@@ -15,6 +15,7 @@ from packaging.version import Version
 
 from ._state import AuditState
 from ._subprocess import CalledProcessError, run
+from ._util import CustomNamedTemporaryFile
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +111,7 @@ class VirtualEnv(venv.EnvBuilder):
 
         self._state.update_state("Installing package in isolated environment")
 
-        with NamedTemporaryFile() as tmp:
+        with CustomNamedTemporaryFile() as tmp:
             # Install our packages
             package_install_cmd = [
                 context.env_exe,

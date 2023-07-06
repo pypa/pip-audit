@@ -18,6 +18,7 @@ from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency
 from pip_audit._state import AuditState
 from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
+from pip_audit._util import CustomNamedTemporaryFile
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,7 @@ class PyProjectSource(DependencySource):
             # dependency resolution now, we can think about doing `pip install <local-project-dir>`
             # regardless of whether the project has a `pyproject.toml` or not. And if it doesn't
             # have a `pyproject.toml`, we can raise an error if the user provides `--fix`.
-            with NamedTemporaryFile() as req_file, TemporaryDirectory() as ve_dir:
+            with CustomNamedTemporaryFile() as req_file, TemporaryDirectory() as ve_dir:
                 # Write the dependencies to a temporary requirements file.
                 req_file.write(os.linesep.join(deps).encode())
                 req_file.flush()
