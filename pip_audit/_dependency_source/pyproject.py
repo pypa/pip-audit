@@ -18,7 +18,6 @@ from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency
 from pip_audit._state import AuditState
 from pip_audit._virtual_env import VirtualEnv, VirtualEnvError
-from pip_audit._util import CustomNamedTemporaryFile
 
 logger = logging.getLogger(__name__)
 
@@ -77,21 +76,26 @@ class PyProjectSource(DependencySource):
             # dependency resolution now, we can think about doing `pip install <local-project-dir>`
             # regardless of whether the project has a `pyproject.toml` or not. And if it doesn't
             # have a `pyproject.toml`, we can raise an error if the user provides `--fix`.
-            with CustomNamedTemporaryFile() as req_file, TemporaryDirectory() as ve_dir:
-                # Write the dependencies to a temporary requirements file.
-                req_file.write(os.linesep.join(deps).encode())
-                req_file.flush()
+            with TemporaryDirectory() as ve_dir:
+                with NamedTemporaryFile(dir=ve_dir, delete=False) as req_file:
+                    # We use delete=False in creating the tempfile to allow it to be
+                    # closed and opened multiple times within the context scope on
+                    # windows, see GitHub issue #646.
 
-                # Try to install the generated requirements file.
-                ve = VirtualEnv(install_args=["-r", req_file.name], state=self.state)
-                try:
-                    ve.create(ve_dir)
-                except VirtualEnvError as exc:
-                    raise PyProjectSourceError(str(exc)) from exc
+                    # Write the dependencies to a temporary requirements file.
+                    req_file.write(os.linesep.join(deps).encode())
+                    req_file.flush()
 
-                # Now query the installed packages.
-                for name, version in ve.installed_packages:
-                    yield ResolvedDependency(name=name, version=version)
+                    # Try to install the generated requirements file.
+                    ve = VirtualEnv(install_args=["-r", req_file.name], state=self.state)
+                    try:
+                        ve.create(ve_dir)
+                    except VirtualEnvError as exc:
+                        raise PyProjectSourceError(str(exc)) from exc
+
+                    # Now query the installed packages.
+                    for name, version in ve.installed_packages:
+                        yield ResolvedDependency(name=name, version=version)
 
     def fix(self, fix_version: ResolvedFixVersion) -> None:
         """

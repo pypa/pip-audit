@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 import logging
 import venv
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from types import SimpleNamespace
 from typing import Iterator
 
@@ -15,7 +15,6 @@ from packaging.version import Version
 
 from ._state import AuditState
 from ._subprocess import CalledProcessError, run
-from ._util import CustomNamedTemporaryFile
 
 logger = logging.getLogger(__name__)
 
@@ -111,38 +110,45 @@ class VirtualEnv(venv.EnvBuilder):
 
         self._state.update_state("Installing package in isolated environment")
 
-        with CustomNamedTemporaryFile() as tmp:
-            # Install our packages
-            package_install_cmd = [
-                context.env_exe,
-                "-m",
-                "pip",
-                "install",
-                *self._index_url_args,
-                "--dry-run",
-                "--report",
-                tmp.name,
-                *self._install_args,
-            ]
-            try:
-                run(package_install_cmd, log_stdout=True, state=self._state)
-            except CalledProcessError as cpe:
-                # TODO: Propagate the subprocess's error output better here.
-                logger.error(f"internal pip failure: {cpe.stderr}")
-                raise VirtualEnvError(f"Failed to install packages: {package_install_cmd}") from cpe
+        with TemporaryDirectory() as ve_dir:
+            with NamedTemporaryFile(dir=ve_dir, delete=False) as tmp:
+                # We use delete=False in creating the tempfile to allow it to be
+                # closed and opened multiple times within the context scope on
+                # windows, see GitHub issue #646.
 
-            self._state.update_state("Processing package list from isolated environment")
+                # Install our packages
+                package_install_cmd = [
+                    context.env_exe,
+                    "-m",
+                    "pip",
+                    "install",
+                    *self._index_url_args,
+                    "--dry-run",
+                    "--report",
+                    tmp.name,
+                    *self._install_args,
+                ]
+                try:
+                    run(package_install_cmd, log_stdout=True, state=self._state)
+                except CalledProcessError as cpe:
+                    # TODO: Propagate the subprocess's error output better here.
+                    logger.error(f"internal pip failure: {cpe.stderr}")
+                    raise VirtualEnvError(
+                        f"Failed to install packages: {package_install_cmd}"
+                    ) from cpe
 
-            install_report = json.load(tmp)
-            package_list = install_report["install"]
+                self._state.update_state("Processing package list from isolated environment")
 
-            # Convert into a series of name, version pairs
-            self._packages = []
-            for package in package_list:
-                package_metadata = package["metadata"]
-                self._packages.append(
-                    (package_metadata["name"], Version(package_metadata["version"]))
-                )
+                install_report = json.load(tmp)
+                package_list = install_report["install"]
+
+                # Convert into a series of name, version pairs
+                self._packages = []
+                for package in package_list:
+                    package_metadata = package["metadata"]
+                    self._packages.append(
+                        (package_metadata["name"], Version(package_metadata["version"]))
+                    )
 
     @property
     def installed_packages(self) -> Iterator[tuple[str, Version]]:
