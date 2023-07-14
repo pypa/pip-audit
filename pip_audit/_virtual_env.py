@@ -110,8 +110,7 @@ class VirtualEnv(venv.EnvBuilder):
 
         self._state.update_state("Installing package in isolated environment")
 
-        with TemporaryDirectory() as ve_dir:
-            with NamedTemporaryFile(dir=ve_dir, delete=False) as tmp:
+        with TemporaryDirectory() as ve_dir, NamedTemporaryFile(dir=ve_dir, delete=False) as tmp:
                 # We use delete=False in creating the tempfile to allow it to be
                 # closed and opened multiple times within the context scope on
                 # windows, see GitHub issue #646.
