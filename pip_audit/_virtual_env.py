@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 import logging
 import venv
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from types import SimpleNamespace
 from typing import Iterator
 
@@ -110,7 +110,11 @@ class VirtualEnv(venv.EnvBuilder):
 
         self._state.update_state("Installing package in isolated environment")
 
-        with NamedTemporaryFile() as tmp:
+        with TemporaryDirectory() as ve_dir, NamedTemporaryFile(dir=ve_dir, delete=False) as tmp:
+            # We use delete=False in creating the tempfile to allow it to be
+            # closed and opened multiple times within the context scope on
+            # windows, see GitHub issue #646.
+
             # Install our packages
             package_install_cmd = [
                 context.env_exe,

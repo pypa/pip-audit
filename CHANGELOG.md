@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed a crash on Windows caused by `pip-audit`'s use of temporary files
+  ([#647](https://github.com/pypa/pip-audit/pull/647))
+
 ## [2.6.0]
 
 ### Added
