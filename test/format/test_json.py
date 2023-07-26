@@ -26,11 +26,15 @@ def test_json(vuln_data):
                             "1.1",
                             "1.4",
                         ],
+                        "severity": None,
+                        "score": None,
                         "description": "The first vulnerability",
                     },
                     {
                         "id": "VULN-1",
                         "fix_versions": ["1.0"],
+                        "severity": None,
+                        "score": None,
                         "description": "The second vulnerability",
                     },
                 ],
@@ -39,7 +43,13 @@ def test_json(vuln_data):
                 "name": "bar",
                 "version": "0.1",
                 "vulns": [
-                    {"id": "VULN-2", "fix_versions": [], "description": "The third vulnerability"}
+                    {
+                        "id": "VULN-2",
+                        "fix_versions": [],
+                        "severity": None,
+                        "score": None,
+                        "description": "The third vulnerability",
+                    }
                 ],
             },
         ],
@@ -62,17 +72,23 @@ def test_json_no_desc(vuln_data):
                             "1.1",
                             "1.4",
                         ],
+                        "severity": None,
+                        "score": None,
                     },
-                    {
-                        "id": "VULN-1",
-                        "fix_versions": ["1.0"],
-                    },
+                    {"id": "VULN-1", "fix_versions": ["1.0"], "severity": None, "score": None},
                 ],
             },
             {
                 "name": "bar",
                 "version": "0.1",
-                "vulns": [{"id": "VULN-2", "fix_versions": []}],
+                "vulns": [
+                    {
+                        "id": "VULN-2",
+                        "fix_versions": [],
+                        "severity": None,
+                        "score": None,
+                    }
+                ],
             },
         ],
         "fixes": [],
@@ -94,6 +110,8 @@ def test_json_skipped_dep(vuln_data_skipped_dep):
                             "1.1",
                             "1.4",
                         ],
+                        "severity": None,
+                        "score": None,
                     },
                 ],
             },
@@ -121,11 +139,15 @@ def test_json_fix(vuln_data, fix_data):
                             "1.1",
                             "1.4",
                         ],
+                        "severity": None,
+                        "score": None,
                         "description": "The first vulnerability",
                     },
                     {
                         "id": "VULN-1",
                         "fix_versions": ["1.0"],
+                        "severity": None,
+                        "score": None,
                         "description": "The second vulnerability",
                     },
                 ],
@@ -134,7 +156,13 @@ def test_json_fix(vuln_data, fix_data):
                 "name": "bar",
                 "version": "0.1",
                 "vulns": [
-                    {"id": "VULN-2", "fix_versions": [], "description": "The third vulnerability"}
+                    {
+                        "id": "VULN-2",
+                        "fix_versions": [],
+                        "severity": None,
+                        "score": None,
+                        "description": "The third vulnerability",
+                    }
                 ],
             },
         ],
@@ -168,11 +196,15 @@ def test_json_skipped_fix(vuln_data, skipped_fix_data):
                             "1.1",
                             "1.4",
                         ],
+                        "severity": None,
+                        "score": None,
                         "description": "The first vulnerability",
                     },
                     {
                         "id": "VULN-1",
                         "fix_versions": ["1.0"],
+                        "severity": None,
+                        "score": None,
                         "description": "The second vulnerability",
                     },
                 ],
@@ -181,7 +213,13 @@ def test_json_skipped_fix(vuln_data, skipped_fix_data):
                 "name": "bar",
                 "version": "0.1",
                 "vulns": [
-                    {"id": "VULN-2", "fix_versions": [], "description": "The third vulnerability"}
+                    {
+                        "id": "VULN-2",
+                        "fix_versions": [],
+                        "severity": None,
+                        "score": None,
+                        "description": "The third vulnerability",
+                    }
                 ],
             },
         ],

@@ -8,6 +8,7 @@ import logging
 from typing import cast
 
 from cyclonedx import output
+from cyclonedx.model import Property
 from cyclonedx.model.bom import Bom
 from cyclonedx.model.component import Component
 from cyclonedx.model.vulnerability import Vulnerability
@@ -35,8 +36,20 @@ def _pip_audit_result_to_bom(
 
         c = Component(name=dep.name, version=str(dep.version))
         for vuln in vulns:
+            properties = []
+            if vuln.severity:
+                severity = Property(name="severity", value=vuln.severity)
+                properties += [severity]
+            if vuln.score:
+                score = Property(name="score", value=str(vuln.score))
+                properties += [score]
             vulnerabilities.append(
-                Vulnerability(id=vuln.id, description=vuln.description, recommendation="Upgrade")
+                Vulnerability(
+                    id=vuln.id,
+                    description=vuln.description,
+                    recommendation="Upgrade",
+                    properties=properties,
+                )
             )
 
         components.append(c)

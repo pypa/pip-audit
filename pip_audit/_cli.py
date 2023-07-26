@@ -372,7 +372,8 @@ def audit() -> None:  # pragma: no cover
     """
     parser = _parser()
     args = _parse_args(parser)
-
+    # Requited by: https://nvd.nist.gov/developers/start-here
+    logger.info("This product uses the NVD API but is not endorsed or certified by the NVD.")
     service = args.vulnerability_service.to_service(args.timeout, args.cache_dir)
     output_desc = args.desc.to_bool(args.format)
     formatter = args.format.to_format(output_desc)

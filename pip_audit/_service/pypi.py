@@ -5,6 +5,7 @@ API as a `VulnerabilityService`.
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import cast
 
@@ -45,8 +46,7 @@ class PyPIService(VulnerabilityService):
         self.session = caching_session(cache_dir)
         self.timeout = timeout
 
-    @staticmethod
-    def get_vulnerability_score(vulnerability_id: str) -> tuple[float | None, str | None]:
+    def get_vulnerability_score(self, vulnerability_id: str) -> tuple[float | None, str | None]:
         """
         Get the vulnerability score and severity for a given vulnerability ID.
 
@@ -58,8 +58,17 @@ class PyPIService(VulnerabilityService):
         """
         base_url = "https://services.nvd.nist.gov/rest/json/cve/1.0/"
         url = f"{base_url}/{vulnerability_id}"
+        api_key = os.environ.get("NVD_API_KEY")
+        if api_key:
+            headers = {"apiKey": api_key}
+        else:
+            headers = {}
         try:
-            response = requests.get(url)
+            response: requests.Response = self.session.get(
+                url=url,
+                headers=headers,
+                timeout=self.timeout,
+            )
             if response.status_code == 200:
                 data = response.json()
                 if "result" in data and "CVE_Items" in data["result"]:
@@ -74,7 +83,10 @@ class PyPIService(VulnerabilityService):
                             ]
                             return base_score, base_severity
             else:
-                logger.info(f"Error: Unable to fetch data for vulnerability {vulnerability_id}.")
+                logger.error(
+                    f"Error: Unable to fetch data for vulnerability {vulnerability_id}. "
+                    f"Status code: {response.status_code}"
+                )
         except requests.exceptions.RequestException as e:
             logger.error(f"Error: {e}")
 

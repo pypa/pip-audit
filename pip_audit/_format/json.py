@@ -77,6 +77,8 @@ class JsonFormat(VulnerabilityFormat):
         vuln_json = {
             "id": vuln.id,
             "fix_versions": [str(version) for version in vuln.fix_versions],
+            "severity": vuln.severity,
+            "score": vuln.score,
         }
         if self.output_desc:
             vuln_json["description"] = vuln.description
