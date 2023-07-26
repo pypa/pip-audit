@@ -50,6 +50,8 @@ def vuln_service():
                         id="fake-id",
                         description="this is not a real result",
                         fix_versions=[fixed],
+                        score=None,
+                        severity=None,
                         aliases=set(),
                     )
                 ]

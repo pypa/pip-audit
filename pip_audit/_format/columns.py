@@ -61,7 +61,7 @@ class ColumnsFormat(VulnerabilityFormat):
         See `VulnerabilityFormat.format`.
         """
         vuln_data: list[list[Any]] = []
-        header = ["Name", "Version", "ID", "Fix Versions"]
+        header = ["Name", "Version", "ID", "Fix Versions", "Severity", "Score"]
         if fixes:
             header.append("Applied Fix")
         if self.output_desc:
@@ -128,6 +128,8 @@ class ColumnsFormat(VulnerabilityFormat):
             dep.version,
             vuln.id,
             self._format_fix_versions(vuln.fix_versions),
+            vuln.severity,
+            vuln.score,
         ]
         if applied_fix is not None:
             vuln_data.append(self._format_applied_fix(applied_fix))

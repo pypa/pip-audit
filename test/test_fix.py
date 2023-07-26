@@ -19,6 +19,8 @@ def test_fix(vuln_service):
                 id="fake-id",
                 description="this is not a real result",
                 fix_versions=[Version("1.0.0")],
+                score=None,
+                severity=None,
                 aliases=set(),
             )
         ]
@@ -37,6 +39,8 @@ def test_fix_skipped_deps(vuln_service):
                 id="fake-id",
                 description="this is not a real result",
                 fix_versions=[Version("1.0.0")],
+                score=None,
+                severity=None,
                 aliases=set(),
             )
         ]
@@ -60,6 +64,8 @@ def test_fix_resolution_impossible(vuln_service):
                 id="fake-id",
                 description="this is not a real result",
                 fix_versions=list(),
+                score=None,
+                severity=None,
                 aliases=set(),
             )
         ]

@@ -97,6 +97,16 @@ class VulnerabilityResult:
     A set of aliases (alternative identifiers) for this result.
     """
 
+    score: float | None
+    """
+    The base severity score from https://services.nvd.nist.gov/rest/json/cve/1.0/.
+    """
+
+    severity: str | None
+    """
+    The base severity level from https://services.nvd.nist.gov/rest/json/cve/1.0/.
+    """
+
     published: datetime | None = None
     """
     When the vulnerability was first published.

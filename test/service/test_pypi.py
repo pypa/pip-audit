@@ -147,6 +147,8 @@ def test_pypi_mocked_response(monkeypatch, cache_dir):
                             "aliases": ["foo", "bar"],
                             "id": "VULN-0",
                             "summary": "The first vulnerability",
+                            "score": None,
+                            "severity": None,
                             "fixed_in": ["1.1", "1.4"],
                         }
                     ]
@@ -170,6 +172,8 @@ def test_pypi_mocked_response(monkeypatch, cache_dir):
         id="VULN-0",
         description="The first vulnerability",
         fix_versions=[Version("1.1"), Version("1.4")],
+        score=None,
+        severity=None,
         aliases={"foo", "bar"},
     )
 
@@ -239,6 +243,8 @@ def test_pypi_vuln_description_fallbacks(monkeypatch, cache_dir, summary, detail
                             "id": "VULN-0",
                             "summary": summary,
                             "details": details,
+                            "score": None,
+                            "severity": None,
                             "fixed_in": ["1.1", "1.4"],
                             "published": "2019-08-24T14:15:22Z",
                         }
@@ -264,6 +270,8 @@ def test_pypi_vuln_description_fallbacks(monkeypatch, cache_dir, summary, detail
         description=description,
         fix_versions=[Version("1.1"), Version("1.4")],
         aliases={"foo", "bar"},
+        score=None,
+        severity=None,
         published=datetime(2019, 8, 24, 14, 15, 22),
     )
 

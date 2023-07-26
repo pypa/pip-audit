@@ -53,12 +53,14 @@ def test_vulnerability_service_no_results(vuln_service, spec):
 
 def test_vulnerability_result_update_aliases():
     result1 = VulnerabilityResult(
-        id="FOO", description="stub", fix_versions=[Version("1.0.0")], aliases={"BAR", "BAZ", "ZAP"}
+        id="FOO", description="stub", fix_versions=[Version("1.0.0")],
+        score=None, severity=None, aliases={"BAR", "BAZ", "ZAP"}
     )
     result2 = VulnerabilityResult(
         id="BAR",
         description="stub",
         fix_versions=[Version("1.0.0")],
+        score=None, severity=None,
         aliases={"FOO", "BAZ", "QUUX"},
     )
 
@@ -69,7 +71,8 @@ def test_vulnerability_result_update_aliases():
 
 def test_vulnerability_result_has_any_id():
     result = VulnerabilityResult(
-        id="FOO", description="bar", fix_versions=[Version("1.0.0")], aliases={"BAR", "BAZ", "QUUX"}
+        id="FOO", description="bar", fix_versions=[Version("1.0.0")],
+        score=None, severity=None, aliases={"BAR", "BAZ", "QUUX"}
     )
 
     assert result.has_any_id({"FOO"})

@@ -43,6 +43,43 @@ class OsvService(VulnerabilityService):
         self.session = caching_session(cache_dir, use_pip=False)
         self.timeout = timeout
 
+    @staticmethod
+    def get_vulnerability_score(vulnerability_id: str) -> tuple[float | None, str | None]:
+        """
+        Get the vulnerability score and severity for a given vulnerability ID.
+
+        Args:
+            vulnerability_id (str): CVE ID
+
+        Returns:
+            tuple[float | None, str | None]: score and severity, when found, None otherwise
+        """
+        base_url = "https://services.nvd.nist.gov/rest/json/cve/1.0/"
+        url = f"{base_url}/{vulnerability_id}"
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                data = response.json()
+                if "result" in data and "CVE_Items" in data["result"]:
+                    cve_items = data["result"]["CVE_Items"]
+                    if cve_items:
+                        # Assuming the first item contains the most recent information
+                        first_item = cve_items[0]
+                        if "impact" in first_item and "baseMetricV3" in first_item["impact"]:
+                            base_score = first_item["impact"]["baseMetricV3"]["cvssV3"]["baseScore"]
+                            base_severity = first_item["impact"]["baseMetricV3"]["cvssV3"][
+                                "baseSeverity"
+                            ]
+                            return base_score, base_severity
+            else:
+                logger.info(f"Error: Unable to fetch data for vulnerability {vulnerability_id}.")
+                logger.info(f"Error: {response.status_code}")
+                logger.info(f"Error: {response.text}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error: {e}")
+
+        return None, None
+
     def query(self, spec: Dependency) -> tuple[Dependency, list[VulnerabilityResult]]:
         """
         Queries OSV for the given `Dependency` specification.
@@ -91,6 +128,7 @@ class OsvService(VulnerabilityService):
                 continue
 
             id = vuln["id"]
+            aliases = vuln.get("aliases", [])
 
             # If the vulnerability has been withdrawn, we skip it entirely.
             withdrawn_at = vuln.get("withdrawn")
@@ -140,13 +178,20 @@ class OsvService(VulnerabilityService):
 
             # The ranges aren't guaranteed to come in chronological order
             fix_versions.sort()
-
+            aliases_and_id = aliases + [id]
+            cve_ids = [alias for alias in aliases_and_id if alias.startswith("CVE-")]
+            if len(cve_ids):
+                score, severity = self.get_vulnerability_score(cve_ids[0])
+            else:
+                score, severity = None, None
             results.append(
                 VulnerabilityResult(
                     id=id,
                     description=description,
                     fix_versions=fix_versions,
                     aliases=set(vuln.get("aliases", [])),
+                    score=score,
+                    severity=severity,
                     published=self._parse_rfc3339(vuln.get("published")),
                 )
             )
