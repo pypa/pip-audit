@@ -83,7 +83,16 @@ def test_plurals(capsys, monkeypatch, args, vuln_count, pkg_count, expected):
                 canonical_name="something" + str(i),
                 version=1,
             ),
-            [pretend.stub(fix_versions=[2], id="foo", aliases=set(), severity=None, score=None, has_any_id=lambda x: False)]
+            [
+                pretend.stub(
+                    fix_versions=[2],
+                    id="foo",
+                    aliases=set(),
+                    severity=None,
+                    score=None,
+                    has_any_id=lambda x: False,
+                )
+            ]
             * (vuln_count // pkg_count),
         )
         for i in range(pkg_count)
