@@ -467,6 +467,21 @@ exitcode="${?}"
 
 See [Exit codes](#exit-codes) for a list of potential codes that need handling.
 
+### Reporting only fixable vulnerabilities
+In development workflows, you may want to ignore the vulnerabilities that haven't been remediated yet and only investigate them in your release process. `pip-audit` does not support ignoring unfixed vulnerabilities. However, you can export its output in JSON format and externally process it. For example, if you want to exit with a non-zero code only when the detected vulnerabilities have known fix versions, you can process the output using [jq](https://github.com/jqlang/jq) as:
+
+```shell
+test -z "$(pip-audit -r requirements.txt --format=json 2>/dev/null | jq '.dependencies[].vulns[].fix_versions[]')"
+```
+
+A simple (and inefficient) example of using this method would be:
+
+```shell
+test -z "$(pip-audit -r requirements.txt --format=json 2>/dev/null | jq '.dependencies[].vulns[].fix_versions[]')" || pip-audit -r requirements.txt
+```
+
+which runs `pip-audit` as usual and exits with a non-zero code only if there are fixed versions for the known vulnerabilities.
+
 ## Security Model
 
 This section exists to describe the security assumptions you **can** and **must not**
