@@ -10,8 +10,9 @@ import logging
 import os
 import sys
 from contextlib import ExitStack, contextmanager
+from datetime import datetime
 from pathlib import Path
-from typing import IO, Iterator, NoReturn, cast
+from typing import IO, Iterator, NoReturn, cast, List, Union, Tuple
 
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
@@ -43,6 +44,8 @@ logger = logging.getLogger(__name__)
 # to avoid overly verbose logging in third-party code by default.
 package_logger = logging.getLogger("pip_audit")
 package_logger.setLevel(os.environ.get("PIP_AUDIT_LOGLEVEL", "INFO").upper())
+
+DATE_SEP = "::"
 
 
 @contextmanager
@@ -458,7 +461,7 @@ def audit() -> None:  # pragma: no cover
         vuln_count = 0
         skip_count = 0
         vuln_ignore_count = 0
-        vulns_to_ignore = set(args.ignore_vulns)
+        vulns_to_ignore = set(yield_vulns_to_ignore(args.ignore_vulns))
         try:
             for spec, vulns in auditor.audit(source):
                 if spec.is_skipped():
@@ -557,3 +560,16 @@ def audit() -> None:  # pragma: no cover
         if skip_count > 0 or formatter.is_manifest:
             with _output_io(args.output) as io:
                 print(formatter.format(result, fixes), file=io)
+
+
+def yield_vulns_to_ignore(ignore_vulns: List[str]):
+    for vuln in ignore_vulns:
+        if DATE_SEP in vuln:
+            vuln_id, enddate_str = vuln.split(DATE_SEP)
+            enddate = datetime.strptime(enddate_str, "%Y-%m-%d")  # should the format be customizable?
+            if datetime.now() < enddate:
+                yield vuln_id
+            else:
+                logger.warning(f"Vulnerability {vuln_id} not ignored as the expiry date {enddate_str} has passed.")
+        else:
+            yield vuln
