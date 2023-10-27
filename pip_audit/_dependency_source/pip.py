@@ -13,7 +13,11 @@ from typing import Iterator, Sequence
 import pip_api
 from packaging.version import InvalidVersion, Version
 
-from pip_audit._dependency_source import DependencyFixError, DependencySource, DependencySourceError
+from pip_audit._dependency_source import (
+    DependencyFixError,
+    DependencySource,
+    DependencySourceError,
+)
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency, SkippedDependency
 from pip_audit._state import AuditState
@@ -118,8 +122,12 @@ class PipSource(DependencySource):
                     )
                 else:
                     try:
-                        dep = ResolvedDependency(name=dist.name, version=Version(str(dist.version)))
-                        self.state.update_state(f"Collecting {dep.name} ({dep.version})")
+                        dep = ResolvedDependency(
+                            name=dist.name, version=Version(str(dist.version))
+                        )
+                        self.state.update_state(
+                            f"Collecting {dep.name} ({dep.version})"
+                        )
                     except InvalidVersion:
                         skip_reason = (
                             "Package has invalid version and could not be audited: "
@@ -147,7 +155,10 @@ class PipSource(DependencySource):
         ]
         try:
             subprocess.run(
-                fix_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                fix_cmd,
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
         except subprocess.CalledProcessError as cpe:
             raise PipFixError(

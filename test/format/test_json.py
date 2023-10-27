@@ -39,7 +39,11 @@ def test_json(vuln_data):
                 "name": "bar",
                 "version": "0.1",
                 "vulns": [
-                    {"id": "VULN-2", "fix_versions": [], "description": "The third vulnerability"}
+                    {
+                        "id": "VULN-2",
+                        "fix_versions": [],
+                        "description": "The third vulnerability",
+                    }
                 ],
             },
         ],
@@ -104,7 +108,9 @@ def test_json_skipped_dep(vuln_data_skipped_dep):
         ],
         "fixes": [],
     }
-    assert json_format.format(vuln_data_skipped_dep, list()) == json.dumps(expected_json)
+    assert json_format.format(vuln_data_skipped_dep, list()) == json.dumps(
+        expected_json
+    )
 
 
 def test_json_fix(vuln_data, fix_data):
@@ -134,7 +140,11 @@ def test_json_fix(vuln_data, fix_data):
                 "name": "bar",
                 "version": "0.1",
                 "vulns": [
-                    {"id": "VULN-2", "fix_versions": [], "description": "The third vulnerability"}
+                    {
+                        "id": "VULN-2",
+                        "fix_versions": [],
+                        "description": "The third vulnerability",
+                    }
                 ],
             },
         ],
@@ -181,7 +191,11 @@ def test_json_skipped_fix(vuln_data, skipped_fix_data):
                 "name": "bar",
                 "version": "0.1",
                 "vulns": [
-                    {"id": "VULN-2", "fix_versions": [], "description": "The third vulnerability"}
+                    {
+                        "id": "VULN-2",
+                        "fix_versions": [],
+                        "description": "The third vulnerability",
+                    }
                 ],
             },
         ],

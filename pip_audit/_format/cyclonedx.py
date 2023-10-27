@@ -36,7 +36,9 @@ def _pip_audit_result_to_bom(
         c = Component(name=dep.name, version=str(dep.version))
         for vuln in vulns:
             vulnerabilities.append(
-                Vulnerability(id=vuln.id, description=vuln.description, recommendation="Upgrade")
+                Vulnerability(
+                    id=vuln.id, description=vuln.description, recommendation="Upgrade"
+                )
             )
 
         components.append(c)

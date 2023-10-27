@@ -97,7 +97,9 @@ def test_pip_source_invalid_version(monkeypatch):
             "pip-api": MockDistribution("pip-api", "1.0"),
         }
 
-    monkeypatch.setattr(pip_api, "installed_distributions", mock_installed_distributions)
+    monkeypatch.setattr(
+        pip_api, "installed_distributions", mock_installed_distributions
+    )
 
     specs = list(source.collect())
     assert len(logger.debug.calls) == 1
@@ -134,7 +136,9 @@ def test_pip_source_skips_editable(monkeypatch):
             "pip-api": MockDistribution("pip-api", "1.0"),
         }
 
-    monkeypatch.setattr(pip_api, "installed_distributions", mock_installed_distributions)
+    monkeypatch.setattr(
+        pip_api, "installed_distributions", mock_installed_distributions
+    )
 
     specs = list(source.collect())
     assert ResolvedDependency(name="pytest", version=Version("0.1")) in specs
@@ -152,7 +156,8 @@ def test_pip_source_fix(monkeypatch):
     source = pip.PipSource()
 
     fix_version = ResolvedFixVersion(
-        dep=ResolvedDependency(name="pip-api", version=Version("1.0")), version=Version("1.5")
+        dep=ResolvedDependency(name="pip-api", version=Version("1.0")),
+        version=Version("1.5"),
     )
 
     def run_mock(args, **kwargs):
@@ -167,7 +172,8 @@ def test_pip_source_fix_failure(monkeypatch):
     source = pip.PipSource()
 
     fix_version = ResolvedFixVersion(
-        dep=ResolvedDependency(name="pip-api", version=Version("1.0")), version=Version("1.5")
+        dep=ResolvedDependency(name="pip-api", version=Version("1.0")),
+        version=Version("1.5"),
     )
 
     def run_mock(args, **kwargs):

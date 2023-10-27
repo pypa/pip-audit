@@ -58,8 +58,14 @@ def test_pypi_redirect_loop(monkeypatch):
     cache_dir = pretend.stub()
     pypi = service.PyPIService(cache_dir)
 
-    with pytest.raises(service.ConnectionError, match="PyPI is not redirecting properly"):
-        dict(pypi.query_all(iter([service.ResolvedDependency("fakedep", Version("1.0.0"))])))
+    with pytest.raises(
+        service.ConnectionError, match="PyPI is not redirecting properly"
+    ):
+        dict(
+            pypi.query_all(
+                iter([service.ResolvedDependency("fakedep", Version("1.0.0"))])
+            )
+        )
 
 
 def test_pypi_connect_timeout(monkeypatch):
@@ -73,7 +79,11 @@ def test_pypi_connect_timeout(monkeypatch):
     with pytest.raises(
         service.ConnectionError, match="Could not connect to PyPI's vulnerability feed"
     ):
-        dict(pypi.query_all(iter([service.ResolvedDependency("fakedep", Version("1.0.0"))])))
+        dict(
+            pypi.query_all(
+                iter([service.ResolvedDependency("fakedep", Version("1.0.0"))])
+            )
+        )
 
 
 def test_pypi_http_notfound(monkeypatch, cache_dir):
@@ -225,7 +235,9 @@ def test_pypi_vuln_withdrawn(monkeypatch, cache_dir):
         (None, None, "N/A"),
     ],
 )
-def test_pypi_vuln_description_fallbacks(monkeypatch, cache_dir, summary, details, description):
+def test_pypi_vuln_description_fallbacks(
+    monkeypatch, cache_dir, summary, details, description
+):
     def get_mock_response():
         class MockResponse:
             def raise_for_status(self):

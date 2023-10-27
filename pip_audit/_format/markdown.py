@@ -82,15 +82,12 @@ class MarkdownFormat(VulnerabilityFormat):
         if not vuln_rows:
             return ""
 
-        return (
-            dedent(
-                f"""
+        return dedent(
+            f"""
             {header}
             {border}
             """
-            )
-            + "\n".join(vuln_rows)
-        )
+        ) + "\n".join(vuln_rows)
 
     def _format_vuln(
         self,
@@ -139,15 +136,12 @@ class MarkdownFormat(VulnerabilityFormat):
         if not skipped_dep_rows:
             return ""
 
-        return (
-            dedent(
-                f"""
+        return dedent(
+            f"""
             {header}
             {border}
             """
-            )
-            + "\n".join(skipped_dep_rows)
-        )
+        ) + "\n".join(skipped_dep_rows)
 
     def _format_skipped_dep(self, dep: service.SkippedDependency) -> str:
         return f"{dep.name} | {dep.skip_reason}"

@@ -13,7 +13,11 @@ import toml
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 
-from pip_audit._dependency_source import DependencyFixError, DependencySource, DependencySourceError
+from pip_audit._dependency_source import (
+    DependencyFixError,
+    DependencySource,
+    DependencySourceError,
+)
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency
 from pip_audit._state import AuditState
@@ -103,7 +107,9 @@ class PyProjectSource(DependencySource):
         Fixes a dependency version for this `PyProjectSource`.
         """
 
-        with self.filename.open("r+") as f, NamedTemporaryFile(mode="r+", delete=False) as tmp:
+        with self.filename.open("r+") as f, NamedTemporaryFile(
+            mode="r+", delete=False
+        ) as tmp:
             pyproject_data = toml.load(f)
 
             project = pyproject_data.get("project")

@@ -16,7 +16,11 @@ from typing import IO, Iterator
 from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name
 from packaging.version import Version
-from pip_requirements_parser import InstallRequirement, InvalidRequirementLine, RequirementsFile
+from pip_requirements_parser import (
+    InstallRequirement,
+    InvalidRequirementLine,
+    RequirementsFile,
+)
 
 from pip_audit._dependency_source import (
     DependencyFixError,
@@ -148,7 +152,9 @@ class RequirementSource(DependencySource):
                 )
 
             # If one or more requirements have a hash, this implies `--require-hashes`.
-            require_hashes = require_hashes or any(req.hash_options for req in rf.requirements)
+            require_hashes = require_hashes or any(
+                req.hash_options for req in rf.requirements
+            )
             reqs.extend(rf.requirements)
 
         # If the user has supplied `--no-deps` or there are hashed requirements, we should assume
@@ -189,7 +195,8 @@ class RequirementSource(DependencySource):
             # Make temporary copies of the existing requirements files. If anything goes wrong, we
             # want to copy them back into place and undo any partial application of the fix.
             tmp_files: list[IO[str]] = [
-                stack.enter_context(NamedTemporaryFile(mode="w")) for _ in self._filenames
+                stack.enter_context(NamedTemporaryFile(mode="w"))
+                for _ in self._filenames
             ]
             for filename, tmp_file in zip(self._filenames, tmp_files):
                 with filename.open("r") as f:
@@ -269,7 +276,9 @@ class RequirementSource(DependencySource):
                     "    # pip-audit: subdependency explicitly fixed",
                     file=f,
                 )
-                print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
+                print(
+                    f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f
+                )
 
     def _recover_files(self, tmp_files: list[IO[str]]) -> None:
         for filename, tmp_file in zip(self._filenames, tmp_files):
@@ -293,7 +302,9 @@ class RequirementSource(DependencySource):
         req_names: set[str] = set()
         for req in reqs:
             if not req.hash_options and require_hashes:
-                raise RequirementSourceError(f"requirement {req.dumps()} does not contain a hash")
+                raise RequirementSourceError(
+                    f"requirement {req.dumps()} does not contain a hash"
+                )
             if req.req is None:
                 # PEP 508-style URL requirements don't have a pre-declared version, even
                 # when hashed; the `#egg=name==version` syntax is non-standard and not supported
@@ -307,7 +318,9 @@ class RequirementSource(DependencySource):
                 )
                 continue
             if self._skip_editable and req.is_editable:
-                yield SkippedDependency(name=req.name, skip_reason="requirement marked as editable")
+                yield SkippedDependency(
+                    name=req.name, skip_reason="requirement marked as editable"
+                )
             if req.marker is not None and not req.marker.evaluate():
                 continue  # pragma: no cover
 
@@ -329,7 +342,9 @@ class RequirementSource(DependencySource):
                     skip_reason="URL requirements cannot be pinned to a specific package version",
                 )
             elif not req.specifier:
-                raise RequirementSourceError(f"requirement {req.name} is not pinned: {str(req)}")
+                raise RequirementSourceError(
+                    f"requirement {req.name} is not pinned: {str(req)}"
+                )
             else:
                 pinned_specifier = PINNED_SPECIFIER_RE.match(str(req.specifier))
                 if pinned_specifier is None:
@@ -337,7 +352,9 @@ class RequirementSource(DependencySource):
                         f"requirement {req.name} is not pinned to an exact version: {str(req)}"
                     )
 
-                yield ResolvedDependency(req.name, Version(pinned_specifier.group("version")))
+                yield ResolvedDependency(
+                    req.name, Version(pinned_specifier.group("version"))
+                )
 
 
 class RequirementSourceError(DependencySourceError):

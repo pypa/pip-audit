@@ -99,9 +99,13 @@ def _resolve_fix_version(
     current_version = dep.version
     current_vulns = vulns
     while current_vulns:
-        state.update_state(f"Resolving fix version for {dep.name}, checking {current_version}")
+        state.update_state(
+            f"Resolving fix version for {dep.name}, checking {current_version}"
+        )
 
-        def get_earliest_fix_version(d: ResolvedDependency, v: VulnerabilityResult) -> Version:
+        def get_earliest_fix_version(
+            d: ResolvedDependency, v: VulnerabilityResult
+        ) -> Version:
             for fix_version in v.fix_versions:
                 if fix_version > current_version:
                     return fix_version
