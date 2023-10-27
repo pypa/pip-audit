@@ -24,9 +24,7 @@ class CalledProcessError(Exception):
         self.stderr = stderr
 
 
-def run(
-    args: Sequence[str], *, log_stdout: bool = False, state: AuditState = AuditState()
-) -> str:
+def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = AuditState()) -> str:
     """
     Execute the given arguments.
 

@@ -122,12 +122,8 @@ class PipSource(DependencySource):
                     )
                 else:
                     try:
-                        dep = ResolvedDependency(
-                            name=dist.name, version=Version(str(dist.version))
-                        )
-                        self.state.update_state(
-                            f"Collecting {dep.name} ({dep.version})"
-                        )
+                        dep = ResolvedDependency(name=dist.name, version=Version(str(dist.version)))
+                        self.state.update_state(f"Collecting {dep.name} ({dep.version})")
                     except InvalidVersion:
                         skip_reason = (
                             "Package has invalid version and could not be audited: "

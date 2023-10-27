@@ -37,9 +37,7 @@ class TestVulnerabilityDescriptionChoice:
             assert choice.to_bool(OutputFormatChoice.Json) in {True, False}
 
     def test_auto_to_bool_for_json(self):
-        assert (
-            VulnerabilityDescriptionChoice.Auto.to_bool(OutputFormatChoice.Json) is True
-        )
+        assert VulnerabilityDescriptionChoice.Auto.to_bool(OutputFormatChoice.Json) is True
 
     def test_str(self):
         for choice in VulnerabilityDescriptionChoice:
@@ -80,9 +78,7 @@ def test_plurals(capsys, monkeypatch, args, vuln_count, pkg_count, expected):
     monkeypatch.setattr(pip_audit._cli, "PipSource", lambda *a, **kw: dummysource)
 
     parser = pip_audit._cli._parser()
-    monkeypatch.setattr(
-        pip_audit._cli, "_parse_args", lambda x: parser.parse_args(args)
-    )
+    monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda x: parser.parse_args(args))
 
     result = [
         (
@@ -106,20 +102,15 @@ def test_plurals(capsys, monkeypatch, args, vuln_count, pkg_count, expected):
     ]
 
     if "--ignore-vuln" in args:
-        result[0][1].append(
-            pretend.stub(id="bar", aliases=set(), has_any_id=lambda x: True)
-        )
+        result[0][1].append(pretend.stub(id="bar", aliases=set(), has_any_id=lambda x: True))
 
     auditor = pretend.stub(audit=lambda a: result)
     monkeypatch.setattr(pip_audit._cli, "Auditor", lambda *a, **kw: auditor)
 
     resolve_fix_versions = [
-        pretend.stub(is_skipped=lambda: False, dep=spec, version=2)
-        for spec, _ in result
+        pretend.stub(is_skipped=lambda: False, dep=spec, version=2) for spec, _ in result
     ]
-    monkeypatch.setattr(
-        pip_audit._cli, "resolve_fix_versions", lambda *a: resolve_fix_versions
-    )
+    monkeypatch.setattr(pip_audit._cli, "resolve_fix_versions", lambda *a: resolve_fix_versions)
 
     try:
         pip_audit._cli.audit()
@@ -194,12 +185,9 @@ def test_print_format(monkeypatch, vuln_count, pkg_count, skip_count, print_form
     monkeypatch.setattr(pip_audit._cli, "Auditor", lambda *a, **kw: auditor)
 
     resolve_fix_versions = [
-        pretend.stub(is_skipped=lambda: False, dep=spec, version=2)
-        for spec, _ in result
+        pretend.stub(is_skipped=lambda: False, dep=spec, version=2) for spec, _ in result
     ]
-    monkeypatch.setattr(
-        pip_audit._cli, "resolve_fix_versions", lambda *a: resolve_fix_versions
-    )
+    monkeypatch.setattr(pip_audit._cli, "resolve_fix_versions", lambda *a: resolve_fix_versions)
 
     try:
         pip_audit._cli.audit()

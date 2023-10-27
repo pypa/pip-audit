@@ -31,9 +31,7 @@ class PyPIService(VulnerabilityService):
     package vulnerability information.
     """
 
-    def __init__(
-        self, cache_dir: Path | None = None, timeout: int | None = None
-    ) -> None:
+    def __init__(self, cache_dir: Path | None = None, timeout: int | None = None) -> None:
         """
         Create a new `PyPIService`.
 
@@ -60,9 +58,7 @@ class PyPIService(VulnerabilityService):
         url = f"https://pypi.org/pypi/{spec.canonical_name}/{str(spec.version)}/json"
 
         try:
-            response: requests.Response = self.session.get(
-                url=url, timeout=self.timeout
-            )
+            response: requests.Response = self.session.get(url=url, timeout=self.timeout)
             response.raise_for_status()
         except requests.TooManyRedirects:
             # This should never happen with a healthy PyPI instance, but might
@@ -100,18 +96,14 @@ class PyPIService(VulnerabilityService):
             # If the vulnerability has been withdrawn, we skip it entirely.
             withdrawn_at = v.get("withdrawn")
             if withdrawn_at is not None:
-                logger.debug(
-                    f"PyPI vuln entry '{id}' marked as withdrawn at {withdrawn_at}"
-                )
+                logger.debug(f"PyPI vuln entry '{id}' marked as withdrawn at {withdrawn_at}")
                 continue
 
             # Put together the fix versions list
             try:
                 fix_versions = [Version(fixed_in) for fixed_in in v["fixed_in"]]
             except InvalidVersion as iv:
-                raise ServiceError(
-                    f'Received malformed version from PyPI: {v["fixed_in"]}'
-                ) from iv
+                raise ServiceError(f'Received malformed version from PyPI: {v["fixed_in"]}') from iv
 
             # The ranges aren't guaranteed to come in chronological order
             fix_versions.sort()

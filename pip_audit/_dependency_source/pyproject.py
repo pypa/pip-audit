@@ -107,9 +107,7 @@ class PyProjectSource(DependencySource):
         Fixes a dependency version for this `PyProjectSource`.
         """
 
-        with self.filename.open("r+") as f, NamedTemporaryFile(
-            mode="r+", delete=False
-        ) as tmp:
+        with self.filename.open("r+") as f, NamedTemporaryFile(mode="r+", delete=False) as tmp:
             pyproject_data = toml.load(f)
 
             project = pyproject_data.get("project")

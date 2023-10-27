@@ -22,15 +22,11 @@ def pytest_addoption(parser):
 
 def pytest_runtest_setup(item):
     if "online" in item.keywords and item.config.getoption("--skip-online"):
-        pytest.skip(
-            "skipping test that requires network connectivity due to `--skip-online` flag"
-        )
+        pytest.skip("skipping test that requires network connectivity due to `--skip-online` flag")
 
 
 def pytest_configure(config):
-    config.addinivalue_line(
-        "markers", "online: mark test as requiring network connectivity"
-    )
+    config.addinivalue_line("markers", "online: mark test as requiring network connectivity")
 
 
 @pytest.fixture(autouse=True)

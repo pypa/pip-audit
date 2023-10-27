@@ -97,3 +97,4 @@ reset = true
 ignore = ["E501"]
 select = ["E", "F", "I", "W", "UP"]
 target-version = "py37"
+line-length = 100

@@ -99,9 +99,7 @@ def test_requirement_source_virtualenv_error(monkeypatch, req_file):
 @pytest.mark.online
 def test_requirement_source_duplicate_dependencies(req_file):
     # Return the same requirements for both files
-    source = _init_requirement(
-        [(req_file(), "flask==2.0.1"), (req_file(), "flask==2.0.1")]
-    )
+    source = _init_requirement([(req_file(), "flask==2.0.1"), (req_file(), "flask==2.0.1")])
 
     specs = list(source.collect())
 
@@ -517,10 +515,7 @@ def test_requirement_source_disable_pip_editable_skip(req_file):
     )
 
     specs = list(source.collect())
-    assert (
-        SkippedDependency(name="flask", skip_reason="requirement marked as editable")
-        in specs
-    )
+    assert SkippedDependency(name="flask", skip_reason="requirement marked as editable") in specs
 
 
 def test_requirement_source_disable_pip_duplicate_dependencies(req_file):
@@ -606,9 +601,7 @@ def test_requirement_source_fix_explicit_subdep(monkeypatch, req_file):
     # associated comment.
     _check_fixes(
         ["flask==2.0.1"],
-        [
-            "flask==2.0.1\n    # pip-audit: subdependency explicitly fixed\njinja2==4.0.0"
-        ],
+        ["flask==2.0.1\n    # pip-audit: subdependency explicitly fixed\njinja2==4.0.0"],
         [req_file()],
         [
             ResolvedFixVersion(
@@ -666,9 +659,7 @@ def test_requirement_source_fix_explicit_subdep_resolver_error(req_file):
 
     # Dependee requirements are a attached to each dependency. We no longer resolve dependencies
     # as part of `--fix` so we shouldn't call into dependency resolution.
-    mock_resolver = pretend.stub(
-        resolve=pretend.call_recorder(lambda _reqs, _req_hashes: [])
-    )
+    mock_resolver = pretend.stub(resolve=pretend.call_recorder(lambda _reqs, _req_hashes: []))
     source.fix(
         ResolvedFixVersion(
             dep=jinja_dep,
@@ -739,9 +730,7 @@ def test_requirement_source_fix_invalid_lines(req_file):
 
 
 def test_requirement_source_disable_pip(req_file):
-    source = _init_requirement(
-        [(req_file(), "flask==2.0.1")], disable_pip=True, no_deps=True
-    )
+    source = _init_requirement([(req_file(), "flask==2.0.1")], disable_pip=True, no_deps=True)
 
     specs = list(source.collect())
     assert specs == [ResolvedDependency("flask", Version("2.0.1"))]
@@ -862,9 +851,7 @@ def test_requirement_source_disable_pip_editable_with_egg_fragment(req_file):
 
 
 def test_requirement_source_disable_pip_editable_without_egg_fragment(req_file):
-    source = _init_requirement(
-        [(req_file(), "-e file:flask.py")], disable_pip=True, no_deps=True
-    )
+    source = _init_requirement([(req_file(), "-e file:flask.py")], disable_pip=True, no_deps=True)
 
     specs = list(source.collect())
     assert (

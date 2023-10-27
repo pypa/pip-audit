@@ -36,15 +36,11 @@ def _get_pip_cache() -> Path:
     # the `pip` HTTP cache
     cmd = [sys.executable, "-m", "pip", "cache", "dir"]
     try:
-        process = subprocess.run(
-            cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
-        )
+        process = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError as cpe:  # pragma: no cover
         # NOTE: This should only happen if pip's cache has been explicitly disabled,
         # which we check for in the caller (via `PIP_NO_CACHE_DIR`).
-        raise ServiceError(
-            f"Failed to query the `pip` HTTP cache directory: {cmd}"
-        ) from cpe
+        raise ServiceError(f"Failed to query the `pip` HTTP cache directory: {cmd}") from cpe
     cache_dir = process.stdout.decode("utf-8").strip("\n")
     http_cache_dir = Path(cache_dir) / "http"
     return http_cache_dir
@@ -66,9 +62,7 @@ def _get_cache_dir(custom_cache_dir: Path | None, *, use_pip: bool = True) -> Pa
 
     # Respect pip's PIP_NO_CACHE_DIR environment setting.
     if use_pip and not os.getenv("PIP_NO_CACHE_DIR"):
-        pip_cache_dir = (
-            _get_pip_cache() if _PIP_VERSION >= _MINIMUM_PIP_VERSION else None
-        )
+        pip_cache_dir = _get_pip_cache() if _PIP_VERSION >= _MINIMUM_PIP_VERSION else None
         if pip_cache_dir is not None:
             return pip_cache_dir
         else:
@@ -148,9 +142,7 @@ class _SafeFileCache(FileCache):
                 self._logged_warning = True
 
 
-def caching_session(
-    cache_dir: Path | None, *, use_pip: bool = False
-) -> requests.Session:
+def caching_session(cache_dir: Path | None, *, use_pip: bool = False) -> requests.Session:
     """
     Return a `requests` style session, with suitable caching middleware.
 

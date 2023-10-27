@@ -174,9 +174,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     dep_source_args = parser.add_mutually_exclusive_group()
-    parser.add_argument(
-        "-V", "--version", action="version", version=f"%(prog)s {__version__}"
-    )
+    parser.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument(
         "-l",
         "--local",
@@ -346,9 +344,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
     return parser
 
 
-def _parse_args(
-    parser: argparse.ArgumentParser
-) -> argparse.Namespace:  # pragma: no cover
+def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragma: no cover
     args = parser.parse_args()
 
     # Configure logging upfront, so that we don't miss anything.
@@ -394,29 +390,19 @@ def audit() -> None:  # pragma: no cover
     # Check for flags that are only valid with requirements files
     if args.requirements is None:
         if args.require_hashes:
-            parser.error(
-                "The --require-hashes flag can only be used with --requirement (-r)"
-            )
+            parser.error("The --require-hashes flag can only be used with --requirement (-r)")
         elif args.index_url:
-            parser.error(
-                "The --index-url flag can only be used with --requirement (-r)"
-            )
+            parser.error("The --index-url flag can only be used with --requirement (-r)")
         elif args.extra_index_urls:
-            parser.error(
-                "The --extra-index-url flag can only be used with --requirement (-r)"
-            )
+            parser.error("The --extra-index-url flag can only be used with --requirement (-r)")
         elif args.no_deps:
             parser.error("The --no-deps flag can only be used with --requirement (-r)")
         elif args.disable_pip:
-            parser.error(
-                "The --disable-pip flag can only be used with --requirement (-r)"
-            )
+            parser.error("The --disable-pip flag can only be used with --requirement (-r)")
 
     # Nudge users to consider alternate workflows.
     if args.require_hashes and args.no_deps:
-        logger.warning(
-            "The --no-deps flag is redundant when used with --require-hashes"
-        )
+        logger.warning("The --no-deps flag is redundant when used with --require-hashes")
 
     if args.no_deps and args.disable_pip:
         logger.warning("The --no-deps flag is redundant when used with --disable-pip")
@@ -478,9 +464,7 @@ def audit() -> None:  # pragma: no cover
         # `--dry-run` only affects the auditor if `--fix` is also not supplied,
         # since the combination of `--dry-run` and `--fix` implies that the user
         # wants to dry-run the "fix" step instead of the "audit" step
-        auditor = Auditor(
-            service, options=AuditOptions(dry_run=args.dry_run and not args.fix)
-        )
+        auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run and not args.fix))
 
         result = {}
         pkg_count = 0
@@ -502,9 +486,7 @@ def audit() -> None:  # pragma: no cover
                     logger.debug(f"Auditing {spec.name} ({spec.version})")
                     state.update_state(f"Auditing {spec.name} ({spec.version})")
                 if vulns_to_ignore:
-                    filtered_vulns = [
-                        v for v in vulns if not v.has_any_id(vulns_to_ignore)
-                    ]
+                    filtered_vulns = [v for v in vulns if not v.has_any_id(vulns_to_ignore)]
                     vuln_ignore_count += len(vulns) - len(filtered_vulns)
                     vulns = filtered_vulns
                 result[spec] = vulns
@@ -539,8 +521,7 @@ def audit() -> None:  # pragma: no cover
                     else:
                         fix = cast(ResolvedFixVersion, fix)
                         logger.info(
-                            f"Dry run: would have upgraded {fix.dep.name} to "
-                            f"{fix.version}"
+                            f"Dry run: would have upgraded {fix.dep.name} to " f"{fix.version}"
                         )
                     continue
 

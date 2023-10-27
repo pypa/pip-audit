@@ -38,9 +38,7 @@ _TEST_VULN_DATA: dict[service.Dependency, list[service.VulnerabilityResult]] = {
     ],
 }
 
-_TEST_VULN_DATA_SKIPPED_DEP: dict[
-    service.Dependency, list[service.VulnerabilityResult]
-] = {
+_TEST_VULN_DATA_SKIPPED_DEP: dict[service.Dependency, list[service.VulnerabilityResult]] = {
     _RESOLVED_DEP_FOO: [
         service.VulnerabilityResult(
             id="VULN-0",
@@ -60,9 +58,7 @@ _TEST_NO_VULN_DATA: dict[service.Dependency, list[service.VulnerabilityResult]] 
     _RESOLVED_DEP_BAR: [],
 }
 
-_TEST_NO_VULN_DATA_SKIPPED_DEP: dict[
-    service.Dependency, list[service.VulnerabilityResult]
-] = {
+_TEST_NO_VULN_DATA_SKIPPED_DEP: dict[service.Dependency, list[service.VulnerabilityResult]] = {
     _RESOLVED_DEP_FOO: [],
     _RESOLVED_DEP_BAR: [],
     _SKIPPED_DEP: [],

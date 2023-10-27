@@ -106,15 +106,11 @@ class VirtualEnv(venv.EnvBuilder):
         try:
             run(pip_upgrade_cmd, state=self._state)
         except CalledProcessError as cpe:
-            raise VirtualEnvError(
-                f"Failed to upgrade `pip`: {pip_upgrade_cmd}"
-            ) from cpe
+            raise VirtualEnvError(f"Failed to upgrade `pip`: {pip_upgrade_cmd}") from cpe
 
         self._state.update_state("Installing package in isolated environment")
 
-        with TemporaryDirectory() as ve_dir, NamedTemporaryFile(
-            dir=ve_dir, delete=False
-        ) as tmp:
+        with TemporaryDirectory() as ve_dir, NamedTemporaryFile(dir=ve_dir, delete=False) as tmp:
             # We use delete=False in creating the tempfile to allow it to be
             # closed and opened multiple times within the context scope on
             # windows, see GitHub issue #646.
@@ -136,13 +132,9 @@ class VirtualEnv(venv.EnvBuilder):
             except CalledProcessError as cpe:
                 # TODO: Propagate the subprocess's error output better here.
                 logger.error(f"internal pip failure: {cpe.stderr}")
-                raise VirtualEnvError(
-                    f"Failed to install packages: {package_install_cmd}"
-                ) from cpe
+                raise VirtualEnvError(f"Failed to install packages: {package_install_cmd}") from cpe
 
-            self._state.update_state(
-                "Processing package list from isolated environment"
-            )
+            self._state.update_state("Processing package list from isolated environment")
 
             install_report = json.load(tmp)
             package_list = install_report["install"]

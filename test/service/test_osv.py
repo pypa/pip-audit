@@ -158,9 +158,7 @@ def test_osv_unsupported_schema_version(monkeypatch, version):
     dep = service.ResolvedDependency("foo", Version("1.0.0"))
     results = dict(osv.query_all(iter([dep])))
 
-    assert logger.warning.calls == [
-        pretend.call(f"Unsupported OSV schema version: {version}")
-    ]
+    assert logger.warning.calls == [pretend.call(f"Unsupported OSV schema version: {version}")]
 
     assert len(results) == 1
     assert dep in results
@@ -189,9 +187,7 @@ def test_osv_vuln_description_fallbacks(monkeypatch, summary, details, descripti
                 "affected": [
                     {
                         "package": {"name": "foo", "ecosystem": "PyPI"},
-                        "ranges": [
-                            {"type": "ECOSYSTEM", "events": [{"fixed": "1.0.1"}]}
-                        ],
+                        "ranges": [{"type": "ECOSYSTEM", "events": [{"fixed": "1.0.1"}]}],
                     }
                 ],
             }

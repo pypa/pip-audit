@@ -84,9 +84,7 @@ class Auditor:
                     # its alias set.
                     if seen_aliases.intersection(v.aliases | {v.id}):
                         idx, previous = next(
-                            (i, p)
-                            for (i, p) in enumerate(unique_vulns)
-                            if p.alias_of(v)
+                            (i, p) for (i, p) in enumerate(unique_vulns) if p.alias_of(v)
                         )
                         unique_vulns[idx] = previous.merge_aliases(v)
                         continue

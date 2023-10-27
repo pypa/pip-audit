@@ -108,9 +108,7 @@ def test_json_skipped_dep(vuln_data_skipped_dep):
         ],
         "fixes": [],
     }
-    assert json_format.format(vuln_data_skipped_dep, list()) == json.dumps(
-        expected_json
-    )
+    assert json_format.format(vuln_data_skipped_dep, list()) == json.dumps(expected_json)
 
 
 def test_json_fix(vuln_data, fix_data):
