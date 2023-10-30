@@ -43,9 +43,7 @@ make lint
 
 `pip-audit` is automatically linted and formatted with a collection of tools:
 
-* [`black`](https://github.com/psf/black): Code formatting
-* [`isort`](https://github.com/PyCQA/isort): Import sorting, ordering
-* [`ruff`](https://github.com/charliermarsh/ruff): PEP-8 linting, style enforcement
+* [`ruff`](https://github.com/charliermarsh/ruff): Formatting, PEP-8 linting, style enforcement
 * [`mypy`](https://mypy.readthedocs.io/en/stable/): Static type checking
 * [`interrogate`](https://interrogate.readthedocs.io/en/latest/): Documentation coverage
 

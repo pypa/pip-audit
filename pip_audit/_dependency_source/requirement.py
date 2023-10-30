@@ -16,7 +16,11 @@ from typing import IO, Iterator
 from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name
 from packaging.version import Version
-from pip_requirements_parser import InstallRequirement, InvalidRequirementLine, RequirementsFile
+from pip_requirements_parser import (
+    InstallRequirement,
+    InvalidRequirementLine,
+    RequirementsFile,
+)
 
 from pip_audit._dependency_source import (
     DependencyFixError,

@@ -191,7 +191,10 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         help="audit the given requirements file; this option can be used multiple times",
     )
     dep_source_args.add_argument(
-        "project_path", type=Path, nargs="?", help="audit a local Python project at the given path"
+        "project_path",
+        type=Path,
+        nargs="?",
+        help="audit a local Python project at the given path",
     )
     parser.add_argument(
         "-f",
@@ -210,7 +213,8 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         default=VulnerabilityServiceChoice.Pypi,
         metavar="SERVICE",
         help=_enum_help(
-            "the vulnerability service to audit dependencies against", VulnerabilityServiceChoice
+            "the vulnerability service to audit dependencies against",
+            VulnerabilityServiceChoice,
         ),
     )
     parser.add_argument(
@@ -250,7 +254,10 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         help="display a progress spinner",
     )
     parser.add_argument(
-        "--timeout", type=int, default=15, help="set the socket timeout"  # Match the `pip` default
+        "--timeout",
+        type=int,
+        default=15,
+        help="set the socket timeout",  # Match the `pip` default
     )
     dep_source_args.add_argument(
         "--path",
@@ -358,7 +365,10 @@ def _dep_source_from_project_path(
     pyproject_path = project_path / "pyproject.toml"
     if pyproject_path.is_file():
         return PyProjectSource(
-            pyproject_path, index_url=index_url, extra_index_urls=extra_index_urls, state=state
+            pyproject_path,
+            index_url=index_url,
+            extra_index_urls=extra_index_urls,
+            state=state,
         )
 
     # TODO: Checks for setup.py and other project files will go here.
@@ -445,7 +455,10 @@ def audit() -> None:  # pragma: no cover
             )
         else:
             source = PipSource(
-                local=args.local, paths=args.paths, skip_editable=args.skip_editable, state=state
+                local=args.local,
+                paths=args.paths,
+                skip_editable=args.skip_editable,
+                state=state,
             )
 
         # `--dry-run` only affects the auditor if `--fix` is also not supplied,

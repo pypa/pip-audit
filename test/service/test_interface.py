@@ -53,7 +53,10 @@ def test_vulnerability_service_no_results(vuln_service, spec):
 
 def test_vulnerability_result_update_aliases():
     result1 = VulnerabilityResult(
-        id="FOO", description="stub", fix_versions=[Version("1.0.0")], aliases={"BAR", "BAZ", "ZAP"}
+        id="FOO",
+        description="stub",
+        fix_versions=[Version("1.0.0")],
+        aliases={"BAR", "BAZ", "ZAP"},
     )
     result2 = VulnerabilityResult(
         id="BAR",
@@ -69,7 +72,10 @@ def test_vulnerability_result_update_aliases():
 
 def test_vulnerability_result_has_any_id():
     result = VulnerabilityResult(
-        id="FOO", description="bar", fix_versions=[Version("1.0.0")], aliases={"BAR", "BAZ", "QUUX"}
+        id="FOO",
+        description="bar",
+        fix_versions=[Version("1.0.0")],
+        aliases={"BAR", "BAZ", "QUUX"},
     )
 
     assert result.has_any_id({"FOO"})
@@ -84,7 +90,10 @@ class TestVulnerabilityService:
         [
             (None, None),
             ("2019-08-24T14:15:22Z", datetime.datetime(2019, 8, 24, 14, 15, 22)),
-            ("2022-10-22T00:00:27.668938Z", datetime.datetime(2022, 10, 22, 0, 0, 27, 668938)),
+            (
+                "2022-10-22T00:00:27.668938Z",
+                datetime.datetime(2022, 10, 22, 0, 0, 27, 668938),
+            ),
         ],
     )
     def test_parse_rfc3339(self, timestamp, result):

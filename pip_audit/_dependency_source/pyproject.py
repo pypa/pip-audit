@@ -13,7 +13,11 @@ import toml
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 
-from pip_audit._dependency_source import DependencyFixError, DependencySource, DependencySourceError
+from pip_audit._dependency_source import (
+    DependencyFixError,
+    DependencySource,
+    DependencySourceError,
+)
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency
 from pip_audit._state import AuditState

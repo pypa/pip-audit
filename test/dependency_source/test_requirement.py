@@ -192,7 +192,8 @@ def test_requirement_source_fix(req_file):
         [req_file()],
         [
             ResolvedFixVersion(
-                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+                dep=ResolvedDependency(name="flask", version=Version("0.5")),
+                version=Version("1.0"),
             )
         ],
     )
@@ -251,7 +252,8 @@ def test_requirement_source_fix_multiple_files(req_file):
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
-                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+                dep=ResolvedDependency(name="flask", version=Version("0.5")),
+                version=Version("1.0"),
             )
         ],
     )
@@ -264,7 +266,8 @@ def test_requirement_source_fix_specifier_match(req_file):
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
-                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+                dep=ResolvedDependency(name="flask", version=Version("0.5")),
+                version=Version("1.0"),
             )
         ],
     )
@@ -302,7 +305,8 @@ def test_requirement_source_fix_preserve_marker(req_file):
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
-                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+                dep=ResolvedDependency(name="flask", version=Version("0.5")),
+                version=Version("1.0"),
             )
         ],
     )
@@ -318,7 +322,8 @@ def test_requirement_source_fix_comments(req_file):
         [req_file(), req_file()],
         [
             ResolvedFixVersion(
-                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+                dep=ResolvedDependency(name="flask", version=Version("0.5")),
+                version=Version("1.0"),
             )
         ],
     )
@@ -342,7 +347,8 @@ def test_requirement_source_fix_parse_failure(monkeypatch, req_file):
     with pytest.raises(DependencyFixError):
         source.fix(
             ResolvedFixVersion(
-                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+                dep=ResolvedDependency(name="flask", version=Version("0.5")),
+                version=Version("1.0"),
             )
         )
     assert len(logger.warning.calls) == 1
@@ -378,7 +384,8 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
     with pytest.raises(DependencyFixError):
         source.fix(
             ResolvedFixVersion(
-                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+                dep=ResolvedDependency(name="flask", version=Version("0.5")),
+                version=Version("1.0"),
             )
         )
     # One for the parsing error and one for each file that we failed to rollback
@@ -716,7 +723,8 @@ def test_requirement_source_fix_invalid_lines(req_file):
     with pytest.raises(DependencyFixError):
         source.fix(
             ResolvedFixVersion(
-                dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+                dep=ResolvedDependency(name="flask", version=Version("0.5")),
+                version=Version("1.0"),
             )
         )
 
@@ -827,7 +835,9 @@ def test_requirement_source_disable_pip_unpinned_url(req_file):
 
 def test_requirement_source_disable_pip_editable_with_egg_fragment(req_file):
     source = _init_requirement(
-        [(req_file(), "-e file:flask.py#egg=flask==2.0.1")], disable_pip=True, no_deps=True
+        [(req_file(), "-e file:flask.py#egg=flask==2.0.1")],
+        disable_pip=True,
+        no_deps=True,
     )
 
     specs = list(source.collect())

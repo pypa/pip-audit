@@ -60,7 +60,12 @@ class TestProgressSpinnerChoice:
         ([], 1, 1, "Found 1 known vulnerability in 1 package"),
         ([], 2, 1, "Found 2 known vulnerabilities in 1 package"),
         ([], 2, 2, "Found 2 known vulnerabilities in 2 packages"),
-        (["--ignore-vuln", "bar"], 2, 2, "Found 2 known vulnerabilities, ignored 1 in 2 packages"),
+        (
+            ["--ignore-vuln", "bar"],
+            2,
+            2,
+            "Found 2 known vulnerabilities, ignored 1 in 2 packages",
+        ),
         (["--fix"], 1, 1, "fixed 1 vulnerability in 1 package"),
         (["--fix"], 2, 1, "fixed 2 vulnerabilities in 1 package"),
         (["--fix"], 2, 2, "fixed 2 vulnerabilities in 2 packages"),
@@ -83,7 +88,14 @@ def test_plurals(capsys, monkeypatch, args, vuln_count, pkg_count, expected):
                 canonical_name="something" + str(i),
                 version=1,
             ),
-            [pretend.stub(fix_versions=[2], id="foo", aliases=set(), has_any_id=lambda x: False)]
+            [
+                pretend.stub(
+                    fix_versions=[2],
+                    id="foo",
+                    aliases=set(),
+                    has_any_id=lambda x: False,
+                )
+            ]
             * (vuln_count // pkg_count),
         )
         for i in range(pkg_count)
@@ -143,7 +155,14 @@ def test_print_format(monkeypatch, vuln_count, pkg_count, skip_count, print_form
                 canonical_name="something" + str(i),
                 version=1,
             ),
-            [pretend.stub(fix_versions=[2], id="foo", aliases=set(), has_any_id=lambda x: False)]
+            [
+                pretend.stub(
+                    fix_versions=[2],
+                    id="foo",
+                    aliases=set(),
+                    has_any_id=lambda x: False,
+                )
+            ]
             * (vuln_count // pkg_count),
         )
         for i in range(pkg_count)

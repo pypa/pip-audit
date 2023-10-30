@@ -14,7 +14,9 @@ from pip_audit._service.interface import (
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--skip-online", action="store_true", help="skip tests that require network connectivity"
+        "--skip-online",
+        action="store_true",
+        help="skip tests that require network connectivity",
     )
 
 

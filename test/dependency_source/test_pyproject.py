@@ -7,7 +7,11 @@ import pytest
 import toml
 from packaging.version import Version
 
-from pip_audit._dependency_source import DependencyFixError, DependencySourceError, pyproject
+from pip_audit._dependency_source import (
+    DependencyFixError,
+    DependencySourceError,
+    pyproject,
+)
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import ResolvedDependency
 from pip_audit._state import AuditState
@@ -125,7 +129,8 @@ dependencies = [
 """,
     )
     fix = ResolvedFixVersion(
-        dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+        dep=ResolvedDependency(name="flask", version=Version("0.5")),
+        version=Version("1.0"),
     )
     source.fix(fix)
     _check_file(source.filename, {"project": {"dependencies": ["flask==1.0"]}})
@@ -142,7 +147,8 @@ dependencies = [
 """,
     )
     fix = ResolvedFixVersion(
-        dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+        dep=ResolvedDependency(name="flask", version=Version("0.5")),
+        version=Version("1.0"),
     )
     with pytest.raises(DependencyFixError):
         source.fix(fix)
@@ -159,7 +165,8 @@ def test_pyproject_source_fix_no_deps(monkeypatch, req_file):
 """,
     )
     fix = ResolvedFixVersion(
-        dep=ResolvedDependency(name="flask", version=Version("0.5")), version=Version("1.0")
+        dep=ResolvedDependency(name="flask", version=Version("0.5")),
+        version=Version("1.0"),
     )
     source.fix(fix)
 

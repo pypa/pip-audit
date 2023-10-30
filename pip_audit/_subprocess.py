@@ -56,7 +56,8 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
         stdout += process.stdout.read(4096)  # type: ignore
         stderr += process.stderr.read(4096)  # type: ignore
         state.update_state(
-            f"Running {pretty_args}", stdout.decode(errors="replace") if log_stdout else None
+            f"Running {pretty_args}",
+            stdout.decode(errors="replace") if log_stdout else None,
         )
 
     if process.returncode != 0:
