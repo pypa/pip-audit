@@ -8,11 +8,94 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.6.1]
+
+### Fixed
+
+* Fixed a crash on Windows caused by `pip-audit`'s use of temporary files
+  ([#647](https://github.com/pypa/pip-audit/pull/647))
+
+## [2.6.0]
+
+### Added
+
+* Added option to skip dependency resolution via `pip` with the `--disable-pip`
+  flag. This option can only be used with hashed requirements files or when the
+  `--no-deps` flag has been provided
+  ([#610](https://github.com/pypa/pip-audit/pull/610))
+
+## [2.5.6]
+
+### Fixed
+
+* Fixed a crash caused by incompatible dependency changes
+  ([#617](https://github.com/pypa/pip-audit/pull/617))
+
+## [2.5.5]
+
+### Fixed
+
+* Fixed a crash caused by incompatible dependency changes
+  ([#605](https://github.com/pypa/pip-audit/pull/605))
+
+## [2.5.4]
+
+### Changed
+
+* Refactored `index-url` option to not override user pip config by default,
+  unless specified ([#565](https://github.com/pypa/pip-audit/pull/565))
+
+### Fixed
+
+* Fixed bug with the `--fix` flag where new requirements were sometimes being
+  appended to requirement files instead of patching the existing requirement
+  ([#577](https://github.com/pypa/pip-audit/pull/577))
+
+* Fixed a crash caused by auditing requirements files that refer to other
+  requirements files ([#568](https://github.com/pypa/pip-audit/pull/568))
+
+## [2.5.3]
+
+### Changed
+
+* Further simplified `pip-audit`'s dependency resolution to remove inconsistent
+  behaviour when using hashed requirements or the `--no-deps` flag
+  ([#540](https://github.com/pypa/pip-audit/pull/540))
+
+### Fixed
+
+* Fixed a crash caused by invalid UTF-8 sequences in subprocess outputs
+  ([#572](https://github.com/pypa/pip-audit/pull/572))
+
+## [2.5.2]
+
+### Fixed
+
+* Fixed a loose dependency constraint for CycloneDX SBOM generation
+  ([#558](https://github.com/pypa/pip-audit/pull/558))
+
+## [2.5.1]
+
+### Fixed
+
+* Fixed a crash on Windows caused by multiple open file handles to
+  input requirements ([#551](https://github.com/pypa/pip-audit/pull/551))
+
+## [2.5.0]
+
 ### Changed
 
 * Improved error messaging when a requirements input or indirect dependency
   has an invalid (non-PEP 440) requirements specifier
   ([#507](https://github.com/pypa/pip-audit/pull/507))
+
+* `pip-audit`'s handling of dependency resolution has been significantly
+  refactored and simplified ([#523](https://github.com/pypa/pip-audit/pull/523))
+
+### Fixed
+
+* Fixed a potential crash on invalid unicode in subprocess streams
+  ([#536](https://github.com/pypa/pip-audit/pull/536))
 
 ## [2.4.15]
 
@@ -457,7 +540,16 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.4.15...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.6.0...HEAD
+[2.6.1]: https://github.com/pypa/pip-audit/compare/v2.6.0...v2.6.1
+[2.6.0]: https://github.com/pypa/pip-audit/compare/v2.5.6...v2.6.0
+[2.5.6]: https://github.com/pypa/pip-audit/compare/v2.5.5...v2.5.6
+[2.5.5]: https://github.com/pypa/pip-audit/compare/v2.5.4...v2.5.5
+[2.5.4]: https://github.com/pypa/pip-audit/compare/v2.5.3...v2.5.4
+[2.5.3]: https://github.com/pypa/pip-audit/compare/v2.5.2...v2.5.3
+[2.5.2]: https://github.com/pypa/pip-audit/compare/v2.5.1...v2.5.2
+[2.5.1]: https://github.com/pypa/pip-audit/compare/v2.5.0...v2.5.1
+[2.5.0]: https://github.com/pypa/pip-audit/compare/v2.4.15...v2.5.0
 [2.4.15]: https://github.com/pypa/pip-audit/compare/v2.4.14...v2.4.15
 [2.4.14]: https://github.com/pypa/pip-audit/compare/v2.4.13...v2.4.14
 [2.4.13]: https://github.com/pypa/pip-audit/compare/v2.4.12...v2.4.13

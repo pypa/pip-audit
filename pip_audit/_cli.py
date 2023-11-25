@@ -16,14 +16,12 @@ from typing import IO, Iterator, NoReturn, cast
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
 from pip_audit._dependency_source import (
-    PYPI_URL,
     DependencySource,
+    DependencySourceError,
     PipSource,
     PyProjectSource,
     RequirementSource,
-    ResolveLibResolver,
 )
-from pip_audit._dependency_source.interface import DependencyResolverError, DependencySourceError
 from pip_audit._fix import ResolvedFixVersion, SkippedFixVersion, resolve_fix_versions
 from pip_audit._format import (
     ColumnsFormat,
@@ -193,7 +191,10 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         help="audit the given requirements file; this option can be used multiple times",
     )
     dep_source_args.add_argument(
-        "project_path", type=Path, nargs="?", help="audit a local Python project at the given path"
+        "project_path",
+        type=Path,
+        nargs="?",
+        help="audit a local Python project at the given path",
     )
     parser.add_argument(
         "-f",
@@ -212,7 +213,8 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         default=VulnerabilityServiceChoice.Pypi,
         metavar="SERVICE",
         help=_enum_help(
-            "the vulnerability service to audit dependencies against", VulnerabilityServiceChoice
+            "the vulnerability service to audit dependencies against",
+            VulnerabilityServiceChoice,
         ),
     )
     parser.add_argument(
@@ -252,7 +254,10 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         help="display a progress spinner",
     )
     parser.add_argument(
-        "--timeout", type=int, default=15, help="set the socket timeout"  # Match the `pip` default
+        "--timeout",
+        type=int,
+        default=15,
+        help="set the socket timeout",  # Match the `pip` default
     )
     dep_source_args.add_argument(
         "--path",
@@ -286,8 +291,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         "--index-url",
         type=str,
         help="base URL of the Python Package Index; this should point to a repository compliant "
-        "with PEP 503 (the simple repository API)",
-        default=PYPI_URL,
+        "with PEP 503 (the simple repository API); this will be resolved by pip if not specified",
     )
     parser.add_argument(
         "--extra-index-url",
@@ -330,6 +334,13 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
             "this option can be used multiple times"
         ),
     )
+    parser.add_argument(
+        "--disable-pip",
+        action="store_true",
+        help="don't use `pip` for dependency resolution; "
+        "this can only be used with hashed requirements files or if the `--no-deps` flag has been "
+        "provided",
+    )
     return parser
 
 
@@ -348,12 +359,17 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragm
 
 
 def _dep_source_from_project_path(
-    project_path: Path, resolver: ResolveLibResolver, state: AuditState
+    project_path: Path, index_url: str, extra_index_urls: list[str], state: AuditState
 ) -> DependencySource:  # pragma: no cover
     # Check for a `pyproject.toml`
     pyproject_path = project_path / "pyproject.toml"
     if pyproject_path.is_file():
-        return PyProjectSource(pyproject_path, resolver, state)
+        return PyProjectSource(
+            pyproject_path,
+            index_url=index_url,
+            extra_index_urls=extra_index_urls,
+            state=state,
+        )
 
     # TODO: Checks for setup.py and other project files will go here.
 
@@ -375,16 +391,21 @@ def audit() -> None:  # pragma: no cover
     if args.requirements is None:
         if args.require_hashes:
             parser.error("The --require-hashes flag can only be used with --requirement (-r)")
-        elif args.index_url != PYPI_URL:
+        elif args.index_url:
             parser.error("The --index-url flag can only be used with --requirement (-r)")
         elif args.extra_index_urls:
             parser.error("The --extra-index-url flag can only be used with --requirement (-r)")
         elif args.no_deps:
             parser.error("The --no-deps flag can only be used with --requirement (-r)")
+        elif args.disable_pip:
+            parser.error("The --disable-pip flag can only be used with --requirement (-r)")
 
     # Nudge users to consider alternate workflows.
     if args.require_hashes and args.no_deps:
         logger.warning("The --no-deps flag is redundant when used with --require-hashes")
+
+    if args.no_deps and args.disable_pip:
+        logger.warning("The --no-deps flag is redundant when used with --disable-pip")
 
     if args.require_hashes and isinstance(service, OsvService):
         logger.warning(
@@ -409,17 +430,16 @@ def audit() -> None:  # pragma: no cover
         state = stack.enter_context(AuditState(members=actors))
 
         source: DependencySource
-        index_urls = [args.index_url] + args.extra_index_urls
         if args.requirements is not None:
             req_files: list[Path] = [Path(req.name) for req in args.requirements]
-            # TODO: This is a leaky abstraction; we should construct the ResolveLibResolver
-            # within the RequirementSource instead of in-line here.
             source = RequirementSource(
                 req_files,
-                ResolveLibResolver(index_urls, args.timeout, args.cache_dir, state),
                 require_hashes=args.require_hashes,
                 no_deps=args.no_deps,
+                disable_pip=args.disable_pip,
                 skip_editable=args.skip_editable,
+                index_url=args.index_url,
+                extra_index_urls=args.extra_index_urls,
                 state=state,
             )
         elif args.project_path is not None:
@@ -429,12 +449,16 @@ def audit() -> None:  # pragma: no cover
             # Determine which kind of project file exists in the project path
             source = _dep_source_from_project_path(
                 args.project_path,
-                ResolveLibResolver(index_urls, args.timeout, args.cache_dir, state),
+                args.index_url,
+                args.extra_index_urls,
                 state,
             )
         else:
             source = PipSource(
-                local=args.local, paths=args.paths, skip_editable=args.skip_editable, state=state
+                local=args.local,
+                paths=args.paths,
+                skip_editable=args.skip_editable,
+                state=state,
             )
 
         # `--dry-run` only affects the auditor if `--fix` is also not supplied,
@@ -469,7 +493,7 @@ def audit() -> None:  # pragma: no cover
                 if len(vulns) > 0:
                     pkg_count += 1
                     vuln_count += len(vulns)
-        except (DependencySourceError, DependencyResolverError) as e:
+        except DependencySourceError as e:
             _fatal(str(e))
         except VulnServiceConnectionError as e:
             # The most common source of connection errors is corporate blocking,

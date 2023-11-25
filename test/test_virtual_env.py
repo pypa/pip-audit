@@ -29,7 +29,7 @@ def test_virtual_env_failed_package_installation(monkeypatch):
 
     def run_mock(args, **kwargs):
         if "flask==2.0.1" in args:
-            raise _subprocess.CalledProcessError("barf")
+            raise _subprocess.CalledProcessError("barf", stderr="")
         # If it's not the package installation command, then call the original run
         return original_run(args, **kwargs)
 
@@ -48,25 +48,8 @@ def test_virtual_env_failed_pip_upgrade(monkeypatch):
         # We have to be a bit more specific than usual here because the `EnvBuilder` invokes
         # `ensurepip` with similar looking arguments and we DON'T want to mock that call.
         if set(["install", "--upgrade", "pip"]).issubset(set(args)):
-            raise _subprocess.CalledProcessError("barf")
+            raise _subprocess.CalledProcessError("barf", stderr="")
         # If it's not a call to upgrade pip, then call the original run
-        return original_run(args, **kwargs)
-
-    monkeypatch.setattr(_virtual_env, "run", run_mock)
-
-    with TemporaryDirectory() as ve_dir:
-        ve = VirtualEnv(["flask==2.0.1"])
-        with pytest.raises(VirtualEnvError):
-            ve.create(ve_dir)
-
-
-def test_virtual_env_failed_pip_list(monkeypatch):
-    original_run = _subprocess.run
-
-    def run_mock(args, **kwargs):
-        if {"list", "--format", "json"}.issubset(set(args)):
-            raise _subprocess.CalledProcessError("barf")
-        # If it's not a call to `pip list`, then call the original run
         return original_run(args, **kwargs)
 
     monkeypatch.setattr(_virtual_env, "run", run_mock)

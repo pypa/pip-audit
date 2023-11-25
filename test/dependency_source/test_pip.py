@@ -152,7 +152,8 @@ def test_pip_source_fix(monkeypatch):
     source = pip.PipSource()
 
     fix_version = ResolvedFixVersion(
-        dep=ResolvedDependency(name="pip-api", version=Version("1.0")), version=Version("1.5")
+        dep=ResolvedDependency(name="pip-api", version=Version("1.0")),
+        version=Version("1.5"),
     )
 
     def run_mock(args, **kwargs):
@@ -167,7 +168,8 @@ def test_pip_source_fix_failure(monkeypatch):
     source = pip.PipSource()
 
     fix_version = ResolvedFixVersion(
-        dep=ResolvedDependency(name="pip-api", version=Version("1.0")), version=Version("1.5")
+        dep=ResolvedDependency(name="pip-api", version=Version("1.0")),
+        version=Version("1.5"),
     )
 
     def run_mock(args, **kwargs):

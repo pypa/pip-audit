@@ -28,15 +28,15 @@ classifiers = [
     "Topic :: Security",
 ]
 dependencies = [
-    "CacheControl[filecache]>=0.12.10",
+    "CacheControl[filecache] >= 0.13.0",
     # NOTE(ww): Release 2.5.0 is broken, subsequent 2.5.x releases fix it.
     # See: https://github.com/CycloneDX/cyclonedx-python-lib/issues/245
-    "cyclonedx-python-lib>=2.0.0,!=2.5.0",
+    "cyclonedx-python-lib >= 4,< 6",
     "html5lib>=1.1",
-    "packaging>=23.0.0",                   # https://github.com/pypa/pip-audit/issues/464
+    "packaging>=23.0.0",               # https://github.com/pypa/pip-audit/issues/464
     "pip-api>=0.0.28",
     "pip-requirements-parser>=32.0.0",
-    "resolvelib>=0.8.0",
+    "requests >= 2.31.0",
     "rich>=12.4",
     "toml>=0.10",
 ]
@@ -45,12 +45,10 @@ requires-python = ">=3.7"
 [project.optional-dependencies]
 test = ["coverage[toml]", "pretend", "pytest", "pytest-cov"]
 lint = [
-    "black>=22.3.0",
     # NOTE(ww): ruff is under active development, so we pin conservatively here
     # and let Dependabot periodically perform this update.
-    "ruff < 0.0.248",
+    "ruff < 0.1.7",
     "interrogate",
-    "isort",
     "mypy",
     "types-html5lib",
     "types-requests",
@@ -66,15 +64,6 @@ pip-audit = "pip_audit._cli:audit"
 Homepage = "https://pypi.org/project/pip-audit/"
 Issues = "https://github.com/pypa/pip-audit/issues"
 Source = "https://github.com/pypa/pip-audit"
-
-[tool.isort]
-line_length = 100
-multi_line_output = 3
-known_first_party = "pip_audit"
-include_trailing_comma = true
-
-[tool.black]
-line-length = 100
 
 [tool.interrogate]
 # don't enforce documentation coverage for packaging, testing, the virtual
@@ -107,5 +96,6 @@ reset = true
 [tool.ruff]
 # Never enforce `E501` (line length violations).
 ignore = ["E501"]
-select = ["E", "F", "W", "UP"]
+select = ["E", "F", "I", "W", "UP"]
 target-version = "py37"
+line-length = 100

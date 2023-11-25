@@ -106,7 +106,7 @@ For example, using `pip-audit` via `pre-commit` to audit a requirements file:
 
 ```yaml
   - repo: https://github.com/pypa/pip-audit
-    rev: v2.4.15
+    rev: v2.6.1
     hooks:
       -   id: pip-audit
           args: ["-r", "requirements.txt"]
@@ -136,6 +136,7 @@ usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENT] [-f FORMAT] [-s SERVICE] [-d]
                  [--path PATH] [-v] [--fix] [--require-hashes]
                  [--index-url INDEX_URL] [--extra-index-url URL]
                  [--skip-editable] [--no-deps] [-o FILE] [--ignore-vuln ID]
+                 [--disable-pip]
                  [project_path]
 
 audit the Python environment for dependencies with known vulnerabilities
@@ -190,8 +191,8 @@ optional arguments:
   --index-url INDEX_URL
                         base URL of the Python Package Index; this should
                         point to a repository compliant with PEP 503 (the
-                        simple repository API) (default:
-                        https://pypi.org/simple/)
+                        simple repository API); this will be resolved by pip
+                        if not specified (default: None)
   --extra-index-url URL
                         extra URLs of package indexes to use in addition to
                         `--index-url`; should follow the same rules as
@@ -206,6 +207,9 @@ optional arguments:
   --ignore-vuln ID      ignore a specific vulnerability by its vulnerability
                         ID; this option can be used multiple times (default:
                         [])
+  --disable-pip         don't use `pip` for dependency resolution; this can
+                        only be used with hashed requirements files or if the
+                        `--no-deps` flag has been provided (default: False)
 ```
 <!-- @end-pip-audit-help@ -->
 
@@ -462,6 +466,21 @@ exitcode="${?}"
 ```
 
 See [Exit codes](#exit-codes) for a list of potential codes that need handling.
+
+### Reporting only fixable vulnerabilities
+In development workflows, you may want to ignore the vulnerabilities that haven't been remediated yet and only investigate them in your release process. `pip-audit` does not support ignoring unfixed vulnerabilities. However, you can export its output in JSON format and externally process it. For example, if you want to exit with a non-zero code only when the detected vulnerabilities have known fix versions, you can process the output using [jq](https://github.com/jqlang/jq) as:
+
+```shell
+test -z "$(pip-audit -r requirements.txt --format=json 2>/dev/null | jq '.dependencies[].vulns[].fix_versions[]')"
+```
+
+A simple (and inefficient) example of using this method would be:
+
+```shell
+test -z "$(pip-audit -r requirements.txt --format=json 2>/dev/null | jq '.dependencies[].vulns[].fix_versions[]')" || pip-audit -r requirements.txt
+```
+
+which runs `pip-audit` as usual and exits with a non-zero code only if there are fixed versions for the known vulnerabilities.
 
 ## Security Model
 

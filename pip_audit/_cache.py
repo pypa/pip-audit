@@ -84,7 +84,7 @@ class _SafeFileCache(FileCache):
 
     def __init__(self, directory: Path):
         self._logged_warning = False
-        super().__init__(directory)
+        super().__init__(str(directory))
 
     def get(self, key: str) -> Any | None:
         try:
@@ -142,7 +142,7 @@ class _SafeFileCache(FileCache):
                 self._logged_warning = True
 
 
-def caching_session(cache_dir: Path | None, *, use_pip: bool = False) -> CacheControl:
+def caching_session(cache_dir: Path | None, *, use_pip: bool = False) -> requests.Session:
     """
     Return a `requests` style session, with suitable caching middleware.
 
