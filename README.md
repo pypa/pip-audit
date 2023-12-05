@@ -50,7 +50,7 @@ with support from Google. This is not an official Google or Trail of Bits produc
 
 ## Installation
 
-`pip-audit` requires Python 3.7 or newer, and can be installed directly via `pip`:
+`pip-audit` requires Python 3.8 or newer, and can be installed directly via `pip`:
 
 ```bash
 python -m pip install pip-audit
