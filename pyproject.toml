@@ -19,7 +19,6 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -40,7 +39,7 @@ dependencies = [
     "rich>=12.4",
     "toml>=0.10",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 
 [project.optional-dependencies]
 test = ["coverage[toml]", "pretend", "pytest", "pytest-cov"]
@@ -97,5 +96,4 @@ reset = true
 # Never enforce `E501` (line length violations).
 ignore = ["E501"]
 select = ["E", "F", "I", "W", "UP"]
-target-version = "py37"
 line-length = 100

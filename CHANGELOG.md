@@ -8,6 +8,10 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Changed
+
+* `pip-audit`'s minimum Python version is now 3.8.
+
 ## [2.6.1]
 
 ### Fixed
