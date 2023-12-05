@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def _pip_audit_result_to_bom(
-    result: dict[service.Dependency, list[service.VulnerabilityResult]]
+    result: dict[service.Dependency, list[service.VulnerabilityResult]],
 ) -> Bom:
     vulnerabilities = []
     components = []
