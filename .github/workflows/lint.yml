@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4.1.1
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.8"
           cache: "pip"
@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4.1.1
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         # NOTE(ww): Important: use pip-audit's minimum supported Python version
         # in this check, since Python can change the `--help` rendering in
         # `argparse` between major versions.
