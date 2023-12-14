@@ -42,7 +42,12 @@ dependencies = [
 requires-python = ">=3.8"
 
 [project.optional-dependencies]
-test = ["coverage[toml]", "pretend", "pytest", "pytest-cov"]
+test = [
+    "coverage[toml] ~= 7.0, != 7.3.3", # https://github.com/nedbat/coveragepy/issues/1713
+    "pretend",
+    "pytest",
+    "pytest-cov",
+]
 lint = [
     # NOTE(ww): ruff is under active development, so we pin conservatively here
     # and let Dependabot periodically perform this update.
