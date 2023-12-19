@@ -116,11 +116,14 @@ class VirtualEnv(venv.EnvBuilder):
             # windows, see GitHub issue #646.
 
             # Install our packages
+            # NOTE(ww): We pass `--no-input` to prevent `pip` from indefinitely
+            # blocking on user input for repository credentials.
             package_install_cmd = [
                 context.env_exe,
                 "-m",
                 "pip",
                 "install",
+                "--no-input",
                 *self._index_url_args,
                 "--dry-run",
                 "--report",

@@ -12,6 +12,12 @@ All versions prior to 0.0.9 are untracked.
 
 * `pip-audit`'s minimum Python version is now 3.8.
 
+### Fixed
+
+* Fixed a hang caused by auditing requirements when resolving against
+  an index that requires authentication, causing `pip` to wait indefinitely
+  for credentials ([#707](https://github.com/pypa/pip-audit/pull/707))
+
 ## [2.6.1]
 
 ### Fixed
