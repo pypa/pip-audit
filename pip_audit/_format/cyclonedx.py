@@ -90,7 +90,7 @@ class CycloneDxFormat(VulnerabilityFormat):
             logger.warning("--fix output is unsupported by CycloneDX formats")
 
         bom = _pip_audit_result_to_bom(result)
-        formatter = output.get_instance(
+        formatter = output.make_outputter(
             bom=bom,
             output_format=self._inner_format.value,
             schema_version=output.SchemaVersion.V1_4,
