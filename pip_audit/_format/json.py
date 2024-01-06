@@ -76,6 +76,7 @@ class JsonFormat(VulnerabilityFormat):
     def _format_vuln(self, vuln: service.VulnerabilityResult) -> dict[str, Any]:
         vuln_json = {
             "id": vuln.id,
+            "aliases": list(vuln.aliases),
             "fix_versions": [str(version) for version in vuln.fix_versions],
         }
         if self.output_desc:

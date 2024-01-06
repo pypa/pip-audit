@@ -51,8 +51,8 @@ def vuln_service():
                     VulnerabilityResult(
                         id="fake-id",
                         description="this is not a real result",
-                        fix_versions=[fixed],
                         aliases=set(),
+                        fix_versions=[fixed],
                     )
                 ]
 

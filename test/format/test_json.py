@@ -22,6 +22,7 @@ def test_json(vuln_data):
                 "vulns": [
                     {
                         "id": "VULN-0",
+                        "aliases": ["CVE-0000-00000"],
                         "fix_versions": [
                             "1.1",
                             "1.4",
@@ -30,6 +31,7 @@ def test_json(vuln_data):
                     },
                     {
                         "id": "VULN-1",
+                        "aliases": ["CVE-0000-00001"],
                         "fix_versions": ["1.0"],
                         "description": "The second vulnerability",
                     },
@@ -41,6 +43,7 @@ def test_json(vuln_data):
                 "vulns": [
                     {
                         "id": "VULN-2",
+                        "aliases": ["CVE-0000-00002"],
                         "fix_versions": [],
                         "description": "The third vulnerability",
                     }
@@ -62,6 +65,7 @@ def test_json_no_desc(vuln_data):
                 "vulns": [
                     {
                         "id": "VULN-0",
+                        "aliases": ["CVE-0000-00000"],
                         "fix_versions": [
                             "1.1",
                             "1.4",
@@ -69,6 +73,7 @@ def test_json_no_desc(vuln_data):
                     },
                     {
                         "id": "VULN-1",
+                        "aliases": ["CVE-0000-00001"],
                         "fix_versions": ["1.0"],
                     },
                 ],
@@ -76,7 +81,7 @@ def test_json_no_desc(vuln_data):
             {
                 "name": "bar",
                 "version": "0.1",
-                "vulns": [{"id": "VULN-2", "fix_versions": []}],
+                "vulns": [{"id": "VULN-2", "aliases": ["CVE-0000-00002"], "fix_versions": []}],
             },
         ],
         "fixes": [],
@@ -94,6 +99,7 @@ def test_json_skipped_dep(vuln_data_skipped_dep):
                 "vulns": [
                     {
                         "id": "VULN-0",
+                        "aliases": ["CVE-0000-00000"],
                         "fix_versions": [
                             "1.1",
                             "1.4",
@@ -121,6 +127,7 @@ def test_json_fix(vuln_data, fix_data):
                 "vulns": [
                     {
                         "id": "VULN-0",
+                        "aliases": ["CVE-0000-00000"],
                         "fix_versions": [
                             "1.1",
                             "1.4",
@@ -129,6 +136,7 @@ def test_json_fix(vuln_data, fix_data):
                     },
                     {
                         "id": "VULN-1",
+                        "aliases": ["CVE-0000-00001"],
                         "fix_versions": ["1.0"],
                         "description": "The second vulnerability",
                     },
@@ -140,6 +148,7 @@ def test_json_fix(vuln_data, fix_data):
                 "vulns": [
                     {
                         "id": "VULN-2",
+                        "aliases": ["CVE-0000-00002"],
                         "fix_versions": [],
                         "description": "The third vulnerability",
                     }
@@ -172,6 +181,7 @@ def test_json_skipped_fix(vuln_data, skipped_fix_data):
                 "vulns": [
                     {
                         "id": "VULN-0",
+                        "aliases": ["CVE-0000-00000"],
                         "fix_versions": [
                             "1.1",
                             "1.4",
@@ -180,6 +190,7 @@ def test_json_skipped_fix(vuln_data, skipped_fix_data):
                     },
                     {
                         "id": "VULN-1",
+                        "aliases": ["CVE-0000-00001"],
                         "fix_versions": ["1.0"],
                         "description": "The second vulnerability",
                     },
@@ -191,6 +202,7 @@ def test_json_skipped_fix(vuln_data, skipped_fix_data):
                 "vulns": [
                     {
                         "id": "VULN-2",
+                        "aliases": ["CVE-0000-00002"],
                         "fix_versions": [],
                         "description": "The third vulnerability",
                     }
