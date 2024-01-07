@@ -21,14 +21,18 @@ class MarkdownFormat(VulnerabilityFormat):
     Markdown tables.
     """
 
-    def __init__(self, output_desc: bool) -> None:
+    def __init__(self, output_desc: bool, output_aliases: bool) -> None:
         """
         Create a new `MarkdownFormat`.
 
         `output_desc` is a flag to determine whether descriptions for each vulnerability should be
         included in the output as they can be quite long and make the output difficult to read.
+
+        `output_aliases` is a flag to determine whether aliases (such as CVEs) for each
+        vulnerability should be included in the output.
         """
         self.output_desc = output_desc
+        self.output_aliases = output_aliases
 
     @property
     def is_manifest(self) -> bool:
@@ -66,6 +70,9 @@ class MarkdownFormat(VulnerabilityFormat):
         if fixes:
             header += " | Applied Fix"
             border += " | ---"
+        if self.output_aliases:
+            header += " | Aliases"
+            border += " | ---"
         if self.output_desc:
             header += " | Description"
             border += " | ---"
@@ -101,6 +108,8 @@ class MarkdownFormat(VulnerabilityFormat):
         )
         if applied_fix is not None:
             vuln_text += f" | {self._format_applied_fix(applied_fix)}"
+        if self.output_aliases:
+            vuln_text += f" | {', '.join(vuln.aliases)}"
         if self.output_desc:
             vuln_text += f" | {vuln.description}"
         return vuln_text

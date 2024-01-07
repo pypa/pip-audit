@@ -71,9 +71,9 @@ class OutputFormatChoice(str, enum.Enum):
     CycloneDxXml = "cyclonedx-xml"
     Markdown = "markdown"
 
-    def to_format(self, output_desc: bool) -> VulnerabilityFormat:
+    def to_format(self, output_desc: bool, output_aliases: bool) -> VulnerabilityFormat:
         if self is OutputFormatChoice.Columns:
-            return ColumnsFormat(output_desc)
+            return ColumnsFormat(output_desc, output_aliases)
         elif self is OutputFormatChoice.Json:
             return JsonFormat(output_desc)
         elif self is OutputFormatChoice.CycloneDxJson:
@@ -81,7 +81,7 @@ class OutputFormatChoice(str, enum.Enum):
         elif self is OutputFormatChoice.CycloneDxXml:
             return CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Xml)
         elif self is OutputFormatChoice.Markdown:
-            return MarkdownFormat(output_desc)
+            return MarkdownFormat(output_desc, output_aliases)
         else:
             assert_never(self)  # pragma: no cover
 
@@ -126,6 +126,32 @@ class VulnerabilityDescriptionChoice(str, enum.Enum):
         elif self is VulnerabilityDescriptionChoice.Off:
             return False
         elif self is VulnerabilityDescriptionChoice.Auto:
+            return bool(format_ is OutputFormatChoice.Json)
+        else:
+            assert_never(self)  # pragma: no cover
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@enum.unique
+class VulnerabilityAliasChoice(str, enum.Enum):
+    """
+    Whether or not vulnerability aliases should be added to the `pip-audit` output.
+    """
+
+    On = "on"
+    Off = "off"
+    Auto = "auto"
+
+    def to_bool(self, format_: OutputFormatChoice) -> bool:
+        if format_ is OutputFormatChoice.Json:  # Note: Aliases are always rendered for JSON.
+            return True
+        if self is VulnerabilityAliasChoice.On:
+            return True
+        elif self is VulnerabilityAliasChoice.Off:
+            return False
+        elif self is VulnerabilityAliasChoice.Auto:
             return bool(format_ is OutputFormatChoice.Json)
         else:
             assert_never(self)  # pragma: no cover
@@ -240,6 +266,17 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         help="include a description for each vulnerability; "
         "`auto` defaults to `on` for the `json` format. This flag has no "
         "effect on the `cyclonedx-json` or `cyclonedx-xml` formats.",
+    )
+    parser.add_argument(
+        "--aliases",
+        type=VulnerabilityAliasChoice,
+        choices=VulnerabilityAliasChoice,
+        nargs="?",
+        const=VulnerabilityAliasChoice.On,
+        default=VulnerabilityAliasChoice.Auto,
+        help="include aliases for each vulnerability; "
+        "`auto` defaults to `off` for the `column` and `markdown` formats. This flag has no "
+        "effect on the `cyclonedx-json`, `cyclonedx-xml`, or `json` formats.",
     )
     parser.add_argument(
         "--cache-dir",
@@ -385,7 +422,8 @@ def audit() -> None:  # pragma: no cover
 
     service = args.vulnerability_service.to_service(args.timeout, args.cache_dir)
     output_desc = args.desc.to_bool(args.format)
-    formatter = args.format.to_format(output_desc)
+    output_aliases = args.aliases.to_bool(args.format)
+    formatter = args.format.to_format(output_desc, output_aliases)
 
     # Check for flags that are only valid with requirements files
     if args.requirements is None:

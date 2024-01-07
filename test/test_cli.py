@@ -5,6 +5,7 @@ import pip_audit._cli
 from pip_audit._cli import (
     OutputFormatChoice,
     ProgressSpinnerChoice,
+    VulnerabilityAliasChoice,
     VulnerabilityDescriptionChoice,
     VulnerabilityServiceChoice,
 )
@@ -13,8 +14,10 @@ from pip_audit._cli import (
 class TestOutputFormatChoice:
     def test_to_format_is_exhaustive(self):
         for choice in OutputFormatChoice:
-            assert choice.to_format(False) is not None
-            assert choice.to_format(True) is not None
+            assert choice.to_format(False, False) is not None
+            assert choice.to_format(True, True) is not None
+            assert choice.to_format(False, True) is not None
+            assert choice.to_format(True, False) is not None
 
     def test_str(self):
         for choice in OutputFormatChoice:
@@ -41,6 +44,23 @@ class TestVulnerabilityDescriptionChoice:
 
     def test_str(self):
         for choice in VulnerabilityDescriptionChoice:
+            assert str(choice) == choice.value
+
+
+class TestVulnerabilityAliasChoice:
+    def test_to_bool_is_exhaustive(self):
+        for choice in VulnerabilityAliasChoice:
+            assert choice.to_bool(OutputFormatChoice.Json) in {True, False}
+            assert choice.to_bool(OutputFormatChoice.Markdown) in {True, False}
+            assert choice.to_bool(OutputFormatChoice.Columns) in {True, False}
+            assert choice.to_bool(OutputFormatChoice.CycloneDxJson) in {True, False}
+            assert choice.to_bool(OutputFormatChoice.CycloneDxXml) in {True, False}
+
+    def test_auto_to_bool_for_json(self):
+        assert VulnerabilityAliasChoice.Auto.to_bool(OutputFormatChoice.Json) is True
+
+    def test_str(self):
+        for choice in VulnerabilityAliasChoice:
             assert str(choice) == choice.value
 
 

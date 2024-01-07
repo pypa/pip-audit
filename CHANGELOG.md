@@ -10,7 +10,9 @@ All versions prior to 0.0.9 are untracked.
 
 ### Added
 
-* pip-audit now includes vulnerability aliases when `--format=json` is used
+* `pip-audit` now includes vulnerability aliases when `--format=json` is used,
+  and also includes them in other output formats if specified by adding the
+  flag `--aliases`
 
 ## [2.6.3]
 
