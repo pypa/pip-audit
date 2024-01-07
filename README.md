@@ -171,6 +171,12 @@ optional arguments:
                         defaults to `on` for the `json` format. This flag has
                         no effect on the `cyclonedx-json` or `cyclonedx-xml`
                         formats. (default: auto)
+  --aliases [{on,off,auto}]
+                        includes alias IDs for each vulnerability; `auto`
+                        defaults to `off` for the `column` and `markdown`
+                        formats. This flag has no effect on the
+                        `cyclonedx-json`, `cyclonedx-xml`, and `json`
+                        formats. (default: auto)
   --cache-dir CACHE_DIR
                         the directory to use as an HTTP cache for PyPI; uses
                         the `pip` HTTP cache by default (default: None)
@@ -274,6 +280,16 @@ Flask 0.5     PYSEC-2019-179 1.0
 Flask 0.5     PYSEC-2018-66  0.12.3
 ```
 
+Audit dependencies including aliases:
+```
+$ pip-audit --aliases
+Found 2 known vulnerabilities in 1 package
+Name  Version ID             Fix Versions Aliases
+----  ------- -------------- ------------ ------------------------------------
+Flask 0.5     PYSEC-2019-179 1.0          CVE-2019-1010083,GHSA-5wv5-4vpf-pj6m
+Flask 0.5     PYSEC-2018-66  0.12.3       CVE-2018-1000656,GHSA-562c-5r94-xh97
+```
+
 Audit dependencies including descriptions:
 ```
 $ pip-audit --desc
@@ -295,6 +311,10 @@ Found 2 known vulnerabilities in 1 package
     "vulns": [
       {
         "id": "PYSEC-2019-179",
+        "aliases": [
+          "CVE-2019-1010083",
+          "GHSA-5wv5-4vpf-pj6m"
+        ],
         "fix_versions": [
           "1.0"
         ],
@@ -302,6 +322,10 @@ Found 2 known vulnerabilities in 1 package
       },
       {
         "id": "PYSEC-2018-66",
+        "aliases": [
+          "CVE-2018-1000656",
+          "GHSA-562c-5r94-xh97"
+        ],
         "fix_versions": [
           "0.12.3"
         ],
