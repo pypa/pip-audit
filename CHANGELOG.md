@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Removed a misleading warning message that resulted in user confusion
+  ([#719](https://github.com/pypa/pip-audit/pull/719))
+
 ## [2.6.2]
 
 ### Changed

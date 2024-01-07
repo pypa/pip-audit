@@ -404,9 +404,6 @@ def audit() -> None:  # pragma: no cover
     if args.require_hashes and args.no_deps:
         logger.warning("The --no-deps flag is redundant when used with --require-hashes")
 
-    if args.no_deps and args.disable_pip:
-        logger.warning("The --no-deps flag is redundant when used with --disable-pip")
-
     if args.require_hashes and isinstance(service, OsvService):
         logger.warning(
             "The --require-hashes flag with --service osv only enforces hash presence NOT hash "
