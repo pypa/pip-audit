@@ -135,7 +135,7 @@ usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENT] [-f FORMAT] [-s SERVICE] [-d]
                  [--progress-spinner {on,off}] [--timeout TIMEOUT]
                  [--path PATH] [-v] [--fix] [--require-hashes]
                  [--index-url INDEX_URL] [--extra-index-url URL]
-                 [--skip-editable] [--no-deps] [-o FILE] [--ignore-vuln ID]
+                 [--skip-editable] [--no-deps] [-o FILE] [--ignore-vuln ID[::enddate]]
                  [--disable-pip]
                  [project_path]
 
@@ -207,6 +207,10 @@ optional arguments:
   --ignore-vuln ID      ignore a specific vulnerability by its vulnerability
                         ID; this option can be used multiple times (default:
                         [])
+  --ignore-vuln ID::enddate
+                        temporarily ignore a specific vulnerability by its 
+                        vulnerability ID; this option can be used multiple times 
+                        (default: [])
   --disable-pip         don't use `pip` for dependency resolution; this can
                         only be used with hashed requirements files or if the
                         `--no-deps` flag has been provided (default: False)
@@ -380,12 +384,14 @@ $ pip-audit --ignore-vuln GHSA-w596-4wvx-j9j6
 The `--ignore-vuln ID` option works with all other dependency resolution
 and auditing options, meaning that it should function correctly with
 requirements-style inputs, alternative vulnerability feeds, and so forth.
+Ignores can be time-limited by specifying `--ignore-vuln ID::enddate` to safeguard
+against ignoring vulnerabilities too long.
 
 It can also be passed multiple times, to ignore multiple reports:
 
 ```console
 # Run the audit as normal, but exclude any reports that match these IDs
-$ pip-audit --ignore-vuln CVE-XXX-YYYY --ignore-vuln CVE-ZZZ-AAAA
+$ pip-audit --ignore-vuln CVE-XXX-YYYY --ignore-vuln CVE-ZZZ-AAAA::2023-09-26
 ```
 
 ### `pip-audit` takes longer than I expect!
