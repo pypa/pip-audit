@@ -19,13 +19,13 @@ _TEST_VULN_DATA: dict[service.Dependency, list[service.VulnerabilityResult]] = {
                 Version("1.1"),
                 Version("1.4"),
             ],
-            aliases=set(),
+            aliases={"CVE-0000-00000"},
         ),
         service.VulnerabilityResult(
             id="VULN-1",
             description="The second vulnerability",
             fix_versions=[Version("1.0")],
-            aliases=set(),
+            aliases={"CVE-0000-00001"},
         ),
     ],
     _RESOLVED_DEP_BAR: [
@@ -33,7 +33,7 @@ _TEST_VULN_DATA: dict[service.Dependency, list[service.VulnerabilityResult]] = {
             id="VULN-2",
             description="The third vulnerability",
             fix_versions=[],
-            aliases=set(),
+            aliases={"CVE-0000-00002"},
         )
     ],
 }
@@ -47,7 +47,7 @@ _TEST_VULN_DATA_SKIPPED_DEP: dict[service.Dependency, list[service.Vulnerability
                 Version("1.1"),
                 Version("1.4"),
             ],
-            aliases=set(),
+            aliases={"CVE-0000-00000"},
         ),
     ],
     _SKIPPED_DEP: [],

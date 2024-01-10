@@ -131,12 +131,12 @@ python -m pip_audit --help
 <!-- @begin-pip-audit-help@ -->
 ```
 usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENT] [-f FORMAT] [-s SERVICE] [-d]
-                 [-S] [--desc [{on,off,auto}]] [--cache-dir CACHE_DIR]
-                 [--progress-spinner {on,off}] [--timeout TIMEOUT]
-                 [--path PATH] [-v] [--fix] [--require-hashes]
-                 [--index-url INDEX_URL] [--extra-index-url URL]
-                 [--skip-editable] [--no-deps] [-o FILE] [--ignore-vuln ID]
-                 [--disable-pip]
+                 [-S] [--desc [{on,off,auto}]] [--aliases [{on,off,auto}]]
+                 [--cache-dir CACHE_DIR] [--progress-spinner {on,off}]
+                 [--timeout TIMEOUT] [--path PATH] [-v] [--fix]
+                 [--require-hashes] [--index-url INDEX_URL]
+                 [--extra-index-url URL] [--skip-editable] [--no-deps]
+                 [-o FILE] [--ignore-vuln ID] [--disable-pip]
                  [project_path]
 
 audit the Python environment for dependencies with known vulnerabilities
@@ -168,6 +168,11 @@ optional arguments:
                         on any dependency (default: False)
   --desc [{on,off,auto}]
                         include a description for each vulnerability; `auto`
+                        defaults to `on` for the `json` format. This flag has
+                        no effect on the `cyclonedx-json` or `cyclonedx-xml`
+                        formats. (default: auto)
+  --aliases [{on,off,auto}]
+                        includes alias IDs for each vulnerability; `auto`
                         defaults to `on` for the `json` format. This flag has
                         no effect on the `cyclonedx-json` or `cyclonedx-xml`
                         formats. (default: auto)
@@ -274,6 +279,16 @@ Flask 0.5     PYSEC-2019-179 1.0
 Flask 0.5     PYSEC-2018-66  0.12.3
 ```
 
+Audit dependencies including aliases:
+```
+$ pip-audit --aliases
+Found 2 known vulnerabilities in 1 package
+Name  Version ID             Fix Versions Aliases
+----  ------- -------------- ------------ -------------------------------------
+Flask 0.5     PYSEC-2019-179 1.0          CVE-2019-1010083, GHSA-5wv5-4vpf-pj6m
+Flask 0.5     PYSEC-2018-66  0.12.3       CVE-2018-1000656, GHSA-562c-5r94-xh97
+```
+
 Audit dependencies including descriptions:
 ```
 $ pip-audit --desc
@@ -298,12 +313,20 @@ Found 2 known vulnerabilities in 1 package
         "fix_versions": [
           "1.0"
         ],
+        "aliases": [
+          "CVE-2019-1010083",
+          "GHSA-5wv5-4vpf-pj6m"
+        ],
         "description": "The Pallets Project Flask before 1.0 is affected by: unexpected memory usage. The impact is: denial of service. The attack vector is: crafted encoded JSON data. The fixed version is: 1. NOTE: this may overlap CVE-2018-1000656."
       },
       {
         "id": "PYSEC-2018-66",
         "fix_versions": [
           "0.12.3"
+        ],
+        "aliases": [
+          "CVE-2018-1000656",
+          "GHSA-562c-5r94-xh97"
         ],
         "description": "The Pallets Project flask version Before 0.12.3 contains a CWE-20: Improper Input Validation vulnerability in flask that can result in Large amount of memory usage possibly leading to denial of service. This attack appear to be exploitable via Attacker provides JSON data in incorrect encoding. This vulnerability appears to have been fixed in 0.12.3. NOTE: this may overlap CVE-2019-1010083."
       }

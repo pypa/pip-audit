@@ -18,14 +18,18 @@ class JsonFormat(VulnerabilityFormat):
     JSON objects.
     """
 
-    def __init__(self, output_desc: bool):
+    def __init__(self, output_desc: bool, output_aliases: bool):
         """
         Create a new `JsonFormat`.
 
         `output_desc` is a flag to determine whether descriptions for each vulnerability should be
         included in the output as they can be quite long and make the output difficult to read.
+
+        `output_aliases` is a flag to determine whether aliases (such as CVEs) for each
+        vulnerability should be included in the output.
         """
         self.output_desc = output_desc
+        self.output_aliases = output_aliases
 
     @property
     def is_manifest(self) -> bool:
@@ -78,6 +82,8 @@ class JsonFormat(VulnerabilityFormat):
             "id": vuln.id,
             "fix_versions": [str(version) for version in vuln.fix_versions],
         }
+        if self.output_aliases:
+            vuln_json["aliases"] = list(vuln.aliases)
         if self.output_desc:
             vuln_json["description"] = vuln.description
         return vuln_json

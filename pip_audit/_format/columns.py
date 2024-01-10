@@ -33,14 +33,18 @@ class ColumnsFormat(VulnerabilityFormat):
     columns.
     """
 
-    def __init__(self, output_desc: bool):
+    def __init__(self, output_desc: bool, output_aliases: bool):
         """
         Create a new `ColumnFormat`.
 
         `output_desc` is a flag to determine whether descriptions for each vulnerability should be
         included in the output as they can be quite long and make the output difficult to read.
+
+        `output_aliases` is a flag to determine whether aliases (such as CVEs) for each
+        vulnerability should be included in the output.
         """
         self.output_desc = output_desc
+        self.output_aliases = output_aliases
 
     @property
     def is_manifest(self) -> bool:
@@ -64,6 +68,8 @@ class ColumnsFormat(VulnerabilityFormat):
         header = ["Name", "Version", "ID", "Fix Versions"]
         if fixes:
             header.append("Applied Fix")
+        if self.output_aliases:
+            header.append("Aliases")
         if self.output_desc:
             header.append("Description")
         vuln_data.append(header)
@@ -131,6 +137,8 @@ class ColumnsFormat(VulnerabilityFormat):
         ]
         if applied_fix is not None:
             vuln_data.append(self._format_applied_fix(applied_fix))
+        if self.output_aliases:
+            vuln_data.append(", ".join(vuln.aliases))
         if self.output_desc:
             vuln_data.append(vuln.description)
         return vuln_data
