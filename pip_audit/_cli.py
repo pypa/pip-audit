@@ -75,7 +75,7 @@ class OutputFormatChoice(str, enum.Enum):
         if self is OutputFormatChoice.Columns:
             return ColumnsFormat(output_desc, output_aliases)
         elif self is OutputFormatChoice.Json:
-            return JsonFormat(output_desc)
+            return JsonFormat(output_desc, output_aliases)
         elif self is OutputFormatChoice.CycloneDxJson:
             return CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Json)
         elif self is OutputFormatChoice.CycloneDxXml:
@@ -145,8 +145,6 @@ class VulnerabilityAliasChoice(str, enum.Enum):
     Auto = "auto"
 
     def to_bool(self, format_: OutputFormatChoice) -> bool:
-        if format_ is OutputFormatChoice.Json:  # Note: Aliases are always rendered for JSON.
-            return True
         if self is VulnerabilityAliasChoice.On:
             return True
         elif self is VulnerabilityAliasChoice.Off:
