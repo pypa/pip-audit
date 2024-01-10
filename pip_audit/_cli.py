@@ -272,9 +272,9 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         nargs="?",
         const=VulnerabilityAliasChoice.On,
         default=VulnerabilityAliasChoice.Auto,
-        help="include aliases for each vulnerability; "
-        "`auto` defaults to `off` for the `column` and `markdown` formats. This flag has no "
-        "effect on the `cyclonedx-json`, `cyclonedx-xml`, or `json` formats.",
+        help="includes alias IDs for each vulnerability; "
+        "`auto` defaults to `on` for the `json` format. This flag has no "
+        "effect on the `cyclonedx-json` or `cyclonedx-xml` formats.",
     )
     parser.add_argument(
         "--cache-dir",
