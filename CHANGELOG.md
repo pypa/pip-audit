@@ -8,6 +8,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.7.0]
+
 ### Added
 
 * `pip-audit` now includes vulnerability aliases when `--format=json` is used,
@@ -565,7 +567,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.6.3...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.7.0...HEAD
+[2.7.0]: https://github.com/pypa/pip-audit/compare/v2.6.3...v2.7.0
 [2.6.3]: https://github.com/pypa/pip-audit/compare/v2.6.2...v2.6.3
 [2.6.2]: https://github.com/pypa/pip-audit/compare/v2.6.1...v2.6.2
 [2.6.1]: https://github.com/pypa/pip-audit/compare/v2.6.0...v2.6.1
