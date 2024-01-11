@@ -27,7 +27,7 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/pypa/pip-audit
-    rev: v2.6.3
+    rev: v2.7.0
     hooks:
       - id: pip-audit
   - repo: https://github.com/rhysd/actionlint
