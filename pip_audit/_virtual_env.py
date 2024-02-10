@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import logging
 import venv
+from os import PathLike
 from tempfile import NamedTemporaryFile, TemporaryDirectory, gettempdir
 from types import SimpleNamespace
 from typing import Iterator
@@ -69,6 +70,28 @@ class VirtualEnv(venv.EnvBuilder):
         self._extra_index_urls = extra_index_urls
         self._packages: list[tuple[str, Version]] | None = None
         self._state = state
+
+    def create(self, env_dir: str | bytes | PathLike[str] | PathLike[bytes]) -> None:
+        try:
+            return super().create(env_dir)
+        except PermissionError:
+            # `venv` uses a subprocess internally to bootstrap pip, but
+            # some Linux distributions choose to mark the system temporary
+            # directory as `noexec`. Apart from having only nominal security
+            # benefits, this completely breaks our ability to execute from
+            # within the temporary virtualenv.
+            #
+            # We may be able to hack around this in the future, but doing so
+            # isn't straightforward or reliable. So we bail for now.
+            #
+            # See: https://github.com/pypa/pip-audit/issues/732
+            base_tmpdir = gettempdir()
+            raise VirtualEnvError(
+                f"Couldn't execute in a temporary directory under {base_tmpdir}. "
+                "This is sometimes caused by a noexec mount flag or other setting. "
+                "Consider changing this setting or explicitly specifying a different "
+                "temporary directory via the TMPDIR environment variable."
+            )
 
     def post_setup(self, context: SimpleNamespace) -> None:
         """
@@ -136,23 +159,6 @@ class VirtualEnv(venv.EnvBuilder):
                 # TODO: Propagate the subprocess's error output better here.
                 logger.error(f"internal pip failure: {cpe.stderr}")
                 raise VirtualEnvError(f"Failed to install packages: {package_install_cmd}") from cpe
-            except PermissionError:
-                # Some Linux distributions choose to mark the system temporary
-                # directory as `noexec`. Apart from having only nominal security
-                # benefits, this completely breaks our ability to execute from
-                # within the temporary virtualenv.
-                #
-                # We may be able to hack around this in the future, but doing so
-                # isn't straightforward or reliable. So we bail for now.
-                #
-                # See: https://github.com/pypa/pip-audit/issues/732
-                base_tmpdir = gettempdir()
-                raise VirtualEnvError(
-                    f"Couldn't execute in a temporary directory under {base_tmpdir}. "
-                    "This is sometimes caused by a noexec mount flag or other setting. "
-                    "Consider changing this setting or explicitly specifying a different "
-                    "temporary directory via the TMPDIR environment variable."
-                )
 
             self._state.update_state("Processing package list from isolated environment")
 
