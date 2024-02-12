@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Improved the error returned to users when their default temporary
+  directory lacks execute permissions
+  ([#737](https://github.com/pypa/pip-audit/pull/737))
+
 ## [2.7.0]
 
 ### Added
