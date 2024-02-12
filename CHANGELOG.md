@@ -8,6 +8,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.7.1]
+
 ### Fixed
 
 * Improved the error returned to users when their default temporary
@@ -573,7 +575,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.7.0...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.7.1...HEAD
+[2.7.1]: https://github.com/pypa/pip-audit/compare/v2.7.0...v2.7.1
 [2.7.0]: https://github.com/pypa/pip-audit/compare/v2.6.3...v2.7.0
 [2.6.3]: https://github.com/pypa/pip-audit/compare/v2.6.2...v2.6.3
 [2.6.2]: https://github.com/pypa/pip-audit/compare/v2.6.1...v2.6.2
