@@ -72,6 +72,10 @@ class VirtualEnv(venv.EnvBuilder):
         self._state = state
 
     def create(self, env_dir: str | bytes | PathLike[str] | PathLike[bytes]) -> None:
+        """
+        Creates the virtual environment.
+        """
+
         try:
             return super().create(env_dir)
         except PermissionError:
