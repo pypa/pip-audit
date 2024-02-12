@@ -1,5 +1,7 @@
+import subprocess
 from tempfile import TemporaryDirectory
 
+import pretend
 import pytest
 from packaging.version import Version
 
@@ -57,4 +59,18 @@ def test_virtual_env_failed_pip_upgrade(monkeypatch):
     with TemporaryDirectory() as ve_dir:
         ve = VirtualEnv(["flask==2.0.1"])
         with pytest.raises(VirtualEnvError):
+            ve.create(ve_dir)
+
+
+def test_virtual_env_failed_permission_error(monkeypatch):
+    """
+    This is a mocked test for GH#732, which is really caused by a user's
+    default `$TMPDIR` having the `noexec` flag set. We have no easy way
+    to unit test this, so we hopefully replicate its effect with a monkeypatch.
+    """
+
+    monkeypatch.setattr(subprocess, "run", pretend.raiser(PermissionError))
+    with TemporaryDirectory() as ve_dir:
+        ve = VirtualEnv(["flask==2.0.1"])
+        with pytest.raises(VirtualEnvError, match=r"^Couldn't execute in a temporary directory .+"):
             ve.create(ve_dir)
