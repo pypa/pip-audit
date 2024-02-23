@@ -27,6 +27,9 @@ body:
         - label: >-
             I agree to follow the [PSF Code of Conduct](https://www.python.org/psf/conduct/).
           required: true
+        - label: >-
+            I have looked through the open issues for a duplicate report.
+          required: true
 
   - type: textarea
     attributes:
