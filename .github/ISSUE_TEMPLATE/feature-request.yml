@@ -1,0 +1,55 @@
+name: Feature request
+description: Suggest an idea or enhancement for pip-audit
+title: "Feature: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank for for making a `pip-audit` feature request!
+
+        Please read the following parts of this form carefully.
+        Invalid or incomplete submissions will be given a lower priority or
+        closed outright.
+
+  - type: checkboxes
+    attributes:
+      label: Pre-submission checks
+      description: |
+        By submitting this issue, you affirm that you've satisfied the following conditions.
+      options:
+        - label: >-
+            I am **not** reporting a new vulnerability or requesting a new vulnerability identifier.
+            These **must** be reported or managed via upstream dependency sources or services,
+            not this repository.
+          required: true
+        - label: >-
+            I agree to follow the [PSF Code of Conduct](https://www.python.org/psf/conduct/).
+          required: true
+        - label: >-
+            I have looked through the open issues for a duplicate request.
+          required: true
+
+  - type: textarea
+    attributes:
+      label: What's the problem this feature will solve?
+      description: |
+        A clear and concise description of the problem.
+      placeholder: |
+        I'm always frustrated when ...
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Describe the solution you'd like
+      description: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: |
+        Any additional context, screenshots, or other material about the feature request.

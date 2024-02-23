@@ -1,6 +1,6 @@
 name: Bug Report
 description: File a bug report
-title: "[BUG]: "
+title: "Bug: "
 labels:
   - bug-candidate
 body:
@@ -17,7 +17,7 @@ body:
     attributes:
       label: Pre-submission checks
       description: |
-        By submitting this issue, you affirm that you've checked the following conditions.
+        By submitting this issue, you affirm that you've satisfied the following conditions.
       options:
         - label: >-
             I am **not** filing an auditing error (false positive or negative).
