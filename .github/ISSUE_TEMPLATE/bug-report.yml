@@ -19,14 +19,12 @@ body:
       description: |
         By submitting this issue, you affirm that you've checked the following conditions.
       options:
-        - label: |
+        - label: >-
             I am **not** filing an auditing error (false positive or negative).
-
             These **must** be reported to
-            [pypa/advisory-database](https://github.com/pypa/advisory-database/issues/new)
-            instead.
+            [pypa/advisory-database](https://github.com/pypa/advisory-database/issues/new) instead.
           required: true
-        - label: |
+        - label: >-
             I agree to follow the [PSF Code of Conduct](https://www.python.org/psf/conduct/).
           required: true
 
@@ -81,7 +79,8 @@ body:
 
   - type: input
     attributes:
-      label: pip-audit version
+      label: >-
+        `pip-audit version
       description: |
         `pip-audit -V`
     validations:
@@ -89,7 +88,8 @@ body:
 
   - type: input
     attributes:
-      label: pip version
+      label: >-
+        `pip` version
       description: |
         `pip -V` or `pip3 -V`
     validations:
