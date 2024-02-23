@@ -79,8 +79,7 @@ body:
 
   - type: input
     attributes:
-      label: >-
-        `pip-audit version
+      label: pip-audit version
       description: |
         `pip-audit -V`
     validations:
@@ -88,8 +87,7 @@ body:
 
   - type: input
     attributes:
-      label: >-
-        `pip` version
+      label: pip version
       description: |
         `pip -V` or `pip3 -V`
     validations:
