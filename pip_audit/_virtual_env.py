@@ -144,13 +144,18 @@ class VirtualEnv(venv.EnvBuilder):
 
             # Install our packages
             # NOTE(ww): We pass `--no-input` to prevent `pip` from indefinitely
-            # blocking on user input for repository credentials.
+            # blocking on user input for repository credentials, and
+            # `--keyring-provider=subprocess` to allow `pip` to access the `keyring`
+            # program on the `$PATH` for index credentials, if necessary. The latter flag
+            # is required beginning with pip 23.1, since `--no-input` disables the default
+            # keyring behavior.
             package_install_cmd = [
                 context.env_exe,
                 "-m",
                 "pip",
                 "install",
                 "--no-input",
+                "--keyring-provider=subprocess",
                 *self._index_url_args,
                 "--dry-run",
                 "--report",
