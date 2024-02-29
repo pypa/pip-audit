@@ -1,6 +1,7 @@
 """
 Interfaces for formatting vulnerability results into a string representation.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
