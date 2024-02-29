@@ -96,7 +96,9 @@ input = "pip_audit/__init__.py"
 reset = true
 
 [tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
 # Never enforce `E501` (line length violations).
 ignore = ["E501"]
 select = ["E", "F", "I", "W", "UP"]
-line-length = 100
