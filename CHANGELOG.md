@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* `pip-audit` now invokes `pip` with `--keyring-provider=subprocess`,
+  partially fixing a regression that was introduced with another authentication
+  fix in [2.6.2]. This allows the interior `pip` to use `keyring` to perform
+  third-party index authentication.
+
 ## [2.7.1]
 
 ### Fixed

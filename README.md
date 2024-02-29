@@ -448,6 +448,30 @@ $ pip-audit --no-deps -r requirements.txt
 $ pip-audit --require-hashes -r requirements.txt
 ```
 
+### `pip-audit` can't authenticate to my third-party index!
+
+### Authenticated third-party or private indices
+
+`pip-audit` supports `--index-url` and `--extra-index-url` for configuring an alternate
+or supplemental package indices, just like `pip`.
+
+When *unauthenticated*, these indices should work as expected. However, when a third-party
+index requires authentication, `pip-audit` has a few additional restrictions on top of
+ordinary `pip`:
+
+* Interactive authentication is **not** supported. In other words: `pip-audit` will **not**
+  prompt you for a username/password for the index.
+* [`pip`'s `keyring` authentication](https://pip.pypa.io/en/stable/topics/authentication/#keyring-support)
+  **is** supported, but in a limited fashion: `pip-audit` uses the `subprocess` keyring provider,
+  since audits happen in isolated virtual environments. The `subprocess` provider in turn
+  is subject to additional restrictions (such as a required username);
+  [`pip`'s documentation](https://pip.pypa.io/en/stable/topics/authentication/#using-keyring-as-a-command-line-application)
+  explains these in depth.
+
+In practice, this means that authenticated third-party indices that **don't** take
+a username, like Google Artifact Registry, are currently **unsupported** by `pip-audit`.
+See [#742](https://github.com/pypa/pip-audit/issues/742) for more details.
+
 ## Tips and Tricks
 
 ### Running against a `pipenv` project
@@ -491,6 +515,7 @@ exitcode="${?}"
 See [Exit codes](#exit-codes) for a list of potential codes that need handling.
 
 ### Reporting only fixable vulnerabilities
+
 In development workflows, you may want to ignore the vulnerabilities that haven't been remediated yet and only investigate them in your release process. `pip-audit` does not support ignoring unfixed vulnerabilities. However, you can export its output in JSON format and externally process it. For example, if you want to exit with a non-zero code only when the detected vulnerabilities have known fix versions, you can process the output using [jq](https://github.com/jqlang/jq) as:
 
 ```shell
