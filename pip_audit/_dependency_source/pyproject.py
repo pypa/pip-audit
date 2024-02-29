@@ -1,6 +1,7 @@
 """
 Collect dependencies from `pyproject.toml` files.
 """
+
 from __future__ import annotations
 
 import logging

@@ -1,6 +1,7 @@
 """
 Functionality for formatting vulnerability results as an array of JSON objects.
 """
+
 from __future__ import annotations
 
 import json

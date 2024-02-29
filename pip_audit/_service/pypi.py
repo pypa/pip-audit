@@ -2,6 +2,7 @@
 Functionality for using the [PyPI](https://warehouse.pypa.io/api-reference/json.html)
 API as a `VulnerabilityService`.
 """
+
 from __future__ import annotations
 
 import logging

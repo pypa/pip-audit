@@ -1,6 +1,7 @@
 """
 Functionality for formatting vulnerability results using the CycloneDX SBOM format.
 """
+
 from __future__ import annotations
 
 import enum

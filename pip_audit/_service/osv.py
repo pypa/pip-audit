@@ -1,6 +1,7 @@
 """
 Functionality for using the [OSV](https://osv.dev/) API as a `VulnerabilityService`.
 """
+
 from __future__ import annotations
 
 import json

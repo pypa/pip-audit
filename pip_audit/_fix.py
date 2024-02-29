@@ -1,6 +1,7 @@
 """
 Functionality for resolving fixed versions of dependencies.
 """
+
 from __future__ import annotations
 
 import logging

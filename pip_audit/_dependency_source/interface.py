@@ -2,6 +2,7 @@
 Interfaces for interacting with "dependency sources", i.e. sources
 of fully resolved Python dependency trees.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
