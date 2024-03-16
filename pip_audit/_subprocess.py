@@ -36,7 +36,7 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
 
     # Run the process with unbuffered I/O, to make the poll-and-read loop below
     # more responsive.
-    process = Popen(args, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     # NOTE(ww): We frequently run commands inside of ephemeral virtual environments,
     # which have long absolute paths on some platforms. These make for confusing
@@ -52,9 +52,8 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
     # once `stdout` hits EOF, so we don't have to worry about that blocking.
     while not terminated:
         terminated = process.poll() is not None
-        # NOTE(ww): Buffer size chosen arbitrarily here and below.
-        stdout += process.stdout.read(4096)  # type: ignore
-        stderr += process.stderr.read(4096)  # type: ignore
+        stdout += process.stdout.read()  # type: ignore
+        stderr += process.stderr.read()  # type: ignore
         state.update_state(
             f"Running {pretty_args}",
             stdout.decode(errors="replace") if log_stdout else None,
