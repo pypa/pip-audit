@@ -225,7 +225,7 @@ class RequirementSource(DependencySource):
         # Check ahead of time for anything invalid in the requirements file since we don't want to
         # encounter this while writing out the file. Check for duplicate requirements and lines that
         # failed to parse.
-        req_specifiers: dict[str, str] = dict()
+        req_specifiers: dict[str, SpecifierSet] = dict()
 
         for req in reqs:
             if (
@@ -299,7 +299,7 @@ class RequirementSource(DependencySource):
         """
         Collect pre-resolved (pinned) dependencies.
         """
-        req_specifiers: dict[str, str] = dict()
+        req_specifiers: dict[str, SpecifierSet] = dict()
         for req in reqs:
             if not req.hash_options and require_hashes:
                 raise RequirementSourceError(f"requirement {req.dumps()} does not contain a hash")
