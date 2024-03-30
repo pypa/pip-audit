@@ -1,5 +1,8 @@
+from pathlib import Path
+
 import pretend  # type: ignore
 import pytest
+from cli_test_helpers import ArgvContext, EnvironContext
 
 import pip_audit._cli
 from pip_audit._cli import (
@@ -215,3 +218,21 @@ def test_print_format(monkeypatch, vuln_count, pkg_count, skip_count, print_form
         pass
 
     assert bool(dummyformat.format.calls) == print_format
+
+
+def test_environment_variable():
+    """Environment variables set before execution change CLI option default."""
+    with ArgvContext("pip-audit"), EnvironContext(
+        PIP_AUDIT_DESC="off",
+        PIP_AUDIT_FORMAT="markdown",
+        PIP_AUDIT_OUTPUT="stderr",
+        PIP_AUDIT_PROGRESS_SPINNER="off",
+        PIP_AUDIT_VULNERABILITY_SERVICE="osv",
+    ):
+        args = pip_audit._cli._parser().parse_args()
+
+    assert args.desc == VulnerabilityDescriptionChoice.Off
+    assert args.format == OutputFormatChoice.Markdown
+    assert args.output == Path("stderr")
+    assert not args.progress_spinner
+    assert args.vulnerability_service == VulnerabilityServiceChoice.Osv

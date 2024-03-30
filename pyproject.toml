@@ -41,6 +41,7 @@ requires-python = ">=3.8"
 
 [project.optional-dependencies]
 test = [
+    "cli-test-helpers",
     "coverage[toml] ~= 7.0, != 7.3.3", # https://github.com/nedbat/coveragepy/issues/1713
     "pretend",
     "pytest",

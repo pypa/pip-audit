@@ -225,7 +225,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         "--format",
         type=OutputFormatChoice,
         choices=OutputFormatChoice,
-        default=OutputFormatChoice.Columns,
+        default=os.environ.get("PIP_AUDIT_FORMAT", OutputFormatChoice.Columns),
         metavar="FORMAT",
         help=_enum_help("the format to emit audit results in", OutputFormatChoice),
     )
@@ -234,7 +234,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         "--vulnerability-service",
         type=VulnerabilityServiceChoice,
         choices=VulnerabilityServiceChoice,
-        default=VulnerabilityServiceChoice.Pypi,
+        default=os.environ.get("PIP_AUDIT_VULNERABILITY_SERVICE", VulnerabilityServiceChoice.Pypi),
         metavar="SERVICE",
         help=_enum_help(
             "the vulnerability service to audit dependencies against",
@@ -260,7 +260,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         choices=VulnerabilityDescriptionChoice,
         nargs="?",
         const=VulnerabilityDescriptionChoice.On,
-        default=VulnerabilityDescriptionChoice.Auto,
+        default=os.environ.get("PIP_AUDIT_DESC", VulnerabilityDescriptionChoice.Auto),
         help="include a description for each vulnerability; "
         "`auto` defaults to `on` for the `json` format. This flag has no "
         "effect on the `cyclonedx-json` or `cyclonedx-xml` formats.",
@@ -285,7 +285,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         "--progress-spinner",
         type=ProgressSpinnerChoice,
         choices=ProgressSpinnerChoice,
-        default=ProgressSpinnerChoice.On,
+        default=os.environ.get("PIP_AUDIT_PROGRESS_SPINNER", ProgressSpinnerChoice.On),
         help="display a progress spinner",
     )
     parser.add_argument(
@@ -355,7 +355,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         type=Path,
         metavar="FILE",
         help="output results to the given file",
-        default="stdout",
+        default=os.environ.get("PIP_AUDIT_OUTPUT", "stdout"),
     )
     parser.add_argument(
         "--ignore-vuln",
