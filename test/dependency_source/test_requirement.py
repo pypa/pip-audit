@@ -121,13 +121,13 @@ def test_requirement_source_git(req_file):
         [
             (
                 req_file(),
-                "git+https://github.com/unbit/uwsgi.git@1bb9ad77c6d2d310c2d6d1d9ad62de61f725b824",
+                "git+https://github.com/benoitc/gunicorn.git@61ccfd6c38d477a908e0f376757bbb884438053a",
             )
         ]
     )
 
     specs = list(source.collect())
-    assert ResolvedDependency(name="uWSGI", version=Version("2.0.20")) in specs
+    assert ResolvedDependency(name="gunicorn", version=Version("20.1.0")) in specs
 
 
 @pytest.mark.online
