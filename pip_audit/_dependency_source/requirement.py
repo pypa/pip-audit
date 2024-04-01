@@ -5,7 +5,6 @@ Collect dependencies from one or more `requirements.txt`-formatted files.
 from __future__ import annotations
 
 import logging
-import os
 import re
 import shutil
 from contextlib import ExitStack

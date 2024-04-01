@@ -380,6 +380,7 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
         raise OSError
 
     from tempfile import _TemporaryFileWrapper
+
     monkeypatch.setattr(_TemporaryFileWrapper, "seek", mock_replace, raising=False)
 
     source = requirement.RequirementSource(req_paths)
