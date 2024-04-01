@@ -220,7 +220,7 @@ class RequirementSource(DependencySource):
         #
         # This time we're using the `RequirementsFile.parse` API instead of `Requirements.from_file`
         # since we want to access each line sequentially in order to rewrite the file.
-        reqs = list(RequirementsFile.parse(filename=str(filename)))
+        reqs = list(RequirementsFile.parse(filename=filename.as_posix()))
 
         # Check ahead of time for anything invalid in the requirements file since we don't want to
         # encounter this while writing out the file. Check for duplicate requirements and lines that
