@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from email.message import EmailMessage
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -559,6 +560,7 @@ def test_requirement_source_no_double_open(monkeypatch, req_file):
     assert ResolvedDependency("Flask", Version("2.0.1")) in specs
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="os.mkfifo does not exists on windows")
 def test_requirement_source_fifo():
     with TemporaryDirectory() as tmp_dir:
         fifo_path = Path(os.path.join(tmp_dir, "fifo"))
