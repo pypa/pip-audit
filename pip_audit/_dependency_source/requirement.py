@@ -193,7 +193,7 @@ class RequirementSource(DependencySource):
             # Make temporary copies of the existing requirements files. If anything goes wrong, we
             # want to copy them back into place and undo any partial application of the fix.
             tmp_files: list[IO[str]] = [
-                stack.enter_context(NamedTemporaryFile(mode="w")) for _ in self._filenames
+                stack.enter_context(NamedTemporaryFile(mode="r+")) for _ in self._filenames
             ]
             for filename, tmp_file in zip(self._filenames, tmp_files):
                 with filename.open("r") as f:
@@ -278,10 +278,9 @@ class RequirementSource(DependencySource):
     def _recover_files(self, tmp_files: list[IO[str]]) -> None:
         for filename, tmp_file in zip(self._filenames, tmp_files):
             try:
-                os.replace(tmp_file.name, filename)
-                # We need to tinker with the internals to prevent the file wrapper from attempting
-                # to remove the temporary file like in the regular case.
-                tmp_file._closer.delete = False  # type: ignore[attr-defined]
+                tmp_file.seek(0)
+                with filename.open("w") as f:
+                    shutil.copyfileobj(tmp_file, f)
             except Exception as e:
                 # Not much we can do at this point since we're already handling an exception. Just
                 # log the error and try to recover the rest of the files.

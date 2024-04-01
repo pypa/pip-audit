@@ -379,7 +379,8 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
     def mock_replace(*_args, **_kwargs):
         raise OSError
 
-    monkeypatch.setattr(os, "replace", mock_replace)
+    from tempfile import _TemporaryFileWrapper
+    monkeypatch.setattr(_TemporaryFileWrapper, "seek", mock_replace, raising=False)
 
     source = requirement.RequirementSource(req_paths)
     with pytest.raises(DependencyFixError):
