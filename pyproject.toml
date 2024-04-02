@@ -49,7 +49,7 @@ test = [
 lint = [
     # NOTE(ww): ruff is under active development, so we pin conservatively here
     # and let Dependabot periodically perform this update.
-    "ruff < 0.3.5",
+    "ruff < 0.3.6",
     # HACK(ww): interrogate needs setuptools to provide `pkg_resources` on Python 3.12+;
     # remove this when https://github.com/econchick/interrogate/issues/164 is resolved.
     "setuptools",
