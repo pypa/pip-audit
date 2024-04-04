@@ -128,7 +128,7 @@ def test_requirement_source_git(req_file):
     )
 
     specs = list(source.collect())
-    assert ResolvedDependency(name="gunicorn", version=Version("20.1.0")) in specs
+    assert ResolvedDependency(name="sampleproject", version=Version("3.0.0")) in specs
 
 
 @pytest.mark.online
