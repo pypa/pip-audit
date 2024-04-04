@@ -122,7 +122,7 @@ def test_requirement_source_git(req_file):
         [
             (
                 req_file(),
-                "git+https://github.com/benoitc/gunicorn.git@61ccfd6c38d477a908e0f376757bbb884438053a",
+                "git+https://github.com/pypa/sampleproject.git@5d277956b5a571dac16b28db74e5f2b780d9af5f",
             )
         ]
     )
