@@ -376,12 +376,12 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
             f.write(input_req)
 
     # Simulate an error being raised during file recovery
-    def mock_replace(*_args, **_kwargs):
+    def mock_seek(*_args, **_kwargs):
         raise OSError
 
     from tempfile import _TemporaryFileWrapper
 
-    monkeypatch.setattr(_TemporaryFileWrapper, "seek", mock_replace, raising=False)
+    monkeypatch.setattr(_TemporaryFileWrapper, "seek", mock_seek, raising=False)
 
     source = requirement.RequirementSource(req_paths)
     with pytest.raises(DependencyFixError):
