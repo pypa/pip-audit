@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from email.message import EmailMessage
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -121,13 +122,13 @@ def test_requirement_source_git(req_file):
         [
             (
                 req_file(),
-                "git+https://github.com/unbit/uwsgi.git@1bb9ad77c6d2d310c2d6d1d9ad62de61f725b824",
+                "git+https://github.com/pypa/sampleproject.git@5d277956b5a571dac16b28db74e5f2b780d9af5f",
             )
         ]
     )
 
     specs = list(source.collect())
-    assert ResolvedDependency(name="uWSGI", version=Version("2.0.20")) in specs
+    assert ResolvedDependency(name="sampleproject", version=Version("3.0.0")) in specs
 
 
 @pytest.mark.online
@@ -375,10 +376,12 @@ def test_requirement_source_fix_rollback_failure(monkeypatch, req_file):
             f.write(input_req)
 
     # Simulate an error being raised during file recovery
-    def mock_replace(*_args, **_kwargs):
+    def mock_seek(*_args, **_kwargs):
         raise OSError
 
-    monkeypatch.setattr(os, "replace", mock_replace)
+    from tempfile import _TemporaryFileWrapper
+
+    monkeypatch.setattr(_TemporaryFileWrapper, "seek", mock_seek, raising=False)
 
     source = requirement.RequirementSource(req_paths)
     with pytest.raises(DependencyFixError):
@@ -559,6 +562,7 @@ def test_requirement_source_no_double_open(monkeypatch, req_file):
     assert ResolvedDependency("Flask", Version("2.0.1")) in specs
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="os.mkfifo does not exists on windows")
 def test_requirement_source_fifo():
     with TemporaryDirectory() as tmp_dir:
         fifo_path = Path(os.path.join(tmp_dir, "fifo"))

@@ -76,7 +76,7 @@ def dep_source(spec):
 @pytest.fixture(scope="session")
 def cache_dir():
     cache = tempfile.TemporaryDirectory()
-    yield cache.name
+    yield Path(cache.name)
     cache.cleanup()
 
 
