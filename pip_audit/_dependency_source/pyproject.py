@@ -142,8 +142,8 @@ class PyProjectSource(DependencySource):
             # Now dump the new edited TOML to the temporary file.
             toml.dump(pyproject_data, tmp)
 
-            # And replace the original `pyproject.toml` file.
-            os.replace(tmp.name, self.filename)
+        # And replace the original `pyproject.toml` file.
+        os.replace(tmp.name, self.filename)
 
 
 class PyProjectSourceError(DependencySourceError):
