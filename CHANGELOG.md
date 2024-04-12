@@ -13,6 +13,9 @@ All versions prior to 0.0.9 are untracked.
 * Improved handling of temporary files on Windows
   ([#757](https://github.com/pypa/pip-audit/pull/757))
 
+* Fixed a subprocess deadlock on Windows
+  ([#756](https://github.com/pypa/pip-audit/pull/756))
+
 ## [2.7.2]
 
 ### Fixed
