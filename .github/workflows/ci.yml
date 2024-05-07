@@ -20,7 +20,7 @@ jobs:
           - "3.12"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.1.4
+      - uses: actions/checkout@v4.1.5
 
       - uses: actions/setup-python@v5
         with:
