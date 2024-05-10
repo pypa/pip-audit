@@ -25,6 +25,7 @@ with support from Google. This is not an official Google or Trail of Bits produc
   * [GitHub Actions](#github-actions)
   * [`pre-commit` support](#pre-commit-support)
 * [Usage](#usage)
+  * [Environment variables](#environment-variables)
   * [Exit codes](#exit-codes)
   * [Dry runs](#dry-runs)
 * [Examples](#examples)
@@ -217,6 +218,20 @@ optional arguments:
                         `--no-deps` flag has been provided (default: False)
 ```
 <!-- @end-pip-audit-help@ -->
+
+### Environment variables
+
+`pip-audit` allows users to configure some flags via environment variables
+instead:
+
+
+| Flag                      | Environment equivalent            | Example                               |
+| ------------------------- | --------------------------------- | ------------------------------------- |
+| `--format`                | `PIP_AUDIT_FORMAT`                | `PIP_AUDIT_FORMAT=markdown`           |
+| `--vulnerability-service` | `PIP_AUDIT_VULNERABILITY_SERVICE` | `PIP_AUDIT_VULNERABILITY_SERVICE=osv` |
+| `--desc`                  | `PIP_AUDIT_DESC`                  | `PIP_AUDIT_DESC=off`                  |
+| `--progress-spinner`      | `PIP_AUDIT_PROGRESS_SPINNER`      |  `PIP_AUDIT_PROGRESS_SPINNER=off`     |
+| `--output`                | `PIP_AUDIT_OUTPUT`                | `PIP_AUDIT_OUTPUT=/tmp/example`       |
 
 ### Exit codes
 
