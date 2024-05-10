@@ -63,7 +63,7 @@ class Auditor:
         if self._options.dry_run:
             # Drain the iterator in dry-run mode.
             logger.info(f"Dry run: would have audited {len(list(specs))} packages")
-            return {}
+            yield from ()
         else:
             for dep, vulns in self._service.query_all(specs):
                 unique_vulns: list[VulnerabilityResult] = []
