@@ -106,7 +106,7 @@ For example, using `pip-audit` via `pre-commit` to audit a requirements file:
 
 ```yaml
   - repo: https://github.com/pypa/pip-audit
-    rev: v2.7.2
+    rev: v2.7.3
     hooks:
       -   id: pip-audit
           args: ["-r", "requirements.txt"]
@@ -468,9 +468,10 @@ ordinary `pip`:
   [`pip`'s documentation](https://pip.pypa.io/en/stable/topics/authentication/#using-keyring-as-a-command-line-application)
   explains these in depth.
 
-In practice, this means that authenticated third-party indices that **don't** take
-a username, like Google Artifact Registry, are currently **unsupported** by `pip-audit`.
-See [#742](https://github.com/pypa/pip-audit/issues/742) for more details.
+In addition to the above, some third-party indices have required, hard-coded usernames.
+For example, for Google Artifact registry, the hard-coded username is `oauth2accesstoken`.
+See [#742](https://github.com/pypa/pip-audit/issues/742) and
+[pip#11971](https://github.com/pypa/pip/issues/11971) for additional context.
 
 ## Tips and Tricks
 

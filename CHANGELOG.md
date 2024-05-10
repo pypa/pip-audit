@@ -8,6 +8,16 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.7.3]
+
+### Fixed
+
+* Improved handling of temporary files on Windows
+  ([#757](https://github.com/pypa/pip-audit/pull/757))
+
+* Fixed a subprocess deadlock on Windows
+  ([#756](https://github.com/pypa/pip-audit/pull/756))
+
 ## [2.7.2]
 
 ### Fixed
@@ -584,7 +594,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.7.2...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.7.3...HEAD
+[2.7.3]: https://github.com/pypa/pip-audit/compare/v2.7.2...v2.7.3
 [2.7.2]: https://github.com/pypa/pip-audit/compare/v2.7.1...v2.7.2
 [2.7.1]: https://github.com/pypa/pip-audit/compare/v2.7.0...v2.7.1
 [2.7.0]: https://github.com/pypa/pip-audit/compare/v2.6.3...v2.7.0
