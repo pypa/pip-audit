@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pretend  # type: ignore
 import pytest
 
@@ -98,7 +100,7 @@ def test_plurals(capsys, monkeypatch, args, vuln_count, pkg_count, expected):
     monkeypatch.setattr(pip_audit._cli, "PipSource", lambda *a, **kw: dummysource)
 
     parser = pip_audit._cli._parser()
-    monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda x: parser.parse_args(args))
+    monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda *a: parser.parse_args(args))
 
     result = [
         (
@@ -165,7 +167,7 @@ def test_print_format(monkeypatch, vuln_count, pkg_count, skip_count, print_form
     monkeypatch.setattr(pip_audit._cli, "ColumnsFormat", lambda *a, **kw: dummyformat)
 
     parser = pip_audit._cli._parser()
-    monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda x: parser.parse_args([]))
+    monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda *a: parser.parse_args([]))
 
     result = [
         (
@@ -215,3 +217,22 @@ def test_print_format(monkeypatch, vuln_count, pkg_count, skip_count, print_form
         pass
 
     assert bool(dummyformat.format.calls) == print_format
+
+
+def test_environment_variable(monkeypatch):
+    """Environment variables set before execution change CLI option default."""
+    monkeypatch.setenv("PIP_AUDIT_DESC", "off")
+    monkeypatch.setenv("PIP_AUDIT_FORMAT", "markdown")
+    monkeypatch.setenv("PIP_AUDIT_OUTPUT", "/tmp/fake")
+    monkeypatch.setenv("PIP_AUDIT_PROGRESS_SPINNER", "off")
+    monkeypatch.setenv("PIP_AUDIT_VULNERABILITY_SERVICE", "osv")
+
+    parser = pip_audit._cli._parser()
+    monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda *a: parser.parse_args([]))
+    args = pip_audit._cli._parse_args(parser, [])
+
+    assert args.desc == VulnerabilityDescriptionChoice.Off
+    assert args.format == OutputFormatChoice.Markdown
+    assert args.output == Path("/tmp/fake")
+    assert not args.progress_spinner
+    assert args.vulnerability_service == VulnerabilityServiceChoice.Osv

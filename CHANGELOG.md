@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Added
+
+* `pip-audit` now allows some CLI flags to be configured via environment
+  variables ([#755](https://github.com/pypa/pip-audit/pull/755))
+
 ## [2.7.3]
 
 ### Fixed
