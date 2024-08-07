@@ -224,18 +224,23 @@ class RequirementSource(DependencySource):
         # Check ahead of time for anything invalid in the requirements file since we don't want to
         # encounter this while writing out the file. Check for duplicate requirements and lines that
         # failed to parse.
-        req_names: set[str] = set()
+        req_specifiers: dict[str, SpecifierSet] = dict()
+
         for req in reqs:
             if (
                 isinstance(req, InstallRequirement)
                 and (req.marker is None or req.marker.evaluate())
                 and req.req is not None
             ):
-                if req.name in req_names:
+                duplicate_req_specifier = req_specifiers.get(req.name)
+
+                if not duplicate_req_specifier:
+                    req_specifiers[req.name] = req.specifier
+
+                elif duplicate_req_specifier != req.specifier:
                     raise RequirementFixError(
                         f"package {req.name} has duplicate requirements: {str(req)}"
                     )
-                req_names.add(req.name)
             elif isinstance(req, InvalidRequirementLine):
                 raise RequirementFixError(
                     f"requirement file {filename} has invalid requirement: {str(req)}"
@@ -292,7 +297,7 @@ class RequirementSource(DependencySource):
         """
         Collect pre-resolved (pinned) dependencies.
         """
-        req_names: set[str] = set()
+        req_specifiers: dict[str, SpecifierSet] = dict()
         for req in reqs:
             if not req.hash_options and require_hashes:
                 raise RequirementSourceError(f"requirement {req.dumps()} does not contain a hash")
@@ -313,12 +318,21 @@ class RequirementSource(DependencySource):
             if req.marker is not None and not req.marker.evaluate():
                 continue  # pragma: no cover
 
-            # This means we have a duplicate requirement for the same package
-            if req.name in req_names:
+            duplicate_req_specifier = req_specifiers.get(req.name)
+
+            if not duplicate_req_specifier:
+                req_specifiers[req.name] = req.specifier
+
+            # We have a duplicate requirement for the same package
+            # but different specifiers, meaning a badly resolved requirements.txt
+            elif duplicate_req_specifier != req.specifier:
                 raise RequirementSourceError(
                     f"package {req.name} has duplicate requirements: {str(req)}"
                 )
-            req_names.add(req.name)
+            else:
+                # We have a duplicate requirement for the same package and the specifier matches
+                # As they would return the same result from the audit, there no need to yield it a second time.
+                continue
 
             # NOTE: URL dependencies cannot be pinned, so skipping them
             # makes sense (under the same principle of skipping dependencies
