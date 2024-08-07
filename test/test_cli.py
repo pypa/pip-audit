@@ -93,6 +93,8 @@ class TestProgressSpinnerChoice:
         (["--fix"], 2, 2, "fixed 2 vulnerabilities in 2 packages"),
         ([], 0, 0, "No known vulnerabilities found"),
         (["--ignore-vuln", "bar"], 0, 1, "No known vulnerabilities found, 1 ignored"),
+        (["--ignore-vuln-ultimatum", "baz", "1970-01-01"], 1, 1, "Found 2 known vulnerabilities in 1 package"),
+        (["--ignore-vuln-ultimatum", "baz", "9999-01-01"], 0, 1, "No known vulnerabilities found, 1 ignored"),
     ],
 )
 def test_plurals(capsys, monkeypatch, args, vuln_count, pkg_count, expected):
@@ -124,7 +126,10 @@ def test_plurals(capsys, monkeypatch, args, vuln_count, pkg_count, expected):
     ]
 
     if "--ignore-vuln" in args:
-        result[0][1].append(pretend.stub(id="bar", aliases=set(), has_any_id=lambda x: True))
+        result[0][1].append(pretend.stub(id="bar", aliases=set(), has_any_id=lambda x: "bar" in x, fix_versions="baz"))
+
+    if "--ignore-vuln-ultimatum" in args:
+        result[0][1].append(pretend.stub(id="baz", aliases=set(), has_any_id=lambda x: "baz" in x, fix_versions="baz"))
 
     auditor = pretend.stub(audit=lambda a: result)
     monkeypatch.setattr(pip_audit._cli, "Auditor", lambda *a, **kw: auditor)
