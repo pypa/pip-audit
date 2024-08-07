@@ -31,7 +31,14 @@ class OsvService(VulnerabilityService):
     package vulnerability information.
     """
 
-    def __init__(self, cache_dir: Path | None = None, timeout: int | None = None):
+    DEFAULT_OSV_URL = "https://api.osv.dev/v1/query"
+
+    def __init__(
+        self,
+        cache_dir: Path | None = None,
+        timeout: int | None = None,
+        osv_url: str = DEFAULT_OSV_URL,
+    ):
         """
         Create a new `OsvService`.
 
@@ -43,6 +50,7 @@ class OsvService(VulnerabilityService):
         """
         self.session = caching_session(cache_dir, use_pip=False)
         self.timeout = timeout
+        self.osv_url = osv_url
 
     def query(self, spec: Dependency) -> tuple[Dependency, list[VulnerabilityResult]]:
         """
@@ -54,14 +62,13 @@ class OsvService(VulnerabilityService):
             return spec, []
         spec = cast(ResolvedDependency, spec)
 
-        url = "https://api.osv.dev/v1/query"
         query = {
             "package": {"name": spec.canonical_name, "ecosystem": "PyPI"},
             "version": str(spec.version),
         }
         try:
             response: requests.Response = self.session.post(
-                url=url,
+                url=self.osv_url,
                 data=json.dumps(query),
                 timeout=self.timeout,
             )

@@ -29,7 +29,7 @@ class TestOutputFormatChoice:
 class TestVulnerabilityServiceChoice:
     def test_to_service_is_exhaustive(self, cache_dir):
         for choice in VulnerabilityServiceChoice:
-            assert choice.to_service(0, cache_dir) is not None
+            assert choice.to_service(timeout=0, cache_dir=cache_dir) is not None
 
     def test_str(self):
         for choice in VulnerabilityServiceChoice:
