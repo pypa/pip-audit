@@ -1,10 +1,30 @@
+import platform
 from pathlib import Path
 
 import pretend  # type: ignore
+import pytest
 from packaging.version import Version
 
 import pip_audit._cache as cache
-from pip_audit._cache import _get_cache_dir, _get_pip_cache
+from pip_audit._cache import _get_cache_dir, _get_internal_cache_path, _get_pip_cache
+
+
+@pytest.mark.parametrize(
+    "sys_platform,expected,is_xdg_set",
+    [
+        ("Linux", Path.home() / ".cache" / "pip-audit", False),
+        ("Darwin", Path.home() / "Library" / "Caches" / "pip-audit", False),
+        ("Windows", Path.home() / ".cache" / "pip-audit", False),
+        ("Linux", Path("/tmp/foo/cache_dir/pip-audit"), True),
+        ("Darwin", Path.home() / "Library" / "Caches" / "pip-audit", True),
+        ("Windows", Path("/tmp/foo/cache_dir/pip-audit"), True),
+    ],
+)
+def test_get_internal_cache_path(monkeypatch, sys_platform, expected, is_xdg_set):
+    monkeypatch.setattr(platform, "system", lambda: sys_platform)
+    if is_xdg_set:
+        monkeypatch.setenv("XDG_CACHE_HOME", "/tmp/foo/cache_dir")
+    assert _get_internal_cache_path() == expected
 
 
 def test_get_cache_dir(monkeypatch):
