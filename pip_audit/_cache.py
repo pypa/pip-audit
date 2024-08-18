@@ -34,19 +34,36 @@ def _get_internal_cache_path() -> Path:
     """
     Returns the default cache directory path used internally by `pip-audit`.
 
-    This should be used as a fallback when other caching options are not specified.
+    It uses the same pip's default paths to select the caching directory.
+    See https://pip.pypa.io/en/latest/topics/caching/#default-paths.
 
-    On macOS, it will be in `$HOME/Library/Caches/pip_audit`.
+    On macOS, it will be in `$HOME/Library/Caches/pip-audit`.
+
+    On Windows, it will be in `%LOCALAPPDATA%/Cache/pip-audit` and
+    fallback to the `XDG Base Directory Specification` default folder.
 
     On other OS, it will follow the `XDG Base Directory Specification` and
     place the cache in either `$HOME/.cache/pip-audit` or respect `$XDG_CACHE_HOME`
     environment variable i-e `$XDG_CACHE_HOME/pip-audit`.
     """
-    return (
-        (Path.home() / "Library" / "Caches" / "pip-audit")
-        if platform.system() == "Darwin"
-        else (Path(os.getenv("XDG_CACHE_HOME", Path.home() / ".cache")) / "pip-audit")
-    )
+    os_platform = platform.system()
+    default_cache_dir = Path.home() / ".cache" / "pip-audit"
+
+    if os_platform == "Windows":
+        return (
+            default_cache_dir
+            if (local_app_data := os.getenv("LOCALAPPDATA")) is None
+            else Path(local_app_data) / "pip-audit" / "Cache"
+        )
+    elif os_platform == "Darwin":
+        return Path.home() / "Library" / "Caches" / "pip-audit"
+    else:
+        # Follow XDG Base Directory Specification
+        return (
+            default_cache_dir
+            if (xdg_cache_home := os.getenv("XDG_CACHE_HOME")) is None
+            else Path(xdg_cache_home) / "pip-audit"
+        )
 
 
 def _get_pip_cache() -> Path:
