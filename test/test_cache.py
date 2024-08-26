@@ -9,7 +9,7 @@ from packaging.version import Version
 from pytest import MonkeyPatch
 
 import pip_audit._cache as cache
-from pip_audit._cache import _get_cache_dir, _get_pip_cache
+from pip_audit._cache import _delete_legacy_cache_dir, _get_cache_dir, _get_pip_cache
 
 
 def _patch_platformdirs(monkeypatch: MonkeyPatch, sys_platform: str) -> None:
@@ -150,3 +150,13 @@ def test_cache_warns_about_old_pip(monkeypatch, cache_dir):
     # have an old `pip`, then we should expect a warning to be logged
     _get_cache_dir(None)
     assert len(logger.warning.calls) == 1
+
+
+def test_delete_legacy_cache_dir(tmp_path):
+    legacy = tmp_path / "pip-audit-cache"
+    legacy.mkdir()
+    assert legacy.exists()
+
+    current = _get_cache_dir(None, use_pip=False)
+    _delete_legacy_cache_dir(current, legacy)
+    assert not legacy.exists()

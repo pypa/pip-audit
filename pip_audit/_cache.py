@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -29,6 +30,8 @@ _MINIMUM_PIP_VERSION = Version("20.1")
 
 _PIP_VERSION = Version(str(pip_api.PIP_VERSION))
 
+_PIP_AUDIT_LEGACY_INTERNAL_CACHE = Path.home() / ".pip-audit-cache"
+
 
 def _get_pip_cache() -> Path:
     # Unless the cache directory is specifically set by the `--cache-dir` option, we try to share
@@ -43,6 +46,14 @@ def _get_pip_cache() -> Path:
     cache_dir = process.stdout.decode("utf-8").strip("\n")
     http_cache_dir = Path(cache_dir) / "http"
     return http_cache_dir
+
+
+def _delete_legacy_cache_dir(current_cache_dir: Path, legacy_cache_dir: Path) -> None:
+    """
+    Deletes the legacy `pip-audit` if it exists.
+    """
+    if current_cache_dir != legacy_cache_dir:
+        shutil.rmtree(legacy_cache_dir)
 
 
 def _get_cache_dir(custom_cache_dir: Path | None, *, use_pip: bool = True) -> Path:
@@ -61,6 +72,10 @@ def _get_cache_dir(custom_cache_dir: Path | None, *, use_pip: bool = True) -> Pa
 
     # Retrieve pip-audit's default internal cache using `platformdirs`.
     pip_audit_cache_dir = user_cache_path("pip-audit", appauthor=False, ensure_exists=True)
+
+    # If the retrieved cache isn't the legacy one, try to delete it.
+    if _PIP_AUDIT_LEGACY_INTERNAL_CACHE.exists():
+        _delete_legacy_cache_dir(pip_audit_cache_dir, _PIP_AUDIT_LEGACY_INTERNAL_CACHE)
 
     # Respect pip's PIP_NO_CACHE_DIR environment setting.
     if use_pip and not os.getenv("PIP_NO_CACHE_DIR"):
