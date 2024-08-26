@@ -13,6 +13,10 @@ All versions prior to 0.0.9 are untracked.
 * `pip-audit` now allows some CLI flags to be configured via environment
   variables ([#755](https://github.com/pypa/pip-audit/pull/755))
 
+### Changed
+
+* `--disable-pip` allows duplicate requirements if specifiers matches ([#749](https://github.com/pypa/pip-audit/pull/749))
+
 ## [2.7.3]
 
 ### Fixed
