@@ -65,7 +65,7 @@ def _get_cache_dir(custom_cache_dir: Path | None, *, use_pip: bool = True) -> Pa
     # Retrieve pip-audit's default internal cache using `platformdirs`.
     pip_audit_cache_dir = user_cache_path("pip-audit", appauthor=False, ensure_exists=True)
 
-    # If the retrieved cache isn't the legacy one, try to delete it the old cache.
+    # If the retrieved cache isn't the legacy one, try to delete the old cache if it exists.
     if (
         _PIP_AUDIT_LEGACY_INTERNAL_CACHE.exists()
         and pip_audit_cache_dir != _PIP_AUDIT_LEGACY_INTERNAL_CACHE
