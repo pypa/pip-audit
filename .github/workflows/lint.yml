@@ -10,7 +10,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.1.7
+      - uses: actions/checkout@v4.2.0
 
       - uses: actions/setup-python@v5
         with:
@@ -24,7 +24,7 @@ jobs:
   check-readme:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.1.7
+      - uses: actions/checkout@v4.2.0
 
       - uses: actions/setup-python@v5
         # NOTE(ww): Important: use pip-audit's minimum supported Python version
