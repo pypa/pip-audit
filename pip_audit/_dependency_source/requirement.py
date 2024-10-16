@@ -332,7 +332,7 @@ class RequirementSource(DependencySource):
             else:
                 # We have a duplicate requirement for the same package and the specifier matches
                 # As they would return the same result from the audit, there no need to yield it a second time.
-                continue
+                continue  # pragma: no cover
 
             # NOTE: URL dependencies cannot be pinned, so skipping them
             # makes sense (under the same principle of skipping dependencies
