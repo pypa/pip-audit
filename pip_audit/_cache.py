@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -17,6 +18,7 @@ import requests
 from cachecontrol import CacheControl
 from cachecontrol.caches import FileCache
 from packaging.version import Version
+from platformdirs import user_cache_path
 
 from pip_audit._service.interface import ServiceError
 
@@ -28,7 +30,7 @@ _MINIMUM_PIP_VERSION = Version("20.1")
 
 _PIP_VERSION = Version(str(pip_api.PIP_VERSION))
 
-_PIP_AUDIT_INTERNAL_CACHE = Path.home() / ".pip-audit-cache"
+_PIP_AUDIT_LEGACY_INTERNAL_CACHE = Path.home() / ".pip-audit-cache"
 
 
 def _get_pip_cache() -> Path:
@@ -60,6 +62,16 @@ def _get_cache_dir(custom_cache_dir: Path | None, *, use_pip: bool = True) -> Pa
     if custom_cache_dir is not None:
         return custom_cache_dir
 
+    # Retrieve pip-audit's default internal cache using `platformdirs`.
+    pip_audit_cache_dir = user_cache_path("pip-audit", appauthor=False, ensure_exists=True)
+
+    # If the retrieved cache isn't the legacy one, try to delete the old cache if it exists.
+    if (
+        _PIP_AUDIT_LEGACY_INTERNAL_CACHE.exists()
+        and pip_audit_cache_dir != _PIP_AUDIT_LEGACY_INTERNAL_CACHE
+    ):
+        shutil.rmtree(_PIP_AUDIT_LEGACY_INTERNAL_CACHE)
+
     # Respect pip's PIP_NO_CACHE_DIR environment setting.
     if use_pip and not os.getenv("PIP_NO_CACHE_DIR"):
         pip_cache_dir = _get_pip_cache() if _PIP_VERSION >= _MINIMUM_PIP_VERSION else None
@@ -68,11 +80,11 @@ def _get_cache_dir(custom_cache_dir: Path | None, *, use_pip: bool = True) -> Pa
         else:
             logger.warning(
                 f"pip {_PIP_VERSION} doesn't support the `cache dir` subcommand, "
-                f"using {_PIP_AUDIT_INTERNAL_CACHE} instead"
+                f"using {pip_audit_cache_dir} instead"
             )
-            return _PIP_AUDIT_INTERNAL_CACHE
+            return pip_audit_cache_dir
     else:
-        return _PIP_AUDIT_INTERNAL_CACHE
+        return pip_audit_cache_dir
 
 
 class _SafeFileCache(FileCache):
