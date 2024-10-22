@@ -13,6 +13,12 @@ All versions prior to 0.0.9 are untracked.
 * `pip-audit` now allows some CLI flags to be configured via environment
   variables ([#755](https://github.com/pypa/pip-audit/pull/755))
 
+### Changed
+
+* The default cache locations on macOS and Linux now respect each platform's
+  caching directory idioms (e.g. XDG)
+  ([#814](https://github.com/pypa/pip-audit/pull/814))
+
 ## [2.7.3]
 
 ### Fixed
