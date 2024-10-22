@@ -7,10 +7,10 @@ from __future__ import annotations
 import json
 import logging
 import venv
+from collections.abc import Iterator
 from os import PathLike
 from tempfile import NamedTemporaryFile, TemporaryDirectory, gettempdir
 from types import SimpleNamespace
-from typing import Iterator
 
 from packaging.version import Version
 

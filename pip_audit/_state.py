@@ -7,8 +7,9 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from logging.handlers import MemoryHandler
-from typing import Any, Sequence
+from typing import Any
 
 from rich.align import StyleType
 from rich.console import Console, Group, RenderableType
