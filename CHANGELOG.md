@@ -13,17 +13,17 @@ All versions prior to 0.0.9 are untracked.
 * `pip-audit` now allows some CLI flags to be configured via environment
   variables ([#755](https://github.com/pypa/pip-audit/pull/755))
 
-### Fixed
-
-* Auditing a fully-pinned requirements file with `--disable-pip` now allows for
-  duplicates, so long as the duplicates don't have conflicting specifier sets
-  ([#749](https://github.com/pypa/pip-audit/pull/749))
-
 ### Changed
 
 * The default cache locations on macOS and Linux now respect each platform's
   caching directory idioms (e.g. XDG)
   ([#814](https://github.com/pypa/pip-audit/pull/814))
+
+### Fixed
+
+* Auditing a fully-pinned requirements file with `--disable-pip` now allows for
+  duplicates, so long as the duplicates don't have conflicting specifier sets
+  ([#749](https://github.com/pypa/pip-audit/pull/749))
 
 ## [2.7.3]
 
