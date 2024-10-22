@@ -36,6 +36,7 @@ dependencies = [
     "requests >= 2.31.0",
     "rich>=12.4",
     "toml>=0.10",
+    "platformdirs>=4.2.0"
 ]
 requires-python = ">=3.8"
 
