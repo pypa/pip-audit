@@ -316,6 +316,8 @@ class RequirementSource(DependencySource):
             if self._skip_editable and req.is_editable:
                 yield SkippedDependency(name=req.name, skip_reason="requirement marked as editable")
             if req.marker is not None and not req.marker.evaluate():
+                # TODO(ww): Remove this `no cover` pragma once we're 3.10+.
+                # See: https://github.com/nedbat/coveragepy/issues/198
                 continue  # pragma: no cover
 
             duplicate_req_specifier = req_specifiers.get(req.name)
