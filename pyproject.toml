@@ -28,7 +28,7 @@ classifiers = [
 ]
 dependencies = [
     "CacheControl[filecache] >= 0.13.0",
-    "cyclonedx-python-lib >= 5,< 8",
+    "cyclonedx-python-lib >= 5,< 9",
     "html5lib>=1.1",
     "packaging>=23.0.0",                 # https://github.com/pypa/pip-audit/issues/464
     "pip-api>=0.0.28",
@@ -50,7 +50,7 @@ test = [
 lint = [
     # NOTE(ww): ruff is under active development, so we pin conservatively here
     # and let Dependabot periodically perform this update.
-    "ruff < 0.6.8",
+    "ruff < 0.7.1",
     # HACK(ww): interrogate needs setuptools to provide `pkg_resources` on Python 3.12+;
     # remove this when https://github.com/econchick/interrogate/issues/164 is resolved.
     "setuptools",
