@@ -5,8 +5,9 @@ Functionality for resolving fixed versions of dependencies.
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Any, Iterator, cast
+from typing import Any, cast
 
 from packaging.version import Version
 

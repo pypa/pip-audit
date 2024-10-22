@@ -19,6 +19,9 @@ All versions prior to 0.0.9 are untracked.
   caching directory idioms (e.g. XDG)
   ([#814](https://github.com/pypa/pip-audit/pull/814))
 
+* The minimum version of Python is now 3.9
+  ([#846](https://github.com/pypa/pip-audit/pull/846))
+
 ### Fixed
 
 * Auditing a fully-pinned requirements file with `--disable-pip` now allows for

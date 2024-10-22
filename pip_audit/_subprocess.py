@@ -5,8 +5,8 @@ responsive from the `pip-audit` CLI.
 
 import os.path
 import subprocess
+from collections.abc import Sequence
 from subprocess import Popen
-from typing import Sequence
 
 from ._state import AuditState
 

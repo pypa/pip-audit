@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Iterator
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from typing import Iterator
 
 import toml
 from packaging.requirements import Requirement
@@ -81,9 +81,10 @@ class PyProjectSource(DependencySource):
             # dependency resolution now, we can think about doing `pip install <local-project-dir>`
             # regardless of whether the project has a `pyproject.toml` or not. And if it doesn't
             # have a `pyproject.toml`, we can raise an error if the user provides `--fix`.
-            with TemporaryDirectory() as ve_dir, NamedTemporaryFile(
-                dir=ve_dir, delete=False
-            ) as req_file:
+            with (
+                TemporaryDirectory() as ve_dir,
+                NamedTemporaryFile(dir=ve_dir, delete=False) as req_file,
+            ):
                 # We use delete=False in creating the tempfile to allow it to be
                 # closed and opened multiple times within the context scope on
                 # windows, see GitHub issue #646.

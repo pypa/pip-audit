@@ -5,8 +5,8 @@ Core auditing APIs.
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Iterator
 
 from pip_audit._dependency_source import DependencySource
 from pip_audit._service import Dependency, VulnerabilityResult, VulnerabilityService

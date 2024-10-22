@@ -6,9 +6,10 @@ of vulnerability information for fully resolved Python packages.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from dataclasses import dataclass, replace
 from datetime import datetime
-from typing import Any, Iterator, NewType
+from typing import Any, NewType
 
 from packaging.utils import canonicalize_name
 from packaging.version import Version

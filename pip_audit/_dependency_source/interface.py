@@ -6,7 +6,7 @@ of fully resolved Python dependency trees.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Iterator
+from collections.abc import Iterator
 
 from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency

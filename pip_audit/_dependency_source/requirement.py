@@ -7,10 +7,11 @@ from __future__ import annotations
 import logging
 import re
 import shutil
+from collections.abc import Iterator
 from contextlib import ExitStack
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from typing import IO, Iterator
+from typing import IO
 
 from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name
