@@ -4,8 +4,9 @@ Functionality for formatting vulnerability results as a set of human-readable co
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from itertools import zip_longest
-from typing import Any, Iterable, cast
+from typing import Any, cast
 
 from packaging.version import Version
 

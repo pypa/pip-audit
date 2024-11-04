@@ -9,9 +9,10 @@ import enum
 import logging
 import os
 import sys
+from collections.abc import Iterator
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import IO, Iterator, NoReturn, cast
+from typing import IO, NoReturn, cast
 
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor

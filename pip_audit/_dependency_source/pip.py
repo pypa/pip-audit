@@ -7,8 +7,8 @@ import logging
 import os
 import subprocess
 import sys
+from collections.abc import Iterator, Sequence
 from pathlib import Path
-from typing import Iterator, Sequence
 
 import pip_api
 from packaging.version import InvalidVersion, Version
