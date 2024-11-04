@@ -7,8 +7,8 @@ on:
   push:
     branches: [ "main" ]
 
-# Declare default permissions as read only.
-permissions: read-all
+# No permissions needed at top-level.
+permissions: {}
 
 jobs:
   analysis:
