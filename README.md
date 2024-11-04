@@ -213,6 +213,10 @@ optional arguments:
   --ignore-vuln ID      ignore a specific vulnerability by its vulnerability
                         ID; this option can be used multiple times (default:
                         [])
+  --ignore-vuln-ultimatum ID end-date
+                        ignore a specific vulnerability by its vulnerability
+                        ID up to the end-date; this option can be used multiple times (default:
+                        [])
   --disable-pip         don't use `pip` for dependency resolution; this can
                         only be used with hashed requirements files or if the
                         `--no-deps` flag has been provided (default: False)
@@ -405,6 +409,9 @@ for your particular application or use case, you can use the `--ignore-vuln ID`
 option to ignore specific vulnerability reports. `--ignore-vuln` supports
 aliases, so you can use a `GHSA-xxx` or `CVE-xxx` ID instead of a `PYSEC-xxx`
 ID if the report in question does not have a PYSEC ID.
+To prevent vulnerabilities being ignored ad infinitum in an automated context, 
+an ultimatum can be set for the ignore using 
+`--ignore-vuln-ultimatum ID end-date`.
 
 For example, here is how you might ignore GHSA-w596-4wvx-j9j6, which is a
 common source of noisy vulnerability reports and false positives for users of
@@ -422,8 +429,9 @@ requirements-style inputs, alternative vulnerability feeds, and so forth.
 It can also be passed multiple times, to ignore multiple reports:
 
 ```console
-# Run the audit as normal, but exclude any reports that match these IDs
-$ pip-audit --ignore-vuln CVE-XXX-YYYY --ignore-vuln CVE-ZZZ-AAAA
+# Run the audit as normal, but exclude any reports that match these IDs, 
+with an ultimatum for the second
+$ pip-audit --ignore-vuln CVE-XXX-YYYY --ignore-vuln-ultimatum CVE-ZZZ-AAAA 2023-09-26
 ```
 
 ### `pip-audit` takes longer than I expect!

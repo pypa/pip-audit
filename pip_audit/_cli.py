@@ -10,8 +10,9 @@ import logging
 import os
 import sys
 from contextlib import ExitStack, contextmanager
+from datetime import datetime
 from pathlib import Path
-from typing import IO, Iterator, NoReturn, cast
+from typing import IO, Iterator, NoReturn, cast, List, Union, Tuple
 
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
@@ -43,6 +44,8 @@ logger = logging.getLogger(__name__)
 # to avoid overly verbose logging in third-party code by default.
 package_logger = logging.getLogger("pip_audit")
 package_logger.setLevel(os.environ.get("PIP_AUDIT_LOGLEVEL", "INFO").upper())
+
+DATE_SEP = "::"
 
 
 @contextmanager
@@ -370,6 +373,20 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         ),
     )
     parser.add_argument(
+        "--ignore-vuln-ultimatum",
+        nargs=2,
+        type=str,
+        metavar=("ID", "end date"),
+        action="append",
+        dest="ignore_vulns_ultimatum",
+        default=[],
+        help=(
+            "ignore a specific vulnerability by its vulnerability ID "
+            "with a given end date; "
+            "this option can be used multiple times"
+        ),
+    )
+    parser.add_argument(
         "--disable-pip",
         action="store_true",
         help="don't use `pip` for dependency resolution; "
@@ -504,7 +521,7 @@ def audit() -> None:  # pragma: no cover
         vuln_count = 0
         skip_count = 0
         vuln_ignore_count = 0
-        vulns_to_ignore = set(args.ignore_vulns)
+        vulns_to_ignore = set(args.ignore_vulns) | ultimatum_vulns_to_ignore(args.ignore_vulns_ultimatum)
         try:
             for spec, vulns in auditor.audit(source):
                 if spec.is_skipped():
@@ -603,3 +620,10 @@ def audit() -> None:  # pragma: no cover
         if skip_count > 0 or formatter.is_manifest:
             with _output_io(args.output) as io:
                 print(formatter.format(result, fixes), file=io)
+
+
+def ultimatum_vulns_to_ignore(ignore_vulns: List[Tuple[str, str]]):
+    return set(
+        v for v, enddate_str in ignore_vulns
+        if datetime.now() < datetime.strptime(enddate_str, "%Y-%m-%d")
+    )
