@@ -572,11 +572,15 @@ def audit() -> None:  # pragma: no cover
                 fixes.append(fix)
 
     if vuln_count > 0:
+        if vuln_ignore_count:
+            ignored = f", ignored {vuln_ignore_count}"
+        else:
+            ignored = ""
+
         summary_msg = (
             f"Found {vuln_count} known "
             f"{'vulnerability' if vuln_count == 1 else 'vulnerabilities'}"
-            f"{(vuln_ignore_count and ', ignored %d ' % vuln_ignore_count) or ' '}"
-            f"in {pkg_count} {'package' if pkg_count == 1 else 'packages'}"
+            f"{ignored} in {pkg_count} {'package' if pkg_count == 1 else 'packages'}"
         )
         if args.fix:
             summary_msg += (
