@@ -40,9 +40,11 @@ class TestVulnerabilityDescriptionChoice:
     def test_to_bool_is_exhaustive(self):
         for choice in VulnerabilityDescriptionChoice:
             assert choice.to_bool(OutputFormatChoice.Json) in {True, False}
+            assert choice.to_bool(OutputFormatChoice.Junit) in {True, False}
 
     def test_auto_to_bool_for_json(self):
         assert VulnerabilityDescriptionChoice.Auto.to_bool(OutputFormatChoice.Json) is True
+        assert VulnerabilityDescriptionChoice.Auto.to_bool(OutputFormatChoice.Junit) is True
 
     def test_str(self):
         for choice in VulnerabilityDescriptionChoice:
@@ -57,9 +59,11 @@ class TestVulnerabilityAliasChoice:
             assert choice.to_bool(OutputFormatChoice.Columns) in {True, False}
             assert choice.to_bool(OutputFormatChoice.CycloneDxJson) in {True, False}
             assert choice.to_bool(OutputFormatChoice.CycloneDxXml) in {True, False}
+            assert choice.to_bool(OutputFormatChoice.Junit) in {True, False}
 
     def test_auto_to_bool_for_json(self):
         assert VulnerabilityAliasChoice.Auto.to_bool(OutputFormatChoice.Json) is True
+        assert VulnerabilityAliasChoice.Auto.to_bool(OutputFormatChoice.Junit) is True
 
     def test_str(self):
         for choice in VulnerabilityAliasChoice:

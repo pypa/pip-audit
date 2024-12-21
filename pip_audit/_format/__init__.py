@@ -6,6 +6,7 @@ from .columns import ColumnsFormat
 from .cyclonedx import CycloneDxFormat
 from .interface import VulnerabilityFormat
 from .json import JsonFormat
+from .junit import JunitFormat
 from .markdown import MarkdownFormat
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "VulnerabilityFormat",
     "JsonFormat",
     "MarkdownFormat",
+    "JunitFormat",
 ]

@@ -28,6 +28,7 @@ from pip_audit._format import (
     ColumnsFormat,
     CycloneDxFormat,
     JsonFormat,
+    JunitFormat,
     MarkdownFormat,
     VulnerabilityFormat,
 )
@@ -71,6 +72,7 @@ class OutputFormatChoice(str, enum.Enum):
     CycloneDxJson = "cyclonedx-json"
     CycloneDxXml = "cyclonedx-xml"
     Markdown = "markdown"
+    Junit = "junit"
 
     def to_format(self, output_desc: bool, output_aliases: bool) -> VulnerabilityFormat:
         if self is OutputFormatChoice.Columns:
@@ -83,6 +85,8 @@ class OutputFormatChoice(str, enum.Enum):
             return CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Xml)
         elif self is OutputFormatChoice.Markdown:
             return MarkdownFormat(output_desc, output_aliases)
+        elif self is OutputFormatChoice.Junit:
+            return JunitFormat(output_desc, output_aliases)
         else:
             assert_never(self)  # pragma: no cover
 
@@ -127,7 +131,7 @@ class VulnerabilityDescriptionChoice(str, enum.Enum):
         elif self is VulnerabilityDescriptionChoice.Off:
             return False
         elif self is VulnerabilityDescriptionChoice.Auto:
-            return bool(format_ is OutputFormatChoice.Json)
+            return bool(format_ is OutputFormatChoice.Json or format_ is OutputFormatChoice.Junit)
         else:
             assert_never(self)  # pragma: no cover
 
@@ -151,7 +155,7 @@ class VulnerabilityAliasChoice(str, enum.Enum):
         elif self is VulnerabilityAliasChoice.Off:
             return False
         elif self is VulnerabilityAliasChoice.Auto:
-            return bool(format_ is OutputFormatChoice.Json)
+            return bool(format_ is OutputFormatChoice.Json or format_ is OutputFormatChoice.Junit)
         else:
             assert_never(self)  # pragma: no cover
 
