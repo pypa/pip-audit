@@ -131,7 +131,7 @@ class VulnerabilityDescriptionChoice(str, enum.Enum):
         elif self is VulnerabilityDescriptionChoice.Off:
             return False
         elif self is VulnerabilityDescriptionChoice.Auto:
-            return bool(format_ is OutputFormatChoice.Json or format_ is OutputFormatChoice.Junit)
+            return bool(format_ is OutputFormatChoice.Json) or bool(format_ is OutputFormatChoice.Junit)
         else:
             assert_never(self)  # pragma: no cover
 
@@ -155,7 +155,7 @@ class VulnerabilityAliasChoice(str, enum.Enum):
         elif self is VulnerabilityAliasChoice.Off:
             return False
         elif self is VulnerabilityAliasChoice.Auto:
-            return bool(format_ is OutputFormatChoice.Json or format_ is OutputFormatChoice.Junit)
+            return bool(format_ is OutputFormatChoice.Json) or bool(format_ is OutputFormatChoice.Junit)
         else:
             assert_never(self)  # pragma: no cover
 
