@@ -156,7 +156,7 @@ optional arguments:
                         used multiple times (default: None)
   -f FORMAT, --format FORMAT
                         the format to emit audit results in (choices: columns,
-                        json, cyclonedx-json, cyclonedx-xml, markdown)
+                        json, junit, cyclonedx-json, cyclonedx-xml, markdown)
                         (default: columns)
   -s SERVICE, --vulnerability-service SERVICE
                         the vulnerability service to audit dependencies
