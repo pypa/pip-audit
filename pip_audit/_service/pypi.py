@@ -104,7 +104,7 @@ class PyPIService(VulnerabilityService):
             try:
                 fix_versions = [Version(fixed_in) for fixed_in in v["fixed_in"]]
             except InvalidVersion as iv:
-                raise ServiceError(f'Received malformed version from PyPI: {v["fixed_in"]}') from iv
+                raise ServiceError(f"Received malformed version from PyPI: {v['fixed_in']}") from iv
 
             # The ranges aren't guaranteed to come in chronological order
             fix_versions.sort()
