@@ -554,9 +554,7 @@ def audit() -> None:  # pragma: no cover
                         )
                     else:
                         fix = cast(ResolvedFixVersion, fix)
-                        logger.info(
-                            f"Dry run: would have upgraded {fix.dep.name} to " f"{fix.version}"
-                        )
+                        logger.info(f"Dry run: would have upgraded {fix.dep.name} to {fix.version}")
                     continue
 
                 if not fix.is_skipped():
