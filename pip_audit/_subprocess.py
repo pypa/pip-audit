@@ -34,10 +34,6 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
     the process's `stdout` stream as a string.
     """
 
-    # Run the process with unbuffered I/O, to make the poll-and-read loop below
-    # more responsive.
-    process = Popen(args, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
     # NOTE(ww): We frequently run commands inside of ephemeral virtual environments,
     # which have long absolute paths on some platforms. These make for confusing
     # state updates, so we trim the first argument down to its basename.
@@ -47,22 +43,25 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
     stdout = b""
     stderr = b""
 
-    # NOTE: We use `poll()` to control this loop instead of the `read()` call
-    # to prevent deadlocks. Similarly, `read(size)` will return an empty bytes
-    # once `stdout` hits EOF, so we don't have to worry about that blocking.
-    while not terminated:
-        terminated = process.poll() is not None
-        stdout += process.stdout.read()  # type: ignore
-        stderr += process.stderr.read()  # type: ignore
-        state.update_state(
-            f"Running {pretty_args}",
-            stdout.decode(errors="replace") if log_stdout else None,
-        )
+    # Run the process with unbuffered I/O, to make the poll-and-read loop below
+    # more responsive.
+    with Popen(args, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+        # NOTE: We use `poll()` to control this loop instead of the `read()` call
+        # to prevent deadlocks. Similarly, `read(size)` will return an empty bytes
+        # once `stdout` hits EOF, so we don't have to worry about that blocking.
+        while not terminated:
+            terminated = process.poll() is not None
+            stdout += process.stdout.read()  # type: ignore
+            stderr += process.stderr.read()  # type: ignore
+            state.update_state(
+                f"Running {pretty_args}",
+                stdout.decode(errors="replace") if log_stdout else None,
+            )
 
-    if process.returncode != 0:
-        raise CalledProcessError(
-            f"{pretty_args} exited with {process.returncode}",
-            stderr=stderr.decode(errors="replace"),
-        )
+        if process.returncode != 0:
+            raise CalledProcessError(
+                f"{pretty_args} exited with {process.returncode}",
+                stderr=stderr.decode(errors="replace"),
+            )
 
     return stdout.decode("utf-8", errors="replace")
