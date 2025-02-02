@@ -27,6 +27,8 @@ All versions prior to 0.0.9 are untracked.
 * Auditing a fully-pinned requirements file with `--disable-pip` now allows for
   duplicates, so long as the duplicates don't have conflicting specifier sets
   ([#749](https://github.com/pypa/pip-audit/pull/749))
+* Fixed two sources of unnecessary resource leaks when doing file I/O
+  ([#878](https://github.com/pypa/pip-audit/pull/878))
 
 ## [2.7.3]
 
