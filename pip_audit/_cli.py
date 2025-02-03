@@ -209,7 +209,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
     dep_source_args.add_argument(
         "-r",
         "--requirement",
-        type=argparse.FileType("r"),
+        type=Path,
         metavar="REQUIREMENT",
         action="append",
         dest="requirements",
@@ -465,9 +465,12 @@ def audit() -> None:  # pragma: no cover
 
         source: DependencySource
         if args.requirements is not None:
-            req_files: list[Path] = [Path(req.name) for req in args.requirements]
+            for req in args.requirements:
+                if not req.exists():
+                    _fatal(f"invalid requirements input: {req}")
+
             source = RequirementSource(
-                req_files,
+                args.requirements,
                 require_hashes=args.require_hashes,
                 no_deps=args.no_deps,
                 disable_pip=args.disable_pip,
