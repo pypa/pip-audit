@@ -13,7 +13,6 @@ jobs:
 
     permissions:
       # Used to authenticate to PyPI via OIDC.
-      # Used to sign the release's artifacts with sigstore-python.
       id-token: write
 
       # Used to attach signing artifacts to the published release.
@@ -37,8 +36,3 @@ jobs:
     - name: publish
       uses: pypa/gh-action-pypi-publish@release/v1
 
-    - name: sign
-      uses: sigstore/gh-action-sigstore-python@f514d46b907ebcd5bedc05145c03b69c1edd8b46 # v3.0.0
-      with:
-        inputs: ./dist/*.tar.gz ./dist/*.whl
-        release-signing-artifacts: true
