@@ -27,7 +27,18 @@ def _patch_platformdirs(monkeypatch: MonkeyPatch, sys_platform: str) -> None:
         monkeypatch.setenv("XDG_CACHE_HOME", "/tmp/home/.cache")
 
 
-def test_get_cache_dir(monkeypatch):
+@pytest.mark.parametrize(
+    "sys_platform",
+    [
+        pytest.param("linux", id="on Linux"),
+        pytest.param("win32", id="on Windows"),
+        pytest.param("darwin", id="on MacOS"),
+    ],
+)
+def test_get_cache_dir(monkeypatch, sys_platform):
+    # Check cross-platforms
+    _patch_platformdirs(monkeypatch, sys_platform)
+
     # When we supply a cache directory, always use that
     cache_dir = Path("/tmp/foo/cache_dir")
     assert _get_cache_dir(cache_dir) == cache_dir
