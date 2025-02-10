@@ -20,8 +20,11 @@ def _patch_platformdirs(monkeypatch: MonkeyPatch, sys_platform: str) -> None:
     # as cache definition is stored in the top level `__init__.py` file of the
     # `platformdirs` package
     importlib.reload(platformdirs)
+    # Setting directory-controlling environment variables to known state
     if sys_platform == "win32":
         monkeypatch.setenv("LOCALAPPDATA", "/tmp/AppData/Local")
+    elif sys_platform == "linux":
+        monkeypatch.setenv("XDG_CACHE_HOME", "/tmp/home/.cache")
 
 
 def test_get_cache_dir(monkeypatch):
@@ -48,7 +51,7 @@ def test_get_pip_cache():
     [
         pytest.param(
             "linux",
-            Path.home() / ".cache" / "pip-audit",
+            Path("/tmp") / "home" / ".cache" / "pip-audit",
             id="on Linux",
         ),
         pytest.param(
@@ -76,7 +79,7 @@ def test_get_cache_dir_do_not_use_pip(monkeypatch, sys_platform, expected):
     [
         pytest.param(
             "linux",
-            Path.home() / ".cache" / "pip-audit",
+            Path("/tmp") / "home" / ".cache" / "pip-audit",
             id="on Linux",
         ),
         pytest.param(
@@ -105,7 +108,7 @@ def test_get_cache_dir_pip_disabled_in_environment(monkeypatch, sys_platform, ex
     [
         pytest.param(
             "linux",
-            Path.home() / ".cache" / "pip-audit",
+            Path("/tmp") / "home" / ".cache" / "pip-audit",
             id="on Linux",
         ),
         pytest.param(
