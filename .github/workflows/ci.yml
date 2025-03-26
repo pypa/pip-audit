@@ -35,11 +35,29 @@ jobs:
       - name: test
         run: make test PIP_AUDIT_EXTRA=test
 
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        with:
+          # Always test with latest Python on Windows.
+          python-version: "3.x"
+          cache: "pip"
+          cache-dependency-path: pyproject.toml
+
+      - name: test
+        run: make test PIP_AUDIT_EXTRA=test
+
   all-tests-pass:
     if: always()
 
     needs:
     - test
+    - test-windows
 
     runs-on: ubuntu-latest
 
