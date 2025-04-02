@@ -23,6 +23,7 @@ from pip_audit._dependency_source import (
     PyProjectSource,
     RequirementSource,
 )
+from pip_audit._dependency_source.pylock import PyLockSource
 from pip_audit._fix import ResolvedFixVersion, SkippedFixVersion, resolve_fix_versions
 from pip_audit._format import (
     ColumnsFormat,
@@ -222,6 +223,12 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         help="audit a local Python project at the given path",
     )
     parser.add_argument(
+        "--locked",
+        action="store_true",
+        help="audit lock files from the local Python project. This "
+        "flag only applies to auditing from project paths",
+    )
+    parser.add_argument(
         "-f",
         "--format",
         type=OutputFormatChoice,
@@ -395,8 +402,20 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragm
 
 
 def _dep_source_from_project_path(
-    project_path: Path, index_url: str, extra_index_urls: list[str], state: AuditState
+    project_path: Path, index_url: str, extra_index_urls: list[str], locked: bool, state: AuditState
 ) -> DependencySource:  # pragma: no cover
+    # If the user has passed `--locked`, we check for `pylock.*.toml` files.
+    if locked:
+        all_pylocks = list(project_path.glob("pylock.*.toml"))
+        generic_pylock = project_path / "pylock.toml"
+        if generic_pylock.is_file():
+            all_pylocks.append(generic_pylock)
+
+        if not all_pylocks:
+            _fatal(f"no lockfiles found in {project_path}")
+
+        return PyLockSource(all_pylocks)
+
     # Check for a `pyproject.toml`
     pyproject_path = project_path / "pyproject.toml"
     if pyproject_path.is_file():
@@ -488,6 +507,7 @@ def audit() -> None:  # pragma: no cover
                 args.project_path,
                 args.index_url,
                 args.extra_index_urls,
+                args.locked,
                 state,
             )
         else:
