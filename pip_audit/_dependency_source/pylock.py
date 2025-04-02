@@ -88,8 +88,13 @@ class PyLockSource(DependencySource):
                 yield SkippedDependency(name, "no version specified")
 
     def fix(self, fix_version: ResolvedFixVersion) -> None:
-        # We don't support fixing dependencies in lockfiles, since
-        # lockfiles should be managed/updated by their packaging tool.
+        """
+        Raises `NotImplementedError` if called.
+
+        We don't support fixing dependencies in lockfiles, since
+        lockfiles should be managed/updated by their packaging tool.
+        """
+
         raise NotImplementedError(
             "lockfiles cannot be fixed directly; use your packaging tool to perform upgrades"
         )
