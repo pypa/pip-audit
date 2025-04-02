@@ -443,6 +443,11 @@ def audit() -> None:  # pragma: no cover
     output_aliases = args.aliases.to_bool(args.format)
     formatter = args.format.to_format(output_desc, output_aliases)
 
+    # Check for flags that are only valid with project paths
+    if args.project_path is None:
+        if args.locked:
+            parser.error("The --locked flag can only be used with a project path")
+
     # Check for flags that are only valid with requirements files
     if args.requirements is None:
         if args.require_hashes:
