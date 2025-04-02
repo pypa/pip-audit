@@ -131,13 +131,14 @@ python -m pip_audit --help
 
 <!-- @begin-pip-audit-help@ -->
 ```
-usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENT] [-f FORMAT] [-s SERVICE] [-d]
-                 [-S] [--desc [{on,off,auto}]] [--aliases [{on,off,auto}]]
-                 [--cache-dir CACHE_DIR] [--progress-spinner {on,off}]
-                 [--timeout TIMEOUT] [--path PATH] [-v] [--fix]
-                 [--require-hashes] [--index-url INDEX_URL]
-                 [--extra-index-url URL] [--skip-editable] [--no-deps]
-                 [-o FILE] [--ignore-vuln ID] [--disable-pip]
+usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENT] [--locked] [-f FORMAT]
+                 [-s SERVICE] [-d] [-S] [--desc [{on,off,auto}]]
+                 [--aliases [{on,off,auto}]] [--cache-dir CACHE_DIR]
+                 [--progress-spinner {on,off}] [--timeout TIMEOUT]
+                 [--path PATH] [-v] [--fix] [--require-hashes]
+                 [--index-url INDEX_URL] [--extra-index-url URL]
+                 [--skip-editable] [--no-deps] [-o FILE] [--ignore-vuln ID]
+                 [--disable-pip]
                  [project_path]
 
 audit the Python environment for dependencies with known vulnerabilities
@@ -146,7 +147,7 @@ positional arguments:
   project_path          audit a local Python project at the given path
                         (default: None)
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -V, --version         show program's version number and exit
   -l, --local           show only results for dependencies in the local
@@ -154,6 +155,9 @@ optional arguments:
   -r REQUIREMENT, --requirement REQUIREMENT
                         audit the given requirements file; this option can be
                         used multiple times (default: None)
+  --locked              audit lock files from the local Python project. This
+                        flag only applies to auditing from project paths
+                        (default: False)
   -f FORMAT, --format FORMAT
                         the format to emit audit results in (choices: columns,
                         json, cyclonedx-json, cyclonedx-xml, markdown)
