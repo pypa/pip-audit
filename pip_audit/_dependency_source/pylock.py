@@ -10,6 +10,7 @@ import toml
 from packaging.version import Version
 
 from pip_audit._dependency_source import DependencyFixError, DependencySource, DependencySourceError
+from pip_audit._fix import ResolvedFixVersion
 from pip_audit._service import Dependency, ResolvedDependency
 from pip_audit._service.interface import SkippedDependency
 
@@ -86,8 +87,12 @@ class PyLockSource(DependencySource):
                 # We mark these as skipped.
                 yield SkippedDependency(name, "no version specified")
 
-    def fix(self, fix_version):
-        raise NotImplementedError("pylock source does not support fixing dependencies")
+    def fix(self, fix_version: ResolvedFixVersion) -> None:
+        # We don't support fixing dependencies in lockfiles, since
+        # lockfiles should be managed/updated by their packaging tool.
+        raise NotImplementedError(
+            "lockfiles cannot be fixed directly; use your packaging tool to perform upgrades"
+        )
 
 
 class PyLockSourceError(DependencySourceError):
