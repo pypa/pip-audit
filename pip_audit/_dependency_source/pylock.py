@@ -87,7 +87,7 @@ class PyLockSource(DependencySource):
                 # We mark these as skipped.
                 yield SkippedDependency(name, "no version specified")
 
-    def fix(self, fix_version: ResolvedFixVersion) -> None:
+    def fix(self, fix_version: ResolvedFixVersion) -> None:  # pragma: no cover
         """
         Raises `NotImplementedError` if called.
 
