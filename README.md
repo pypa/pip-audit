@@ -264,32 +264,46 @@ an audit (or fix) step is actually performed.
 ## Examples
 
 Audit dependencies for the current Python environment:
-```
+
+```console
 $ pip-audit
 No known vulnerabilities found
 ```
 
 Audit dependencies for a given requirements file:
-```
+
+```console
 $ pip-audit -r ./requirements.txt
 No known vulnerabilities found
 ```
 
 Audit dependencies for a requirements file, excluding system packages:
-```
+
+```console
 $ pip-audit -r ./requirements.txt -l
 No known vulnerabilities found
 ```
 
 Audit dependencies for a local Python project:
-```
+
+```console
 $ pip-audit .
 No known vulnerabilities found
 ```
-`pip-audit` searches the provided path for various Python "project" files. At the moment, only `pyproject.toml` is supported.
+
+Audit lockfiles for a local Python project:
+
+```console
+$ pip-audit --locked .
+No known vulnerabilities found
+```
+
+`pip-audit` searches the provided path for various Python "project" files.
+At the moment, only `pyproject.toml` and `pylock.*.toml` are supported.
 
 Audit dependencies when there are vulnerabilities present:
-```
+
+```console
 $ pip-audit
 Found 2 known vulnerabilities in 1 package
 Name  Version ID             Fix Versions
@@ -299,7 +313,8 @@ Flask 0.5     PYSEC-2018-66  0.12.3
 ```
 
 Audit dependencies including aliases:
-```
+
+```console
 $ pip-audit --aliases
 Found 2 known vulnerabilities in 1 package
 Name  Version ID             Fix Versions Aliases
@@ -309,7 +324,8 @@ Flask 0.5     PYSEC-2018-66  0.12.3       CVE-2018-1000656, GHSA-562c-5r94-xh97
 ```
 
 Audit dependencies including descriptions:
-```
+
+```console
 $ pip-audit --desc
 Found 2 known vulnerabilities in 1 package
 Name  Version ID             Fix Versions Description
@@ -319,7 +335,8 @@ Flask 0.5     PYSEC-2018-66  0.12.3       The Pallets Project flask version Befo
 ```
 
 Audit dependencies in JSON format:
-```
+
+```console
 $ pip-audit -f json | python -m json.tool
 Found 2 known vulnerabilities in 1 package
 [
@@ -380,7 +397,8 @@ Found 2 known vulnerabilities in 1 package
 ```
 
 Audit and attempt to automatically upgrade vulnerable dependencies:
-```
+
+```console
 $ pip-audit --fix
 Found 2 known vulnerabilities in 1 package and fixed 2 vulnerabilities in 1 package
 Name  Version ID             Fix Versions Applied Fix
