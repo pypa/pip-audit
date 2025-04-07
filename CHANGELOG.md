@@ -14,6 +14,10 @@ All versions prior to 0.0.9 are untracked.
 
 * `pip-audit` now allows some CLI flags to be configured via environment
   variables ([#755](https://github.com/pypa/pip-audit/pull/755))
+* `pip-audit` now supports [PEP 751](https://peps.python.org/pep-0751/)
+  lockfiles. These lockfiles can be audited in "project" mode by
+  passing `--locked` to `pip-audit`
+  ([#888](https://github.com/pypa/pip-audit/pull/888))
 
 ### Changed
 
