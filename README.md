@@ -2,7 +2,7 @@ pip-audit
 =========
 
 <!--- BADGES: START --->
-![CI](https://github.com/pypa/pip-audit/workflows/CI/badge.svg)
+[![CI](https://github.com/pypa/pip-audit/workflows/CI/badge.svg)](https://github.com/pypa/pip-audit/actions/workflows/ci.yml)
 [![PyPI version](https://badge.fury.io/py/pip-audit.svg)](https://pypi.org/project/pip-audit)
 [![Packaging status](https://repology.org/badge/tiny-repos/python:pip-audit.svg)](https://repology.org/project/python:pip-audit/versions)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/pypa/pip-audit/badge)](https://api.securityscorecards.dev/projects/github.com/pypa/pip-audit)
