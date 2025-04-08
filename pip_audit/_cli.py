@@ -32,9 +32,9 @@ from pip_audit._format import (
     MarkdownFormat,
     VulnerabilityFormat,
 )
-from pip_audit._service import OsvService, PyPIService, VulnerabilityService
+from pip_audit._service import OsvService, PyPIService
 from pip_audit._service.interface import ConnectionError as VulnServiceConnectionError
-from pip_audit._service.interface import ResolvedDependency, SkippedDependency
+from pip_audit._service.interface import ResolvedDependency, SkippedDependency, VulnerabilityService
 from pip_audit._state import AuditSpinner, AuditState
 from pip_audit._util import assert_never
 
@@ -99,14 +99,6 @@ class VulnerabilityServiceChoice(str, enum.Enum):
 
     Osv = "osv"
     Pypi = "pypi"
-
-    def to_service(self, **kwargs: dict) -> VulnerabilityService:
-        if self is VulnerabilityServiceChoice.Osv:
-            return OsvService(**kwargs)
-        elif self is VulnerabilityServiceChoice.Pypi:
-            return PyPIService(**kwargs)
-        else:
-            assert_never(self)  # pragma: no cover
 
     def __str__(self) -> str:
         return self.value
@@ -446,11 +438,14 @@ def audit() -> None:  # pragma: no cover
     parser = _parser()
     args = _parse_args(parser)
 
-    service = args.vulnerability_service.to_service(
-        timeout=args.timeout,
-        cache_dir=args.cache_dir,
-        osv_url=args.osv_url,
-    )
+    service: VulnerabilityService
+    if args.vulnerability_service is VulnerabilityServiceChoice.Osv:
+        service = OsvService(cache_dir=args.cache_dir, timeout=args.timeout, osv_url=args.osv_url)
+    elif args.vulnerability_service is VulnerabilityServiceChoice.Pypi:
+        service = PyPIService(cache_dir=args.cache_dir, timeout=args.timeout)
+    else:
+        assert_never(args.vulnerability_service)  # pragma: no cover
+
     output_desc = args.desc.to_bool(args.format)
     output_aliases = args.aliases.to_bool(args.format)
     formatter = args.format.to_format(output_desc, output_aliases)

@@ -32,7 +32,9 @@ class PyPIService(VulnerabilityService):
     package vulnerability information.
     """
 
-    def __init__(self, cache_dir: Path | None = None, timeout: int | None = None, **kwargs: dict) -> None:
+    def __init__(
+        self, cache_dir: Path | None = None, timeout: int | None = None, **kwargs: dict
+    ) -> None:
         """
         Create a new `PyPIService`.
 
