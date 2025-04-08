@@ -8,7 +8,17 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Added
+
+* `pip-audit` now supports the `--osv-url URL` flag, which can be used to
+  retrieve vulnerabilities from a custom OSV service. This is useful for
+  organizations that host their own mirror of the OSV database, or that
+  have custom OSV records
+  ([#810](https://github.com/pypa/pip-audit/pull/810))
+
 ## [2.9.0]
+
+### Added
 
 * `pip-audit` now supports [PEP 751](https://peps.python.org/pep-0751/)
   lockfiles. These lockfiles can be audited in "project" mode by

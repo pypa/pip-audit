@@ -132,13 +132,13 @@ python -m pip_audit --help
 <!-- @begin-pip-audit-help@ -->
 ```
 usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENT] [--locked] [-f FORMAT]
-                 [-s SERVICE] [-d] [-S] [--desc [{on,off,auto}]]
-                 [--aliases [{on,off,auto}]] [--cache-dir CACHE_DIR]
-                 [--progress-spinner {on,off}] [--timeout TIMEOUT]
-                 [--path PATH] [-v] [--fix] [--require-hashes]
-                 [--index-url INDEX_URL] [--extra-index-url URL]
-                 [--skip-editable] [--no-deps] [-o FILE] [--ignore-vuln ID]
-                 [--disable-pip]
+                 [-s SERVICE] [--osv-url OSV_URL] [-d] [-S]
+                 [--desc [{on,off,auto}]] [--aliases [{on,off,auto}]]
+                 [--cache-dir CACHE_DIR] [--progress-spinner {on,off}]
+                 [--timeout TIMEOUT] [--path PATH] [-v] [--fix]
+                 [--require-hashes] [--index-url INDEX_URL]
+                 [--extra-index-url URL] [--skip-editable] [--no-deps]
+                 [-o FILE] [--ignore-vuln ID] [--disable-pip]
                  [project_path]
 
 audit the Python environment for dependencies with known vulnerabilities
@@ -165,6 +165,8 @@ optional arguments:
   -s SERVICE, --vulnerability-service SERVICE
                         the vulnerability service to audit dependencies
                         against (choices: osv, pypi) (default: pypi)
+  --osv-url OSV_URL     URL to use for the OSV API instead of the default
+                        (default: https://api.osv.dev/v1/query)
   -d, --dry-run         without `--fix`: collect all dependencies but do not
                         perform the auditing step; with `--fix`: perform the
                         auditing step but do not perform any fixes (default:
