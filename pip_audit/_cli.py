@@ -9,9 +9,10 @@ import enum
 import logging
 import os
 import sys
+from collections.abc import Iterator
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import IO, Iterator, NoReturn, cast
+from typing import IO, NoReturn, cast
 
 from pip_audit import __version__
 from pip_audit._audit import AuditOptions, Auditor
@@ -22,6 +23,7 @@ from pip_audit._dependency_source import (
     PyProjectSource,
     RequirementSource,
 )
+from pip_audit._dependency_source.pylock import PyLockSource
 from pip_audit._fix import ResolvedFixVersion, SkippedFixVersion, resolve_fix_versions
 from pip_audit._format import (
     ColumnsFormat,
@@ -208,7 +210,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
     dep_source_args.add_argument(
         "-r",
         "--requirement",
-        type=argparse.FileType("r"),
+        type=Path,
         metavar="REQUIREMENT",
         action="append",
         dest="requirements",
@@ -219,6 +221,12 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         type=Path,
         nargs="?",
         help="audit a local Python project at the given path",
+    )
+    parser.add_argument(
+        "--locked",
+        action="store_true",
+        help="audit lock files from the local Python project. This "
+        "flag only applies to auditing from project paths",
     )
     parser.add_argument(
         "-f",
@@ -402,8 +410,20 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragm
 
 
 def _dep_source_from_project_path(
-    project_path: Path, index_url: str, extra_index_urls: list[str], state: AuditState
+    project_path: Path, index_url: str, extra_index_urls: list[str], locked: bool, state: AuditState
 ) -> DependencySource:  # pragma: no cover
+    # If the user has passed `--locked`, we check for `pylock.*.toml` files.
+    if locked:
+        all_pylocks = list(project_path.glob("pylock.*.toml"))
+        generic_pylock = project_path / "pylock.toml"
+        if generic_pylock.is_file():
+            all_pylocks.append(generic_pylock)
+
+        if not all_pylocks:
+            _fatal(f"no lockfiles found in {project_path}")
+
+        return PyLockSource(all_pylocks)
+
     # Check for a `pyproject.toml`
     pyproject_path = project_path / "pyproject.toml"
     if pyproject_path.is_file():
@@ -434,6 +454,11 @@ def audit() -> None:  # pragma: no cover
     output_desc = args.desc.to_bool(args.format)
     output_aliases = args.aliases.to_bool(args.format)
     formatter = args.format.to_format(output_desc, output_aliases)
+
+    # Check for flags that are only valid with project paths
+    if args.project_path is None:
+        if args.locked:
+            parser.error("The --locked flag can only be used with a project path")
 
     # Check for flags that are only valid with requirements files
     if args.requirements is None:
@@ -476,9 +501,12 @@ def audit() -> None:  # pragma: no cover
 
         source: DependencySource
         if args.requirements is not None:
-            req_files: list[Path] = [Path(req.name) for req in args.requirements]
+            for req in args.requirements:
+                if not req.exists():
+                    _fatal(f"invalid requirements input: {req}")
+
             source = RequirementSource(
-                req_files,
+                args.requirements,
                 require_hashes=args.require_hashes,
                 no_deps=args.no_deps,
                 disable_pip=args.disable_pip,
@@ -496,6 +524,7 @@ def audit() -> None:  # pragma: no cover
                 args.project_path,
                 args.index_url,
                 args.extra_index_urls,
+                args.locked,
                 state,
             )
         else:
@@ -565,9 +594,7 @@ def audit() -> None:  # pragma: no cover
                         )
                     else:
                         fix = cast(ResolvedFixVersion, fix)
-                        logger.info(
-                            f"Dry run: would have upgraded {fix.dep.name} to " f"{fix.version}"
-                        )
+                        logger.info(f"Dry run: would have upgraded {fix.dep.name} to {fix.version}")
                     continue
 
                 if not fix.is_skipped():
@@ -583,11 +610,15 @@ def audit() -> None:  # pragma: no cover
                 fixes.append(fix)
 
     if vuln_count > 0:
+        if vuln_ignore_count:
+            ignored = f", ignored {vuln_ignore_count}"
+        else:
+            ignored = ""
+
         summary_msg = (
             f"Found {vuln_count} known "
             f"{'vulnerability' if vuln_count == 1 else 'vulnerabilities'}"
-            f"{(vuln_ignore_count and ', ignored %d ' % vuln_ignore_count) or ' '}"
-            f"in {pkg_count} {'package' if pkg_count == 1 else 'packages'}"
+            f"{ignored} in {pkg_count} {'package' if pkg_count == 1 else 'packages'}"
         )
         if args.fix:
             summary_msg += (

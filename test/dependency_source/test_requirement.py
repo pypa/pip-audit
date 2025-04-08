@@ -526,6 +526,30 @@ def test_requirement_source_disable_pip_duplicate_dependencies(req_file):
         [(req_file(), "flask==1.0\nflask==1.0")], disable_pip=True, no_deps=True
     )
 
+    specs = list(source.collect())
+
+    # If the dependency list has duplicates, then converting to a set will reduce the length of the
+    # collection
+    assert len(specs) == len(set(specs))
+
+
+def test_requirement_source_disable_pip_duplicate_dependencies_with_extras(req_file):
+    source = _init_requirement(
+        [(req_file(), "aiohttp==3.9\naiohttp[speedups]==3.9")], disable_pip=True, no_deps=True
+    )
+
+    specs = list(source.collect())
+
+    # If the dependency list has duplicates, then converting to a set will reduce the length of the
+    # collection
+    assert len(specs) == len(set(specs))
+
+
+def test_requirement_source_disable_pip_duplicate_dependencies_diff_specifier(req_file):
+    source = _init_requirement(
+        [(req_file(), "flask==1.0\nflask==2.0")], disable_pip=True, no_deps=True
+    )
+
     with pytest.raises(DependencySourceError):
         list(source.collect())
 

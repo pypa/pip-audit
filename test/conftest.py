@@ -11,6 +11,9 @@ from pip_audit._service.interface import (
     VulnerabilityService,
 )
 
+_ASSETS = Path(__file__).parent / "assets"
+assert _ASSETS.is_dir(), f"assets directory not found: {_ASSETS}"
+
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -91,3 +94,13 @@ def req_file():
         return req_path
 
     return _req_file
+
+
+@pytest.fixture
+def asset():
+    def _asset(name: str):
+        asset_path = _ASSETS / name
+        assert asset_path.exists(), f"Asset not found: {asset_path}"
+        return asset_path
+
+    return _asset

@@ -2,7 +2,7 @@ pip-audit
 =========
 
 <!--- BADGES: START --->
-![CI](https://github.com/pypa/pip-audit/workflows/CI/badge.svg)
+[![CI](https://github.com/pypa/pip-audit/workflows/CI/badge.svg)](https://github.com/pypa/pip-audit/actions/workflows/ci.yml)
 [![PyPI version](https://badge.fury.io/py/pip-audit.svg)](https://pypi.org/project/pip-audit)
 [![Packaging status](https://repology.org/badge/tiny-repos/python:pip-audit.svg)](https://repology.org/project/python:pip-audit/versions)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/pypa/pip-audit/badge)](https://api.securityscorecards.dev/projects/github.com/pypa/pip-audit)
@@ -51,7 +51,7 @@ with support from Google. This is not an official Google or Trail of Bits produc
 
 ## Installation
 
-`pip-audit` requires Python 3.8 or newer, and can be installed directly via `pip`:
+`pip-audit` requires Python 3.9 or newer, and can be installed directly via `pip`:
 
 ```bash
 python -m pip install pip-audit
@@ -107,7 +107,7 @@ For example, using `pip-audit` via `pre-commit` to audit a requirements file:
 
 ```yaml
   - repo: https://github.com/pypa/pip-audit
-    rev: v2.7.3
+    rev: v2.9.0
     hooks:
       -   id: pip-audit
           args: ["-r", "requirements.txt"]
@@ -131,13 +131,14 @@ python -m pip_audit --help
 
 <!-- @begin-pip-audit-help@ -->
 ```
-usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENT] [-f FORMAT] [-s SERVICE] [-d]
-                 [-S] [--desc [{on,off,auto}]] [--aliases [{on,off,auto}]]
-                 [--cache-dir CACHE_DIR] [--progress-spinner {on,off}]
-                 [--timeout TIMEOUT] [--path PATH] [-v] [--fix]
-                 [--require-hashes] [--index-url INDEX_URL]
-                 [--extra-index-url URL] [--skip-editable] [--no-deps]
-                 [-o FILE] [--ignore-vuln ID] [--disable-pip]
+usage: pip-audit [-h] [-V] [-l] [-r REQUIREMENT] [--locked] [-f FORMAT]
+                 [-s SERVICE] [-d] [-S] [--desc [{on,off,auto}]]
+                 [--aliases [{on,off,auto}]] [--cache-dir CACHE_DIR]
+                 [--progress-spinner {on,off}] [--timeout TIMEOUT]
+                 [--path PATH] [-v] [--fix] [--require-hashes]
+                 [--index-url INDEX_URL] [--extra-index-url URL]
+                 [--skip-editable] [--no-deps] [-o FILE] [--ignore-vuln ID]
+                 [--disable-pip]
                  [project_path]
 
 audit the Python environment for dependencies with known vulnerabilities
@@ -154,6 +155,9 @@ optional arguments:
   -r REQUIREMENT, --requirement REQUIREMENT
                         audit the given requirements file; this option can be
                         used multiple times (default: None)
+  --locked              audit lock files from the local Python project. This
+                        flag only applies to auditing from project paths
+                        (default: False)
   -f FORMAT, --format FORMAT
                         the format to emit audit results in (choices: columns,
                         json, cyclonedx-json, cyclonedx-xml, markdown)
@@ -260,32 +264,46 @@ an audit (or fix) step is actually performed.
 ## Examples
 
 Audit dependencies for the current Python environment:
-```
+
+```console
 $ pip-audit
 No known vulnerabilities found
 ```
 
 Audit dependencies for a given requirements file:
-```
+
+```console
 $ pip-audit -r ./requirements.txt
 No known vulnerabilities found
 ```
 
 Audit dependencies for a requirements file, excluding system packages:
-```
+
+```console
 $ pip-audit -r ./requirements.txt -l
 No known vulnerabilities found
 ```
 
 Audit dependencies for a local Python project:
-```
+
+```console
 $ pip-audit .
 No known vulnerabilities found
 ```
-`pip-audit` searches the provided path for various Python "project" files. At the moment, only `pyproject.toml` is supported.
+
+Audit lockfiles for a local Python project:
+
+```console
+$ pip-audit --locked .
+No known vulnerabilities found
+```
+
+`pip-audit` searches the provided path for various Python "project" files.
+At the moment, only `pyproject.toml` and `pylock.*.toml` are supported.
 
 Audit dependencies when there are vulnerabilities present:
-```
+
+```console
 $ pip-audit
 Found 2 known vulnerabilities in 1 package
 Name  Version ID             Fix Versions
@@ -295,7 +313,8 @@ Flask 0.5     PYSEC-2018-66  0.12.3
 ```
 
 Audit dependencies including aliases:
-```
+
+```console
 $ pip-audit --aliases
 Found 2 known vulnerabilities in 1 package
 Name  Version ID             Fix Versions Aliases
@@ -305,7 +324,8 @@ Flask 0.5     PYSEC-2018-66  0.12.3       CVE-2018-1000656, GHSA-562c-5r94-xh97
 ```
 
 Audit dependencies including descriptions:
-```
+
+```console
 $ pip-audit --desc
 Found 2 known vulnerabilities in 1 package
 Name  Version ID             Fix Versions Description
@@ -315,7 +335,8 @@ Flask 0.5     PYSEC-2018-66  0.12.3       The Pallets Project flask version Befo
 ```
 
 Audit dependencies in JSON format:
-```
+
+```console
 $ pip-audit -f json | python -m json.tool
 Found 2 known vulnerabilities in 1 package
 [
@@ -376,7 +397,8 @@ Found 2 known vulnerabilities in 1 package
 ```
 
 Audit and attempt to automatically upgrade vulnerable dependencies:
-```
+
+```console
 $ pip-audit --fix
 Found 2 known vulnerabilities in 1 package and fixed 2 vulnerabilities in 1 package
 Name  Version ID             Fix Versions Applied Fix
