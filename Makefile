@@ -14,9 +14,6 @@ ifeq ($(OS),Windows_NT)
 	VENV_BIN := $(VENV)/Scripts
 endif
 
-# Optionally overridden by the user in the `release` target.
-BUMP_ARGS :=
-
 # Optionally overridden by the user in the `test` target.
 TESTS :=
 
@@ -51,7 +48,7 @@ $(VENV)/pyvenv.cfg: pyproject.toml
 	# Create our Python 3 virtual environment
 	python3 -m venv env
 	$(VENV_BIN)/python -m pip install --upgrade pip
-	$(VENV_BIN)/python -m pip install -e .[$(PIP_AUDIT_EXTRA)]
+	$(VENV_BIN)/python -m pip install --upgrade -e .[$(PIP_AUDIT_EXTRA)]
 
 .PHONY: lint
 lint: $(VENV)/pyvenv.cfg
