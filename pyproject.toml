@@ -28,7 +28,7 @@ classifiers = [
 ]
 dependencies = [
     "CacheControl[filecache] >= 0.13.0",
-    "cyclonedx-python-lib >= 5,< 10",
+    "cyclonedx-python-lib >= 5,< 11",
     "packaging>=23.0.0",                 # https://github.com/pypa/pip-audit/issues/464
     "pip-api>=0.0.28",
     "pip-requirements-parser>=32.0.0",
