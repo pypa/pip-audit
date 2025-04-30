@@ -9,7 +9,7 @@ description = "A tool for scanning Python environments for known vulnerabilities
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [
-    { name = "Alex Cameron", email = "alex.cameron@trailofbits.com" },
+    { name = "Alex Cameron" },
     { name = "Dustin Ingram", email = "di@python.org" },
     { name = "William Woodruff", email = "william@trailofbits.com" },
 ]
@@ -33,9 +33,9 @@ dependencies = [
     "pip-api>=0.0.28",
     "pip-requirements-parser>=32.0.0",
     "requests >= 2.31.0",
-    "rich>=12.4",
-    "toml>=0.10",
-    "platformdirs>=4.2.0",
+    "rich >= 12.4",
+    "toml >= 0.10",
+    "platformdirs >= 4.2.0",
 ]
 requires-python = ">=3.9"
 
@@ -47,7 +47,7 @@ test = [
     "pytest-cov",
 ]
 lint = [
-    "ruff ~= 0.9",
+    "ruff >= 0.11",
     "interrogate ~= 1.6",
     "mypy",
     "types-requests",
