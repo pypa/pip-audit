@@ -6,6 +6,7 @@ pip-audit
 [![PyPI version](https://badge.fury.io/py/pip-audit.svg)](https://pypi.org/project/pip-audit)
 [![Packaging status](https://repology.org/badge/tiny-repos/python:pip-audit.svg)](https://repology.org/project/python:pip-audit/versions)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/pypa/pip-audit/badge)](https://api.securityscorecards.dev/projects/github.com/pypa/pip-audit)
+[![License](https://img.shields.io/github/license/pypa/pip-audit)](https://github.com/pypa/pip-audit/blob/main/LICENSE)
 <!--- BADGES: END --->
 
 `pip-audit` is a tool for scanning Python environments for packages
