@@ -1,4 +1,6 @@
 import datetime
+import random
+from typing import cast
 
 import pytest
 from packaging.version import Version
@@ -7,6 +9,7 @@ from pip_audit._service.interface import (
     Dependency,
     ResolvedDependency,
     SkippedDependency,
+    VulnerabilityID,
     VulnerabilityResult,
     VulnerabilityService,
 )
@@ -82,6 +85,21 @@ def test_vulnerability_result_has_any_id():
     assert result.has_any_id({"ham", "eggs", "BAZ"})
     assert not result.has_any_id({"zilch"})
     assert not result.has_any_id(set())
+
+
+@pytest.mark.parametrize("_n", range(10))
+def test_vulnerability_result_create(_n):
+    ids = cast(
+        list[VulnerabilityID],
+        ["testid1", "testid2", "GHSA-XXXX-XXXXX", "CVE-XXXX-XXXXX", "PYSEC-XXXX-XXXXX"],
+    )
+    random.shuffle(ids)
+
+    result = VulnerabilityResult.create(ids, "foo", [], None)
+
+    assert result.id == "PYSEC-XXXX-XXXXX"
+    ids.remove(VulnerabilityID("PYSEC-XXXX-XXXXX"))
+    assert result.aliases == set(ids)
 
 
 class TestVulnerabilityService:

@@ -125,11 +125,10 @@ class PyPIService(VulnerabilityService):
             description = description.replace("\n", " ")
 
             results.append(
-                VulnerabilityResult(
-                    id=id,
+                VulnerabilityResult.create(
+                    ids=[id, *v["aliases"]],
                     description=description,
                     fix_versions=fix_versions,
-                    aliases=set(v["aliases"]),
                     published=self._parse_rfc3339(v.get("published")),
                 )
             )

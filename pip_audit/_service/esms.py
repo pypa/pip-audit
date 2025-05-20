@@ -28,14 +28,6 @@ from pip_audit._service.interface import (
 logger = logging.getLogger(__name__)
 
 
-def _id_comparison_key(id: str) -> int:
-    if id.startswith("PYSEC"):
-        return 1
-    elif id.startswith("CVE"):
-        return 2
-    return 3
-
-
 class EcosystemsService(VulnerabilityService):
     """
     An implementation of `VulnerabilityService` that uses Ecosyste.ms to provide Python
@@ -100,7 +92,6 @@ class EcosystemsService(VulnerabilityService):
         for vuln in response_json:
             # Get the IDs, prioritising PYSEC and CVE.
             ids: list[VulnerabilityID] = vuln["identifiers"]
-            ids.sort(key=_id_comparison_key)
 
             # If the vulnerability has been withdrawn, we skip it entirely.
             withdrawn_at = vuln["withdrawn_at"]
@@ -153,11 +144,10 @@ class EcosystemsService(VulnerabilityService):
                 continue
 
             results.append(
-                VulnerabilityResult(
-                    id=ids[0],
+                VulnerabilityResult.create(
+                    ids=ids,
                     description=description,
                     fix_versions=sorted(fix_versions),
-                    aliases=set(ids[1:]),
                     published=self._parse_rfc3339(vuln.get("published")),
                 )
             )

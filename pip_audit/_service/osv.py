@@ -150,11 +150,10 @@ class OsvService(VulnerabilityService):
             fix_versions.sort()
 
             results.append(
-                VulnerabilityResult(
-                    id=id,
+                VulnerabilityResult.create(
+                    ids=[id, *vuln.get("aliases", [])],
                     description=description,
                     fix_versions=fix_versions,
-                    aliases=set(vuln.get("aliases", [])),
                     published=self._parse_rfc3339(vuln.get("published")),
                 )
             )
