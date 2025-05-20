@@ -32,7 +32,7 @@ from pip_audit._format import (
     MarkdownFormat,
     VulnerabilityFormat,
 )
-from pip_audit._service import OsvService, PyPIService
+from pip_audit._service import EcosystemsService, OsvService, PyPIService
 from pip_audit._service.interface import ConnectionError as VulnServiceConnectionError
 from pip_audit._service.interface import ResolvedDependency, SkippedDependency, VulnerabilityService
 from pip_audit._state import AuditSpinner, AuditState
@@ -99,6 +99,7 @@ class VulnerabilityServiceChoice(str, enum.Enum):
 
     Osv = "osv"
     Pypi = "pypi"
+    Esms = "esms"
 
     def __str__(self) -> str:
         return self.value
@@ -443,6 +444,8 @@ def audit() -> None:  # pragma: no cover
         service = OsvService(cache_dir=args.cache_dir, timeout=args.timeout, osv_url=args.osv_url)
     elif args.vulnerability_service is VulnerabilityServiceChoice.Pypi:
         service = PyPIService(cache_dir=args.cache_dir, timeout=args.timeout)
+    elif args.vulnerability_service is VulnerabilityServiceChoice.Esms:
+        service = EcosystemsService(cache_dir=args.cache_dir, timeout=args.timeout)
     else:
         assert_never(args.vulnerability_service)  # pragma: no cover
 

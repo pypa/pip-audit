@@ -16,6 +16,10 @@ All versions prior to 0.0.9 are untracked.
   have custom OSV records
   ([#810](https://github.com/pypa/pip-audit/pull/810))
 
+* `pip-audit` now supports the Ecosyste.ms vulnerability service with
+  `--vulnerability-service=esms`
+  ([#903](https://github.com/pypa/pip-audit/pull/903)).
+
 ## [2.9.0]
 
 ### Added
@@ -46,6 +50,7 @@ All versions prior to 0.0.9 are untracked.
 * Auditing a fully-pinned requirements file with `--disable-pip` now allows for
   duplicates, so long as the duplicates don't have conflicting specifier sets
   ([#749](https://github.com/pypa/pip-audit/pull/749))
+
 * Fixed two sources of unnecessary resource leaks when doing file I/O
   ([#878](https://github.com/pypa/pip-audit/pull/878))
 
@@ -629,6 +634,7 @@ All versions prior to 0.0.9 are untracked.
 * CLI: Skipped dependencies are now listed in the output of `pip-audit`,
   for supporting output formats
   ([#145](https://github.com/pypa/pip-audit/pull/145))
+
 * CLI: `pip-audit` now supports a "strict" mode (enabled with `-S` or
   `--strict`) that fails if the audit if any individual dependency cannot be
   resolved or audited. The default behavior is still to skip any individual

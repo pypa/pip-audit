@@ -165,7 +165,7 @@ optional arguments:
                         (default: columns)
   -s SERVICE, --vulnerability-service SERVICE
                         the vulnerability service to audit dependencies
-                        against (choices: osv, pypi) (default: pypi)
+                        against (choices: osv, pypi, esms) (default: pypi)
   --osv-url OSV_URL     URL to use for the OSV API instead of the default
                         (default: https://api.osv.dev/v1/query)
   -d, --dry-run         without `--fix`: collect all dependencies but do not
