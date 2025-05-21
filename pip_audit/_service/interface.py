@@ -17,6 +17,14 @@ from packaging.version import Version
 VulnerabilityID = NewType("VulnerabilityID", str)
 
 
+def _id_comparison_key(id: str) -> int:
+    if id.startswith("PYSEC"):
+        return 1
+    elif id.startswith("CVE"):
+        return 2
+    return 3
+
+
 @dataclass(frozen=True)
 class Dependency:
     """
@@ -93,7 +101,7 @@ class VulnerabilityResult:
     A list of versions that can be upgraded to that resolve the vulnerability.
     """
 
-    aliases: set[str]
+    aliases: set[VulnerabilityID]
     """
     A set of aliases (alternative identifiers) for this result.
     """
@@ -102,6 +110,22 @@ class VulnerabilityResult:
     """
     When the vulnerability was first published.
     """
+
+    @classmethod
+    def create(
+        cls,
+        ids: list[VulnerabilityID],
+        description: str,
+        fix_versions: list[Version],
+        published: datetime | None,
+    ) -> VulnerabilityResult:
+        """
+        Instantiates a `VulnerabilityResult` with the given data, prioritizing
+        PYSEC and CVE vulnerability IDs for the primary identifier.
+        """
+
+        ids.sort(key=_id_comparison_key)
+        return cls(ids[0], description, fix_versions, set(ids[1:]), published)
 
     def alias_of(self, other: VulnerabilityResult) -> bool:
         """
