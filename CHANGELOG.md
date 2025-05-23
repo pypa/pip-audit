@@ -8,6 +8,8 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.10.0]
+
 ### Added
 
 * `pip-audit` now supports the `--osv-url URL` flag, which can be used to
@@ -641,7 +643,8 @@ All versions prior to 0.0.9 are untracked.
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.9.0...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.10.0...HEAD
+[2.10.0]: https://github.com/pypa/pip-audit/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/pypa/pip-audit/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/pypa/pip-audit/compare/v2.7.3...v2.8.0
 [2.7.3]: https://github.com/pypa/pip-audit/compare/v2.7.2...v2.7.3
