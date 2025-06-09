@@ -8,6 +8,27 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Added
+
+* `pip-audit` now supports the `--osv-url URL` flag, which can be used to
+  retrieve vulnerabilities from a custom OSV service. This is useful for
+  organizations that host their own mirror of the OSV database, or that
+  have custom OSV records
+  ([#810](https://github.com/pypa/pip-audit/pull/810))
+
+* `pip-audit` now supports the Ecosyste.ms vulnerability service with
+  `--vulnerability-service=esms`
+  ([#903](https://github.com/pypa/pip-audit/pull/903)).
+
+## [2.9.0]
+
+### Added
+
+* `pip-audit` now supports [PEP 751](https://peps.python.org/pep-0751/)
+  lockfiles. These lockfiles can be audited in "project" mode by
+  passing `--locked` to `pip-audit`
+  ([#888](https://github.com/pypa/pip-audit/pull/888))
+
 ## [2.8.0]
 
 ### Added
@@ -29,6 +50,7 @@ All versions prior to 0.0.9 are untracked.
 * Auditing a fully-pinned requirements file with `--disable-pip` now allows for
   duplicates, so long as the duplicates don't have conflicting specifier sets
   ([#749](https://github.com/pypa/pip-audit/pull/749))
+
 * Fixed two sources of unnecessary resource leaks when doing file I/O
   ([#878](https://github.com/pypa/pip-audit/pull/878))
 
@@ -612,13 +634,15 @@ All versions prior to 0.0.9 are untracked.
 * CLI: Skipped dependencies are now listed in the output of `pip-audit`,
   for supporting output formats
   ([#145](https://github.com/pypa/pip-audit/pull/145))
+
 * CLI: `pip-audit` now supports a "strict" mode (enabled with `-S` or
   `--strict`) that fails if the audit if any individual dependency cannot be
   resolved or audited. The default behavior is still to skip any individual
   dependency errors ([#146](https://github.com/pypa/pip-audit/pull/146))
 
 <!-- Release URLs -->
-[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.8.0...HEAD
+[Unreleased]: https://github.com/pypa/pip-audit/compare/v2.9.0...HEAD
+[2.9.0]: https://github.com/pypa/pip-audit/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/pypa/pip-audit/compare/v2.7.3...v2.8.0
 [2.7.3]: https://github.com/pypa/pip-audit/compare/v2.7.2...v2.7.3
 [2.7.2]: https://github.com/pypa/pip-audit/compare/v2.7.1...v2.7.2

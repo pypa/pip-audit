@@ -6,3 +6,4 @@ __pycache__/
 html/
 dist/
 .python-version
+/.pytest_cache/

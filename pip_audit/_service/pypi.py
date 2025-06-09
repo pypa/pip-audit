@@ -32,7 +32,9 @@ class PyPIService(VulnerabilityService):
     package vulnerability information.
     """
 
-    def __init__(self, cache_dir: Path | None = None, timeout: int | None = None) -> None:
+    def __init__(
+        self, cache_dir: Path | None = None, timeout: int | None = None, **kwargs: dict
+    ) -> None:
         """
         Create a new `PyPIService`.
 
@@ -123,11 +125,10 @@ class PyPIService(VulnerabilityService):
             description = description.replace("\n", " ")
 
             results.append(
-                VulnerabilityResult(
-                    id=id,
+                VulnerabilityResult.create(
+                    ids=[id, *v["aliases"]],
                     description=description,
                     fix_versions=fix_versions,
-                    aliases=set(v["aliases"]),
                     published=self._parse_rfc3339(v.get("published")),
                 )
             )

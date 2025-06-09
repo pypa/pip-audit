@@ -10,6 +10,7 @@ from .interface import (
     InvalidRequirementSpecifier,
 )
 from .pip import PipSource, PipSourceError
+from .pylock import PyLockSource
 from .pyproject import PyProjectSource
 from .requirement import RequirementSource
 
@@ -21,6 +22,7 @@ __all__ = [
     "InvalidRequirementSpecifier",
     "PipSource",
     "PipSourceError",
+    "PyLockSource",
     "PyProjectSource",
     "RequirementSource",
 ]

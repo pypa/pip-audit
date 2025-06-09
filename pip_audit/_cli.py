@@ -23,6 +23,7 @@ from pip_audit._dependency_source import (
     PyProjectSource,
     RequirementSource,
 )
+from pip_audit._dependency_source.pylock import PyLockSource
 from pip_audit._fix import ResolvedFixVersion, SkippedFixVersion, resolve_fix_versions
 from pip_audit._format import (
     ColumnsFormat,
@@ -31,9 +32,9 @@ from pip_audit._format import (
     MarkdownFormat,
     VulnerabilityFormat,
 )
-from pip_audit._service import OsvService, PyPIService, VulnerabilityService
+from pip_audit._service import EcosystemsService, OsvService, PyPIService
 from pip_audit._service.interface import ConnectionError as VulnServiceConnectionError
-from pip_audit._service.interface import ResolvedDependency, SkippedDependency
+from pip_audit._service.interface import ResolvedDependency, SkippedDependency, VulnerabilityService
 from pip_audit._state import AuditSpinner, AuditState
 from pip_audit._util import assert_never
 
@@ -98,14 +99,7 @@ class VulnerabilityServiceChoice(str, enum.Enum):
 
     Osv = "osv"
     Pypi = "pypi"
-
-    def to_service(self, timeout: int, cache_dir: Path | None) -> VulnerabilityService:
-        if self is VulnerabilityServiceChoice.Osv:
-            return OsvService(cache_dir, timeout)
-        elif self is VulnerabilityServiceChoice.Pypi:
-            return PyPIService(cache_dir, timeout)
-        else:
-            assert_never(self)  # pragma: no cover
+    Esms = "esms"
 
     def __str__(self) -> str:
         return self.value
@@ -222,6 +216,12 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         help="audit a local Python project at the given path",
     )
     parser.add_argument(
+        "--locked",
+        action="store_true",
+        help="audit lock files from the local Python project. This "
+        "flag only applies to auditing from project paths",
+    )
+    parser.add_argument(
         "-f",
         "--format",
         type=OutputFormatChoice,
@@ -241,6 +241,14 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
             "the vulnerability service to audit dependencies against",
             VulnerabilityServiceChoice,
         ),
+    )
+    parser.add_argument(
+        "--osv-url",
+        type=str,
+        metavar="OSV_URL",
+        dest="osv_url",
+        default=os.environ.get("PIP_AUDIT_OSV_URL", OsvService.DEFAULT_OSV_URL),
+        help="URL to use for the OSV API instead of the default",
     )
     parser.add_argument(
         "-d",
@@ -395,8 +403,20 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragm
 
 
 def _dep_source_from_project_path(
-    project_path: Path, index_url: str, extra_index_urls: list[str], state: AuditState
+    project_path: Path, index_url: str, extra_index_urls: list[str], locked: bool, state: AuditState
 ) -> DependencySource:  # pragma: no cover
+    # If the user has passed `--locked`, we check for `pylock.*.toml` files.
+    if locked:
+        all_pylocks = list(project_path.glob("pylock.*.toml"))
+        generic_pylock = project_path / "pylock.toml"
+        if generic_pylock.is_file():
+            all_pylocks.append(generic_pylock)
+
+        if not all_pylocks:
+            _fatal(f"no lockfiles found in {project_path}")
+
+        return PyLockSource(all_pylocks)
+
     # Check for a `pyproject.toml`
     pyproject_path = project_path / "pyproject.toml"
     if pyproject_path.is_file():
@@ -419,10 +439,24 @@ def audit() -> None:  # pragma: no cover
     parser = _parser()
     args = _parse_args(parser)
 
-    service = args.vulnerability_service.to_service(args.timeout, args.cache_dir)
+    service: VulnerabilityService
+    if args.vulnerability_service is VulnerabilityServiceChoice.Osv:
+        service = OsvService(cache_dir=args.cache_dir, timeout=args.timeout, osv_url=args.osv_url)
+    elif args.vulnerability_service is VulnerabilityServiceChoice.Pypi:
+        service = PyPIService(cache_dir=args.cache_dir, timeout=args.timeout)
+    elif args.vulnerability_service is VulnerabilityServiceChoice.Esms:
+        service = EcosystemsService(cache_dir=args.cache_dir, timeout=args.timeout)
+    else:
+        assert_never(args.vulnerability_service)  # pragma: no cover
+
     output_desc = args.desc.to_bool(args.format)
     output_aliases = args.aliases.to_bool(args.format)
     formatter = args.format.to_format(output_desc, output_aliases)
+
+    # Check for flags that are only valid with project paths
+    if args.project_path is None:
+        if args.locked:
+            parser.error("The --locked flag can only be used with a project path")
 
     # Check for flags that are only valid with requirements files
     if args.requirements is None:
@@ -488,6 +522,7 @@ def audit() -> None:  # pragma: no cover
                 args.project_path,
                 args.index_url,
                 args.extra_index_urls,
+                args.locked,
                 state,
             )
         else:
