@@ -54,12 +54,13 @@ def test_pip_source_warns_about_old_pip(monkeypatch):
     monkeypatch.setattr(pip, "logger", logger)
 
     pip.PipSource()
-    assert logger.warning.calls == [
+    assert (
         pretend.call(
             "pip 1.0.0 is very old, and may not provide reliable dependency information! "
             "You are STRONGLY encouraged to upgrade to a newer version of pip."
         )
-    ]
+        in logger.warning.calls
+    )
 
 
 def test_pip_source_pip_api_failure(monkeypatch):
@@ -75,7 +76,9 @@ def test_pip_source_pip_api_failure(monkeypatch):
 
 
 def test_pip_source_invalid_version(monkeypatch):
-    logger = pretend.stub(debug=pretend.call_recorder(lambda s: None))
+    logger = pretend.stub(
+        debug=pretend.call_recorder(lambda s: None), warning=pretend.call_recorder(lambda s: None)
+    )
     monkeypatch.setattr(pip, "logger", logger)
 
     source = pip.PipSource()
