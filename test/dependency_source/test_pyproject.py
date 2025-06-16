@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pretend  # type: ignore
 import pytest
-import toml
+import tomli
 from packaging.version import Version
 
 from pip_audit._dependency_source import (
@@ -25,8 +25,8 @@ def _init_pyproject(filename: Path, contents: str) -> pyproject.PyProjectSource:
 
 
 def _check_file(filename: Path, expected_contents: dict) -> None:
-    with open(filename) as f:
-        assert toml.load(f) == expected_contents
+    with open(filename, "rb") as f:
+        assert tomli.load(f) == expected_contents
 
 
 @pytest.mark.online
