@@ -47,7 +47,7 @@ class PyLockSource(DependencySource):
         Raises a `PyLockSourceError` on any errors.
         """
         try:
-            with open(filename, "rb") as f:
+            with filename.open(mode="rb") as f:
                 pylock = tomli.load(f)
         except tomli.TOMLDecodeError as e:
             raise PyLockSourceError(f"{filename}: invalid TOML in lockfile") from e
