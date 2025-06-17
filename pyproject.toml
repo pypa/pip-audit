@@ -63,7 +63,7 @@ Issues = "https://github.com/pypa/pip-audit/issues"
 Source = "https://github.com/pypa/pip-audit"
 
 [tool.coverage.paths]
-source = ["pip-audit/", "*/pip-audit/", "*\\pip-audit\\"]
+source = ["pip_audit/", "*\\pip_audit\\"]
 tests = ["tests/", "*\\tests\\"]
 
 [tool.coverage.run]
