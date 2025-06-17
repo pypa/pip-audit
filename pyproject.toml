@@ -63,7 +63,12 @@ Issues = "https://github.com/pypa/pip-audit/issues"
 Source = "https://github.com/pypa/pip-audit"
 
 [tool.coverage.paths]
-source = ["pip_audit/", "*/pip_audit/*", "*\\pip_audit\\"]
+# This is used for path mapping when combining coverage data
+# from multiple machines. The first entry is the local path,
+# and subsequent entries are the remote paths that get remapped
+# to the local path.
+# See: https://coverage.readthedocs.io/en/latest/config.html#paths
+source = ["pip_audit/", "*/pip_audit/", "*\\pip_audit\\"]
 
 [tool.coverage.run]
 parallel = true
