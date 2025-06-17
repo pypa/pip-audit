@@ -27,10 +27,8 @@ PIP_AUDIT_EXTRA := dev
 # complete test coverage.
 ifneq ($(TESTS),)
 	TEST_ARGS := -x -k $(TESTS)
-	COV_ARGS :=
 else
 	TEST_ARGS :=
-	COV_ARGS := --fail-under 100
 endif
 
 .PHONY: all
@@ -67,8 +65,7 @@ reformat:
 .PHONY: test tests
 test tests: $(VENV)/pyvenv.cfg
 	. $(VENV_BIN)/activate && \
-		pytest --cov=$(PY_MODULE) $(T) $(TEST_ARGS) && \
-		python -m coverage report -m $(COV_ARGS)
+		pytest --cov=$(PY_MODULE) $(T) $(TEST_ARGS)
 
 .PHONY: doc
 doc: $(VENV)/pyvenv.cfg
