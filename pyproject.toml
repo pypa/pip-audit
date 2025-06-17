@@ -63,8 +63,7 @@ Issues = "https://github.com/pypa/pip-audit/issues"
 Source = "https://github.com/pypa/pip-audit"
 
 [tool.coverage.paths]
-source = ["pip_audit/", "*\\pip_audit\\"]
-tests = ["test/", "*\\test\\"]
+source = ["pip_audit/", "*/pip_audit/*", "*\\pip_audit\\"]
 
 [tool.coverage.run]
 parallel = true
