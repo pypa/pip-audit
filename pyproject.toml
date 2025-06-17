@@ -73,6 +73,7 @@ source = ["pip_audit/", "*/pip_audit/", "*\\pip_audit\\"]
 [tool.coverage.run]
 source = ["pip_audit"]
 parallel = true
+relative_files = true
 
 [tool.interrogate]
 # don't enforce documentation coverage for packaging, testing, the virtual
