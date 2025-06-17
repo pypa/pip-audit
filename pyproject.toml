@@ -62,6 +62,9 @@ Homepage = "https://pypi.org/project/pip-audit/"
 Issues = "https://github.com/pypa/pip-audit/issues"
 Source = "https://github.com/pypa/pip-audit"
 
+[tool.coverage.run]
+parallel = true
+
 [tool.interrogate]
 # don't enforce documentation coverage for packaging, testing, the virtual
 # environment, or the CLI (which is documented separately).
