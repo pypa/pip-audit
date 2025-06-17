@@ -65,7 +65,8 @@ reformat:
 .PHONY: test tests
 test tests: $(VENV)/pyvenv.cfg
 	. $(VENV_BIN)/activate && \
-	    coverage run -m pytest -n auto $(T) $(TEST_ARGS)
+	    coverage run -m pytest -n auto $(T) $(TEST_ARGS) && \
+		coverage report -m
 
 .PHONY: doc
 doc: $(VENV)/pyvenv.cfg
