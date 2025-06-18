@@ -34,7 +34,13 @@ from pip_audit._format import (
 )
 from pip_audit._service import EcosystemsService, OsvService, PyPIService
 from pip_audit._service.interface import ConnectionError as VulnServiceConnectionError
-from pip_audit._service.interface import ResolvedDependency, SkippedDependency, VulnerabilityService
+from pip_audit._service.interface import (
+    Dependency,
+    ResolvedDependency,
+    SkippedDependency,
+    VulnerabilityResult,
+    VulnerabilityService,
+)
 from pip_audit._state import AuditSpinner, AuditState
 from pip_audit._util import assert_never
 
@@ -538,7 +544,7 @@ def audit() -> None:  # pragma: no cover
         # wants to dry-run the "fix" step instead of the "audit" step
         auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run and not args.fix))
 
-        result = {}
+        result: dict[Dependency, list[VulnerabilityResult]] = {}
         pkg_count = 0
         vuln_count = 0
         skip_count = 0

@@ -34,18 +34,17 @@ dependencies = [
     "pip-requirements-parser>=32.0.0",
     "requests >= 2.31.0",
     "rich >= 12.4",
-    "toml >= 0.10",
+    "tomli >= 2.2.1",
+    "tomli-w >= 1.2.0",
     "platformdirs >= 4.2.0",
 ]
 requires-python = ">=3.9"
 
 [project.optional-dependencies]
-test = [
+cov = [
     "coverage[toml] ~= 7.0, != 7.3.3", # https://github.com/nedbat/coveragepy/issues/1713
-    "pretend",
-    "pytest",
-    "pytest-cov",
 ]
+test = ["pretend", "pytest", "pip-audit[cov]"]
 lint = [
     "ruff >= 0.11",
     "interrogate ~= 1.6",
@@ -63,6 +62,19 @@ pip-audit = "pip_audit._cli:audit"
 Homepage = "https://pypi.org/project/pip-audit/"
 Issues = "https://github.com/pypa/pip-audit/issues"
 Source = "https://github.com/pypa/pip-audit"
+
+[tool.coverage.paths]
+# This is used for path mapping when combining coverage data
+# from multiple machines. The first entry is the local path,
+# and subsequent entries are the remote paths that get remapped
+# to the local path.
+# See: https://coverage.readthedocs.io/en/latest/config.html#paths
+source = ["pip_audit", "*/pip_audit", "*\\pip_audit"]
+
+[tool.coverage.run]
+source = ["pip_audit"]
+parallel = true
+relative_files = true
 
 [tool.interrogate]
 # don't enforce documentation coverage for packaging, testing, the virtual

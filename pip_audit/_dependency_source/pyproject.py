@@ -10,7 +10,8 @@ from collections.abc import Iterator
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
-import toml
+import tomli
+import tomli_w
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 
@@ -60,8 +61,8 @@ class PyProjectSource(DependencySource):
         Raises a `PyProjectSourceError` on any errors.
         """
 
-        with self.filename.open("r") as f:
-            pyproject_data = toml.load(f)
+        with self.filename.open("rb") as f:
+            pyproject_data = tomli.load(f)
 
             project = pyproject_data.get("project")
             if project is None:
@@ -109,8 +110,8 @@ class PyProjectSource(DependencySource):
         Fixes a dependency version for this `PyProjectSource`.
         """
 
-        with self.filename.open("r+") as f, NamedTemporaryFile(mode="r+", delete=False) as tmp:
-            pyproject_data = toml.load(f)
+        with self.filename.open("rb+") as f, NamedTemporaryFile(mode="rb+", delete=False) as tmp:
+            pyproject_data = tomli.load(f)
 
             project = pyproject_data.get("project")
             if project is None:
@@ -141,7 +142,7 @@ class PyProjectSource(DependencySource):
                 assert req.marker is None or req.marker.evaluate()
 
             # Now dump the new edited TOML to the temporary file.
-            toml.dump(pyproject_data, tmp)
+            tomli_w.dump(pyproject_data, tmp)
 
         # And replace the original `pyproject.toml` file.
         os.replace(tmp.name, self.filename)

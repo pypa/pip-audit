@@ -6,7 +6,7 @@ import logging
 from collections.abc import Iterator
 from pathlib import Path
 
-import toml
+import tomli
 from packaging.version import Version
 
 from pip_audit._dependency_source import DependencyFixError, DependencySource, DependencySourceError
@@ -47,8 +47,9 @@ class PyLockSource(DependencySource):
         Raises a `PyLockSourceError` on any errors.
         """
         try:
-            pylock = toml.load(filename)
-        except toml.TomlDecodeError as e:
+            with filename.open(mode="rb") as f:
+                pylock = tomli.load(f)
+        except tomli.TOMLDecodeError as e:
             raise PyLockSourceError(f"{filename}: invalid TOML in lockfile") from e
 
         lock_version = pylock.get("lock-version")
