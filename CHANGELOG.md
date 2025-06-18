@@ -22,6 +22,12 @@ All versions prior to 0.0.9 are untracked.
   `--vulnerability-service=esms`
   ([#903](https://github.com/pypa/pip-audit/pull/903)).
 
+### Fixed
+
+* Fixed a bug where `pip-audit` would fail to parse `pyproject.toml` files
+  containing TOML 1.0.0 features
+  ([#910](https://github.com/pypa/pip-audit/pull/910))
+
 ## [2.9.0]
 
 ### Added
