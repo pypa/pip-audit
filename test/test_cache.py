@@ -1,40 +1,24 @@
-import importlib
-import sys
 from pathlib import Path
 
-import platformdirs
 import pretend  # type: ignore
-import pytest
 from packaging.version import Version
-from pytest import MonkeyPatch
+from platformdirs import user_cache_path
 
 import pip_audit._cache as cache
 from pip_audit._cache import _get_cache_dir, _get_pip_cache
 
 
-def _patch_platformdirs(monkeypatch: MonkeyPatch, sys_platform: str) -> None:
-    """Utility function to patch `platformdirs` in order to test cross-platforms."""
-    # Mocking OS host
-    monkeypatch.setattr(sys, "platform", sys_platform)
-    # We are forced to reload `platformdirs` to get the correct cache directory
-    # as cache definition is stored in the top level `__init__.py` file of the
-    # `platformdirs` package
-    importlib.reload(platformdirs)
-    if sys_platform == "win32":
-        monkeypatch.setenv("LOCALAPPDATA", "/tmp/AppData/Local")
-
-
 def test_get_cache_dir(monkeypatch):
     # When we supply a cache directory, always use that
-    cache_dir = _get_cache_dir(Path("/tmp/foo/cache_dir"))
-    assert cache_dir.as_posix() == "/tmp/foo/cache_dir"
+    cache_dir = Path("/tmp/foo/cache_dir")
+    assert _get_cache_dir(cache_dir) == cache_dir
 
-    get_pip_cache = pretend.call_recorder(lambda: Path("/fake/pip/cache/dir"))
+    cache_dir = Path("/fake/pip/cache/dir")
+    get_pip_cache = pretend.call_recorder(lambda: cache_dir)
     monkeypatch.setattr(cache, "_get_pip_cache", get_pip_cache)
 
     # When `pip cache dir` works, we use it. In this case, it's mocked.
-    cache_dir = _get_cache_dir(None, use_pip=True)
-    assert cache_dir.as_posix() == "/fake/pip/cache/dir"
+    assert _get_cache_dir(None, use_pip=True) == cache_dir
 
 
 def test_get_pip_cache():
@@ -43,96 +27,30 @@ def test_get_pip_cache():
     assert cache_dir.stem == "http"
 
 
-@pytest.mark.parametrize(
-    "sys_platform,expected",
-    [
-        pytest.param(
-            "linux",
-            Path.home() / ".cache" / "pip-audit",
-            id="on Linux",
-        ),
-        pytest.param(
-            "win32",
-            Path("/tmp") / "AppData" / "Local" / "pip-audit" / "Cache",
-            id="on Windows",
-        ),
-        pytest.param(
-            "darwin",
-            Path.home() / "Library" / "Caches" / "pip-audit",
-            id="on MacOS",
-        ),
-    ],
-)
-def test_get_cache_dir_do_not_use_pip(monkeypatch, sys_platform, expected):
-    # Check cross-platforms
-    _patch_platformdirs(monkeypatch, sys_platform)
+def test_get_cache_dir_do_not_use_pip():
+    expected = user_cache_path("pip-audit", appauthor=False)
+
     # Even with None, we never use the pip cache if we're told not to.
-    cache_dir = _get_cache_dir(None, use_pip=False)
-    assert cache_dir == expected
+    assert _get_cache_dir(None, use_pip=False) == expected
 
 
-@pytest.mark.parametrize(
-    "sys_platform,expected",
-    [
-        pytest.param(
-            "linux",
-            Path.home() / ".cache" / "pip-audit",
-            id="on Linux",
-        ),
-        pytest.param(
-            "win32",
-            Path("/tmp") / "AppData" / "Local" / "pip-audit" / "Cache",
-            id="on Windows",
-        ),
-        pytest.param(
-            "darwin",
-            Path.home() / "Library" / "Caches" / "pip-audit",
-            id="on MacOS",
-        ),
-    ],
-)
-def test_get_cache_dir_pip_disabled_in_environment(monkeypatch, sys_platform, expected):
+def test_get_cache_dir_pip_disabled_in_environment(monkeypatch):
     monkeypatch.setenv("PIP_NO_CACHE_DIR", "1")
-    # Check cross-platforms
-    _patch_platformdirs(monkeypatch, sys_platform)
+
+    expected = user_cache_path("pip-audit", appauthor=False)
 
     # Even with use_pip=True, we avoid pip's cache if the environment tells us to.
     assert _get_cache_dir(None, use_pip=True) == expected
 
 
-@pytest.mark.parametrize(
-    "sys_platform,expected",
-    [
-        pytest.param(
-            "linux",
-            Path.home() / ".cache" / "pip-audit",
-            id="on Linux",
-        ),
-        pytest.param(
-            "win32",
-            Path("/tmp") / "AppData" / "Local" / "pip-audit" / "Cache",
-            id="on Windows",
-        ),
-        pytest.param(
-            "darwin",
-            Path.home() / "Library" / "Caches" / "pip-audit",
-            id="on MacOS",
-        ),
-    ],
-)
-def test_get_cache_dir_old_pip(monkeypatch, sys_platform, expected):
+def test_get_cache_dir_old_pip(monkeypatch):
     # Check the case where we have an old `pip`
     monkeypatch.setattr(cache, "_PIP_VERSION", Version("1.0.0"))
-    # Check cross-platforms
-    _patch_platformdirs(monkeypatch, sys_platform)
-
-    # When we supply a cache directory, always use that
-    cache_dir = _get_cache_dir(Path("/tmp/foo/cache_dir"))
-    assert cache_dir.as_posix() == "/tmp/foo/cache_dir"
 
     # In this case, we can't query `pip` to figure out where its HTTP cache is
     # Instead, we use `~/.pip-audit-cache`
     cache_dir = _get_cache_dir(None)
+    expected = user_cache_path("pip-audit", appauthor=False)
     assert cache_dir == expected
 
 
