@@ -34,7 +34,8 @@ dependencies = [
     "pip-requirements-parser>=32.0.0",
     "requests >= 2.31.0",
     "rich >= 12.4",
-    "toml >= 0.10",
+    "tomli >= 2.2.1",
+    "tomli-w >= 1.2.0",
     "platformdirs >= 4.2.0",
 ]
 requires-python = ">=3.9"
