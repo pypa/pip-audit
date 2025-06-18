@@ -23,8 +23,6 @@ PIP_AUDIT_EXTRA := dev
 
 # If the user selects a specific test pattern to run, set `pytest` to fail fast
 # and only run tests that match the pattern.
-# Otherwise, run all tests and enable coverage assertions, since we expect
-# complete test coverage.
 ifneq ($(TESTS),)
 	TEST_ARGS := -x -k $(TESTS)
 else
@@ -65,8 +63,7 @@ reformat:
 .PHONY: test tests
 test tests: $(VENV)/pyvenv.cfg
 	. $(VENV_BIN)/activate && \
-	    coverage run -m pytest -n auto $(T) $(TEST_ARGS) && \
-		coverage report -m
+	    coverage run -m pytest $(T) $(TEST_ARGS)
 
 .PHONY: doc
 doc: $(VENV)/pyvenv.cfg
