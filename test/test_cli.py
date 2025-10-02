@@ -232,3 +232,58 @@ def test_environment_variable(monkeypatch):
     assert args.output == Path("/tmp/fake")
     assert not args.progress_spinner
     assert args.vulnerability_service == VulnerabilityServiceChoice.Osv
+
+
+def test_ignore_vuln_environment_variable_single(monkeypatch):
+    """PIP_AUDIT_IGNORE_VULN with single vulnerability ID."""
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULN", "VULN-123")
+
+    parser = pip_audit._cli._parser()
+    args = parser.parse_args([])
+
+    assert args.ignore_vulns == ["VULN-123"]
+
+
+def test_ignore_vuln_environment_variable_multiple(monkeypatch):
+    """PIP_AUDIT_IGNORE_VULN with multiple space-separated vulnerability IDs."""
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULN", "VULN-123 VULN-456 VULN-789")
+
+    parser = pip_audit._cli._parser()
+    args = parser.parse_args([])
+
+    assert args.ignore_vulns == ["VULN-123", "VULN-456", "VULN-789"]
+
+
+def test_ignore_vuln_environment_variable_with_cli_flag(monkeypatch):
+    """PIP_AUDIT_IGNORE_VULN merges with --ignore-vuln CLI flags."""
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULN", "VULN-123 VULN-456")
+
+    parser = pip_audit._cli._parser()
+    args = parser.parse_args(["--ignore-vuln", "VULN-789", "--ignore-vuln", "VULN-000"])
+
+    # Environment variable values should be first, then CLI flags
+    assert "VULN-123" in args.ignore_vulns
+    assert "VULN-456" in args.ignore_vulns
+    assert "VULN-789" in args.ignore_vulns
+    assert "VULN-000" in args.ignore_vulns
+    assert len(args.ignore_vulns) == 4
+
+
+def test_ignore_vuln_environment_variable_empty(monkeypatch):
+    """PIP_AUDIT_IGNORE_VULN empty string results in empty list."""
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULN", "")
+
+    parser = pip_audit._cli._parser()
+    args = parser.parse_args([])
+
+    assert args.ignore_vulns == []
+
+
+def test_ignore_vuln_environment_variable_whitespace(monkeypatch):
+    """PIP_AUDIT_IGNORE_VULN handles extra whitespace correctly."""
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULN", "  VULN-123   VULN-456  ")
+
+    parser = pip_audit._cli._parser()
+    args = parser.parse_args([])
+
+    assert args.ignore_vulns == ["VULN-123", "VULN-456"]
