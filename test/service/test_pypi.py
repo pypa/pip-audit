@@ -333,3 +333,15 @@ def test_pypi_skipped_dep(cache_dir):
     assert dep in results
     vulns = results[dep]
     assert len(vulns) == 0
+
+
+def test_pypi_user_agent(cache_dir):
+    # Test that PyPI requests include a custom User-Agent header
+    from pip_audit import __version__
+
+    pypi = service.PyPIService(cache_dir)
+
+    # The session should have the User-Agent header set
+    expected_user_agent = f"pip-audit/{__version__}"
+    assert "User-Agent" in pypi.session.headers
+    assert pypi.session.headers["User-Agent"] == expected_user_agent

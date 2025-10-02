@@ -277,3 +277,15 @@ def test_osv_vuln_withdrawn(monkeypatch):
     assert logger.debug.calls == [
         pretend.call("OSV vuln entry 'fakeid' marked as withdrawn at some-datetime")
     ]
+
+
+def test_osv_user_agent():
+    # Test that OSV requests include a custom User-Agent header
+    from pip_audit import __version__
+
+    osv = service.OsvService()
+
+    # The session should have the User-Agent header set
+    expected_user_agent = f"pip-audit/{__version__}"
+    assert "User-Agent" in osv.session.headers
+    assert osv.session.headers["User-Agent"] == expected_user_agent

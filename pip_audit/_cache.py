@@ -20,6 +20,7 @@ from cachecontrol.caches import FileCache
 from packaging.version import Version
 from platformdirs import user_cache_path
 
+from pip_audit import __version__
 from pip_audit._service.interface import ServiceError
 
 logger = logging.getLogger(__name__)
@@ -171,6 +172,9 @@ def caching_session(cache_dir: Path | None, *, use_pip: bool = False) -> request
     # should really never redirect more than once or twice.
     inner_session = requests.Session()
     inner_session.max_redirects = 5
+
+    # Set custom User-Agent to identify pip-audit in HTTP requests
+    inner_session.headers["User-Agent"] = f"pip-audit/{__version__}"
 
     return CacheControl(
         inner_session,
