@@ -63,7 +63,7 @@ def _output_io(name: Path) -> Iterator[IO[str]]:  # pragma: no cover
     if str(name) in {"stdout", "-"}:
         yield sys.stdout
     else:
-        with name.open("w") as io:
+        with name.open("w", encoding="utf-8") as io:
             yield io
 
 

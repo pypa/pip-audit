@@ -232,3 +232,26 @@ def test_environment_variable(monkeypatch):
     assert args.output == Path("/tmp/fake")
     assert not args.progress_spinner
     assert args.vulnerability_service == VulnerabilityServiceChoice.Osv
+
+
+def test_unicode_output_file(tmp_path):
+    """Test that Unicode characters are correctly written to output files with UTF-8 encoding."""
+    # Test data with Chinese characters (from issue #918)
+    unicode_content = "Vulnerability reported by 刘力源 (Liu Liyuan)"
+
+    # Create temporary output file path
+    output_file = tmp_path / "test_output.txt"
+
+    # Use _output_io to write Unicode content
+    with pip_audit._cli._output_io(output_file) as io:
+        io.write(unicode_content)
+
+    # Verify file exists
+    assert output_file.exists()
+
+    # Read back with explicit UTF-8 encoding and verify content
+    with output_file.open("r", encoding="utf-8") as f:
+        content = f.read()
+
+    assert content == unicode_content
+    assert "刘力源" in content
