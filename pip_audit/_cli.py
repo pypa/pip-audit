@@ -391,6 +391,19 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         "this can only be used with hashed requirements files or if the `--no-deps` flag has been "
         "provided",
     )
+    parser.add_argument(
+        "--cyclonedx",
+        type=Path,
+        metavar="FILE",
+        action="append",
+        dest="cyclonedx_output",
+        default=[],
+        help=(
+            "write output to the given file in CycloneDX format; "
+            "the format (JSON or XML) is determined by the file extension (.json or .xml); "
+            "this option can be used multiple times to output to multiple files"
+        ),
+    )
     return parser
 
 
@@ -404,6 +417,15 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragm
         logging.getLogger().setLevel("DEBUG")
 
     logger.debug(f"parsed arguments: {args}")
+
+    # Validate --cyclonedx file extensions
+    for cyclonedx_file in args.cyclonedx_output:
+        suffix = cyclonedx_file.suffix.lower()
+        if suffix not in {".json", ".xml"}:
+            parser.error(
+                f"Invalid file extension for --cyclonedx: {cyclonedx_file}. "
+                "Expected .json or .xml"
+            )
 
     return args
 
@@ -634,6 +656,18 @@ def audit() -> None:  # pragma: no cover
         print(summary_msg, file=sys.stderr)
         with _output_io(args.output) as io:
             print(formatter.format(result, fixes), file=io)
+
+        # Write CycloneDX outputs if specified
+        for cyclonedx_file in args.cyclonedx_output:
+            suffix = cyclonedx_file.suffix.lower()
+            if suffix == ".json":
+                cyclonedx_formatter = CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Json)
+            else:  # suffix == ".xml"
+                cyclonedx_formatter = CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Xml)
+
+            with _output_io(cyclonedx_file) as io:
+                print(cyclonedx_formatter.format(result, fixes), file=io)
+
         if pkg_count != fixed_pkg_count:
             sys.exit(1)
     else:
@@ -650,3 +684,14 @@ def audit() -> None:  # pragma: no cover
         if skip_count > 0 or formatter.is_manifest:
             with _output_io(args.output) as io:
                 print(formatter.format(result, fixes), file=io)
+
+        # Write CycloneDX outputs if specified (always emit manifest formats)
+        for cyclonedx_file in args.cyclonedx_output:
+            suffix = cyclonedx_file.suffix.lower()
+            if suffix == ".json":
+                cyclonedx_formatter = CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Json)
+            else:  # suffix == ".xml"
+                cyclonedx_formatter = CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Xml)
+
+            with _output_io(cyclonedx_file) as io:
+                print(cyclonedx_formatter.format(result, fixes), file=io)

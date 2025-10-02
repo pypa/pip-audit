@@ -29,6 +29,7 @@ with support from Google. This is not an official Google or Trail of Bits produc
   * [Environment variables](#environment-variables)
   * [Exit codes](#exit-codes)
   * [Dry runs](#dry-runs)
+  * [Multiple output formats](#multiple-output-formats)
 * [Examples](#examples)
 * [Troubleshooting](#troubleshooting)
 * [Tips and Tricks](#tips-and-tricks)
@@ -263,6 +264,35 @@ an audit (or fix) step is actually performed.
 * In fix mode, `pip-audit --fix --dry-run` performs the auditing step and prints
   out the fix behavior (i.e., which dependencies would be upgraded or skipped)
   that *would have been performed*.
+
+### Multiple output formats
+
+`pip-audit` supports generating multiple output formats simultaneously using the `--cyclonedx` flag.
+This is particularly useful in CI/CD workflows where you want both human-readable console output
+and machine-readable SBOM files for integration with other tools.
+
+The `--cyclonedx FILE` flag writes CycloneDX SBOM output to the specified file. The format (JSON or XML)
+is automatically determined by the file extension (`.json` or `.xml`). This flag can be used multiple times
+to generate both JSON and XML outputs simultaneously.
+
+```console
+# Generate CycloneDX JSON SBOM while showing columnar output in console
+$ pip-audit --cyclonedx sbom.json
+No known vulnerabilities found
+
+# Generate both JSON and XML SBOMs simultaneously
+$ pip-audit --cyclonedx sbom.json --cyclonedx sbom.xml
+No known vulnerabilities found
+
+# Combine with other output options
+$ pip-audit --output audit-results.txt --cyclonedx sbom.json
+No known vulnerabilities found
+```
+
+The `--cyclonedx` flag is independent of the `--format` and `--output` flags, allowing you to:
+- Display results in one format (e.g., columns or markdown) while saving CycloneDX SBOMs to files
+- Generate multiple SBOM files in different formats (JSON and XML) from a single audit run
+- Save audit results in multiple formats for different purposes (e.g., developer logs + CI integration)
 
 ## Examples
 
