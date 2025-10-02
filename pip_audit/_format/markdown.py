@@ -45,6 +45,7 @@ class MarkdownFormat(VulnerabilityFormat):
         self,
         result: dict[service.Dependency, list[service.VulnerabilityResult]],
         fixes: list[fix.FixVersion],
+        ignored_vulns: dict[service.Dependency, list[service.VulnerabilityResult]] | None = None,
     ) -> str:
         """
         Returns a Markdown formatted string representing a set of vulnerability results and applied
@@ -58,6 +59,12 @@ class MarkdownFormat(VulnerabilityFormat):
             if output:
                 output += "\n"
             output += skipped_deps_output
+        ignored_vulns_output = self._format_ignored_vulns(ignored_vulns)
+        if ignored_vulns_output:
+            # Add line breaks to ensure proper rendering
+            if output:
+                output += "\n"
+            output += ignored_vulns_output
         return output
 
     def _format_vuln_results(
@@ -154,3 +161,54 @@ class MarkdownFormat(VulnerabilityFormat):
 
     def _format_skipped_dep(self, dep: service.SkippedDependency) -> str:
         return f"{dep.name} | {dep.skip_reason}"
+
+    def _format_ignored_vulns(
+        self, ignored_vulns: dict[service.Dependency, list[service.VulnerabilityResult]] | None
+    ) -> str:
+        if not ignored_vulns:
+            return ""
+
+        header = "Name | Version | ID | Fix Versions"
+        border = "--- | --- | --- | ---"
+        if self.output_aliases:
+            header += " | Aliases"
+            border += " | ---"
+        if self.output_desc:
+            header += " | Description"
+            border += " | ---"
+        header += " | Ignored Reason"
+        border += " | ---"
+
+        ignored_rows: list[str] = []
+        for dep, vulns in ignored_vulns.items():
+            if dep.is_skipped():
+                continue
+            dep = cast(service.ResolvedDependency, dep)
+            for vuln in vulns:
+                ignored_rows.append(self._format_ignored_vuln(dep, vuln))
+
+        if not ignored_rows:
+            return ""
+
+        return dedent(
+            f"""
+            {header}
+            {border}
+            """
+        ) + "\n".join(ignored_rows)
+
+    def _format_ignored_vuln(
+        self,
+        dep: service.ResolvedDependency,
+        vuln: service.VulnerabilityResult,
+    ) -> str:
+        vuln_text = (
+            f"{dep.canonical_name} | {dep.version} | {vuln.id} | "
+            f"{self._format_fix_versions(vuln.fix_versions)}"
+        )
+        if self.output_aliases:
+            vuln_text += f" | {', '.join(vuln.aliases)}"
+        if self.output_desc:
+            vuln_text += f" | {vuln.description}"
+        vuln_text += " | Ignored via --ignore-vuln"
+        return vuln_text

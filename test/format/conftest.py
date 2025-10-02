@@ -8,6 +8,7 @@ import pip_audit._service as service
 
 _RESOLVED_DEP_FOO = service.ResolvedDependency(name="foo", version=Version("1.0"))
 _RESOLVED_DEP_BAR = service.ResolvedDependency(name="bar", version=Version("0.1"))
+_RESOLVED_DEP_BAZ = service.ResolvedDependency(name="baz", version=Version("2.0"))
 _SKIPPED_DEP = service.SkippedDependency(name="bar", skip_reason="skip-reason")
 
 _TEST_VULN_DATA: dict[service.Dependency, list[service.VulnerabilityResult]] = {
@@ -64,6 +65,18 @@ _TEST_NO_VULN_DATA_SKIPPED_DEP: dict[service.Dependency, list[service.Vulnerabil
     _SKIPPED_DEP: [],
 }
 
+
+_TEST_IGNORED_VULN_DATA: dict[service.Dependency, list[service.VulnerabilityResult]] = {
+    _RESOLVED_DEP_BAZ: [
+        service.VulnerabilityResult(
+            id="VULN-IGNORED-0",
+            description="An ignored vulnerability",
+            fix_versions=[Version("2.1")],
+            aliases={"CVE-9999-99999"},
+        ),
+    ],
+}
+
 _TEST_FIX_DATA: list[fix.FixVersion] = [
     fix.ResolvedFixVersion(dep=_RESOLVED_DEP_FOO, version=Version("1.8")),
     fix.ResolvedFixVersion(dep=_RESOLVED_DEP_BAR, version=Version("0.3")),
@@ -94,6 +107,11 @@ def no_vuln_data():
 def no_vuln_data_skipped_dep():
     return _TEST_NO_VULN_DATA_SKIPPED_DEP
 
+
+
+@pytest.fixture(autouse=True)
+def ignored_vuln_data():
+    return _TEST_IGNORED_VULN_DATA
 
 @pytest.fixture(autouse=True)
 def fix_data():

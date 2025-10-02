@@ -80,6 +80,7 @@ class CycloneDxFormat(VulnerabilityFormat):
         self,
         result: dict[service.Dependency, list[service.VulnerabilityResult]],
         fixes: list[fix.FixVersion],
+        ignored_vulns: dict[service.Dependency, list[service.VulnerabilityResult]] | None = None,
     ) -> str:
         """
         Returns a CycloneDX formatted string for a given mapping of dependencies to vulnerability

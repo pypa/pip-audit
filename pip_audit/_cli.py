@@ -545,6 +545,7 @@ def audit() -> None:  # pragma: no cover
         auditor = Auditor(service, options=AuditOptions(dry_run=args.dry_run and not args.fix))
 
         result: dict[Dependency, list[VulnerabilityResult]] = {}
+        ignored_vulns: dict[Dependency, list[VulnerabilityResult]] = {}
         pkg_count = 0
         vuln_count = 0
         skip_count = 0
@@ -565,6 +566,9 @@ def audit() -> None:  # pragma: no cover
                     state.update_state(f"Auditing {spec.name} ({spec.version})")
                 if vulns_to_ignore:
                     filtered_vulns = [v for v in vulns if not v.has_any_id(vulns_to_ignore)]
+                    ignored = [v for v in vulns if v.has_any_id(vulns_to_ignore)]
+                    if ignored:
+                        ignored_vulns[spec] = ignored
                     vuln_ignore_count += len(vulns) - len(filtered_vulns)
                     vulns = filtered_vulns
                 result[spec] = vulns
@@ -633,7 +637,7 @@ def audit() -> None:  # pragma: no cover
             )
         print(summary_msg, file=sys.stderr)
         with _output_io(args.output) as io:
-            print(formatter.format(result, fixes), file=io)
+            print(formatter.format(result, fixes, ignored_vulns), file=io)
         if pkg_count != fixed_pkg_count:
             sys.exit(1)
     else:
@@ -649,4 +653,4 @@ def audit() -> None:  # pragma: no cover
         # even if nothing other than a dependency summary is present.
         if skip_count > 0 or formatter.is_manifest:
             with _output_io(args.output) as io:
-                print(formatter.format(result, fixes), file=io)
+                print(formatter.format(result, fixes, ignored_vulns), file=io)

@@ -33,8 +33,12 @@ class VulnerabilityFormat(ABC):
         self,
         result: dict[service.Dependency, list[service.VulnerabilityResult]],
         fixes: list[fix.FixVersion],
+        ignored_vulns: dict[service.Dependency, list[service.VulnerabilityResult]] | None = None,
     ) -> str:  # pragma: no cover
         """
         Convert a mapping of dependencies to vulnerabilities into a string.
+
+        `ignored_vulns` is an optional mapping of dependencies to vulnerabilities that were
+        ignored via the `--ignore-vuln` CLI flag.
         """
         raise NotImplementedError
