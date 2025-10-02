@@ -232,3 +232,30 @@ def test_environment_variable(monkeypatch):
     assert args.output == Path("/tmp/fake")
     assert not args.progress_spinner
     assert args.vulnerability_service == VulnerabilityServiceChoice.Osv
+
+
+class TestParseProjectPathWithExtras:
+    def test_parse_simple_path(self):
+        path, extras = pip_audit._cli._parse_project_path_with_extras(".")
+        assert path == Path(".")
+        assert extras == []
+
+    def test_parse_path_with_single_extra(self):
+        path, extras = pip_audit._cli._parse_project_path_with_extras(".[dev]")
+        assert path == Path(".")
+        assert extras == ["dev"]
+
+    def test_parse_path_with_multiple_extras(self):
+        path, extras = pip_audit._cli._parse_project_path_with_extras(".[dev,test]")
+        assert path == Path(".")
+        assert extras == ["dev", "test"]
+
+    def test_parse_path_with_spaces_in_extras(self):
+        path, extras = pip_audit._cli._parse_project_path_with_extras(".[dev, test, docs]")
+        assert path == Path(".")
+        assert extras == ["dev", "test", "docs"]
+
+    def test_parse_absolute_path_with_extras(self):
+        path, extras = pip_audit._cli._parse_project_path_with_extras("/path/to/project[dev]")
+        assert path == Path("/path/to/project")
+        assert extras == ["dev"]

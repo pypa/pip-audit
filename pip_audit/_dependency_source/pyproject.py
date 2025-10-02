@@ -38,6 +38,7 @@ class PyProjectSource(DependencySource):
         filename: Path,
         index_url: str | None = None,
         extra_index_urls: list[str] = [],
+        extras: list[str] = [],
         state: AuditState = AuditState(),
     ) -> None:
         """
@@ -49,9 +50,12 @@ class PyProjectSource(DependencySource):
 
         `extra_index_urls` are the extra URLs of package indexes.
 
+        `extras` is a list of optional dependency groups to include (e.g., ["dev", "test"])
+
         `state` is an `AuditState` to use for state callbacks.
         """
         self.filename = filename
+        self.extras = extras
         self.state = state
 
     def collect(self) -> Iterator[Dependency]:
@@ -70,13 +74,32 @@ class PyProjectSource(DependencySource):
                     f"pyproject file {self.filename} does not contain `project` section"
                 )
 
-            deps = project.get("dependencies")
-            if deps is None:
+            deps = project.get("dependencies", [])
+            if not deps and not self.extras:
                 # Projects without dependencies aren't an error case
                 logger.warning(
                     f"pyproject file {self.filename} does not contain `dependencies` list"
                 )
                 return
+
+            # Collect optional dependencies if extras are specified
+            if self.extras:
+                optional_deps = project.get("optional-dependencies")
+                if optional_deps is None:
+                    raise PyProjectSourceError(
+                        f"pyproject file {self.filename}: `optional-dependencies` section not found, "
+                        f"but extras were requested: {self.extras}"
+                    )
+
+                for extra in self.extras:
+                    if extra not in optional_deps:
+                        raise PyProjectSourceError(
+                            f"pyproject file {self.filename}: extra '{extra}' not found in "
+                            f"`optional-dependencies`. Available extras: {list(optional_deps.keys())}"
+                        )
+                    # Add the dependencies from this extra
+                    extra_deps = optional_deps[extra]
+                    deps = deps + extra_deps
 
             # NOTE(alex): This is probably due for a redesign. Since we're leaning on `pip` for
             # dependency resolution now, we can think about doing `pip install <local-project-dir>`
@@ -127,6 +150,7 @@ class PyProjectSource(DependencySource):
                 )
                 return
 
+            # Try to fix in main dependencies
             reqs = [Requirement(dep) for dep in deps]
             for i in range(len(reqs)):
                 # When we find a requirement that matches the provided fix version, we need to edit
@@ -140,6 +164,24 @@ class PyProjectSource(DependencySource):
                     req.specifier = SpecifierSet(f"=={fix_version.version}")
                     deps[i] = str(req)
                 assert req.marker is None or req.marker.evaluate()
+
+            # Also try to fix in optional dependencies if extras are specified
+            if self.extras:
+                optional_deps = project.get("optional-dependencies", {})
+                for extra in self.extras:
+                    if extra in optional_deps:
+                        extra_deps = optional_deps[extra]
+                        extra_reqs = [Requirement(dep) for dep in extra_deps]
+                        for i in range(len(extra_reqs)):
+                            req = extra_reqs[i]
+                            if (
+                                req.name == fix_version.dep.name
+                                and req.specifier.contains(fix_version.dep.version)
+                                and not req.specifier.contains(fix_version.version)
+                            ):
+                                req.specifier = SpecifierSet(f"=={fix_version.version}")
+                                extra_deps[i] = str(req)
+                            assert req.marker is None or req.marker.evaluate()
 
             # Now dump the new edited TOML to the temporary file.
             tomli_w.dump(pyproject_data, tmp)

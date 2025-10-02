@@ -173,3 +173,121 @@ def test_pyproject_source_fix_no_deps(monkeypatch, req_file):
     # We log a warning when we find a `pyproject.toml` file with no dependencies
     assert len(logger.warning.calls) == 1
     _check_file(source.filename, {"project": {}})
+
+
+@pytest.mark.online
+def test_pyproject_source_with_single_extra(req_file):
+    # Test that we can audit optional dependencies with a single extra
+    source = pyproject.PyProjectSource(filename=req_file(), extras=["dev"])
+    with open(source.filename, mode="w") as f:
+        f.write("""
+[project]
+dependencies = [
+  "flask==2.0.1"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==7.0.0"
+]
+""")
+    specs = list(source.collect())
+    # Should include both main and dev dependencies
+    assert ResolvedDependency("Flask", Version("2.0.1")) in specs
+    assert ResolvedDependency("pytest", Version("7.0.0")) in specs
+
+
+@pytest.mark.online
+def test_pyproject_source_with_multiple_extras(req_file):
+    # Test that we can audit optional dependencies with multiple extras
+    source = pyproject.PyProjectSource(filename=req_file(), extras=["dev", "test"])
+    with open(source.filename, mode="w") as f:
+        f.write("""
+[project]
+dependencies = [
+  "flask==2.0.1"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==7.0.0"
+]
+test = [
+  "coverage==6.0.0"
+]
+""")
+    specs = list(source.collect())
+    # Should include main, dev, and test dependencies
+    assert ResolvedDependency("Flask", Version("2.0.1")) in specs
+    assert ResolvedDependency("pytest", Version("7.0.0")) in specs
+    assert ResolvedDependency("coverage", Version("6.0.0")) in specs
+
+
+def test_pyproject_source_with_nonexistent_extra(monkeypatch, req_file):
+    # Test that non-existent extras trigger an error
+    logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
+    monkeypatch.setattr(pyproject, "logger", logger)
+
+    source = pyproject.PyProjectSource(filename=req_file(), extras=["nonexistent"])
+    with open(source.filename, mode="w") as f:
+        f.write("""
+[project]
+dependencies = [
+  "flask==2.0.1"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==7.0.0"
+]
+""")
+
+    # Should raise an error for non-existent extras
+    with pytest.raises(DependencySourceError, match="extra.*nonexistent.*not found"):
+        list(source.collect())
+
+
+@pytest.mark.online
+def test_pyproject_source_extras_no_optional_dependencies(req_file):
+    # Test when extras are requested but no optional-dependencies section exists
+    source = pyproject.PyProjectSource(filename=req_file(), extras=["dev"])
+    with open(source.filename, mode="w") as f:
+        f.write("""
+[project]
+dependencies = [
+  "flask==2.0.1"
+]
+""")
+
+    # Should raise an error when extras are requested but section doesn't exist
+    with pytest.raises(DependencySourceError, match="optional-dependencies.*not found"):
+        list(source.collect())
+
+
+@pytest.mark.online
+def test_pyproject_source_fix_with_extras(req_file):
+    # Test that fixing works with extras
+    source = pyproject.PyProjectSource(filename=req_file(), extras=["dev"])
+    with open(source.filename, mode="w") as f:
+        f.write("""
+[project]
+dependencies = [
+  "flask==0.5"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==6.0.0"
+]
+""")
+
+    fix = ResolvedFixVersion(
+        dep=ResolvedDependency(name="pytest", version=Version("6.0.0")),
+        version=Version("7.0.0"),
+    )
+    source.fix(fix)
+
+    # Check that the optional dependency was fixed
+    with open(source.filename, "rb") as f:
+        content = tomli.load(f)
+        assert content["project"]["optional-dependencies"]["dev"] == ["pytest==7.0.0"]

@@ -217,9 +217,9 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
     )
     dep_source_args.add_argument(
         "project_path",
-        type=Path,
+        type=str,
         nargs="?",
-        help="audit a local Python project at the given path",
+        help="audit a local Python project at the given path (supports pip-style extras: .[dev])",
     )
     parser.add_argument(
         "--locked",
@@ -408,8 +408,39 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragm
     return args
 
 
+def _parse_project_path_with_extras(path_str: str) -> tuple[Path, list[str]]:
+    """
+    Parse a project path that may include extras in pip-style syntax.
+
+    Examples:
+        "." -> (Path("."), [])
+        ".[dev]" -> (Path("."), ["dev"])
+        ".[dev,test]" -> (Path("."), ["dev", "test"])
+        "/path/to/project[dev]" -> (Path("/path/to/project"), ["dev"])
+
+    Returns a tuple of (path, extras_list).
+    """
+    # Check if the path contains extras notation
+    if "[" in path_str and path_str.endswith("]"):
+        # Split on the opening bracket
+        parts = path_str.rsplit("[", 1)
+        if len(parts) == 2:
+            base_path = parts[0]
+            extras_str = parts[1].rstrip("]")
+            # Split extras by comma and strip whitespace
+            extras = [e.strip() for e in extras_str.split(",") if e.strip()]
+            return Path(base_path), extras
+
+    return Path(path_str), []
+
+
 def _dep_source_from_project_path(
-    project_path: Path, index_url: str, extra_index_urls: list[str], locked: bool, state: AuditState
+    project_path: Path,
+    index_url: str,
+    extra_index_urls: list[str],
+    locked: bool,
+    extras: list[str],
+    state: AuditState,
 ) -> DependencySource:  # pragma: no cover
     # If the user has passed `--locked`, we check for `pylock.*.toml` files.
     if locked:
@@ -430,6 +461,7 @@ def _dep_source_from_project_path(
             pyproject_path,
             index_url=index_url,
             extra_index_urls=extra_index_urls,
+            extras=extras,
             state=state,
         )
 
@@ -523,12 +555,16 @@ def audit() -> None:  # pragma: no cover
             # NOTE: We'll probably want to support --skip-editable here,
             # once PEP 660 is more widely supported: https://www.python.org/dev/peps/pep-0660/
 
+            # Parse project path to extract any extras (e.g., ".[dev]" -> ".", ["dev"])
+            project_path, extras = _parse_project_path_with_extras(args.project_path)
+
             # Determine which kind of project file exists in the project path
             source = _dep_source_from_project_path(
-                args.project_path,
+                project_path,
                 args.index_url,
                 args.extra_index_urls,
                 args.locked,
+                extras,
                 state,
             )
         else:
