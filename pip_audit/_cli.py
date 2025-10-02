@@ -8,6 +8,7 @@ import argparse
 import enum
 import logging
 import os
+import subprocess
 import sys
 from collections.abc import Iterator
 from contextlib import ExitStack, contextmanager
@@ -332,6 +333,20 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         help="automatically upgrade dependencies with known vulnerabilities",
     )
     parser.add_argument(
+        "--fix-download-only",
+        type=Path,
+        metavar="DIR",
+        help="download fixed packages to the specified directory without installing them; "
+        "requires --fix",
+    )
+    parser.add_argument(
+        "--fix-output-requirements",
+        type=Path,
+        metavar="FILE",
+        help="output fixed versions as requirements.txt format to the specified file; "
+        "requires --fix",
+    )
+    parser.add_argument(
         "--require-hashes",
         action="store_true",
         help="require a hash to check each requirement against, for repeatable audits; this option "
@@ -464,6 +479,19 @@ def audit() -> None:  # pragma: no cover
         if args.locked:
             parser.error("The --locked flag can only be used with a project path")
 
+    # Check for flags that are only valid with --fix
+    if not args.fix:
+        if args.fix_download_only:
+            parser.error("The --fix-download-only flag can only be used with --fix")
+        elif args.fix_output_requirements:
+            parser.error("The --fix-output-requirements flag can only be used with --fix")
+
+    # Check for mutually exclusive fix modes
+    if args.fix_download_only and args.fix_output_requirements:
+        parser.error(
+            "The --fix-download-only and --fix-output-requirements flags cannot be used together"
+        )
+
     # Check for flags that are only valid with requirements files
     if args.requirements is None:
         if args.require_hashes:
@@ -588,6 +616,15 @@ def audit() -> None:  # pragma: no cover
         fixed_pkg_count = 0
         fixed_vuln_count = 0
         if args.fix:
+            # Prepare download directory if needed
+            if args.fix_download_only:
+                download_dir = args.fix_download_only
+                download_dir.mkdir(parents=True, exist_ok=True)
+                logger.info(f"Downloading fixed packages to {download_dir}")
+
+            # Collect fixed requirements if needed
+            fixed_requirements = []
+
             for fix in resolve_fix_versions(service, result, state):
                 if args.dry_run:
                     if fix.is_skipped():
@@ -603,15 +640,77 @@ def audit() -> None:  # pragma: no cover
 
                 if not fix.is_skipped():
                     fix = cast(ResolvedFixVersion, fix)
-                    try:
-                        source.fix(fix)
+
+                    # Handle different fix modes
+                    if args.fix_download_only:
+                        # Download mode: use pip download
+                        try:
+                            package_spec = f"{fix.dep.name}=={fix.version}"
+                            state.update_state(f"Downloading {package_spec}")
+                            cmd = [
+                                sys.executable,
+                                "-m",
+                                "pip",
+                                "download",
+                                package_spec,
+                                "-d",
+                                str(download_dir),
+                            ]
+                            # Add index URLs if specified
+                            if args.index_url:
+                                cmd.extend(["--index-url", args.index_url])
+                            for extra_url in args.extra_index_urls:
+                                cmd.extend(["--extra-index-url", extra_url])
+
+                            result_proc = subprocess.run(
+                                cmd, capture_output=True, text=True, check=False
+                            )
+                            if result_proc.returncode == 0:
+                                logger.info(f"Downloaded {package_spec}")
+                                fixed_pkg_count += 1
+                                fixed_vuln_count += len(result[fix.dep])
+                            else:
+                                skip_reason = (
+                                    f"failed to download {package_spec}: "
+                                    f"{result_proc.stderr.strip()}"
+                                )
+                                logger.debug(skip_reason)
+                                fix = SkippedFixVersion(fix.dep, skip_reason)
+                        except Exception as e:
+                            skip_reason = f"failed to download {fix.dep.name}: {e}"
+                            logger.debug(skip_reason)
+                            fix = SkippedFixVersion(fix.dep, skip_reason)
+                    elif args.fix_output_requirements:
+                        # Requirements output mode: collect fixed versions
+                        package_spec = f"{fix.dep.name}=={fix.version}"
+                        fixed_requirements.append(package_spec)
                         fixed_pkg_count += 1
                         fixed_vuln_count += len(result[fix.dep])
-                    except DependencySourceError as dse:
-                        skip_reason = str(dse)
-                        logger.debug(skip_reason)
-                        fix = SkippedFixVersion(fix.dep, skip_reason)
+                        logger.info(f"Will output {package_spec}")
+                    else:
+                        # Normal mode: apply fix via source
+                        try:
+                            source.fix(fix)
+                            fixed_pkg_count += 1
+                            fixed_vuln_count += len(result[fix.dep])
+                        except DependencySourceError as dse:
+                            skip_reason = str(dse)
+                            logger.debug(skip_reason)
+                            fix = SkippedFixVersion(fix.dep, skip_reason)
                 fixes.append(fix)
+
+            # Write requirements file if requested
+            if args.fix_output_requirements and fixed_requirements:
+                try:
+                    with args.fix_output_requirements.open("w") as f:
+                        for req in fixed_requirements:
+                            f.write(f"{req}\n")
+                    logger.info(
+                        f"Wrote {len(fixed_requirements)} fixed requirements to "
+                        f"{args.fix_output_requirements}"
+                    )
+                except Exception as e:
+                    _fatal(f"Failed to write requirements file: {e}")
 
     if vuln_count > 0:
         if vuln_ignore_count:
