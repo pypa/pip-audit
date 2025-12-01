@@ -108,7 +108,7 @@ For example, using `pip-audit` via `pre-commit` to audit a requirements file:
 
 ```yaml
   - repo: https://github.com/pypa/pip-audit
-    rev: v2.9.0
+    rev: v2.10.0
     hooks:
       -   id: pip-audit
           args: ["-r", "requirements.txt"]
@@ -148,7 +148,7 @@ positional arguments:
   project_path          audit a local Python project at the given path
                         (default: None)
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -V, --version         show program's version number and exit
   -l, --local           show only results for dependencies in the local
