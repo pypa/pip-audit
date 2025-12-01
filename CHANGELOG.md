@@ -28,6 +28,10 @@ All versions prior to 0.0.9 are untracked.
   containing TOML 1.0.0 features
   ([#910](https://github.com/pypa/pip-audit/pull/910))
 
+* CycloneDX JSON/XML output now correctly links vulnerabilities to their
+  affected components via the `affects` field
+  ([#980](https://github.com/pypa/pip-audit/issues/980))
+
 ## [2.9.0]
 
 ### Added

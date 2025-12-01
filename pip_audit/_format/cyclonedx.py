@@ -11,7 +11,7 @@ from typing import cast
 from cyclonedx import output
 from cyclonedx.model.bom import Bom
 from cyclonedx.model.component import Component
-from cyclonedx.model.vulnerability import Vulnerability
+from cyclonedx.model.vulnerability import BomTarget, Vulnerability
 
 import pip_audit._fix as fix
 import pip_audit._service as service
@@ -37,7 +37,13 @@ def _pip_audit_result_to_bom(
         c = Component(name=dep.name, version=str(dep.version))
         for vuln in vulns:
             vulnerabilities.append(
-                Vulnerability(id=vuln.id, description=vuln.description, recommendation="Upgrade")
+                Vulnerability(
+                    id=vuln.id,
+                    description=vuln.description,
+                    recommendation="Upgrade",
+                    # BomTarget expects str in type hints, but accepts BomRef at runtime
+                    affects=[BomTarget(ref=c.bom_ref)],  # type: ignore[arg-type]
+                )
             )
 
         components.append(c)
