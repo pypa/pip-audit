@@ -22,6 +22,11 @@ All versions prior to 0.0.9 are untracked.
   `--vulnerability-service=esms`
   ([#903](https://github.com/pypa/pip-audit/pull/903)).
 
+### Changed
+
+* The minimum version of Python is now 3.10
+  ([#905](https://github.com/pypa/pip-audit/pull/905))
+
 ### Fixed
 
 * Fixed a bug where `pip-audit` would fail to parse `pyproject.toml` files
