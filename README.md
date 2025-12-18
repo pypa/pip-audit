@@ -1,13 +1,91 @@
+# pip-audit-range
+
+> **Prerelease**: This fork is under active development. The API, output format, and behavior may change. Feedback welcome.
+
+This is a fork of [`pip-audit`](https://github.com/pypa/pip-audit) that adds **constraint range analysis**: auditing *what your declared dependency constraints permit*, not just what your environment happens to resolve today.
+
+`pip-audit` answers:
+
+> "Are the versions I installed vulnerable?"
+
+This fork additionally answers:
+
+> **"Do my declared dependency constraints allow vulnerable versions to be installed?"**
+
+These are related but distinct questions. Both are useful.
+
+---
+
+## What this fork adds
+
+This fork introduces **Range Mode**, an optional analysis mode that inspects version *constraints* (for example, `>=`, `<`, `~=` specifiers) without performing dependency resolution.
+
+Range Mode detects cases where:
+
+* A dependency constraint permits one or more known vulnerable versions
+* Even if today's resolver selects a fixed version
+* And even if CI, lockfiles, or current environments appear clean
+
+This is especially relevant for:
+
+* Libraries that publish reusable packages
+* Projects that rely on downstream installation environments
+* Long-lived deployments where dependency resolution may change over time
+
+Range Mode does **not** replace environment-based auditing. It complements it.
+
+---
+
+## Using Range Mode
+
+Range Mode is opt-in and does not affect existing behavior.
+
+```bash
+pip-audit --range path/to/project
+```
+
+By default, Range Mode reports findings but exits successfully. To enforce constraints strictly:
+
+```bash
+pip-audit --range-strict path/to/project
+```
+
+Range Mode currently operates on `pyproject.toml` metadata and analyzes both direct and transitive dependency constraints.
+
+---
+
+## Correctness and validation
+
+Range Mode includes several layers of testing and design choices intended to ensure correct behavior:
+
+* A reference oracle implementation defining intended semantics
+* Property-based testing (Hypothesis) checking equivalence to the oracle
+* Metamorphic invariants (monotonicity, order-independence, conflict handling)
+* Type aliases distinguishing intersection vs. union semantics
+* Symbolic execution checks via CrossHair on an abstract model
+
+These provide confidence in the correctness of the *logic*, assuming accurate upstream data sources (e.g., OSV, PyPI metadata).
+
+---
+
+## Relationship to upstream
+
+This fork intentionally minimizes changes to upstream code and keeps Range Mode isolated from existing audit paths.
+
+It is maintained as a fork because Range Mode:
+
+* Answers a different policy question than upstream audits
+* Introduces new semantics and outputs
+* Is still iterating based on real-world usage
+
+For general usage, installation instructions, supported formats, and environment-based auditing, refer to the upstream documentation below.
+
+---
+
+<!-- Upstream pip-audit README follows (badges removed to avoid confusion with fork status) -->
+
 pip-audit
 =========
-
-<!--- BADGES: START --->
-[![CI](https://github.com/pypa/pip-audit/workflows/CI/badge.svg)](https://github.com/pypa/pip-audit/actions/workflows/ci.yml)
-[![PyPI version](https://badge.fury.io/py/pip-audit.svg)](https://pypi.org/project/pip-audit)
-[![Packaging status](https://repology.org/badge/tiny-repos/python:pip-audit.svg)](https://repology.org/project/python:pip-audit/versions)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/pypa/pip-audit/badge)](https://api.securityscorecards.dev/projects/github.com/pypa/pip-audit)
-[![License](https://img.shields.io/github/license/pypa/pip-audit)](https://github.com/pypa/pip-audit/blob/main/LICENSE)
-<!--- BADGES: END --->
 
 `pip-audit` is a tool for scanning Python environments for packages
 with known vulnerabilities. It uses the Python Packaging Advisory Database

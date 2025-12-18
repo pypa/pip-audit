@@ -232,3 +232,87 @@ def test_environment_variable(monkeypatch):
     assert args.output == Path("/tmp/fake")
     assert not args.progress_spinner
     assert args.vulnerability_service == VulnerabilityServiceChoice.Osv
+
+
+class TestRangeModeCli:
+    """Tests for --range mode CLI dispatch."""
+
+    def test_range_mode_dispatches_to_audit_range(self, monkeypatch, tmp_path):
+        """Verify --range flag calls _audit_range with correct args."""
+        import pip_audit._range_audit
+
+        # Create minimal pyproject.toml
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[project]
+name = "test"
+version = "0.1.0"
+dependencies = ["requests>=2.0"]
+"""
+        )
+
+        # Mock _audit_range to capture calls
+        audit_range_calls = []
+
+        def mock_audit_range(args):
+            audit_range_calls.append(args)
+            return 0
+
+        monkeypatch.setattr(pip_audit._range_audit, "_audit_range", mock_audit_range)
+
+        # Mock parse_args to simulate --range with project path
+        parser = pip_audit._cli._parser()
+        monkeypatch.setattr(
+            pip_audit._cli, "_parse_args", lambda *a: parser.parse_args(["--range", str(tmp_path)])
+        )
+
+        # Call audit() - should dispatch to _audit_range
+        try:
+            pip_audit._cli.audit()
+        except SystemExit:
+            pass
+
+        assert len(audit_range_calls) == 1
+        args = audit_range_calls[0]
+        assert args.range is True
+        assert args.project_path == tmp_path
+
+    def test_range_strict_mode_dispatches(self, monkeypatch, tmp_path):
+        """Verify --range-strict flag calls _audit_range with range_strict=True."""
+        import pip_audit._range_audit
+
+        # Create minimal pyproject.toml
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[project]
+name = "test"
+version = "0.1.0"
+dependencies = ["requests>=2.0"]
+"""
+        )
+
+        audit_range_calls = []
+
+        def mock_audit_range(args):
+            audit_range_calls.append(args)
+            return 0
+
+        monkeypatch.setattr(pip_audit._range_audit, "_audit_range", mock_audit_range)
+
+        parser = pip_audit._cli._parser()
+        monkeypatch.setattr(
+            pip_audit._cli,
+            "_parse_args",
+            lambda *a: parser.parse_args(["--range-strict", str(tmp_path)]),
+        )
+
+        try:
+            pip_audit._cli.audit()
+        except SystemExit:
+            pass
+
+        assert len(audit_range_calls) == 1
+        args = audit_range_calls[0]
+        assert args.range_strict is True

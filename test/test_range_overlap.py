@@ -254,3 +254,86 @@ class TestComputeRangeKey:
         key1 = compute_range_key(events1)
         key2 = compute_range_key(events2)
         assert key1 == key2
+
+
+class TestOsvParsingEdgeCases:
+    """Tests for OSV parsing edge cases and bug fixes."""
+
+    def test_consecutive_introduced_events(self):
+        """
+        Regression test: consecutive introduced events without fixed should use first.
+
+        Per OSV spec, once a version is introduced as affected, it stays affected
+        until a fixed event closes the interval. Multiple introduced events in
+        a row should not overwrite the first one.
+        """
+        events = [{"introduced": "1.0"}, {"introduced": "1.2"}, {"fixed": "1.5"}]
+        specs = specifier_from_osv_range(events)
+
+        # Should emit >=1.0,<1.5 (not >=1.2,<1.5)
+        assert len(specs) == 1
+        assert specs[0].contains(Version("1.0"))
+        assert specs[0].contains(Version("1.1"))  # Was missed before fix
+        assert specs[0].contains(Version("1.2"))
+        assert specs[0].contains(Version("1.4"))
+        assert not specs[0].contains(Version("1.5"))
+        assert not specs[0].contains(Version("0.9"))
+
+    def test_consecutive_introduced_with_zero(self):
+        """Regression: consecutive introduced with zero as first."""
+        events = [{"introduced": "0"}, {"introduced": "1.0"}, {"fixed": "2.0"}]
+        specs = specifier_from_osv_range(events)
+
+        # Should emit <2.0 (using "0" as start, not "1.0")
+        assert len(specs) == 1
+        assert specs[0].contains(Version("0.1"))
+        assert specs[0].contains(Version("1.0"))
+        assert specs[0].contains(Version("1.9"))
+        assert not specs[0].contains(Version("2.0"))
+
+    def test_last_affected_event(self):
+        """Handle last_affected event type from OSV spec."""
+        events = [{"introduced": "1.0"}, {"last_affected": "1.4"}]
+        specs = specifier_from_osv_range(events)
+
+        assert len(specs) == 1
+        # last_affected is INCLUSIVE
+        assert specs[0].contains(Version("1.0"))
+        assert specs[0].contains(Version("1.4"))  # Inclusive
+        assert not specs[0].contains(Version("1.5"))
+        assert not specs[0].contains(Version("0.9"))
+
+    def test_last_affected_with_zero_introduced(self):
+        """Handle last_affected with unbounded lower."""
+        events = [{"introduced": "0"}, {"last_affected": "2.0"}]
+        specs = specifier_from_osv_range(events)
+
+        assert len(specs) == 1
+        # <=2.0 (all versions from beginning up to and including 2.0)
+        assert specs[0].contains(Version("0.1"))
+        assert specs[0].contains(Version("1.5"))
+        assert specs[0].contains(Version("2.0"))  # Inclusive
+        assert not specs[0].contains(Version("2.1"))
+
+    def test_last_affected_multiple_intervals(self):
+        """Handle last_affected in multiple interval scenario."""
+        events = [
+            {"introduced": "1.0"},
+            {"last_affected": "1.5"},
+            {"introduced": "2.0"},
+            {"fixed": "2.5"},
+        ]
+        specs = specifier_from_osv_range(events)
+
+        # Two intervals: >=1.0,<=1.5 and >=2.0,<2.5
+        assert len(specs) == 2
+
+        # First interval: >=1.0,<=1.5
+        assert specs[0].contains(Version("1.0"))
+        assert specs[0].contains(Version("1.5"))  # Inclusive
+        assert not specs[0].contains(Version("1.6"))
+
+        # Second interval: >=2.0,<2.5
+        assert specs[1].contains(Version("2.0"))
+        assert specs[1].contains(Version("2.4"))
+        assert not specs[1].contains(Version("2.5"))  # Exclusive (fixed)

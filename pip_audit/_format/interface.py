@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from pip_audit._range_types import (
         ConstraintFinding,
         MetadataCoverage,
+        OsvCoverage,
         UnsatisfiableEnvelope,
     )
 
@@ -52,6 +53,7 @@ class VulnerabilityFormat(ABC):
         findings: list[ConstraintFinding],
         unsatisfiables: list[UnsatisfiableEnvelope],
         coverage: MetadataCoverage,
+        osv_coverage: OsvCoverage | None = None,
     ) -> str:
         """
         Format constraint findings for range mode.
@@ -66,6 +68,7 @@ class VulnerabilityFormat(ABC):
             findings: List of constraint findings (where constraints permit vulnerable versions)
             unsatisfiables: List of packages with unsatisfiable constraint envelopes
             coverage: Metadata coverage statistics
+            osv_coverage: OSV query coverage statistics (optional)
 
         Returns:
             Formatted string, or empty string if not supported

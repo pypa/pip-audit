@@ -10,7 +10,6 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-import icontract
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
@@ -25,10 +24,6 @@ if TYPE_CHECKING:
     from pip_audit._range_types import AffectedUnion, AllowedEnvelope
 
 
-@icontract.ensure(
-    lambda result, known_versions: all(v in known_versions for v in result[1]),
-    "overlap must be subset of known_versions",
-)
 def ranges_overlap(
     allowed: "AllowedEnvelope | SpecifierSet",
     vulnerable_ranges: "AffectedUnion | tuple[SpecifierSet, ...] | SpecifierSet",
@@ -63,6 +58,11 @@ def ranges_overlap(
     - Yanked releases: excluded (if yanked_versions provided)
     - Prereleases: excluded unless include_prereleases=True OR
       the allowed specifier explicitly admits them (e.g., >=1.0.0a1)
+
+    Note:
+        Correctness invariants (e.g., result is subset of known_versions) are
+        verified via Hypothesis property tests in test/test_properties.py and
+        formal verification with CrossHair in test/model_verification.py.
     """
     if yanked_versions is None:
         yanked_versions = set()
@@ -153,18 +153,29 @@ def specifier_from_osv_range(events: list[dict]) -> tuple[SpecifierSet, ...]:
 
     for event in events:
         if "introduced" in event:
-            introduced = event["introduced"]
-            # "0" means "all versions from the beginning"
-            if introduced == "0":
-                current_introduced = "0"
-            else:
-                current_introduced = introduced
+            # Only set if not already in an open interval (OSV spec: once introduced,
+            # versions stay affected until a fixed event closes the interval)
+            if current_introduced is None:
+                introduced = event["introduced"]
+                # "0" means "all versions from the beginning"
+                if introduced == "0":
+                    current_introduced = "0"
+                else:
+                    current_introduced = introduced
         elif "fixed" in event and current_introduced is not None:
             fixed = event["fixed"]
             if current_introduced == "0":
                 specs.append(f"<{fixed}")
             else:
                 specs.append(f">={current_introduced},<{fixed}")
+            current_introduced = None
+        elif "last_affected" in event and current_introduced is not None:
+            # last_affected is inclusive (version X and earlier are affected)
+            last = event["last_affected"]
+            if current_introduced == "0":
+                specs.append(f"<={last}")
+            else:
+                specs.append(f">={current_introduced},<={last}")
             current_introduced = None
 
     # Handle open range (introduced but no fixed)

@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from pip_audit._range_types import (
         ConstraintFinding,
         MetadataCoverage,
+        OsvCoverage,
         UnsatisfiableEnvelope,
     )
 
@@ -178,6 +179,7 @@ class ColumnsFormat(VulnerabilityFormat):
         findings: list[ConstraintFinding],
         unsatisfiables: list[UnsatisfiableEnvelope],
         coverage: MetadataCoverage,
+        osv_coverage: OsvCoverage | None = None,
     ) -> str:
         """
         Format constraint findings as columns.
@@ -187,6 +189,13 @@ class ColumnsFormat(VulnerabilityFormat):
         advisories with equivalent affected ranges.
         """
         columns_string = ""
+
+        # Display OSV query failure warning if applicable
+        if osv_coverage is not None and osv_coverage.packages_query_failed > 0:
+            columns_string += (
+                f"WARNING: OSV queries failed for {osv_coverage.packages_query_failed} "
+                f"package(s) (vulnerability data may be incomplete)\n\n"
+            )
 
         # Group findings by (package_name, envelope_str, range_key)
         if findings:

@@ -24,6 +24,7 @@ from pip_audit._range_types import (
     ConstrainedDependency,
     ConstraintFinding,
     MetadataCoverage,
+    OsvCoverage,
     UnsatisfiableEnvelope,
     VulnerabilityRangeResult,
 )
@@ -69,6 +70,10 @@ class RangeAuditor:
         self._service = service
         self._metadata = metadata
         self._osv_cache: dict[str, list[VulnerabilityRangeResult]] = {}
+        # Track OSV query coverage
+        self._packages_queried = 0
+        self._packages_with_vulns = 0
+        self._packages_query_failed = 0
 
     def audit(
         self,
@@ -86,11 +91,16 @@ class RangeAuditor:
         for name, node in graph.packages.items():
             # Cache OSV results per package
             if name not in self._osv_cache:
+                self._packages_queried += 1
                 try:
-                    self._osv_cache[name] = self._service.query_package(name)
+                    vulns = self._service.query_package(name)
+                    self._osv_cache[name] = vulns
+                    if vulns:
+                        self._packages_with_vulns += 1
                 except Exception as e:
                     logger.warning(f"Failed to query OSV for {name}: {e}")
                     self._osv_cache[name] = []
+                    self._packages_query_failed += 1
 
             vuln_ranges = self._osv_cache[name]
             if not vuln_ranges:
@@ -123,6 +133,15 @@ class RangeAuditor:
                         vulnerable_versions_permitted=vuln_versions,
                     )
 
+    @property
+    def osv_coverage(self) -> OsvCoverage:
+        """Return OSV query coverage statistics."""
+        return OsvCoverage(
+            packages_queried=self._packages_queried,
+            packages_with_vulns=self._packages_with_vulns,
+            packages_query_failed=self._packages_query_failed,
+        )
+
 
 def _parse_pyproject(path: Path) -> list[Requirement]:
     """
@@ -139,7 +158,11 @@ def _parse_pyproject(path: Path) -> list[Requirement]:
 
     project = data.get("project")
     if project is None:
-        raise ValueError(f"pyproject.toml at {path} has no [project] section")
+        raise ValueError(
+            f"{path} has no [project] section. "
+            f"Range mode only supports PEP 621 pyproject.toml files. "
+            f"Poetry ([tool.poetry]) and Flit ([tool.flit]) formats are not yet supported."
+        )
 
     deps = project.get("dependencies", [])
     requirements: list[Requirement] = []
@@ -158,6 +181,7 @@ def _format_findings_text(
     findings: list[ConstraintFinding],
     unsatisfiables: list[UnsatisfiableEnvelope],
     coverage: MetadataCoverage,
+    osv_coverage: OsvCoverage | None = None,
 ) -> str:
     """
     Format findings as plain text.
@@ -171,6 +195,14 @@ def _format_findings_text(
     lines.append("Range Mode Analysis Results")
     lines.append("=" * 40)
     lines.append("")
+
+    # OSV coverage warning
+    if osv_coverage is not None and osv_coverage.packages_query_failed > 0:
+        lines.append(
+            f"WARNING: OSV queries failed for {osv_coverage.packages_query_failed} "
+            f"package(s) (vulnerability data may be incomplete)"
+        )
+        lines.append("")
 
     # Findings
     if findings:
@@ -279,6 +311,7 @@ def _audit_range(args: argparse.Namespace) -> int:
     # Run range audit
     auditor = RangeAuditor(service=service, metadata=metadata)
     findings = list(auditor.audit(graph))
+    osv_coverage = auditor.osv_coverage
 
     # Format output
     # Use the formatter if specified and it supports constraint findings
@@ -290,7 +323,11 @@ def _audit_range(args: argparse.Namespace) -> int:
     aliases_choice = getattr(args, "aliases", None)
 
     # Determine effective format for Auto resolution
-    effective_format = output_format if output_format is not None else OutputFormatChoice.Columns
+    # Handle case where CLI import failed (OutputFormatChoice is None)
+    if OutputFormatChoice is not None:
+        effective_format = output_format if output_format is not None else OutputFormatChoice.Columns
+    else:
+        effective_format = output_format
 
     # Convert to bool - handle both enum and raw bool (for testing)
     if desc_choice is not None and hasattr(desc_choice, "to_bool"):
@@ -305,16 +342,18 @@ def _audit_range(args: argparse.Namespace) -> int:
 
     if output_format is not None:
         formatter = output_format.to_format(output_desc, output_aliases)
-        output = formatter.format_constraint_findings(findings, unsatisfiables, coverage)
+        output = formatter.format_constraint_findings(
+            findings, unsatisfiables, coverage, osv_coverage
+        )
         if output:
             print(output)
         else:
             # Formatter returned empty string, use fallback
-            output = _format_findings_text(findings, unsatisfiables, coverage)
+            output = _format_findings_text(findings, unsatisfiables, coverage, osv_coverage)
             print(output)
     else:
         # No formatter specified, use plain text fallback
-        output = _format_findings_text(findings, unsatisfiables, coverage)
+        output = _format_findings_text(findings, unsatisfiables, coverage, osv_coverage)
         print(output)
 
     # Determine exit code

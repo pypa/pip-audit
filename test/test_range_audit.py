@@ -361,3 +361,230 @@ class TestDescAliasToggles:
         assert "aliases" not in vuln_data
         # Verify description IS included (output_desc=True)
         assert vuln_data["description"] == "Test description"
+
+
+class TestRangeModeE2E:
+    """End-to-end integration tests for range mode."""
+
+    @responses.activate
+    def test_audit_range_full_pipeline(self, tmp_path):
+        """E2E test: full _audit_range pipeline with mocked HTTP responses."""
+        import argparse
+
+        from pip_audit._range_audit import _audit_range
+
+        # Create pyproject.toml with a known dependency
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[project]
+name = "test-project"
+version = "0.1.0"
+dependencies = ["jinja2>=3.1.5"]
+"""
+        )
+
+        # Mock PyPI JSON API for jinja2
+        pypi_jinja2_response = {
+            "info": {
+                "name": "jinja2",
+                "version": "3.1.6",
+                "requires_dist": ["MarkupSafe>=2.0"],
+            },
+            "releases": {
+                "3.1.5": [{"yanked": False}],
+                "3.1.6": [{"yanked": False}],
+            },
+        }
+        responses.add(
+            responses.GET,
+            "https://pypi.org/pypi/jinja2/json",
+            json=pypi_jinja2_response,
+            status=200,
+        )
+
+        # Mock PyPI JSON API for markupsafe (transitive dep)
+        pypi_markupsafe_response = {
+            "info": {
+                "name": "markupsafe",
+                "version": "2.1.5",
+                "requires_dist": None,
+            },
+            "releases": {
+                "2.1.5": [{"yanked": False}],
+            },
+        }
+        responses.add(
+            responses.GET,
+            "https://pypi.org/pypi/markupsafe/json",
+            json=pypi_markupsafe_response,
+            status=200,
+        )
+
+        # Mock OSV API for jinja2
+        osv_jinja2_response = {
+            "vulns": [
+                {
+                    "id": "GHSA-cpwx-vrp4-4pq7",
+                    "summary": "Jinja2 sandbox breakout",
+                    "affected": [
+                        {
+                            "package": {"name": "jinja2", "ecosystem": "PyPI"},
+                            "ranges": [
+                                {
+                                    "type": "ECOSYSTEM",
+                                    "events": [
+                                        {"introduced": "0"},
+                                        {"fixed": "3.1.6"},
+                                    ],
+                                }
+                            ],
+                        }
+                    ],
+                    "aliases": ["CVE-2024-56326"],
+                }
+            ]
+        }
+        responses.add(
+            responses.POST,
+            "https://api.osv.dev/v1/query",
+            json=osv_jinja2_response,
+            status=200,
+        )
+
+        # Mock OSV API for markupsafe (no vulns)
+        osv_markupsafe_response = {"vulns": []}
+        responses.add(
+            responses.POST,
+            "https://api.osv.dev/v1/query",
+            json=osv_markupsafe_response,
+            status=200,
+        )
+
+        # Create args namespace
+        args = argparse.Namespace(
+            range=True,
+            range_strict=False,
+            project_path=tmp_path,
+            format=None,  # Use default text format
+            desc=None,
+            aliases=None,
+            cache_dir=None,
+            timeout=10,
+            osv_url=None,
+        )
+
+        # Capture stdout
+        import io
+        import sys
+
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
+
+        try:
+            exit_code = _audit_range(args)
+        finally:
+            sys.stdout = sys.__stdout__
+
+        output = captured_output.getvalue()
+
+        # Verify exit code (--range mode always returns 0 unless --range-strict)
+        assert exit_code == 0
+
+        # Verify output contains expected finding
+        assert "jinja2" in output.lower() or "GHSA" in output
+
+    @responses.activate
+    def test_audit_range_strict_exit_code(self, tmp_path):
+        """Verify --range-strict returns exit 1 when findings exist."""
+        import argparse
+
+        from pip_audit._range_audit import _audit_range
+
+        # Create pyproject.toml
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[project]
+name = "test-project"
+version = "0.1.0"
+dependencies = ["jinja2>=3.1.5"]
+"""
+        )
+
+        # Mock PyPI JSON API for jinja2
+        pypi_response = {
+            "info": {
+                "name": "jinja2",
+                "version": "3.1.6",
+                "requires_dist": None,  # No transitive deps to simplify
+            },
+            "releases": {
+                "3.1.5": [{"yanked": False}],
+                "3.1.6": [{"yanked": False}],
+            },
+        }
+        responses.add(
+            responses.GET,
+            "https://pypi.org/pypi/jinja2/json",
+            json=pypi_response,
+            status=200,
+        )
+
+        # Mock OSV API with vulnerability
+        osv_response = {
+            "vulns": [
+                {
+                    "id": "GHSA-test",
+                    "summary": "Test vulnerability",
+                    "affected": [
+                        {
+                            "package": {"name": "jinja2", "ecosystem": "PyPI"},
+                            "ranges": [
+                                {
+                                    "type": "ECOSYSTEM",
+                                    "events": [
+                                        {"introduced": "0"},
+                                        {"fixed": "3.1.6"},
+                                    ],
+                                }
+                            ],
+                        }
+                    ],
+                    "aliases": [],
+                }
+            ]
+        }
+        responses.add(
+            responses.POST,
+            "https://api.osv.dev/v1/query",
+            json=osv_response,
+            status=200,
+        )
+
+        # Create args with range_strict=True
+        args = argparse.Namespace(
+            range=False,
+            range_strict=True,
+            project_path=tmp_path,
+            format=None,
+            desc=None,
+            aliases=None,
+            cache_dir=None,
+            timeout=10,
+            osv_url=None,
+        )
+
+        # Suppress stdout
+        import io
+        import sys
+
+        sys.stdout = io.StringIO()
+
+        try:
+            exit_code = _audit_range(args)
+        finally:
+            sys.stdout = sys.__stdout__
+
+        # Verify --range-strict returns 1 when findings exist
+        assert exit_code == 1

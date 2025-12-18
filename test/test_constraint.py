@@ -210,3 +210,106 @@ class TestMultipleParentConstraints:
         assert not node.envelope.contains(Version("2.5.0"))  # Excluded
         assert node.envelope.contains(Version("2.6"))
         assert not node.envelope.contains(Version("3.0"))  # Above upper bound
+
+
+class TestGraphWithMissingMetadata:
+    """Tests for graph building when metadata is missing (is_envelope_empty returns None)."""
+
+    def test_graph_proceeds_when_metadata_missing(self):
+        """
+        Verify build_constraint_graph proceeds when is_envelope_empty returns None.
+
+        When a package has no known versions (metadata unavailable), is_envelope_empty
+        returns None (unknown) rather than True (unsatisfiable). The graph builder
+        should NOT add this to unsatisfiables and should proceed with traversal.
+        """
+        from unittest.mock import Mock
+
+        from packaging.requirements import Requirement
+
+        from pip_audit._constraint import build_constraint_graph
+
+        # Create a mock metadata provider that returns empty versions
+        mock_metadata = Mock()
+
+        # For "test-pkg": has metadata but no versions match envelope
+        test_pkg_meta = Mock()
+        test_pkg_meta.all_versions = []  # No versions known
+        test_pkg_meta.yanked_versions = set()
+
+        def get_requires_dist(name, specifier, stats):
+            # Return empty list - no dependencies
+            return []
+
+        mock_metadata.get_metadata.return_value = test_pkg_meta
+        mock_metadata.get_requires_dist = get_requires_dist
+
+        # Build graph with a single direct dependency
+        direct_deps = [Requirement("test-pkg>=1.0")]
+        graph, unsatisfiables, coverage = build_constraint_graph(
+            direct_deps=direct_deps,
+            metadata=mock_metadata,
+        )
+
+        # Verify graph was built
+        assert "test-pkg" in graph.packages
+
+        # Verify unsatisfiables is empty (missing metadata = unknown, not unsatisfiable)
+        assert len(unsatisfiables) == 0
+
+        # Verify the package has the correct envelope
+        node = graph.packages["test-pkg"]
+        assert node.envelope == SpecifierSet(">=1.0")
+
+    def test_graph_continues_past_missing_metadata_for_transitive(self):
+        """
+        Verify graph building continues when a transitive dep has missing metadata.
+
+        The graph should still include both direct and transitive deps,
+        even if transitive has no version info.
+        """
+        from unittest.mock import Mock
+
+        from packaging.requirements import Requirement
+
+        from pip_audit._constraint import build_constraint_graph
+
+        mock_metadata = Mock()
+
+        # For "direct-pkg": has metadata with transitive dep
+        direct_pkg_meta = Mock()
+        direct_pkg_meta.all_versions = [Version("1.0"), Version("2.0")]
+        direct_pkg_meta.yanked_versions = set()
+
+        # For "transitive-pkg": no versions known
+        transitive_pkg_meta = Mock()
+        transitive_pkg_meta.all_versions = []
+        transitive_pkg_meta.yanked_versions = set()
+
+        def get_metadata(name):
+            if name == "direct-pkg":
+                return direct_pkg_meta
+            return transitive_pkg_meta
+
+        def get_requires_dist(name, specifier, stats):
+            if name == "direct-pkg":
+                stats.versions_examined += 1
+                stats.versions_with_requires_dist += 1
+                return [Requirement("transitive-pkg>=0.1")]
+            return []
+
+        mock_metadata.get_metadata = get_metadata
+        mock_metadata.get_requires_dist = get_requires_dist
+
+        direct_deps = [Requirement("direct-pkg>=1.0")]
+        graph, unsatisfiables, coverage = build_constraint_graph(
+            direct_deps=direct_deps,
+            metadata=mock_metadata,
+        )
+
+        # Both packages should be in graph
+        assert "direct-pkg" in graph.packages
+        assert "transitive-pkg" in graph.packages
+
+        # No unsatisfiables (missing metadata != unsatisfiable)
+        assert len(unsatisfiables) == 0

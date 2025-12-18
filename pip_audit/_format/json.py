@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from pip_audit._range_types import (
         ConstraintFinding,
         MetadataCoverage,
+        OsvCoverage,
         UnsatisfiableEnvelope,
     )
 
@@ -116,12 +117,13 @@ class JsonFormat(VulnerabilityFormat):
         findings: list[ConstraintFinding],
         unsatisfiables: list[UnsatisfiableEnvelope],
         coverage: MetadataCoverage,
+        osv_coverage: OsvCoverage | None = None,
     ) -> str:
         """
         Format constraint findings as JSON.
 
         Returns a JSON object with constraint_findings, unsatisfiable_envelopes,
-        and transitive_metadata_completeness keys.
+        transitive_metadata_completeness, and osv_coverage keys.
 
         Findings are grouped by (package, envelope, range_key) to deduplicate
         advisories with equivalent affected ranges.
@@ -192,5 +194,9 @@ class JsonFormat(VulnerabilityFormat):
 
         # Format transitive metadata completeness
         output["transitive_metadata_completeness"] = coverage.to_dict()
+
+        # Format OSV coverage if available
+        if osv_coverage is not None:
+            output["osv_coverage"] = osv_coverage.to_dict()
 
         return json.dumps(output)

@@ -196,3 +196,29 @@ class MetadataCoverage:
             "versions_fetch_failed": self.versions_fetch_failed,
             "versions_parse_failed": self.versions_parse_failed,
         }
+
+
+@dataclass
+class OsvCoverage:
+    """
+    Track OSV query coverage for transparency in output.
+
+    This helps users understand how complete the vulnerability scan was.
+    """
+
+    packages_queried: int
+    """Total number of packages for which OSV was queried."""
+
+    packages_with_vulns: int
+    """Number of packages with at least one vulnerability found."""
+
+    packages_query_failed: int
+    """Number of packages where the OSV query failed (timeout/HTTP error)."""
+
+    def to_dict(self) -> dict[str, int]:
+        """Convert to a dictionary for JSON serialization."""
+        return {
+            "packages_queried": self.packages_queried,
+            "packages_with_vulns": self.packages_with_vulns,
+            "packages_query_failed": self.packages_query_failed,
+        }

@@ -11,7 +11,6 @@ import logging
 from collections import deque
 from dataclasses import dataclass, field
 
-import icontract
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name
