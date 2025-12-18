@@ -2,43 +2,11 @@
 
 > **Prerelease**: This fork is under active development. The API, output format, and behavior may change. Feedback welcome.
 
-This is a fork of [`pip-audit`](https://github.com/pypa/pip-audit) that adds **constraint range analysis**: auditing *what your declared dependency constraints permit*, not just what your environment happens to resolve today.
-
-`pip-audit` answers:
-
-> "Are the versions I installed vulnerable?"
-
-This fork additionally answers:
-
-> **"Do my declared dependency constraints allow vulnerable versions to be installed?"**
-
-These are related but distinct questions. Both are useful.
+This is a fork of [`pip-audit`](https://github.com/pypa/pip-audit) that introduces **constraint range analysis**: auditing what declared dependency constraints permit rather than what an environment or requirements resolve at a particular moment in time.  CI workflows are the natural use case, where tightening constraints early reduces the likelihood of vulnerable versions propagating downstream.
 
 ---
 
-## What this fork adds
-
-This fork introduces **Range Mode**, an optional analysis mode that inspects version *constraints* (for example, `>=`, `<`, `~=` specifiers) without performing dependency resolution.
-
-Range Mode detects cases where:
-
-* A dependency constraint permits one or more known vulnerable versions
-* Even if today's resolver selects a fixed version
-* And even if CI, lockfiles, or current environments appear clean
-
-This is especially relevant for:
-
-* Libraries that publish reusable packages
-* Projects that rely on downstream installation environments
-* Long-lived deployments where dependency resolution may change over time
-
-Range Mode does **not** replace environment-based auditing. It complements it.
-
----
-
-## Using Range Mode
-
-Range Mode is opt-in and does not affect existing behavior.
+## Usage
 
 ```bash
 pip-audit --range path/to/project
@@ -54,31 +22,32 @@ Range Mode currently operates on `pyproject.toml` metadata and analyzes both dir
 
 ---
 
-## Correctness and validation
+## Goals and non-goals
 
-Range Mode includes several layers of testing and design choices intended to ensure correct behavior:
+### Goals
+
+- Identify where declared dependency constraints permit known vulnerable versions
+- Provide early, actionable feedback when authoring or reviewing these dependency bounds
+- Complement environment-based auditing with constraint-level analysis
+- Produce deterministic findings suitable for CI workflows
+
+### Non-goals
+
+- Predict which dependency versions will be installed in a given environment
+- Replace user-side dependency hygiene or update practices
+- Assess exploitability, reachability, or real-world impact
+- Guarantee safety across all future ecosystem states
+- Enforce policy beyond reporting and optional CI failure
+
+---
+
+## Correctness and validation
 
 * A reference oracle implementation defining intended semantics
 * Property-based testing (Hypothesis) checking equivalence to the oracle
 * Metamorphic invariants (monotonicity, order-independence, conflict handling)
 * Type aliases distinguishing intersection vs. union semantics
-* Symbolic execution checks via CrossHair on an abstract model
-
-These provide confidence in the correctness of the *logic*, assuming accurate upstream data sources (e.g., OSV, PyPI metadata).
-
----
-
-## Relationship to upstream
-
-This fork intentionally minimizes changes to upstream code and keeps Range Mode isolated from existing audit paths.
-
-It is maintained as a fork because Range Mode:
-
-* Answers a different policy question than upstream audits
-* Introduces new semantics and outputs
-* Is still iterating based on real-world usage
-
-For general usage, installation instructions, supported formats, and environment-based auditing, refer to the upstream documentation below.
+* Symbolic execution checks via CrossHair
 
 ---
 
