@@ -5,9 +5,17 @@ Interfaces for formatting vulnerability results into a string representation.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 import pip_audit._fix as fix
 import pip_audit._service as service
+
+if TYPE_CHECKING:
+    from pip_audit._range_types import (
+        ConstraintFinding,
+        MetadataCoverage,
+        UnsatisfiableEnvelope,
+    )
 
 
 class VulnerabilityFormat(ABC):
@@ -38,3 +46,28 @@ class VulnerabilityFormat(ABC):
         Convert a mapping of dependencies to vulnerabilities into a string.
         """
         raise NotImplementedError
+
+    def format_constraint_findings(
+        self,
+        findings: list[ConstraintFinding],
+        unsatisfiables: list[UnsatisfiableEnvelope],
+        coverage: MetadataCoverage,
+    ) -> str:
+        """
+        Format constraint findings for range mode.
+
+        Default implementation returns empty string. Formatters that want
+        to support range mode should override this method.
+
+        If this method returns an empty string, range mode will fall back
+        to plain text output.
+
+        Args:
+            findings: List of constraint findings (where constraints permit vulnerable versions)
+            unsatisfiables: List of packages with unsatisfiable constraint envelopes
+            coverage: Metadata coverage statistics
+
+        Returns:
+            Formatted string, or empty string if not supported
+        """
+        return ""

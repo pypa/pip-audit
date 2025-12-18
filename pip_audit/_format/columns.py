@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from itertools import zip_longest
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from packaging.version import Version
 
@@ -14,6 +14,13 @@ import pip_audit._fix as fix
 import pip_audit._service as service
 
 from .interface import VulnerabilityFormat
+
+if TYPE_CHECKING:
+    from pip_audit._range_types import (
+        ConstraintFinding,
+        MetadataCoverage,
+        UnsatisfiableEnvelope,
+    )
 
 
 def tabulate(rows: Iterable[Iterable[Any]]) -> tuple[list[str], list[int]]:
@@ -165,3 +172,107 @@ class ColumnsFormat(VulnerabilityFormat):
             f"Successfully upgraded {applied_fix.dep.canonical_name} ({applied_fix.dep.version} "
             f"=> {applied_fix.version})"
         )
+
+    def format_constraint_findings(
+        self,
+        findings: list[ConstraintFinding],
+        unsatisfiables: list[UnsatisfiableEnvelope],
+        coverage: MetadataCoverage,
+    ) -> str:
+        """
+        Format constraint findings as columns.
+
+        Returns a column-formatted string for range mode output.
+        Findings are grouped by (package, envelope, range_key) to deduplicate
+        advisories with equivalent affected ranges.
+        """
+        columns_string = ""
+
+        # Group findings by (package_name, envelope_str, range_key)
+        if findings:
+            grouped: dict[tuple, list["ConstraintFinding"]] = {}
+            for finding in findings:
+                group_key = (
+                    finding.dependency.canonical_name,
+                    str(finding.dependency.specifier),
+                    finding.vulnerability.range_key,
+                )
+                if group_key not in grouped:
+                    grouped[group_key] = []
+                grouped[group_key].append(finding)
+
+            finding_data: list[list[Any]] = []
+            header = ["Name", "Envelope", "Vuln IDs", "Affected Range", "Vulnerable Versions"]
+            if self.output_desc:
+                header.append("Description")
+            finding_data.append(header)
+
+            for (pkg_name, envelope_str, _range_key), group in grouped.items():
+                first = group[0]
+
+                # Collect all advisory IDs from the group
+                all_ids = [f.vulnerability.id for f in group]
+                ids_str = ", ".join(all_ids[:3])
+                if len(all_ids) > 3:
+                    ids_str += f" (+{len(all_ids) - 3})"
+
+                # Truncate vulnerable versions list for display
+                vuln_versions = first.vulnerable_versions_permitted[:5]
+                versions_str = ", ".join(str(v) for v in vuln_versions)
+                if len(first.vulnerable_versions_permitted) > 5:
+                    versions_str += f" (+{len(first.vulnerable_versions_permitted) - 5} more)"
+
+                row: list[Any] = [
+                    pkg_name,
+                    envelope_str or "*",
+                    ids_str,
+                    first.vulnerability.affected_range_display,
+                    versions_str,
+                ]
+                if self.output_desc:
+                    # Truncate description
+                    desc = first.vulnerability.description
+                    if len(desc) > 60:
+                        desc = desc[:57] + "..."
+                    row.append(desc)
+                finding_data.append(row)
+
+            if len(finding_data) > 1:
+                finding_strings, sizes = tabulate(finding_data)
+                finding_strings.insert(1, " ".join("-" * s for s in sizes))
+                columns_string = "\n".join(finding_strings)
+
+        # Format unsatisfiable envelopes
+        if unsatisfiables:
+            if columns_string:
+                columns_string += "\n\n"
+
+            unsat_data: list[list[Any]] = []
+            unsat_header = ["Name", "Conflicting Constraints"]
+            unsat_data.append(unsat_header)
+
+            for unsat in unsatisfiables:
+                constraints_str = "; ".join(
+                    f"{spec} (from {src})" for spec, src in unsat.constraints[:3]
+                )
+                if len(unsat.constraints) > 3:
+                    constraints_str += f" (+{len(unsat.constraints) - 3} more)"
+                unsat_data.append([unsat.canonical_name, constraints_str])
+
+            if len(unsat_data) > 1:
+                unsat_strings, sizes = tabulate(unsat_data)
+                unsat_strings.insert(1, " ".join("-" * s for s in sizes))
+                if columns_string:
+                    columns_string += "Unsatisfiable Envelopes:\n"
+                columns_string += "\n".join(unsat_strings)
+
+        # Add transitive metadata completeness as footer
+        if columns_string:
+            columns_string += "\n\n"
+        columns_string += (
+            f"Transitive metadata completeness: "
+            f"{coverage.versions_with_requires_dist}/{coverage.versions_examined} versions with metadata "
+            f"({coverage.packages_with_requires_dist}/{coverage.packages_total} packages)"
+        )
+
+        return columns_string

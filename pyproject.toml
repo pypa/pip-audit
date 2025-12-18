@@ -44,7 +44,8 @@ requires-python = ">=3.10"
 cov = [
     "coverage[toml] ~= 7.0, != 7.3.3", # https://github.com/nedbat/coveragepy/issues/1713
 ]
-test = ["pretend", "pytest", "pip-audit[cov]"]
+test = ["pretend", "pytest", "hypothesis", "responses", "pip-audit[cov]"]
+verify = ["crosshair-tool", "icontract"]
 lint = [
     "ruff >= 0.11",
     "interrogate ~= 1.6",

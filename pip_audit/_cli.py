@@ -391,6 +391,18 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         "this can only be used with hashed requirements files or if the `--no-deps` flag has been "
         "provided",
     )
+    range_args = parser.add_mutually_exclusive_group()
+    range_args.add_argument(
+        "--range",
+        action="store_true",
+        help="analyze constraints without resolving; reports if declared constraints "
+        "could permit vulnerable versions (exit 0 always)",
+    )
+    range_args.add_argument(
+        "--range-strict",
+        action="store_true",
+        help="like --range, but exit 1 if any constraint findings exist",
+    )
     return parser
 
 
@@ -444,6 +456,23 @@ def audit() -> None:  # pragma: no cover
     """
     parser = _parser()
     args = _parse_args(parser)
+
+    # Range mode: single dispatch to separate pipeline
+    if args.range or args.range_strict:
+        # Validate mutual exclusivity with other modes
+        range_flag = "--range-strict" if args.range_strict else "--range"
+        if args.requirements:
+            parser.error(f"{range_flag} is mutually exclusive with -r/--requirement")
+        if args.paths:
+            parser.error(f"{range_flag} is mutually exclusive with --path")
+        if args.locked:
+            parser.error(f"{range_flag} is mutually exclusive with --locked")
+        if args.fix:
+            parser.error(f"{range_flag} is mutually exclusive with --fix")
+
+        from pip_audit._range_audit import _audit_range
+
+        sys.exit(_audit_range(args))
 
     service: VulnerabilityService
     if args.vulnerability_service is VulnerabilityServiceChoice.Osv:

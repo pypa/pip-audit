@@ -5,12 +5,19 @@ Functionality for formatting vulnerability results as an array of JSON objects.
 from __future__ import annotations
 
 import json
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import pip_audit._fix as fix
 import pip_audit._service as service
 
 from .interface import VulnerabilityFormat
+
+if TYPE_CHECKING:
+    from pip_audit._range_types import (
+        ConstraintFinding,
+        MetadataCoverage,
+        UnsatisfiableEnvelope,
+    )
 
 
 class JsonFormat(VulnerabilityFormat):
@@ -103,3 +110,87 @@ class JsonFormat(VulnerabilityFormat):
             "old_version": str(fix_version.dep.version),
             "new_version": str(fix_version.version),
         }
+
+    def format_constraint_findings(
+        self,
+        findings: list[ConstraintFinding],
+        unsatisfiables: list[UnsatisfiableEnvelope],
+        coverage: MetadataCoverage,
+    ) -> str:
+        """
+        Format constraint findings as JSON.
+
+        Returns a JSON object with constraint_findings, unsatisfiable_envelopes,
+        and transitive_metadata_completeness keys.
+
+        Findings are grouped by (package, envelope, range_key) to deduplicate
+        advisories with equivalent affected ranges.
+        """
+        output: dict[str, Any] = {}
+
+        # Group findings by (package_name, envelope_str, range_key)
+        # This deduplicates advisories like GHSA + PYSEC for the same issue
+        grouped: dict[tuple, list["ConstraintFinding"]] = {}
+        for finding in findings:
+            group_key = (
+                finding.dependency.canonical_name,
+                str(finding.dependency.specifier),
+                finding.vulnerability.range_key,
+            )
+            if group_key not in grouped:
+                grouped[group_key] = []
+            grouped[group_key].append(finding)
+
+        # Format grouped findings
+        findings_json = []
+        for (pkg_name, envelope_str, _range_key), group in grouped.items():
+            # Collect all advisory IDs and aliases from the group
+            all_ids = [f.vulnerability.id for f in group]
+            all_aliases: set[str] = set()
+            for f in group:
+                all_aliases.update(f.vulnerability.aliases)
+
+            # Use first finding for common fields (they're the same within group)
+            first = group[0]
+
+            # Sort constraint sources: "pyproject.toml" first, then alpha
+            sources = list(first.dependency.constraint_sources)
+            sources.sort(key=lambda s: (0 if s == "pyproject.toml" else 1, s))
+
+            finding_json: dict[str, Any] = {
+                "name": pkg_name,
+                "envelope": envelope_str or "*",
+                "constraint_sources": sources,
+                "vulnerability": {
+                    "ids": all_ids,
+                    "affected_range": first.vulnerability.affected_range_display,
+                    "fix_versions": [str(v) for v in first.vulnerability.fix_versions],
+                },
+                "vulnerable_versions_permitted": [
+                    str(v) for v in first.vulnerable_versions_permitted
+                ],
+            }
+            if self.output_aliases:
+                finding_json["vulnerability"]["aliases"] = sorted(all_aliases)
+            if self.output_desc:
+                finding_json["vulnerability"]["description"] = first.vulnerability.description
+            findings_json.append(finding_json)
+        output["constraint_findings"] = findings_json
+
+        # Format unsatisfiable envelopes
+        unsatisfiables_json = []
+        for unsat in unsatisfiables:
+            unsat_json = {
+                "name": unsat.canonical_name,
+                "constraints": [
+                    {"specifier": str(spec), "source": source}
+                    for spec, source in unsat.constraints
+                ],
+            }
+            unsatisfiables_json.append(unsat_json)
+        output["unsatisfiable_envelopes"] = unsatisfiables_json
+
+        # Format transitive metadata completeness
+        output["transitive_metadata_completeness"] = coverage.to_dict()
+
+        return json.dumps(output)

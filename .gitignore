@@ -7,3 +7,7 @@ html/
 dist/
 .python-version
 /.pytest_cache/
+/.hypothesis/
+CLAUDE.md
+AGENTS.md
+GEMINI.md
