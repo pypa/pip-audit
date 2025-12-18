@@ -1,0 +1,4 @@
+# Fork-specific files: keep ours during upstream merges
+# These files are intentionally different from upstream and should not be overwritten
+README.md merge=ours
+CONTRIBUTING.md merge=ours
