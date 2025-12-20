@@ -697,7 +697,7 @@ def test_requirement_source_fix_explicit_subdep_resolver_error(req_file):
     assert len(mock_resolver.resolve.calls) == 0
 
 
-def test_requirement_source_fix_explicit_subdep_comment_retension(req_file):
+def test_requirement_source_fix_explicit_subdep_comment_retention(req_file):
     # This test is regression testing a weakness in the previous fix implementation.
     #
     # When fixing a subdependency and explicitly adding it to the requirements file, we add a

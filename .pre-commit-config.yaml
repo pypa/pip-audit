@@ -1,36 +1,47 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.2.0
+    rev: v6.0.0
     hooks:
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: check-shebang-scripts-are-executable
+      - id: check-ast
+      - id: check-case-conflict
+      - id: check-added-large-files
+      - id: check-docstring-first
+      - id: check-json
       - id: check-toml
+        exclude: "pylock.invalid.toml"
       - id: check-yaml
+      - id: detect-private-key
+      - id: debug-statements
       - id: end-of-file-fixer
       - id: fix-byte-order-marker
       - id: mixed-line-ending
+        args: ["--fix=lf"]
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
       - id: no-commit-to-branch
         args: ["-b", "main"]
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.10
     hooks:
-      - id: black
-  - repo: https://github.com/pycqa/flake8
-    rev: 4.0.1
-    hooks:
-      - id: flake8
-  - repo: https://github.com/pycqa/isort
-    rev: 5.10.1
-    hooks:
-      - id: isort
+      - id: ruff-format
+      - id: ruff-check
+        args: [--fix]
+
   - repo: https://github.com/pypa/pip-audit
     rev: v2.10.0
     hooks:
       - id: pip-audit
+
   - repo: https://github.com/rhysd/actionlint
-    rev: v1.6.12
+    rev: v1.7.9
     hooks:
       - id: actionlint-docker
+
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.40.0
+    hooks:
+      - id: typos
