@@ -52,7 +52,8 @@ lint: $(VENV)/pyvenv.cfg
 		ruff format --check $(ALL_PY_SRCS) && \
 		ruff check $(ALL_PY_SRCS) && \
 		mypy $(PY_MODULE) && \
-		interrogate -c pyproject.toml .
+		interrogate -c pyproject.toml . && \
+		typos .
 
 .PHONY: reformat
 reformat:

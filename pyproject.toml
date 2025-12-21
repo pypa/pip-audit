@@ -51,6 +51,7 @@ lint = [
     "mypy",
     "types-requests",
     "types-toml",
+    "typos",
 ]
 doc = ["pdoc"]
 dev = ["build", "pip-audit[doc,test,lint]"]
