@@ -5,7 +5,7 @@ on:
   schedule:
     - cron: '19 4 * * 0'
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 # No permissions needed at top-level.
 permissions: {}

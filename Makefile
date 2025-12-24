@@ -5,7 +5,7 @@ PY_MODULE := pip_audit
 ALL_PY_SRCS := $(shell find $(PY_MODULE) -name '*.py') \
 	$(shell find test -name '*.py')
 
-# Optionally overriden by the user, if they're using a virtual environment manager.
+# Optionally overridden by the user, if they're using a virtual environment manager.
 VENV ?= env
 
 # On Windows, venv scripts/shims are under `Scripts` instead of `bin`.
@@ -52,7 +52,8 @@ lint: $(VENV)/pyvenv.cfg
 		ruff format --check $(ALL_PY_SRCS) && \
 		ruff check $(ALL_PY_SRCS) && \
 		mypy $(PY_MODULE) && \
-		interrogate -c pyproject.toml .
+		interrogate -c pyproject.toml . && \
+		typos .
 
 .PHONY: reformat
 reformat:

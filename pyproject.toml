@@ -46,11 +46,12 @@ cov = [
 ]
 test = ["pretend", "pytest", "pip-audit[cov]"]
 lint = [
-    "ruff >= 0.11",
+    "ruff >= 0.14",
     "interrogate ~= 1.6",
     "mypy",
     "types-requests",
     "types-toml",
+    "typos",
 ]
 doc = ["pdoc"]
 dev = ["build", "pip-audit[doc,test,lint]"]

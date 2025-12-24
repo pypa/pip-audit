@@ -604,7 +604,7 @@ and purposes, `pip-audit -r INPUT` is functionally equivalent to
 `pip install -r INPUT`, with a small amount of **non-security isolation** to
 avoid conflicts with any of your local environments.
 
-`pip-audit` is first and foremost a auditing tool for *Python* packages.
+`pip-audit` is first and foremost an auditing tool for *Python* packages.
 You **must not** assume that `pip-audit` will detect or flag "transitive"
 vulnerabilities that might be exposed through Python packages, but are not
 actually part of the package itself. For example, `pip-audit`'s vulnerability
