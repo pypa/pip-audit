@@ -35,17 +35,17 @@ def _pip_audit_result_to_bom(
         dep = cast(service.ResolvedDependency, dep)
 
         c = Component(name=dep.name, version=str(dep.version))
-        for vuln in vulns:
-            vulnerabilities.append(
-                Vulnerability(
-                    id=vuln.id,
-                    description=vuln.description,
-                    recommendation="Upgrade",
-                    # BomTarget expects str in type hints, but accepts BomRef at runtime
-                    affects=[BomTarget(ref=c.bom_ref)],  # type: ignore[arg-type]
-                )
+        vuln_list = [
+            Vulnerability(
+                id=vuln.id,
+                description=vuln.description,
+                recommendation="Upgrade",
+                # BomTarget expects str in type hints, but accepts BomRef at runtime
+                affects=[BomTarget(ref=c.bom_ref)],  # type: ignore[arg-type]
             )
-
+            for vuln in vulns
+        ]
+        vulnerabilities.extend(vuln_list)
         components.append(c)
 
     return Bom(components=components, vulnerabilities=vulnerabilities)

@@ -584,7 +584,7 @@ def audit() -> None:  # pragma: no cover
 
         # If the `--fix` flag has been applied, find a set of suitable fix versions and upgrade the
         # dependencies at the source
-        fixes = list()
+        fixes = []
         fixed_pkg_count = 0
         fixed_vuln_count = 0
         if args.fix:

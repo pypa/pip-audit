@@ -50,15 +50,10 @@ class JsonFormat(VulnerabilityFormat):
 
         See `VulnerabilityFormat.format`.
         """
-        output_json = {}
-        dep_json = []
-        for dep, vulns in result.items():
-            dep_json.append(self._format_dep(dep, vulns))
-        output_json["dependencies"] = dep_json
-        fix_json = []
-        for f in fixes:
-            fix_json.append(self._format_fix(f))
-        output_json["fixes"] = fix_json
+        output_json = {
+            "dependencies": [self._format_dep(dep, vulns) for dep, vulns in result.items()],
+            "fixes": [self._format_fix(f) for f in fixes],
+        }
         return json.dumps(output_json)
 
     def _format_dep(

@@ -77,14 +77,16 @@ class MarkdownFormat(VulnerabilityFormat):
             header += " | Description"
             border += " | ---"
 
-        vuln_rows: list[str] = []
-        for dep, vulns in result.items():
-            if dep.is_skipped():
-                continue
-            dep = cast(service.ResolvedDependency, dep)
-            applied_fix = next((f for f in fixes if f.dep == dep), None)
-            for vuln in vulns:
-                vuln_rows.append(self._format_vuln(dep, vuln, applied_fix))
+        vuln_rows = [
+            self._format_vuln(
+                cast(service.ResolvedDependency, dep),
+                vuln,
+                next((f for f in fixes if f.dep == dep), None),
+            )
+            for dep, vulns in result.items()
+            if not dep.is_skipped()
+            for vuln in vulns
+        ]
 
         if not vuln_rows:
             return ""
@@ -137,7 +139,7 @@ class MarkdownFormat(VulnerabilityFormat):
         border = "--- | ---"
 
         skipped_dep_rows: list[str] = []
-        for dep, _ in result.items():
+        for dep in result.keys():
             if dep.is_skipped():
                 dep = cast(service.SkippedDependency, dep)
                 skipped_dep_rows.append(self._format_skipped_dep(dep))

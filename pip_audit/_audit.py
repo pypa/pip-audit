@@ -93,4 +93,4 @@ class Auditor:
                     seen_aliases.update(v.aliases | {v.id})
                     unique_vulns.append(v)
 
-                yield (dep, unique_vulns)
+                yield dep, unique_vulns

@@ -109,6 +109,15 @@ reset = true
 line-length = 100
 
 [tool.ruff.lint]
+select = [
+    "E",        # pycodestyle (errors)
+    "W",        # pycodestyle (warnings)
+    "F",        # pyflakes
+    "I",        # isort (imports ordering)
+    "UP",       # pyupgrade
+    "C4",       # comprehensions
+    "PERF",     # perflint
+]
+
 # Never enforce `E501` (line length violations).
 ignore = ["E501"]
-select = ["E", "F", "I", "W", "UP"]

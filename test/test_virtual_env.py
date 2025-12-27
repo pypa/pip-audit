@@ -49,7 +49,7 @@ def test_virtual_env_failed_pip_upgrade(monkeypatch):
     def run_mock(args, **kwargs):
         # We have to be a bit more specific than usual here because the `EnvBuilder` invokes
         # `ensurepip` with similar looking arguments and we DON'T want to mock that call.
-        if set(["install", "--upgrade", "pip"]).issubset(set(args)):
+        if {"install", "--upgrade", "pip"}.issubset(set(args)):
             raise _subprocess.CalledProcessError("barf", stderr="")
         # If it's not a call to upgrade pip, then call the original run
         return original_run(args, **kwargs)
