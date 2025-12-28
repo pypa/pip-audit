@@ -195,7 +195,7 @@ class RequirementSource(DependencySource):
             tmp_files: list[IO[str]] = [
                 stack.enter_context(NamedTemporaryFile(mode="r+")) for _ in self._filenames
             ]
-            for filename, tmp_file in zip(self._filenames, tmp_files, strict=False):
+            for filename, tmp_file in zip(self._filenames, tmp_files, strict=True):
                 with filename.open("r") as f:
                     shutil.copyfileobj(f, tmp_file)
 
@@ -281,7 +281,7 @@ class RequirementSource(DependencySource):
                 print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
 
     def _recover_files(self, tmp_files: list[IO[str]]) -> None:
-        for filename, tmp_file in zip(self._filenames, tmp_files, strict=False):
+        for filename, tmp_file in zip(self._filenames, tmp_files, strict=True):
             try:
                 tmp_file.seek(0)
                 with filename.open("w") as f:
