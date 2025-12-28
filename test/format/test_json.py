@@ -52,7 +52,7 @@ def test_json(vuln_data):
         ],
         "fixes": [],
     }
-    assert json_format.format(vuln_data, list()) == json.dumps(expected_json)
+    assert json_format.format(vuln_data, []) == json.dumps(expected_json)
 
 
 def test_json_no_desc(vuln_data):
@@ -92,7 +92,7 @@ def test_json_no_desc(vuln_data):
         ],
         "fixes": [],
     }
-    assert json_format.format(vuln_data, list()) == json.dumps(expected_json)
+    assert json_format.format(vuln_data, []) == json.dumps(expected_json)
 
 
 def test_json_no_desc_no_aliases(vuln_data):
@@ -129,7 +129,7 @@ def test_json_no_desc_no_aliases(vuln_data):
         ],
         "fixes": [],
     }
-    assert json_format.format(vuln_data, list()) == json.dumps(expected_json)
+    assert json_format.format(vuln_data, []) == json.dumps(expected_json)
 
 
 def test_json_skipped_dep(vuln_data_skipped_dep):
@@ -157,7 +157,7 @@ def test_json_skipped_dep(vuln_data_skipped_dep):
         ],
         "fixes": [],
     }
-    assert json_format.format(vuln_data_skipped_dep, list()) == json.dumps(expected_json)
+    assert json_format.format(vuln_data_skipped_dep, []) == json.dumps(expected_json)
 
 
 def test_json_fix(vuln_data, fix_data):

@@ -74,13 +74,19 @@ class ColumnsFormat(VulnerabilityFormat):
         if self.output_desc:
             header.append("Description")
         vuln_data.append(header)
-        for dep, vulns in result.items():
-            if dep.is_skipped():
-                continue
-            dep = cast(service.ResolvedDependency, dep)
-            applied_fix = next((f for f in fixes if f.dep == dep), None)
-            for vuln in vulns:
-                vuln_data.append(self._format_vuln(dep, vuln, applied_fix))
+
+        vuln_rows = [
+            self._format_vuln(
+                cast(service.ResolvedDependency, dep),
+                vuln,
+                next((f for f in fixes if f.dep == dep), None),
+            )
+            for dep, vulns in result.items()
+            if not dep.is_skipped()
+            for vuln in vulns
+        ]
+
+        vuln_data.extend(vuln_rows)
 
         columns_string = ""
 
@@ -90,7 +96,7 @@ class ColumnsFormat(VulnerabilityFormat):
 
             # Create and add a separator.
             if len(vuln_data) > 0:
-                vuln_strings.insert(1, " ".join(map(lambda x: "-" * x, sizes)))
+                vuln_strings.insert(1, " ".join("-" * x for x in sizes))
 
             for row in vuln_strings:
                 if columns_string:
@@ -98,29 +104,21 @@ class ColumnsFormat(VulnerabilityFormat):
                 columns_string += row
 
         # Now display the skipped dependencies
-        skip_data: list[list[Any]] = []
-        skip_header = ["Name", "Skip Reason"]
+        skip_data = [
+            self._format_skipped_dep(cast(service.SkippedDependency, dep))
+            for dep in result.keys()
+            if dep.is_skipped()
+        ]
 
-        skip_data.append(skip_header)
-        for dep, _ in result.items():
-            if dep.is_skipped():
-                dep = cast(service.SkippedDependency, dep)
-                skip_data.append(self._format_skipped_dep(dep))
+        if skip_data:
+            skip_data.insert(0, ["Name", "Skip Reason"])
+            skip_strings, sizes = tabulate(skip_data)
+            skip_strings.insert(1, " ".join("-" * x for x in sizes))
 
-        # If we only have the header, that means that we haven't skipped any dependencies
-        # In that case, don't bother printing the header
-        if len(skip_data) <= 1:
-            return columns_string
-
-        skip_strings, sizes = tabulate(skip_data)
-
-        # Create separator for skipped dependencies columns
-        skip_strings.insert(1, " ".join(map(lambda x: "-" * x, sizes)))
-
-        for row in skip_strings:
-            if columns_string:
-                columns_string += "\n"
-            columns_string += row
+            for row in skip_strings:
+                if columns_string:
+                    columns_string += "\n"
+                columns_string += row
 
         return columns_string
 

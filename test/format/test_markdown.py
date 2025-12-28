@@ -17,7 +17,7 @@ Name | Version | ID | Fix Versions | Aliases | Description
 foo | 1.0 | VULN-0 | 1.1,1.4 | CVE-0000-00000 | The first vulnerability
 foo | 1.0 | VULN-1 | 1.0 | CVE-0000-00001 | The second vulnerability
 bar | 0.1 | VULN-2 |  | CVE-0000-00002 | The third vulnerability"""
-    assert markdown_format.format(vuln_data, list()) == expected_markdown
+    assert markdown_format.format(vuln_data, []) == expected_markdown
 
 
 def test_markdown_no_desc(vuln_data):
@@ -28,7 +28,7 @@ Name | Version | ID | Fix Versions | Aliases
 foo | 1.0 | VULN-0 | 1.1,1.4 | CVE-0000-00000
 foo | 1.0 | VULN-1 | 1.0 | CVE-0000-00001
 bar | 0.1 | VULN-2 |  | CVE-0000-00002"""
-    assert markdown_format.format(vuln_data, list()) == expected_markdown
+    assert markdown_format.format(vuln_data, []) == expected_markdown
 
 
 def test_markdown_no_desc_no_aliases(vuln_data):
@@ -39,7 +39,7 @@ Name | Version | ID | Fix Versions
 foo | 1.0 | VULN-0 | 1.1,1.4
 foo | 1.0 | VULN-1 | 1.0
 bar | 0.1 | VULN-2 | """
-    assert markdown_format.format(vuln_data, list()) == expected_markdown
+    assert markdown_format.format(vuln_data, []) == expected_markdown
 
 
 def test_markdown_skipped_dep(vuln_data_skipped_dep):
@@ -52,13 +52,13 @@ foo | 1.0 | VULN-0 | 1.1,1.4 | CVE-0000-00000
 Name | Skip Reason
 --- | ---
 bar | skip-reason"""
-    assert markdown_format.format(vuln_data_skipped_dep, list()) == expected_markdown
+    assert markdown_format.format(vuln_data_skipped_dep, []) == expected_markdown
 
 
 def test_markdown_no_vuln_data(no_vuln_data):
     markdown_format = format.MarkdownFormat(False, True)
     expected_markdown = ""
-    assert markdown_format.format(no_vuln_data, list()) == expected_markdown
+    assert markdown_format.format(no_vuln_data, []) == expected_markdown
 
 
 def test_markdown_no_vuln_data_skipped_dep(no_vuln_data_skipped_dep):
@@ -67,7 +67,7 @@ def test_markdown_no_vuln_data_skipped_dep(no_vuln_data_skipped_dep):
 Name | Skip Reason
 --- | ---
 bar | skip-reason"""
-    assert markdown_format.format(no_vuln_data_skipped_dep, list()) == expected_markdown
+    assert markdown_format.format(no_vuln_data_skipped_dep, []) == expected_markdown
 
 
 def test_markdown_fix(vuln_data, fix_data):

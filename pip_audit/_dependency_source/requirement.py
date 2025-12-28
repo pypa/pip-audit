@@ -195,7 +195,7 @@ class RequirementSource(DependencySource):
             tmp_files: list[IO[str]] = [
                 stack.enter_context(NamedTemporaryFile(mode="r+")) for _ in self._filenames
             ]
-            for filename, tmp_file in zip(self._filenames, tmp_files):
+            for filename, tmp_file in zip(self._filenames, tmp_files, strict=True):
                 with filename.open("r") as f:
                     shutil.copyfileobj(f, tmp_file)
 
@@ -225,7 +225,7 @@ class RequirementSource(DependencySource):
         # Check ahead of time for anything invalid in the requirements file since we don't want to
         # encounter this while writing out the file. Check for duplicate requirements and lines that
         # failed to parse.
-        req_specifiers: dict[str, SpecifierSet] = dict()
+        req_specifiers: dict[str, SpecifierSet] = {}
 
         for req in reqs:
             if (
@@ -281,12 +281,12 @@ class RequirementSource(DependencySource):
                 print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
 
     def _recover_files(self, tmp_files: list[IO[str]]) -> None:
-        for filename, tmp_file in zip(self._filenames, tmp_files):
+        for filename, tmp_file in zip(self._filenames, tmp_files, strict=True):
             try:
                 tmp_file.seek(0)
                 with filename.open("w") as f:
                     shutil.copyfileobj(tmp_file, f)
-            except Exception as e:
+            except Exception as e:  # noqa: PERF203
                 # Not much we can do at this point since we're already handling an exception. Just
                 # log the error and try to recover the rest of the files.
                 logger.warning(f"encountered an exception during file recovery: {e}")
@@ -298,7 +298,7 @@ class RequirementSource(DependencySource):
         """
         Collect pre-resolved (pinned) dependencies.
         """
-        req_specifiers: dict[str, SpecifierSet] = dict()
+        req_specifiers: dict[str, SpecifierSet] = {}
         for req in reqs:
             if not req.hash_options and require_hashes:
                 raise RequirementSourceError(f"requirement {req.dumps()} does not contain a hash")

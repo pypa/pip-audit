@@ -47,7 +47,7 @@ def test_fix_skipped_deps(vuln_service):
 
 def test_fix_no_vulns(vuln_service):
     dep = ResolvedDependency(name="foo", version=Version("0.5.0"))
-    result: dict[Dependency, list[VulnerabilityResult]] = {dep: list()}
+    result: dict[Dependency, list[VulnerabilityResult]] = {dep: []}
     fix_versions = list(resolve_fix_versions(vuln_service(), result))
     assert not fix_versions
 
@@ -59,7 +59,7 @@ def test_fix_resolution_impossible(vuln_service):
             VulnerabilityResult(
                 id="fake-id",
                 description="this is not a real result",
-                fix_versions=list(),
+                fix_versions=[],
                 aliases=set(),
             )
         ]
