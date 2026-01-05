@@ -108,7 +108,7 @@ The following manual steps are required:
     $ git checkout -b prepare-1.0.0
     ```
 
-1. Update `pip-audit`'s `__version__` attribute. It can be found under `pip_audit/__init__.py`.
+2. Update `pip-audit`'s `__version__` attribute. It can be found under `pip_audit/__init__.py`.
 
     **Note**: You can do this automatically with `bump`:
 
@@ -117,31 +117,31 @@ The following manual steps are required:
     $ bump --major
     ```
 
-1. Commit your changes to the branch and create a new Pull Request.
+3. Commit your changes to the branch and create a new Pull Request.
 
-1. Tag another maintainer for review. Once approved, you may merge your PR.
+4. Tag another maintainer for review. Once approved, you may merge your PR.
 
-1. Create a new tag corresponding to the merged version change. For example:
+5. Create a new tag corresponding to the merged version change. For example:
 
     ```console
     # IMPORTANT: don't forget the `v` prefix!
     $ git tag v1.0.0
     ```
 
-1. Push the new tag:
+6. Push the new tag:
 
     ```console
     $ git push origin v1.0.0
     ```
 
-1. Use the [releases page](https://github.com/pypa/pip-audit/releases) to
+7. Use the [releases page](https://github.com/pypa/pip-audit/releases) to
    create a new release, marking it as a "pre-release" if appropriate.
 
-1. Copy the relevant
+8. Copy the relevant
   [CHANGELOG](https://github.com/pypa/pip-audit/blob/main/CHANGELOG.md)
   entries into the release notes.
 
-1. Save and publish the release. The CI will take care of all other tasks.
+9. Save and publish the release. The CI will take care of all other tasks.
 
 
 
