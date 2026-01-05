@@ -52,7 +52,7 @@ with support from Google. This is not an official Google or Trail of Bits produc
 
 ## Installation
 
-`pip-audit` requires Python 3.9 or newer, and can be installed directly via `pip`:
+`pip-audit` requires Python 3.10 or newer, and can be installed directly via `pip`:
 
 ```bash
 python -m pip install pip-audit
@@ -233,11 +233,11 @@ instead:
 
 
 | Flag                      | Environment equivalent            | Example                               |
-| ------------------------- | --------------------------------- | ------------------------------------- |
+|---------------------------|-----------------------------------|---------------------------------------|
 | `--format`                | `PIP_AUDIT_FORMAT`                | `PIP_AUDIT_FORMAT=markdown`           |
 | `--vulnerability-service` | `PIP_AUDIT_VULNERABILITY_SERVICE` | `PIP_AUDIT_VULNERABILITY_SERVICE=osv` |
 | `--desc`                  | `PIP_AUDIT_DESC`                  | `PIP_AUDIT_DESC=off`                  |
-| `--progress-spinner`      | `PIP_AUDIT_PROGRESS_SPINNER`      |  `PIP_AUDIT_PROGRESS_SPINNER=off`     |
+| `--progress-spinner`      | `PIP_AUDIT_PROGRESS_SPINNER`      | `PIP_AUDIT_PROGRESS_SPINNER=off`      |
 | `--output`                | `PIP_AUDIT_OUTPUT`                | `PIP_AUDIT_OUTPUT=/tmp/example`       |
 
 ### Exit codes
