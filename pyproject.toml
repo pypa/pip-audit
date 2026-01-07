@@ -51,7 +51,7 @@ test = [
 ]
 lint = [
     "ruff >= 0.14",
-    "interrogate >= 1.7",
+    "interrogate ~= 1.6",
     "mypy",
     "types-requests",
     "types-toml",
