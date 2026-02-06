@@ -120,6 +120,9 @@ class OsvService(VulnerabilityService):
             # formatting in the process).
             description = description.replace("\n", " ")
 
+            # NOTE: Some feeds may include runtime constraints under
+            # `affected[*].ecosystem_specific`(e.g., `python_runtime`), but pip-audit 
+            # currently does not interpret these fields.
             # OSV doesn't mandate this field either. There's very little we
             # can do without it, so we skip any results that are missing it.
             affecteds = vuln.get("affected")

@@ -277,3 +277,44 @@ def test_osv_vuln_withdrawn(monkeypatch):
     assert logger.debug.calls == [
         pretend.call("OSV vuln entry 'fakeid' marked as withdrawn at some-datetime")
     ]
+
+
+def test_osv_ignores_ecosystem_specific_python_runtime(monkeypatch):
+    payload = {
+        "vulns": [
+            {
+                "id": "fakeid",
+                "summary": "fake summary",
+                "details": "fake details",
+                "affected": [
+                    {
+                        "package": {"name": "foo", "ecosystem": "PyPI"},
+                        "ranges": [
+                            {
+                                "type": "ECOSYSTEM",
+                                "events": [{"introduced": "0"}, {"fixed": "2.0.0"}],
+                            }
+                        ],
+                        "ecosystem_specific": {
+                            "python_runtime": [
+                                ">=3.9,<3.10"
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+    response = pretend.stub(raise_for_status=lambda: None, json=lambda: payload)
+    post = pretend.call_recorder(lambda *a, **kw: response)
+
+    osv = service.OsvService()
+    monkeypatch.setattr(osv.session, "post", post)
+
+    # Simulate running on Python 3.11 (outside python_runtime range)
+    dep = service.ResolvedDependency("foo", Version("1.5.0"))
+    results = dict(osv.query_all(iter([dep])))
+
+    assert dep in results
+    assert len(results[dep]) == 1
