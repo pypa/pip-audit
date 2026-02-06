@@ -13,6 +13,10 @@ body:
         Invalid or incomplete submissions will be given a lower priority or
         closed outright.
 
+        Before filing:
+        - **Update to the latest stable `pip-audit`** (and confirm with `pip-audit -V`).
+        - **Search for duplicates** in both **open and recently closed** issues.
+
   - type: checkboxes
     attributes:
       label: Pre-submission checks
@@ -25,10 +29,14 @@ body:
             [pypa/advisory-database](https://github.com/pypa/advisory-database/issues/new) instead.
           required: true
         - label: >-
-            I agree to follow the [PSF Code of Conduct](https://www.python.org/psf/conduct/).
+            I have verified that I am running the **latest stable** release of `pip-audit`
+            (try `python -m pip install -U pip-audit` and confirm with `pip-audit -V`).
           required: true
         - label: >-
-            I have looked through the open issues for a duplicate report.
+            I have searched for a duplicate report in **open** issues and **recently closed** issues.
+          required: true
+        - label: >-
+            I agree to follow the [PSF Code of Conduct](https://www.python.org/psf/conduct/).
           required: true
 
   - type: textarea
