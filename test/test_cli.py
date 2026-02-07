@@ -232,3 +232,21 @@ def test_environment_variable(monkeypatch):
     assert args.output == Path("/tmp/fake")
     assert not args.progress_spinner
     assert args.vulnerability_service == VulnerabilityServiceChoice.Osv
+
+
+def test_disable_pip_requires_requirement_flag(capsys, monkeypatch):
+    parser = pip_audit._cli._parser()
+    monkeypatch.setattr(
+        pip_audit._cli,
+        "_parse_args",
+        lambda *a: parser.parse_args(["--disable-pip"]),
+    )
+
+    with pytest.raises(SystemExit) as excinfo:
+        pip_audit._cli.audit()
+
+    assert excinfo.value.code == 2
+
+    captured = capsys.readouterr()
+    assert "The --disable-pip flag can only be used with --requirement (-r)" in captured.err
+    assert "Use: pip-audit -r requirements.txt" in captured.err

@@ -388,8 +388,8 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         "--disable-pip",
         action="store_true",
         help="don't use `pip` for dependency resolution; "
-        "this can only be used with hashed requirements files or if the `--no-deps` flag has been "
-        "provided",
+        "only valid with `--requirement (-r)` and requires hashed requirements files or "
+        "the `--no-deps` flag",
     )
     return parser
 
@@ -475,7 +475,10 @@ def audit() -> None:  # pragma: no cover
         elif args.no_deps:
             parser.error("The --no-deps flag can only be used with --requirement (-r)")
         elif args.disable_pip:
-            parser.error("The --disable-pip flag can only be used with --requirement (-r)")
+            parser.error(
+                "The --disable-pip flag can only be used with --requirement (-r). "
+                "Use: pip-audit -r requirements.txt (and add --no-deps or hashes)."
+            )
 
     # Nudge users to consider alternate workflows.
     if args.require_hashes and args.no_deps:
