@@ -36,7 +36,7 @@ body:
             I have searched for a duplicate report in **open** issues and **recently closed** issues.
           required: true
         - label: >-
-            I agree to follow the [PSF Code of Conduct](https://www.python.org/psf/conduct/).
+            I have searched for duplicate reports in both open and recently closed issues.
           required: true
 
   - type: textarea
@@ -92,7 +92,9 @@ body:
     attributes:
       label: pip-audit version
       description: |
-        `pip-audit -V`
+        Paste the output of `pip-audit -V` here.
+      placeholder: |
+        pip-audit 2.7.3
     validations:
       required: true
 
