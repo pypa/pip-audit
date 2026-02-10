@@ -13,10 +13,6 @@ body:
         Invalid or incomplete submissions will be given a lower priority or
         closed outright.
 
-        Before filing:
-        - **Update to the latest stable `pip-audit`** (and confirm with `pip-audit -V`).
-        - **Search for duplicates** in both **open and recently closed** issues.
-
   - type: checkboxes
     attributes:
       label: Pre-submission checks
