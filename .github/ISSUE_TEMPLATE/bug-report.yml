@@ -25,14 +25,14 @@ body:
             [pypa/advisory-database](https://github.com/pypa/advisory-database/issues/new) instead.
           required: true
         - label: >-
+            I agree to follow the [PSF Code of Conduct](https://www.python.org/psf/conduct/).
+          required: true
+        - label: >-
             I have verified that I am running the **latest stable** release of `pip-audit`
             (try `python -m pip install -U pip-audit` and confirm with `pip-audit -V`).
           required: true
         - label: >-
             I have searched for a duplicate report in **open** issues and **recently closed** issues.
-          required: true
-        - label: >-
-            I have searched for duplicate reports in both open and recently closed issues.
           required: true
 
   - type: textarea
