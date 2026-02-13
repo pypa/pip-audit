@@ -39,24 +39,17 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
     # state updates, so we trim the first argument down to its basename.
     pretty_args = " ".join([os.path.basename(args[0]), *args[1:]])
 
-    terminated = False
-    stdout = b""
-    stderr = b""
-
-    # Run the process with unbuffered I/O, to make the poll-and-read loop below
-    # more responsive.
+    # Run the process with unbuffered I/O and use `communicate()` to avoid
+    # deadlocks while reading full stdout/stderr.
     with Popen(args, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
-        # NOTE: We use `poll()` to control this loop instead of the `read()` call
-        # to prevent deadlocks. Similarly, `read(size)` will return an empty bytes
-        # once `stdout` hits EOF, so we don't have to worry about that blocking.
-        while not terminated:
-            terminated = process.poll() is not None
-            stdout += process.stdout.read()  # type: ignore
-            stderr += process.stderr.read()  # type: ignore
-            state.update_state(
-                f"Running {pretty_args}",
-                stdout.decode(errors="replace") if log_stdout else None,
-            )
+        state.update_state(f"Running {pretty_args}")
+
+        stdout, stderr = process.communicate()
+
+        state.update_state(
+            f"Running {pretty_args}",
+            stdout.decode(errors="replace") if log_stdout else None,
+        )
 
         if process.returncode != 0:
             raise CalledProcessError(
