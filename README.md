@@ -111,6 +111,7 @@ For example, using `pip-audit` via `pre-commit` to audit a requirements file:
     rev: v2.10.0
     hooks:
       -   id: pip-audit
+          files: ^requirements.*\.(txt|in)$
           args: ["-r", "requirements.txt"]
 
 ci:
