@@ -232,3 +232,10 @@ def test_environment_variable(monkeypatch):
     assert args.output == Path("/tmp/fake")
     assert not args.progress_spinner
     assert args.vulnerability_service == VulnerabilityServiceChoice.Osv
+
+# We are building the parser after setting the env var since the defualt is read 
+def test_ignore_vuln_env_var(monkeypatch):
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULN", "CVE-1111-2222 GHSA-aaaa-bbbb-cccc")
+    parser = pip_audit._cli._parser()
+    args = parser.parse_args([])
+    assert args.ignore_vulns == ["CVE-1111-2222", "GHSA-aaaa-bbbb-cccc"]

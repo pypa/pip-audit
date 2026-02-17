@@ -239,7 +239,7 @@ instead:
 | `--desc`                  | `PIP_AUDIT_DESC`                  | `PIP_AUDIT_DESC=off`                  |
 | `--progress-spinner`      | `PIP_AUDIT_PROGRESS_SPINNER`      | `PIP_AUDIT_PROGRESS_SPINNER=off`      |
 | `--output`                | `PIP_AUDIT_OUTPUT`                | `PIP_AUDIT_OUTPUT=/tmp/example`       |
-
+| `--ignore-vuln`           | `PIP_AUDIT_IGNORE_VULN`           | `PIP_AUDIT_IGNORE_VULN="CVE-1111-2222 GHSA-aaaa-bbbb-cccc"` |
 ### Exit codes
 
 On completion, `pip-audit` will exit with a code indicating its status.
