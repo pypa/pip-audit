@@ -381,7 +381,8 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         default=[],
         help=(
             "ignore a specific vulnerability by its vulnerability ID; "
-            "this option can be used multiple times"
+            "this option can be used multiple times; "
+            "can also be set via the PIP_AUDIT_IGNORE_VULN environment variable"
         ),
     )
     parser.add_argument(
@@ -396,6 +397,13 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
 
 def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragma: no cover
     args = parser.parse_args()
+
+    # Merge PIP_AUDIT_IGNORE_VULN with CLI --ignore-vuln
+    env_ignore_raw = os.environ.get("PIP_AUDIT_IGNORE_VULN")
+    if env_ignore_raw:
+        env_ignore = [v.strip() for v in env_ignore_raw.split(",") if v.strip()]
+        if env_ignore:
+            args.ignore_vulns = (args.ignore_vulns or []) + env_ignore
 
     # Configure logging upfront, so that we don't miss anything.
     if args.verbose >= 1:

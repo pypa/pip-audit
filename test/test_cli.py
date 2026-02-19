@@ -232,3 +232,16 @@ def test_environment_variable(monkeypatch):
     assert args.output == Path("/tmp/fake")
     assert not args.progress_spinner
     assert args.vulnerability_service == VulnerabilityServiceChoice.Osv
+
+
+def test_ignore_vuln_env(monkeypatch):
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULN", "ENV-1")
+
+    parser = pip_audit._cli._parser()
+
+    # Forza argv vuoto per evitare interferenze pytest
+    monkeypatch.setattr("sys.argv", ["pip-audit"])
+
+    args = pip_audit._cli._parse_args(parser)
+
+    assert "ENV-1" in args.ignore_vulns
