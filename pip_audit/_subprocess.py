@@ -39,29 +39,26 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
     # state updates, so we trim the first argument down to its basename.
     pretty_args = " ".join([os.path.basename(args[0]), *args[1:]])
 
-    terminated = False
-    stdout = b""
-    stderr = b""
+    with Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+        state.update_state(
+            f"Running {pretty_args}",
+            None,
+        )
 
-    # Run the process with unbuffered I/O, to make the poll-and-read loop below
-    # more responsive.
-    with Popen(args, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
-        # NOTE: We use `poll()` to control this loop instead of the `read()` call
-        # to prevent deadlocks. Similarly, `read(size)` will return an empty bytes
-        # once `stdout` hits EOF, so we don't have to worry about that blocking.
-        while not terminated:
-            terminated = process.poll() is not None
-            stdout += process.stdout.read()  # type: ignore
-            stderr += process.stderr.read()  # type: ignore
+        stdout, stderr = process.communicate()
+
+        # Best-effort: surface stdout to the state once we have it
+        # (we no longer stream it incrementally).
+        if log_stdout:
             state.update_state(
                 f"Running {pretty_args}",
-                stdout.decode(errors="replace") if log_stdout else None,
+                stdout.decode("utf-8", errors="replace"),
             )
 
         if process.returncode != 0:
             raise CalledProcessError(
                 f"{pretty_args} exited with {process.returncode}",
-                stderr=stderr.decode(errors="replace"),
+                stderr=stderr.decode("utf-8", errors="replace"),
             )
 
     return stdout.decode("utf-8", errors="replace")
