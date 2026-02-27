@@ -222,13 +222,108 @@ def test_environment_variable(monkeypatch):
     monkeypatch.setenv("PIP_AUDIT_OUTPUT", "/tmp/fake")
     monkeypatch.setenv("PIP_AUDIT_PROGRESS_SPINNER", "off")
     monkeypatch.setenv("PIP_AUDIT_VULNERABILITY_SERVICE", "osv")
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULNS", "cve ghsa xyz")
 
     parser = pip_audit._cli._parser()
-    monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda *a: parser.parse_args([]))
-    args = pip_audit._cli._parse_args(parser, [])
+    args = parser.parse_args([])
 
     assert args.desc == VulnerabilityDescriptionChoice.Off
     assert args.format == OutputFormatChoice.Markdown
     assert args.output == Path("/tmp/fake")
     assert not args.progress_spinner
     assert args.vulnerability_service == VulnerabilityServiceChoice.Osv
+    assert args.ignore_vulns is None
+
+
+def test_ignore_vulns_from_env_only(capsys, monkeypatch):
+    dummysource = pretend.stub(fix=lambda a: None)
+    monkeypatch.setattr(pip_audit._cli, "PipSource", lambda *a, **kw: dummysource)
+
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULNS", "bar")
+
+    parser = pip_audit._cli._parser()
+    monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda *a: parser.parse_args([]))
+
+    # One package with one vuln "bar" which should be ignored via env var.
+    result = [
+        (
+            pretend.stub(
+                is_skipped=lambda: False,
+                name="something",
+                canonical_name="something",
+                version=1,
+            ),
+            [
+                pretend.stub(
+                    fix_versions=[2],
+                    id="bar",
+                    aliases=set(),
+                    has_any_id=lambda ids: "bar" in ids,
+                )
+            ],
+        )
+    ]
+
+    auditor = pretend.stub(audit=lambda a: result)
+    monkeypatch.setattr(pip_audit._cli, "Auditor", lambda *a, **kw: auditor)
+
+    resolve_fix_versions = [pretend.stub(is_skipped=lambda: False, dep=result[0][0], version=2)]
+    monkeypatch.setattr(pip_audit._cli, "resolve_fix_versions", lambda *a: resolve_fix_versions)
+
+    try:
+        pip_audit._cli.audit()
+    except SystemExit:
+        pass
+
+    captured = capsys.readouterr()
+    assert "No known vulnerabilities found, 1 ignored" in captured.err
+
+
+def test_cli_ignore_overrides_env(capsys, monkeypatch):
+    dummysource = pretend.stub(fix=lambda a: None)
+    monkeypatch.setattr(pip_audit._cli, "PipSource", lambda *a, **kw: dummysource)
+
+    # env says ignore bar ...
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULNS", "bar")
+
+    # ...but CLI ignores foo, so bar should NOT be ignored
+    parser = pip_audit._cli._parser()
+    monkeypatch.setattr(
+        pip_audit._cli, "_parse_args", lambda *a: parser.parse_args(["--ignore-vuln", "foo"])
+    )
+
+    # Only one vulnerability: bar. If env is incorrectly applied alongside CLI,
+    # bar would be ignored and we'd see "No known vulnerabilities...".
+    result = [
+        (
+            pretend.stub(
+                is_skipped=lambda: False,
+                name="something",
+                canonical_name="something",
+                version=1,
+            ),
+            [
+                pretend.stub(
+                    fix_versions=[2],
+                    id="bar",
+                    aliases=set(),
+                    has_any_id=lambda ids: "bar" in ids,
+                )
+            ],
+        )
+    ]
+
+    auditor = pretend.stub(audit=lambda a: result)
+    monkeypatch.setattr(pip_audit._cli, "Auditor", lambda *a, **kw: auditor)
+
+    resolve_fix_versions = [pretend.stub(is_skipped=lambda: False, dep=result[0][0], version=2)]
+    monkeypatch.setattr(pip_audit._cli, "resolve_fix_versions", lambda *a: resolve_fix_versions)
+
+    try:
+        pip_audit._cli.audit()
+    except SystemExit:
+        pass
+
+    captured = capsys.readouterr()
+    assert "Found 1 known vulnerability in 1 package" in captured.err
+    assert "ignored" not in captured.err
