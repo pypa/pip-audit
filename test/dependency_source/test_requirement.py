@@ -889,3 +889,21 @@ def test_requirement_source_disable_pip_editable_without_egg_fragment(req_file):
         )
         in specs
     )
+
+
+def test_requirement_source_non_normalized_version(req_file):
+    """
+    This test verifies the fix for issue https://github.com/pypa/pip-audit/issues/464,
+    where non-normalized version strings in requirements files could cause parsing errors.
+    With packaging>=23.0.0, these versions should be parsed and normalized correctly.
+    """
+    source = _init_requirement(
+        [(req_file(), "setuptools==80.9.1.0")], disable_pip=True, no_deps=True
+    )
+
+    specs = list(source.collect())
+    assert len(specs) == 1
+    assert isinstance(specs[0], ResolvedDependency)
+    assert specs[0].name == "setuptools"
+    # Both versions should be considered equal
+    assert specs[0].version == Version("80.9.1") == Version("80.9.1.0")
