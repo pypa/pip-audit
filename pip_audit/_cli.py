@@ -439,9 +439,37 @@ def _dep_source_from_project_path(
 
 
 def audit() -> None:  # pragma: no cover
+
     """
     The primary entrypoint for `pip-audit`.
     """
+
+    def _safe_print(text, *, file) -> None:
+        """Print to a text stream, but avoid crashing on Windows/non-UTF8 encodings.
+
+        When the underlying text stream can't encode the output (e.g. cp1252 on Windows),
+        fall back to encoding with the stream's encoding using errors="backslashreplace".
+        """
+        try:
+            print(text, file=file)
+        except UnicodeEncodeError:
+            enc = getattr(file, "encoding", None) or "utf-8"
+            text_nl = text + "\n"
+            try:
+                data = text_nl.encode(enc, errors="backslashreplace")
+            except LookupError:
+                data = text_nl.encode("utf-8", errors="backslashreplace")
+
+            buf = getattr(file, "buffer", None)
+            if buf is not None:
+                buf.write(data)
+            else:
+                # backslashreplace produces ASCII escapes; decoding is safe.
+                file.write(data.decode("ascii", errors="replace"))
+            try:
+                file.flush()
+            except Exception:
+                pass
     parser = _parser()
     args = _parse_args(parser)
 
@@ -633,7 +661,7 @@ def audit() -> None:  # pragma: no cover
             )
         print(summary_msg, file=sys.stderr)
         with _output_io(args.output) as io:
-            print(formatter.format(result, fixes), file=io)
+            _safe_print(formatter.format(result, fixes), file=io)
         if pkg_count != fixed_pkg_count:
             sys.exit(1)
     else:
@@ -649,4 +677,4 @@ def audit() -> None:  # pragma: no cover
         # even if nothing other than a dependency summary is present.
         if skip_count > 0 or formatter.is_manifest:
             with _output_io(args.output) as io:
-                print(formatter.format(result, fixes), file=io)
+                _safe_print(formatter.format(result, fixes), file=io)

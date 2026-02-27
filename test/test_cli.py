@@ -215,6 +215,93 @@ def test_print_format(monkeypatch, vuln_count, pkg_count, skip_count, print_form
     assert bool(dummyformat.format.calls) == print_format
 
 
+def test_non_utf8_output_does_not_crash(monkeypatch):
+    # Simulate a Windows-like output stream with a limited encoding (e.g. cp1252)
+    # and ensure we don't crash when output contains unencodable Unicode.
+    import io
+
+    dummysource = pretend.stub(fix=lambda a: None)
+    monkeypatch.setattr(pip_audit._cli, "PipSource", lambda *a, **kw: dummysource)
+
+    # Force formatter output to contain characters outside cp1252.
+    dummyformat = pretend.stub(
+        format=pretend.call_recorder(lambda _result, _fixes: "report: 刘力源"),
+        is_manifest=False,
+    )
+    monkeypatch.setattr(pip_audit._cli, "ColumnsFormat", lambda *a, **kw: dummyformat)
+
+    parser = pip_audit._cli._parser()
+    monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda *a: parser.parse_args([]))
+
+    # Minimal audit result: one package with one vulnerability to trigger printing.
+    result = [
+        (
+            pretend.stub(
+                is_skipped=lambda: False,
+                name="something",
+                canonical_name="something",
+                version=1,
+            ),
+            [
+                pretend.stub(
+                    fix_versions=[2],
+                    id="foo",
+                    aliases=set(),
+                    has_any_id=lambda x: False,
+                )
+            ],
+        )
+    ]
+
+    auditor = pretend.stub(audit=lambda a: result)
+    monkeypatch.setattr(pip_audit._cli, "Auditor", lambda *a, **kw: auditor)
+
+    resolve_fix_versions = [pretend.stub(is_skipped=lambda: False, dep=result[0][0], version=2)]
+    monkeypatch.setattr(pip_audit._cli, "resolve_fix_versions", lambda *a: resolve_fix_versions)
+
+    raw = io.BytesIO()
+
+    class FailingTextStream:
+        # Expose a binary buffer so the fallback can write bytes.
+        buffer = raw
+        encoding = "cp1252"
+
+        def write(self, _s):
+            # Force the fallback path deterministically.
+            raise UnicodeEncodeError(
+                "cp1252",
+                "刘",
+                0,
+                1,
+                "charmap codec can't encode character",
+            )
+
+        def flush(self):
+            pass
+
+    out = FailingTextStream()
+
+    class _CM:
+        def __enter__(self):
+            return out
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    monkeypatch.setattr(pip_audit._cli, "_output_io", lambda *_a, **_kw: _CM())
+
+    # Should not raise UnicodeEncodeError
+    try:
+        pip_audit._cli.audit()
+    except SystemExit:
+        pass
+
+    data = raw.getvalue()
+    assert data, "expected some output bytes"
+    # backslashreplace should emit \u.... escapes for unencodable characters
+    assert b"\\u" in data
+
+
 def test_environment_variable(monkeypatch):
     """Environment variables set before execution change CLI option default."""
     monkeypatch.setenv("PIP_AUDIT_DESC", "off")
