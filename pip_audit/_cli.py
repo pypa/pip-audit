@@ -378,7 +378,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         metavar="ID",
         action="append",
         dest="ignore_vulns",
-        default=os.environ.get("PIP_AUDIT_IGNORE_VULNS", "").split(),
+        default=None,
         help=(
             "ignore a specific vulnerability by its vulnerability ID; "
             "this option can be used multiple times"
@@ -549,7 +549,11 @@ def audit() -> None:  # pragma: no cover
         vuln_count = 0
         skip_count = 0
         vuln_ignore_count = 0
-        vulns_to_ignore = set(args.ignore_vulns)
+        ignore_vulns = args.ignore_vulns
+        if not ignore_vulns:
+            ignore_vulns = os.environ.get("PIP_AUDIT_IGNORE_VULNS", "").split()
+        vulns_to_ignore = set(ignore_vulns)
+
         try:
             for spec, vulns in auditor.audit(source):
                 if spec.is_skipped():
