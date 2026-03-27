@@ -5,6 +5,7 @@ Functionality for formatting vulnerability results as a set of human-readable co
 from __future__ import annotations
 
 import re
+import sys
 from collections.abc import Iterable
 from itertools import zip_longest
 from typing import Any, cast
@@ -148,16 +149,17 @@ class ColumnsFormat(VulnerabilityFormat):
         vuln: service.VulnerabilityResult,
         applied_fix: fix.FixVersion | None,
     ) -> list[Any]:
+        link = _osc8_link if sys.stdout.isatty() else lambda text, _url: text
         vuln_data = [
-            _osc8_link(dep.canonical_name, pypi_url(dep.canonical_name)),
+            link(dep.canonical_name, pypi_url(dep.canonical_name)),
             dep.version,
-            _osc8_link(vuln.id, vuln_id_url(vuln.id)),
+            link(vuln.id, vuln_id_url(vuln.id)),
             self._format_fix_versions(vuln.fix_versions),
         ]
         if applied_fix is not None:
             vuln_data.append(self._format_applied_fix(applied_fix))
         if self.output_aliases:
-            vuln_data.append(", ".join(_osc8_link(a, vuln_id_url(a)) for a in vuln.aliases))
+            vuln_data.append(", ".join(link(a, vuln_id_url(a)) for a in vuln.aliases))
         if self.output_desc:
             vuln_data.append(vuln.description)
         return vuln_data
