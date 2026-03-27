@@ -14,7 +14,7 @@ from packaging.version import Version
 import pip_audit._fix as fix
 import pip_audit._service as service
 
-from .interface import VulnerabilityFormat
+from .interface import VulnerabilityFormat, pypi_url, vuln_id_url
 
 _OSC8_RE = re.compile(r"\033]8;;[^\033]*\033\\")
 
@@ -22,16 +22,6 @@ _OSC8_RE = re.compile(r"\033]8;;[^\033]*\033\\")
 def _osc8_link(text: str, url: str) -> str:
     """Wrap text in an OSC 8 terminal hyperlink."""
     return f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
-
-
-def _vuln_id_url(vuln_id: str) -> str:
-    """Return the OSV URL for a vulnerability ID."""
-    return f"https://osv.dev/vulnerability/{vuln_id}"
-
-
-def _pypi_url(name: str) -> str:
-    """Return the PyPI URL for a package."""
-    return f"https://pypi.org/project/{name}/"
 
 
 def _visible_len(s: str) -> int:
@@ -159,15 +149,15 @@ class ColumnsFormat(VulnerabilityFormat):
         applied_fix: fix.FixVersion | None,
     ) -> list[Any]:
         vuln_data = [
-            _osc8_link(dep.canonical_name, _pypi_url(dep.canonical_name)),
+            _osc8_link(dep.canonical_name, pypi_url(dep.canonical_name)),
             dep.version,
-            _osc8_link(vuln.id, _vuln_id_url(vuln.id)),
+            _osc8_link(vuln.id, vuln_id_url(vuln.id)),
             self._format_fix_versions(vuln.fix_versions),
         ]
         if applied_fix is not None:
             vuln_data.append(self._format_applied_fix(applied_fix))
         if self.output_aliases:
-            vuln_data.append(", ".join(_osc8_link(a, _vuln_id_url(a)) for a in vuln.aliases))
+            vuln_data.append(", ".join(_osc8_link(a, vuln_id_url(a)) for a in vuln.aliases))
         if self.output_desc:
             vuln_data.append(vuln.description)
         return vuln_data

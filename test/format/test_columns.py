@@ -1,16 +1,17 @@
 import pytest
 
 import pip_audit._format as format
-from pip_audit._format.columns import _osc8_link, _pypi_url, _vuln_id_url
+from pip_audit._format.columns import _osc8_link
+from pip_audit._format.interface import pypi_url, vuln_id_url
 
 
 # Shortcuts for building expected output with OSC8 links
 def _P(name):
-    return _osc8_link(name, _pypi_url(name))
+    return _osc8_link(name, pypi_url(name))
 
 
 def _V(vid):
-    return _osc8_link(vid, _vuln_id_url(vid))
+    return _osc8_link(vid, vuln_id_url(vid))
 
 
 @pytest.mark.parametrize("output_desc, output_aliases", ([True, False], [True, False]))
