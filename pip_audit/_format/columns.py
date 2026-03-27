@@ -4,6 +4,8 @@ Functionality for formatting vulnerability results as a set of human-readable co
 
 from __future__ import annotations
 
+import re
+import sys
 from collections.abc import Iterable
 from itertools import zip_longest
 from typing import Any, cast
@@ -13,7 +15,24 @@ from packaging.version import Version
 import pip_audit._fix as fix
 import pip_audit._service as service
 
-from .interface import VulnerabilityFormat
+from .interface import VulnerabilityFormat, pypi_url, vuln_id_url
+
+_OSC8_RE = re.compile(r"\033]8;;[^\033]*\033\\")
+
+
+def _osc8_link(text: str, url: str) -> str:
+    """Wrap text in an OSC 8 terminal hyperlink."""
+    return f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
+
+
+def _visible_len(s: str) -> int:
+    """Return the visible length of a string, ignoring OSC 8 escape sequences."""
+    return len(_OSC8_RE.sub("", s))
+
+
+def _visible_ljust(s: str, width: int) -> str:
+    """Left-justify a string to the given visible width, ignoring OSC 8 escapes."""
+    return s + " " * (width - _visible_len(s))
 
 
 def tabulate(rows: Iterable[Iterable[Any]]) -> tuple[list[str], list[int]]:
@@ -23,8 +42,8 @@ def tabulate(rows: Iterable[Iterable[Any]]) -> tuple[list[str], list[int]]:
     (['foobar     2000', '3735928559'], [10, 4])
     """
     rows = [tuple(map(str, row)) for row in rows]
-    sizes = [max(map(len, col)) for col in zip_longest(*rows, fillvalue="")]
-    table = [" ".join(map(str.ljust, row, sizes)).rstrip() for row in rows]
+    sizes = [max(map(_visible_len, col)) for col in zip_longest(*rows, fillvalue="")]
+    table = [" ".join(map(_visible_ljust, row, sizes)).rstrip() for row in rows]
     return table, sizes
 
 
@@ -115,6 +134,8 @@ class ColumnsFormat(VulnerabilityFormat):
             skip_strings, sizes = tabulate(skip_data)
             skip_strings.insert(1, " ".join("-" * x for x in sizes))
 
+            if columns_string:
+                columns_string += "\n"
             for row in skip_strings:
                 if columns_string:
                     columns_string += "\n"
@@ -128,16 +149,17 @@ class ColumnsFormat(VulnerabilityFormat):
         vuln: service.VulnerabilityResult,
         applied_fix: fix.FixVersion | None,
     ) -> list[Any]:
+        link = _osc8_link if sys.stdout.isatty() else lambda text, _url: text
         vuln_data = [
-            dep.canonical_name,
+            link(dep.canonical_name, pypi_url(dep.canonical_name)),
             dep.version,
-            vuln.id,
+            link(vuln.id, vuln_id_url(vuln.id)),
             self._format_fix_versions(vuln.fix_versions),
         ]
         if applied_fix is not None:
             vuln_data.append(self._format_applied_fix(applied_fix))
         if self.output_aliases:
-            vuln_data.append(", ".join(vuln.aliases))
+            vuln_data.append(", ".join(link(a, vuln_id_url(a)) for a in vuln.aliases))
         if self.output_desc:
             vuln_data.append(vuln.description)
         return vuln_data

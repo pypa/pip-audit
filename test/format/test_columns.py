@@ -1,6 +1,19 @@
+import sys
+
 import pytest
 
 import pip_audit._format as format
+from pip_audit._format.columns import _osc8_link
+from pip_audit._format.interface import pypi_url, vuln_id_url
+
+
+# Shortcuts for building expected output with OSC8 links
+def _P(name):
+    return _osc8_link(name, pypi_url(name))
+
+
+def _V(vid):
+    return _osc8_link(vid, vuln_id_url(vid))
 
 
 @pytest.mark.parametrize("output_desc, output_aliases", ([True, False], [True, False]))
@@ -44,6 +57,7 @@ def test_columns_skipped_dep(vuln_data_skipped_dep):
     expected_columns = """Name Version ID     Fix Versions Aliases
 ---- ------- ------ ------------ --------------
 foo  1.0     VULN-0 1.1,1.4      CVE-0000-00000
+
 Name Skip Reason
 ---- -----------
 bar  skip-reason"""
@@ -82,3 +96,14 @@ foo  1.0     VULN-0 1.1,1.4      Successfully upgraded foo (1.0 => 1.8) CVE-0000
 foo  1.0     VULN-1 1.0          Successfully upgraded foo (1.0 => 1.8) CVE-0000-00001
 bar  0.1     VULN-2              Failed to fix bar (0.1): skip-reason   CVE-0000-00002"""
     assert columns_format.format(vuln_data, skipped_fix_data) == expected_columns
+
+
+def test_columns_terminal_links(monkeypatch, vuln_data):
+    monkeypatch.setattr(sys, "stdout", type("FakeTTY", (), {"isatty": lambda self: True})())
+    columns_format = format.ColumnsFormat(False, True)
+    expected_columns = f"""Name Version ID     Fix Versions Aliases
+---- ------- ------ ------------ --------------
+{_P("foo")}  1.0     {_V("VULN-0")} 1.1,1.4      {_V("CVE-0000-00000")}
+{_P("foo")}  1.0     {_V("VULN-1")} 1.0          {_V("CVE-0000-00001")}
+{_P("bar")}  0.1     {_V("VULN-2")}              {_V("CVE-0000-00002")}"""
+    assert columns_format.format(vuln_data, []) == expected_columns
