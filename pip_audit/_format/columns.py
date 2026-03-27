@@ -143,6 +143,8 @@ class ColumnsFormat(VulnerabilityFormat):
             skip_strings, sizes = tabulate(skip_data)
             skip_strings.insert(1, " ".join("-" * x for x in sizes))
 
+            if columns_string:
+                columns_string += "\n"
             for row in skip_strings:
                 if columns_string:
                     columns_string += "\n"

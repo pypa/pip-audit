@@ -54,6 +54,7 @@ def test_columns_skipped_dep(vuln_data_skipped_dep):
     expected_columns = f"""Name Version ID     Fix Versions Aliases
 ---- ------- ------ ------------ --------------
 {_P("foo")}  1.0     {_V("VULN-0")} 1.1,1.4      {_V("CVE-0000-00000")}
+
 Name Skip Reason
 ---- -----------
 bar  skip-reason"""
