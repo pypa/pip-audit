@@ -4,6 +4,7 @@ Functionality for formatting vulnerability results as a set of human-readable co
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable
 from itertools import zip_longest
 from typing import Any, cast
@@ -15,6 +16,33 @@ import pip_audit._service as service
 
 from .interface import VulnerabilityFormat
 
+_OSC8_RE = re.compile(r"\033]8;;[^\033]*\033\\")
+
+
+def _osc8_link(text: str, url: str) -> str:
+    """Wrap text in an OSC 8 terminal hyperlink."""
+    return f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
+
+
+def _vuln_id_url(vuln_id: str) -> str:
+    """Return the OSV URL for a vulnerability ID."""
+    return f"https://osv.dev/vulnerability/{vuln_id}"
+
+
+def _pypi_url(name: str) -> str:
+    """Return the PyPI URL for a package."""
+    return f"https://pypi.org/project/{name}/"
+
+
+def _visible_len(s: str) -> int:
+    """Return the visible length of a string, ignoring OSC 8 escape sequences."""
+    return len(_OSC8_RE.sub("", s))
+
+
+def _visible_ljust(s: str, width: int) -> str:
+    """Left-justify a string to the given visible width, ignoring OSC 8 escapes."""
+    return s + " " * (width - _visible_len(s))
+
 
 def tabulate(rows: Iterable[Iterable[Any]]) -> tuple[list[str], list[int]]:
     """Return a list of formatted rows and a list of column sizes.
@@ -23,8 +51,8 @@ def tabulate(rows: Iterable[Iterable[Any]]) -> tuple[list[str], list[int]]:
     (['foobar     2000', '3735928559'], [10, 4])
     """
     rows = [tuple(map(str, row)) for row in rows]
-    sizes = [max(map(len, col)) for col in zip_longest(*rows, fillvalue="")]
-    table = [" ".join(map(str.ljust, row, sizes)).rstrip() for row in rows]
+    sizes = [max(map(_visible_len, col)) for col in zip_longest(*rows, fillvalue="")]
+    table = [" ".join(map(_visible_ljust, row, sizes)).rstrip() for row in rows]
     return table, sizes
 
 
@@ -129,15 +157,15 @@ class ColumnsFormat(VulnerabilityFormat):
         applied_fix: fix.FixVersion | None,
     ) -> list[Any]:
         vuln_data = [
-            dep.canonical_name,
+            _osc8_link(dep.canonical_name, _pypi_url(dep.canonical_name)),
             dep.version,
-            vuln.id,
+            _osc8_link(vuln.id, _vuln_id_url(vuln.id)),
             self._format_fix_versions(vuln.fix_versions),
         ]
         if applied_fix is not None:
             vuln_data.append(self._format_applied_fix(applied_fix))
         if self.output_aliases:
-            vuln_data.append(", ".join(vuln.aliases))
+            vuln_data.append(", ".join(_osc8_link(a, _vuln_id_url(a)) for a in vuln.aliases))
         if self.output_desc:
             vuln_data.append(vuln.description)
         return vuln_data
