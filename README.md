@@ -91,7 +91,7 @@ add it to your CI manually:
 jobs:
   pip-audit:
     steps:
-      - uses: pypa/gh-action-pip-audit@v1.0.0
+      - uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           inputs: requirements.txt
 ```
