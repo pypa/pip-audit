@@ -517,8 +517,29 @@ def test_requirement_source_disable_pip_editable_skip(req_file):
         skip_editable=True,
     )
 
-    specs = list(source.collect())
-    assert SkippedDependency(name="flask", skip_reason="requirement marked as editable") in specs
+    assert list(source.collect()) == [
+        SkippedDependency(name="flask", skip_reason="requirement marked as editable")
+    ]
+
+
+def test_requirement_source_disable_pip_editable_skip_with_inferred_hashes(req_file):
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "-e file:.\n"
+                "requests==2.31.0 "
+                "--hash=sha256:58cd2187c01e70e6e26505bca751777a74f336f717b0f37c29e2f6cfa6d1f936",
+            )
+        ],
+        disable_pip=True,
+        skip_editable=True,
+    )
+
+    assert list(source.collect()) == [
+        SkippedDependency(name="-e file:.", skip_reason="requirement marked as editable"),
+        ResolvedDependency("requests", Version("2.31.0")),
+    ]
 
 
 def test_requirement_source_disable_pip_duplicate_dependencies(req_file):

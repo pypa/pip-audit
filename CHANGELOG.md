@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed `--skip-editable` handling for `--disable-pip` when hashed requirements
+  infer `--require-hashes`, allowing editable requirements to be skipped before
+  hash validation
+  ([#1024](https://github.com/pypa/pip-audit/issues/1024))
+
 ## [2.10.0]
 
 ### Added
