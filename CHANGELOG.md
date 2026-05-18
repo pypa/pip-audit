@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* `pip-audit --skip-editable` now skips editable requirements before enforcing
+  hash validation ([#1024](https://github.com/pypa/pip-audit/issues/1024)).
+
 ## [2.10.0]
 
 ### Added
