@@ -800,6 +800,27 @@ def test_requirement_source_disable_pip_hashes_without_no_deps(req_file):
     assert specs == [ResolvedDependency("flask", Version("2.0.1"))]
 
 
+def test_requirement_source_skip_editable_before_hash_validation(req_file):
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "-e file:flask.py#egg=flask==2.0.1\n"
+                "requests==1.0 "
+                "--hash=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            )
+        ],
+        disable_pip=True,
+        skip_editable=True,
+    )
+
+    specs = list(source.collect())
+    assert specs == [
+        SkippedDependency(name="flask", skip_reason="requirement marked as editable"),
+        ResolvedDependency("requests", Version("1.0")),
+    ]
+
+
 def test_requirement_source_disable_pip_incomplete_hashes(req_file):
     # In this case, `--no-deps` is not provided but since the requirements file is hashed, providing
     # `--disable-pip` is valid.
