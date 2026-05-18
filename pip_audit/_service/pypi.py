@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import cast
 
 import requests
+import truststore
 from packaging.version import InvalidVersion, Version
 
 from pip_audit._cache import caching_session
@@ -45,6 +46,9 @@ class PyPIService(VulnerabilityService):
         `timeout` is an optional argument to control how many seconds the component should wait for
         responses to network requests.
         """
+        # Injecting all certificate authorities installed on the system into SSL
+        # context for all HTTP calls.
+        truststore.inject_into_ssl()
         self.session = caching_session(cache_dir)
         self.timeout = timeout
 
