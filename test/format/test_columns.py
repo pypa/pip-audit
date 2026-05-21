@@ -3,7 +3,7 @@ import sys
 import pytest
 
 import pip_audit._format as format
-from pip_audit._format.columns import _osc8_link
+from pip_audit._format.columns import _osc8_link, tabulate
 from pip_audit._format.interface import pypi_url, vuln_id_url
 
 
@@ -107,3 +107,35 @@ def test_columns_terminal_links(monkeypatch, vuln_data):
 {_P("foo")}  1.0     {_V("VULN-1")} 1.0          {_V("CVE-0000-00001")}
 {_P("bar")}  0.1     {_V("VULN-2")}              {_V("CVE-0000-00002")}"""
     assert columns_format.format(vuln_data, []) == expected_columns
+
+
+def test_tabulate_empty_rows():
+    table, sizes = tabulate([])
+    assert table == []
+    assert sizes == []
+
+
+def test_tabulate_long_version_string():
+    long_version = "1.2.3.dev456+extra.long.version.string.that.exceeds.normal.widths"
+    rows = [["Name", "Version"], ["pkg", long_version]]
+    table, sizes = tabulate(rows)
+    assert table == [
+        "Name Version",
+        f"pkg  {long_version}",
+    ]
+    assert sizes == [4, len(long_version)]
+
+
+def test_tabulate_unicode_width_characters():
+    rows = [
+        ["Name", "Version"],
+        ["pkg", "1.0🚀"],
+        ["pkg", "日本語"],
+    ]
+    table, sizes = tabulate(rows)
+    assert table == [
+        "Name Version",
+        "pkg  1.0🚀",
+        "pkg  日本語",
+    ]
+    assert sizes == [4, 7]
