@@ -5,18 +5,14 @@ on:
 
 name: release
 
+permissions: {}
+
 jobs:
-  pypi:
-    name: upload release to PyPI
+  build:
+    name: build release distributions
     runs-on: ubuntu-latest
-    environment: release
-
     permissions:
-      # Used to authenticate to PyPI via OIDC.
-      id-token: write
-
-      # Used to attach signing artifacts to the published release.
-      contents: write
+      contents: read
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -32,6 +28,29 @@ jobs:
 
       - name: build
         run: python -m build
+
+      - name: upload distributions
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: dist/*
+
+  pypi:
+    name: upload release to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment: release
+
+    permissions:
+      # Used to authenticate to PyPI via OIDC.
+      id-token: write
+
+    steps:
+      - name: download distributions
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist
 
       - name: publish
         uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
