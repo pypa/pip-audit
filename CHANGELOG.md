@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed live progress output emitting replacement characters when a subprocess's
+  stdout split a multi-byte UTF-8 sequence across reads. The poll-buffer loop now
+  decodes incrementally and only surfaces complete codepoints
+  ([#574](https://github.com/pypa/pip-audit/issues/574))
+
 ## [2.10.0]
 
 ### Added

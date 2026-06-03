@@ -3,6 +3,7 @@ A thin `subprocess` wrapper for making long-running subprocesses more
 responsive from the `pip-audit` CLI.
 """
 
+import codecs
 import os.path
 import subprocess
 from collections.abc import Sequence
@@ -43,6 +44,18 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
     stdout = b""
     stderr = b""
 
+    # We accumulate raw bytes for the final result, but the live progress
+    # updates need a textual view of `stdout` so far. Decoding the raw buffer
+    # on each iteration is unsound: an unbuffered read can stop in the middle
+    # of a multi-byte UTF-8 sequence, so a plain `bytes.decode` would either
+    # raise or (with `errors="replace"`) emit a replacement character for a
+    # codepoint that is actually valid once the rest of its bytes arrive.
+    # An incremental decoder holds those trailing bytes back until the
+    # sequence is complete, so we only ever surface fully-decoded codepoints.
+    # See https://github.com/pypa/pip-audit/issues/574.
+    stdout_decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+    decoded_stdout = ""
+
     # Run the process with unbuffered I/O, to make the poll-and-read loop below
     # more responsive.
     with Popen(args, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
@@ -51,12 +64,19 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
         # once `stdout` hits EOF, so we don't have to worry about that blocking.
         while not terminated:
             terminated = process.poll() is not None
-            stdout += process.stdout.read()  # type: ignore
+            chunk = process.stdout.read()  # type: ignore
+            stdout += chunk
             stderr += process.stderr.read()  # type: ignore
-            state.update_state(
-                f"Running {pretty_args}",
-                stdout.decode(errors="replace") if log_stdout else None,
-            )
+            if log_stdout:
+                # `final=terminated` flushes any pending (incomplete) bytes once
+                # the stream is at EOF, matching the previous replace behaviour.
+                decoded_stdout += stdout_decoder.decode(chunk, final=terminated)
+                state.update_state(
+                    f"Running {pretty_args}",
+                    decoded_stdout,
+                )
+            else:
+                state.update_state(f"Running {pretty_args}")
 
         if process.returncode != 0:
             raise CalledProcessError(
