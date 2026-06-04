@@ -11,7 +11,6 @@ from typing import Any, cast
 from urllib.parse import urlencode
 
 import requests
-import truststore
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
@@ -49,9 +48,6 @@ class EcosystemsService(VulnerabilityService):
         `timeout` is an optional argument to control how many seconds the component should wait for
         responses to network requests.
         """
-        # Injecting all certificate authorities installed on the system into SSL
-        # context for all HTTP calls.
-        truststore.inject_into_ssl()
         self.session = caching_session(cache_dir, use_pip=False)
         self.timeout = timeout
 

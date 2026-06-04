@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any, cast
 
 import requests
-import truststore
 from packaging.version import Version
 
 from pip_audit._cache import caching_session
@@ -49,9 +48,6 @@ class OsvService(VulnerabilityService):
         `timeout` is an optional argument to control how many seconds the component should wait for
         responses to network requests.
         """
-        # Injecting all certificate authorities installed on the system into SSL
-        # context for all HTTP calls.
-        truststore.inject_into_ssl()
         self.session = caching_session(cache_dir, use_pip=False)
         self.timeout = timeout
         self.osv_url = osv_url
