@@ -522,6 +522,29 @@ def test_requirement_source_disable_pip_editable_skip(req_file):
     assert SkippedDependency(name="flask", skip_reason="requirement marked as editable") in specs
 
 
+def test_requirement_source_skip_editable_with_implicit_require_hashes(req_file):
+    # Regression test for #1024: when a requirements file contains both an editable
+    # dependency and a hashed dependency, --skip-editable should skip the editable
+    # without raising a hash error.
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "-e file:flask.py#egg=flask==2.0.1\n"
+                "wheel==0.38.1 "
+                "--hash=sha256:7a95f9a8dc0924ef318bd55b616112c70903192f524d120acc614f59547a9e1f",
+            )
+        ],
+        disable_pip=True,
+        no_deps=True,
+        skip_editable=True,
+    )
+
+    specs = list(source.collect())
+    assert SkippedDependency(name="flask", skip_reason="requirement marked as editable") in specs
+    assert ResolvedDependency(name="wheel", version=Version("0.38.1")) in specs
+
+
 def test_requirement_source_disable_pip_duplicate_dependencies(req_file):
     source = _init_requirement(
         [(req_file(), "flask==1.0\nflask==1.0")], disable_pip=True, no_deps=True
