@@ -246,6 +246,44 @@ def test_osv_vuln_affected_missing(monkeypatch):
     ]
 
 
+def test_osv_vuln_ranges_missing(monkeypatch):
+    # An affected entry with no 'ranges' key is valid per the OSV schema
+    # (ranges is optional); pip-audit should not crash with a KeyError.
+    payload = {
+        "vulns": [
+            {
+                "id": "fakeid",
+                "summary": "fakesummary",
+                "details": "fakedetails",
+                "affected": [
+                    {
+                        "package": {"name": "foo", "ecosystem": "PyPI"},
+                        "versions": ["1.0.0"],
+                    }
+                ],
+            }
+        ],
+    }
+
+    response = pretend.stub(raise_for_status=lambda: None, json=lambda: payload)
+    post = pretend.call_recorder(lambda *a, **kw: response)
+
+    osv = service.OsvService()
+    monkeypatch.setattr(osv.session, "post", post)
+
+    dep = service.ResolvedDependency("foo", Version("1.0.0"))
+    results = dict(osv.query_all(iter([dep])))
+
+    assert len(results) == 1
+    assert dep in results
+
+    # No fix versions available without ranges, so the vuln is still reported
+    # but with an empty fix_versions list (no KeyError raised).
+    vulns = results[dep]
+    assert len(vulns) == 1
+    assert vulns[0].fix_versions == []
+
+
 def test_osv_vuln_withdrawn(monkeypatch):
     logger = pretend.stub(debug=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(service.osv, "logger", logger)

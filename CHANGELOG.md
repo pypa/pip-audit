@@ -8,6 +8,14 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+## [2.10.1]
+
+### Fixed
+
+* Fixed a `KeyError` crash when an OSV vulnerability record contains an
+  `affected` entry that omits the optional `ranges` field
+  ([#1046](https://github.com/pypa/pip-audit/pull/1046))
+
 ## [2.10.0]
 
 ### Added
