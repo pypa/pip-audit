@@ -112,12 +112,16 @@ For example, using `pip-audit` via `pre-commit` to audit a requirements file:
     hooks:
       -   id: pip-audit
           args: ["-r", "requirements.txt"]
+          files: ^requirements\.txt$
 
 ci:
   # Leave pip-audit to only run locally and not in CI
   # pre-commit.ci does not allow network calls
   skip: [pip-audit]
 ```
+
+The `files` pattern keeps the hook focused on changes to the requirements file being
+audited. Adjust the pattern if your project stores dependency files elsewhere.
 
 Any `pip-audit` arguments documented below can be passed.
 
