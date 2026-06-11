@@ -222,6 +222,7 @@ def test_environment_variable(monkeypatch):
     monkeypatch.setenv("PIP_AUDIT_OUTPUT", "/tmp/fake")
     monkeypatch.setenv("PIP_AUDIT_PROGRESS_SPINNER", "off")
     monkeypatch.setenv("PIP_AUDIT_VULNERABILITY_SERVICE", "osv")
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULN", "GHSA-1234,GHSA-5678")
 
     parser = pip_audit._cli._parser()
     monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda *a: parser.parse_args([]))
@@ -232,3 +233,4 @@ def test_environment_variable(monkeypatch):
     assert args.output == Path("/tmp/fake")
     assert not args.progress_spinner
     assert args.vulnerability_service == VulnerabilityServiceChoice.Osv
+    assert args.ignore_vulns == ["GHSA-1234", "GHSA-5678"]
