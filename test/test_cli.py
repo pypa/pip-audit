@@ -232,3 +232,35 @@ def test_environment_variable(monkeypatch):
     assert args.output == Path("/tmp/fake")
     assert not args.progress_spinner
     assert args.vulnerability_service == VulnerabilityServiceChoice.Osv
+
+
+def test_pip_audit_ignore_vuln_env_var(monkeypatch):
+    """PIP_AUDIT_IGNORE_VULN sets the default ignore list from the environment."""
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULN", "GHSA-1234-5678-abcd PYSEC-2024-001")
+
+    parser = pip_audit._cli._parser()
+    args = parser.parse_args([])
+
+    assert "GHSA-1234-5678-abcd" in args.ignore_vulns
+    assert "PYSEC-2024-001" in args.ignore_vulns
+
+
+def test_pip_audit_ignore_vuln_env_var_combined_with_cli(monkeypatch):
+    """PIP_AUDIT_IGNORE_VULN env var IDs are combined with --ignore-vuln CLI flags."""
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULN", "GHSA-1111-2222-aaaa")
+
+    parser = pip_audit._cli._parser()
+    args = parser.parse_args(["--ignore-vuln", "GHSA-3333-4444-bbbb"])
+
+    assert "GHSA-1111-2222-aaaa" in args.ignore_vulns
+    assert "GHSA-3333-4444-bbbb" in args.ignore_vulns
+
+
+def test_pip_audit_ignore_vuln_env_var_empty(monkeypatch):
+    """Empty PIP_AUDIT_IGNORE_VULN produces an empty default list."""
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULN", "")
+
+    parser = pip_audit._cli._parser()
+    args = parser.parse_args([])
+
+    assert args.ignore_vulns == []
