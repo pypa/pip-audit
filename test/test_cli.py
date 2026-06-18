@@ -219,6 +219,7 @@ def test_environment_variable(monkeypatch):
     """Environment variables set before execution change CLI option default."""
     monkeypatch.setenv("PIP_AUDIT_DESC", "off")
     monkeypatch.setenv("PIP_AUDIT_FORMAT", "markdown")
+    monkeypatch.setenv("PIP_AUDIT_IGNORE_VULN", "GHSA-xxxx GHSA-yyyy")
     monkeypatch.setenv("PIP_AUDIT_OUTPUT", "/tmp/fake")
     monkeypatch.setenv("PIP_AUDIT_PROGRESS_SPINNER", "off")
     monkeypatch.setenv("PIP_AUDIT_VULNERABILITY_SERVICE", "osv")
@@ -227,6 +228,7 @@ def test_environment_variable(monkeypatch):
     monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda *a: parser.parse_args([]))
     args = pip_audit._cli._parse_args(parser, [])
 
+    assert args.ignore_vulns == ["GHSA-xxxx", "GHSA-yyyy"]
     assert args.desc == VulnerabilityDescriptionChoice.Off
     assert args.format == OutputFormatChoice.Markdown
     assert args.output == Path("/tmp/fake")
