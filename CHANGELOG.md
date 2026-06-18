@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* `pip-audit --fix` now respects `PIPAPI_PYTHON_LOCATION`, matching the
+  Python selection behavior used during dependency collection
+  ([#1030](https://github.com/pypa/pip-audit/issues/1030))
+
 ## [2.10.1]
 
 ### Fixed

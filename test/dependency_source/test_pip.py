@@ -183,3 +183,21 @@ def test_pip_source_fix_failure(monkeypatch):
 
     with pytest.raises(pip.PipFixError):
         source.fix(fix_version)
+
+
+def test_pip_source_fix_uses_pipapi_python_location(monkeypatch):
+    source = pip.PipSource()
+
+    fix_version = ResolvedFixVersion(
+        dep=ResolvedDependency(name="pip-api", version=Version("1.0")),
+        version=Version("1.5"),
+    )
+
+    monkeypatch.setenv("PIPAPI_PYTHON_LOCATION", "/tmp/custom-python")
+
+    def run_mock(args, **kwargs):
+        assert " ".join(args) == "/tmp/custom-python -m pip install pip-api==1.5"
+
+    monkeypatch.setattr(subprocess, "run", run_mock)
+
+    source.fix(fix_version)
