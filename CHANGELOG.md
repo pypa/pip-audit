@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* `--fix` now respects `PIPAPI_PYTHON_LOCATION` when upgrading packages from
+  `PipSource`, matching the interpreter used by `pip-api`
+  ([#1030](https://github.com/pypa/pip-audit/issues/1030))
+
 ## [2.10.1]
 
 ### Fixed

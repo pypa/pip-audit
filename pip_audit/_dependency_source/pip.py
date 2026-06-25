@@ -142,8 +142,9 @@ class PipSource(DependencySource):
         self.state.update_state(
             f"Fixing {fix_version.dep.name} ({fix_version.dep.version} => {fix_version.version})"
         )
+        effective_python = os.environ.get("PIPAPI_PYTHON_LOCATION", sys.executable)
         fix_cmd = [
-            sys.executable,
+            effective_python,
             "-m",
             "pip",
             "install",

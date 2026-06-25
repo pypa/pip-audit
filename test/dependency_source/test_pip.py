@@ -152,6 +152,7 @@ def test_pip_source_skips_editable(monkeypatch):
 
 
 def test_pip_source_fix(monkeypatch):
+    monkeypatch.delenv("PIPAPI_PYTHON_LOCATION", raising=False)
     source = pip.PipSource()
 
     fix_version = ResolvedFixVersion(
@@ -167,7 +168,25 @@ def test_pip_source_fix(monkeypatch):
     source.fix(fix_version)
 
 
+def test_pip_source_fix_uses_pipapi_python_location(monkeypatch):
+    monkeypatch.setenv("PIPAPI_PYTHON_LOCATION", "/tmp/venv/bin/python")
+    source = pip.PipSource()
+
+    fix_version = ResolvedFixVersion(
+        dep=ResolvedDependency(name="pip-api", version=Version("1.0")),
+        version=Version("1.5"),
+    )
+
+    def run_mock(args, **kwargs):
+        assert " ".join(args) == "/tmp/venv/bin/python -m pip install pip-api==1.5"
+
+    monkeypatch.setattr(subprocess, "run", run_mock)
+
+    source.fix(fix_version)
+
+
 def test_pip_source_fix_failure(monkeypatch):
+    monkeypatch.delenv("PIPAPI_PYTHON_LOCATION", raising=False)
     source = pip.PipSource()
 
     fix_version = ResolvedFixVersion(
