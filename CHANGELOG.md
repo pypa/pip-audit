@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* `--skip-editable` now skips editable requirements before enforcing hashes,
+  so hashed requirements files can include editable entries when dependency
+  resolution is disabled ([#1024](https://github.com/pypa/pip-audit/issues/1024))
+
 ## [2.10.1]
 
 ### Fixed
