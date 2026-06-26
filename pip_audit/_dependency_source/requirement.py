@@ -206,7 +206,14 @@ class RequirementSource(DependencySource):
                         f"Fixing dependency {fix_version.dep.name} ({fix_version.dep.version} => "
                         f"{fix_version.version})"
                     )
-                    self._fix_file(filename, fix_version)
+                    self._fix_file(
+                        filename,
+                        fix_version,
+                        allow_explicit_add=len(self._filenames) == 1
+                        or self._file_contains_dependency(
+                            filename, fix_version.dep.canonical_name
+                        ),
+                    )
             except Exception as e:
                 logger.warning(
                     f"encountered an exception while applying fixes, recovering original files: {e}"
@@ -214,7 +221,20 @@ class RequirementSource(DependencySource):
                 self._recover_files(tmp_files)
                 raise e
 
-    def _fix_file(self, filename: Path, fix_version: ResolvedFixVersion) -> None:
+    def _file_contains_dependency(self, filename: Path, canonical_name: str) -> bool:
+        rf = RequirementsFile.from_file(filename)
+        for req in rf.requirements:
+            if req.req is not None and canonicalize_name(req.name) == canonical_name:
+                return True
+        return False
+
+    def _fix_file(
+        self,
+        filename: Path,
+        fix_version: ResolvedFixVersion,
+        *,
+        allow_explicit_add: bool = True,
+    ) -> None:
         # Reparse the requirements file. We want to rewrite each line to the new requirements file
         # and only modify the lines that we're fixing.
         #
@@ -269,7 +289,7 @@ class RequirementSource(DependencySource):
             # To know whether this is the case, we'll need to resolve dependencies if we haven't
             # already in order to figure out whether this subdependency belongs to this file or
             # another.
-            if not found:
+            if not found and allow_explicit_add:
                 logger.warning(
                     "added fixed subdependency explicitly to requirements file "
                     f"{filename}: {fix_version.dep.canonical_name}"
