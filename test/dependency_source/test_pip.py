@@ -167,6 +167,24 @@ def test_pip_source_fix(monkeypatch):
     source.fix(fix_version)
 
 
+def test_pip_source_fix_respects_pipapi_python_location(monkeypatch):
+    source = pip.PipSource()
+    effective_python = "/test/.venv/bin/python"
+    monkeypatch.setenv("PIPAPI_PYTHON_LOCATION", effective_python)
+
+    fix_version = ResolvedFixVersion(
+        dep=ResolvedDependency(name="pip-api", version=Version("1.0")),
+        version=Version("1.5"),
+    )
+
+    def run_mock(args, **kwargs):
+        assert " ".join(args) == f"{effective_python} -m pip install pip-api==1.5"
+
+    monkeypatch.setattr(subprocess, "run", run_mock)
+
+    source.fix(fix_version)
+
+
 def test_pip_source_fix_failure(monkeypatch):
     source = pip.PipSource()
 
