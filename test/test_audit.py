@@ -130,3 +130,35 @@ def test_audit_dedupes_aliases_by_id(dep_source, vulns):
 
     # The result contains the merged alias set for all aliases.
     assert results[0][1][0].aliases == {"FAKE-1", "CVE-XXXX-YYYYY"}
+
+
+def test_audit_dedupes_pysec_results_by_id(dep_source):
+    vulns = [
+        VulnerabilityResult(
+            id="PYSEC-2023-11",
+            description="first description",
+            fix_versions=[Version("1.1.0")],
+            aliases={"CVE-XXXX-YYYYY"},
+        ),
+        VulnerabilityResult(
+            id="PYSEC-2023-11",
+            description="second description",
+            fix_versions=[Version("1.1.0")],
+            aliases={"GHSA-xxxx-yyyy-zzzz"},
+        ),
+    ]
+
+    class Service(VulnerabilityService):
+        def query(self, spec):
+            return spec, vulns
+
+    service = Service()
+    source = dep_source()
+
+    auditor = Auditor(service)
+    results = list(auditor.audit(source))
+
+    assert len(results) == 1
+    assert len(results[0][1]) == 1
+    assert results[0][1][0].id == "PYSEC-2023-11"
+    assert results[0][1][0].aliases == {"CVE-XXXX-YYYYY", "GHSA-xxxx-yyyy-zzzz"}
