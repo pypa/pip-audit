@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pretend  # type: ignore
@@ -115,6 +116,37 @@ dependencies = [
     monkeypatch.setattr(pyproject, "VirtualEnv", MockVirtualEnv)
     with pytest.raises(DependencySourceError):
         list(source.collect())
+
+
+def test_pyproject_source_locked_sets_uv_frozen(monkeypatch, req_file):
+    class MockVirtualEnv:
+        def __init__(self, install_args: list[str], state: AuditState) -> None:
+            pass
+
+        def create(self, dir: Path) -> None:
+            assert os.environ["UV_FROZEN"] == "1"
+
+        @property
+        def installed_packages(self):
+            return []
+
+    filename = req_file()
+    with open(filename, mode="w") as f:
+        f.write(
+            """
+[project]
+dependencies = [
+  "flask==2.0.1"
+]
+"""
+        )
+
+    monkeypatch.setenv("UV_FROZEN", "0")
+    monkeypatch.setattr(pyproject, "VirtualEnv", MockVirtualEnv)
+
+    source = pyproject.PyProjectSource(filename, locked=True)
+    assert list(source.collect()) == []
+    assert os.environ["UV_FROZEN"] == "0"
 
 
 @pytest.mark.online

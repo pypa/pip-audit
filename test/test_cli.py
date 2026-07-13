@@ -11,6 +11,7 @@ from pip_audit._cli import (
     VulnerabilityDescriptionChoice,
     VulnerabilityServiceChoice,
 )
+from pip_audit._state import AuditState
 
 
 class TestOutputFormatChoice:
@@ -70,6 +71,24 @@ class TestProgressSpinnerChoice:
     def test_str(self):
         for choice in ProgressSpinnerChoice:
             assert str(choice) == choice.value
+
+
+def test_dep_source_from_locked_uv_project(tmp_path):
+    pyproject_path = tmp_path / "pyproject.toml"
+    pyproject_path.write_text("[project]\ndependencies = []\n")
+    (tmp_path / "uv.lock").write_text("")
+
+    source = pip_audit._cli._dep_source_from_project_path(
+        tmp_path,
+        index_url="https://example.com/simple",
+        extra_index_urls=["https://extra.example.com/simple"],
+        locked=True,
+        state=AuditState(),
+    )
+
+    assert isinstance(source, pip_audit._cli.PyProjectSource)
+    assert source.filename == pyproject_path
+    assert source.locked
 
 
 @pytest.mark.parametrize(

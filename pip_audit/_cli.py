@@ -411,17 +411,28 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragm
 def _dep_source_from_project_path(
     project_path: Path, index_url: str, extra_index_urls: list[str], locked: bool, state: AuditState
 ) -> DependencySource:  # pragma: no cover
-    # If the user has passed `--locked`, we check for `pylock.*.toml` files.
+    # If the user has passed `--locked`, we check for supported lock files.
     if locked:
         all_pylocks = list(project_path.glob("pylock.*.toml"))
         generic_pylock = project_path / "pylock.toml"
         if generic_pylock.is_file():
             all_pylocks.append(generic_pylock)
 
-        if not all_pylocks:
-            _fatal(f"no lockfiles found in {project_path}")
+        if all_pylocks:
+            return PyLockSource(all_pylocks)
 
-        return PyLockSource(all_pylocks)
+        uv_lock = project_path / "uv.lock"
+        pyproject_path = project_path / "pyproject.toml"
+        if uv_lock.is_file() and pyproject_path.is_file():
+            return PyProjectSource(
+                pyproject_path,
+                index_url=index_url,
+                extra_index_urls=extra_index_urls,
+                locked=True,
+                state=state,
+            )
+
+        _fatal(f"no lockfiles found in {project_path}")
 
     # Check for a `pyproject.toml`
     pyproject_path = project_path / "pyproject.toml"

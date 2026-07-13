@@ -38,6 +38,7 @@ class PyProjectSource(DependencySource):
         filename: Path,
         index_url: str | None = None,
         extra_index_urls: list[str] = [],
+        locked: bool = False,
         state: AuditState = AuditState(),
     ) -> None:
         """
@@ -49,9 +50,12 @@ class PyProjectSource(DependencySource):
 
         `extra_index_urls` are the extra URLs of package indexes.
 
+        `locked` prevents compatible installers from updating existing lock files.
+
         `state` is an `AuditState` to use for state callbacks.
         """
         self.filename = filename
+        self.locked = locked
         self.state = state
 
     def collect(self) -> Iterator[Dependency]:
@@ -97,9 +101,18 @@ class PyProjectSource(DependencySource):
                 # Try to install the generated requirements file.
                 ve = VirtualEnv(install_args=["-r", req_file.name], state=self.state)
                 try:
+                    old_uv_frozen = os.environ.get("UV_FROZEN")
+                    if self.locked:
+                        os.environ["UV_FROZEN"] = "1"
                     ve.create(ve_dir)
                 except VirtualEnvError as exc:
                     raise PyProjectSourceError(str(exc)) from exc
+                finally:
+                    if self.locked:
+                        if old_uv_frozen is None:
+                            os.environ.pop("UV_FROZEN", None)
+                        else:
+                            os.environ["UV_FROZEN"] = old_uv_frozen
 
                 # Now query the installed packages.
                 for name, version in ve.installed_packages:
