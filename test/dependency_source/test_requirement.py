@@ -477,6 +477,7 @@ def test_requirement_source_require_hashes_unpinned(req_file):
         [
             (
                 req_file(),
+                "missing\n"
                 "wheel==0.38.1 "
                 "--hash=sha256:7a95f9a8dc0924ef318bd55b616112c70903192f524d120acc614f59547a9e1f\n"
                 "setuptools<=67.0.0 "
@@ -535,7 +536,9 @@ def test_requirement_source_disable_pip_duplicate_dependencies(req_file):
 
 def test_requirement_source_disable_pip_duplicate_dependencies_with_extras(req_file):
     source = _init_requirement(
-        [(req_file(), "aiohttp==3.9\naiohttp[speedups]==3.9")], disable_pip=True, no_deps=True
+        [(req_file(), "aiohttp==3.9\naiohttp[speedups]==3.9")],
+        disable_pip=True,
+        no_deps=True,
     )
 
     specs = list(source.collect())

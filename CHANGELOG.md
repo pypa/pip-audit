@@ -13,6 +13,13 @@ All versions prior to 0.0.9 are untracked.
   the system. This enables using it behind corporate networks with custom
   SSL certificates. Importing the certificate authorities is achieved by
   using [`truststore`](https://pypi.org/project/truststore).
+## [2.10.1]
+
+### Fixed
+
+* Fixed a `KeyError` crash when an OSV vulnerability record contains an
+  `affected` entry that omits the optional `ranges` field
+  ([#1046](https://github.com/pypa/pip-audit/pull/1046))
 
 ## [2.10.0]
 
