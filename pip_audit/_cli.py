@@ -391,6 +391,24 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         "this can only be used with hashed requirements files or if the `--no-deps` flag has been "
         "provided",
     )
+    parser.add_argument(
+        "--cyclonedx-xml",
+        type=Path,
+        metavar="FILE",
+        dest="cyclonedx_xml",
+        default=None,
+        help="write a CycloneDX SBOM report in XML format to the given file, "
+        "in addition to the main output",
+    )
+    parser.add_argument(
+        "--cyclonedx-json",
+        type=Path,
+        metavar="FILE",
+        dest="cyclonedx_json",
+        default=None,
+        help="write a CycloneDX SBOM report in JSON format to the given file, "
+        "in addition to the main output",
+    )
     return parser
 
 
@@ -406,6 +424,35 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragm
     logger.debug(f"parsed arguments: {args}")
 
     return args
+
+
+def _write_cyclonedx_reports(
+    args: argparse.Namespace,
+    result: dict[Dependency, list[VulnerabilityResult]],
+    fixes: list,
+) -> None:
+    """
+    Write CycloneDX SBOM reports to files if ``--cyclonedx-xml`` or
+    ``--cyclonedx-json`` were supplied.
+    """
+    if args.cyclonedx_xml is None and args.cyclonedx_json is None:
+        return
+
+    from pip_audit._format import CycloneDxFormat
+
+    if args.cyclonedx_xml is not None:
+        fmt = CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Xml)
+        report = fmt.format(result, fixes)
+        with args.cyclonedx_xml.open("w") as f:
+            f.write(report)
+        logger.info(f"Wrote CycloneDX XML report to {args.cyclonedx_xml}")
+
+    if args.cyclonedx_json is not None:
+        fmt = CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Json)
+        report = fmt.format(result, fixes)
+        with args.cyclonedx_json.open("w") as f:
+            f.write(report)
+        logger.info(f"Wrote CycloneDX JSON report to {args.cyclonedx_json}")
 
 
 def _dep_source_from_project_path(
@@ -612,6 +659,8 @@ def audit() -> None:  # pragma: no cover
                         logger.debug(skip_reason)
                         fix = SkippedFixVersion(fix.dep, skip_reason)
                 fixes.append(fix)
+
+    _write_cyclonedx_reports(args, result, fixes)
 
     if vuln_count > 0:
         if vuln_ignore_count:

@@ -232,3 +232,93 @@ def test_environment_variable(monkeypatch):
     assert args.output == Path("/tmp/fake")
     assert not args.progress_spinner
     assert args.vulnerability_service == VulnerabilityServiceChoice.Osv
+
+
+class TestCycloneDxExtraOutput:
+    """Tests for --cyclonedx-xml and --cyclonedx-json flags."""
+
+    def test_cyclonedx_xml_default_is_none(self):
+        parser = pip_audit._cli._parser()
+        args = parser.parse_args([])
+        assert args.cyclonedx_xml is None
+
+    def test_cyclonedx_json_default_is_none(self):
+        parser = pip_audit._cli._parser()
+        args = parser.parse_args([])
+        assert args.cyclonedx_json is None
+
+    def test_cyclonedx_xml_arg_parsed(self, tmp_path):
+        xml_file = tmp_path / "report.xml"
+        parser = pip_audit._cli._parser()
+        args = parser.parse_args(["--cyclonedx-xml", str(xml_file)])
+        assert args.cyclonedx_xml == xml_file
+
+    def test_cyclonedx_json_arg_parsed(self, tmp_path):
+        json_file = tmp_path / "report.json"
+        parser = pip_audit._cli._parser()
+        args = parser.parse_args(["--cyclonedx-json", str(json_file)])
+        assert args.cyclonedx_json == json_file
+
+    def test_cyclonedx_both_flags_together(self, tmp_path):
+        xml_file = tmp_path / "report.xml"
+        json_file = tmp_path / "report.json"
+        parser = pip_audit._cli._parser()
+        args = parser.parse_args(
+            ["--cyclonedx-xml", str(xml_file), "--cyclonedx-json", str(json_file)]
+        )
+        assert args.cyclonedx_xml == xml_file
+        assert args.cyclonedx_json == json_file
+
+    def test_write_cyclonedx_reports_xml(self, tmp_path, monkeypatch):
+        xml_file = tmp_path / "report.xml"
+        result = {
+            pretend.stub(
+                is_skipped=lambda: False,
+                name="test-pkg",
+                canonical_name="test-pkg",
+                version=1,
+            ): [
+                pretend.stub(
+                    fix_versions=[2],
+                    id="CVE-2024-0001",
+                    aliases=set(),
+                    has_any_id=lambda x: False,
+                    description="test vuln",
+                )
+            ]
+        }
+        args = pretend.stub(cyclonedx_xml=xml_file, cyclonedx_json=None)
+        pip_audit._cli._write_cyclonedx_reports(args, result, [])
+        assert xml_file.exists()
+        content = xml_file.read_text()
+        assert "test-pkg" in content
+
+    def test_write_cyclonedx_reports_json(self, tmp_path, monkeypatch):
+        json_file = tmp_path / "report.json"
+        result = {
+            pretend.stub(
+                is_skipped=lambda: False,
+                name="test-pkg",
+                canonical_name="test-pkg",
+                version=1,
+            ): [
+                pretend.stub(
+                    fix_versions=[2],
+                    id="CVE-2024-0001",
+                    aliases=set(),
+                    has_any_id=lambda x: False,
+                    description="test vuln",
+                )
+            ]
+        }
+        args = pretend.stub(cyclonedx_xml=None, cyclonedx_json=json_file)
+        pip_audit._cli._write_cyclonedx_reports(args, result, [])
+        assert json_file.exists()
+        content = json_file.read_text()
+        assert "test-pkg" in content
+
+    def test_write_cyclonedx_reports_none_when_no_flags(self, tmp_path):
+        args = pretend.stub(cyclonedx_xml=None, cyclonedx_json=None)
+        result = {}
+        # Should not raise or write any files
+        pip_audit._cli._write_cyclonedx_reports(args, result, [])
