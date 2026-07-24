@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Read timeouts while querying a vulnerability feed (OSV, PyPI, ESMS) are now
+  caught and surfaced as a friendly `ConnectionError`, instead of escaping as an
+  uncaught `requests.ReadTimeout` traceback
+  ([#1083](https://github.com/pypa/pip-audit/pull/1083))
+
 ## [2.10.1]
 
 ### Fixed

@@ -73,7 +73,7 @@ class OsvService(VulnerabilityService):
                 timeout=self.timeout,
             )
             response.raise_for_status()
-        except requests.ConnectTimeout:
+        except requests.Timeout:
             raise ConnectionError("Could not connect to OSV's vulnerability feed")
         except requests.HTTPError as http_error:
             raise ServiceError from http_error

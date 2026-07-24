@@ -68,7 +68,7 @@ class PyPIService(VulnerabilityService):
             # happen during an outage or network event.
             # Ref 2022-06-10: https://status.python.org/incidents/lgpr13fy71bk
             raise ConnectionError("PyPI is not redirecting properly")
-        except requests.ConnectTimeout:
+        except requests.Timeout:
             # Apart from a normal network outage, this can happen for two main
             # reasons:
             # 1. PyPI's APIs are offline

@@ -5,7 +5,7 @@ import random
 import pretend  # type: ignore
 import pytest
 from packaging.version import Version
-from requests.exceptions import ConnectTimeout, HTTPError
+from requests.exceptions import ConnectTimeout, HTTPError, ReadTimeout
 
 import pip_audit._service as service
 
@@ -89,6 +89,17 @@ def test_esms_no_vuln():
 def test_esms_connection_error(monkeypatch):
     esms = service.EcosystemsService()
     monkeypatch.setattr(esms.session, "get", pretend.raiser(ConnectTimeout))
+
+    dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
+    with pytest.raises(
+        service.ConnectionError, match="Could not connect to ESMS' vulnerability feed"
+    ):
+        dict(esms.query_all(iter([dep])))
+
+
+def test_esms_read_timeout(monkeypatch):
+    esms = service.EcosystemsService()
+    monkeypatch.setattr(esms.session, "get", pretend.raiser(ReadTimeout))
 
     dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
     with pytest.raises(
