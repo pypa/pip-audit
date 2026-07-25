@@ -217,6 +217,8 @@ options:
                         False)
   -o FILE, --output FILE
                         output results to the given file (default: stdout)
+  --cyclonedx FILE      write a CycloneDX SBOM to FILE; infer JSON or XML
+                        from its extension (default: None)
   --ignore-vuln ID      ignore a specific vulnerability by its vulnerability
                         ID; this option can be used multiple times (default:
                         [])

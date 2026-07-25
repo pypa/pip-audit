@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Added
+
+* Added `--cyclonedx FILE` to write a CycloneDX JSON or XML report while retaining
+  the selected primary output format ([#753](https://github.com/pypa/pip-audit/issues/753)).
+
 ## [2.10.1]
 
 ### Fixed

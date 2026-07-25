@@ -11,6 +11,7 @@ from pip_audit._cli import (
     VulnerabilityDescriptionChoice,
     VulnerabilityServiceChoice,
 )
+from pip_audit._format import CycloneDxFormat
 
 
 class TestOutputFormatChoice:
@@ -24,6 +25,28 @@ class TestOutputFormatChoice:
     def test_str(self):
         for choice in OutputFormatChoice:
             assert str(choice) == choice.value
+
+
+@pytest.mark.parametrize(
+    ("filename", "inner_format"),
+    [
+        ("report.json", CycloneDxFormat.InnerFormat.Json),
+        ("report.xml", CycloneDxFormat.InnerFormat.Xml),
+        ("report.JSON", CycloneDxFormat.InnerFormat.Json),
+    ],
+)
+def test_cyclonedx_format(filename, inner_format):
+    formatter = pip_audit._cli._cyclonedx_format(Path(filename))
+
+    assert formatter._inner_format is inner_format
+
+
+@pytest.mark.parametrize("filename", ["report", "report.csv"])
+def test_cyclonedx_output_path_requires_supported_extension(filename):
+    parser = pip_audit._cli._parser()
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["--cyclonedx", filename])
 
 
 class TestVulnerabilityServiceChoice:
@@ -140,19 +163,22 @@ def test_plurals(capsys, monkeypatch, args, vuln_count, pkg_count, expected):
 
 
 @pytest.mark.parametrize(
-    "vuln_count, pkg_count, skip_count, print_format",
+    "vuln_count, pkg_count, skip_count, print_format, cyclonedx",
     [
-        (1, 1, 0, True),
-        (2, 1, 0, True),
-        (2, 2, 0, True),
-        (0, 0, 0, False),
-        (0, 1, 0, False),
+        (1, 1, 0, True, False),
+        (2, 1, 0, True, False),
+        (2, 2, 0, True, False),
+        (0, 0, 0, False, False),
+        (0, 1, 0, False, False),
         # If there are no vulnerabilities but a dependency has been skipped, we
         # should print the formatted result
-        (0, 0, 1, True),
+        (0, 0, 1, True, False),
+        (0, 1, 0, False, True),
     ],
 )
-def test_print_format(monkeypatch, vuln_count, pkg_count, skip_count, print_format):
+def test_print_format(
+    monkeypatch, tmp_path, vuln_count, pkg_count, skip_count, print_format, cyclonedx
+):
     dummysource = pretend.stub(fix=lambda a: None)
     monkeypatch.setattr(pip_audit._cli, "PipSource", lambda *a, **kw: dummysource)
 
@@ -161,9 +187,16 @@ def test_print_format(monkeypatch, vuln_count, pkg_count, skip_count, print_form
         is_manifest=False,
     )
     monkeypatch.setattr(pip_audit._cli, "ColumnsFormat", lambda *a, **kw: dummyformat)
+    cyclonedx_format = pretend.stub(format=pretend.call_recorder(lambda _result, _fixes: "SBOM"))
+    monkeypatch.setattr(
+        pip_audit._cli,
+        "_cyclonedx_format",
+        lambda _output: cyclonedx_format,
+    )
 
     parser = pip_audit._cli._parser()
-    monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda *a: parser.parse_args([]))
+    args = ["--cyclonedx", str(tmp_path / "audit.json")] if cyclonedx else []
+    monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda *a: parser.parse_args(args))
 
     result = [
         (
@@ -213,6 +246,9 @@ def test_print_format(monkeypatch, vuln_count, pkg_count, skip_count, print_form
         pass
 
     assert bool(dummyformat.format.calls) == print_format
+    assert bool(cyclonedx_format.format.calls) == cyclonedx
+    if cyclonedx:
+        assert (tmp_path / "audit.json").read_text() == "SBOM\n"
 
 
 def test_environment_variable(monkeypatch):

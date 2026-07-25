@@ -67,6 +67,26 @@ def _output_io(name: Path) -> Iterator[IO[str]]:  # pragma: no cover
             yield io
 
 
+def _cyclonedx_format(output: Path) -> CycloneDxFormat:
+    """Return the CycloneDX formatter implied by an output filename."""
+    suffix = output.suffix.lower()
+    if suffix == ".json":
+        return CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Json)
+    if suffix == ".xml":
+        return CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Xml)
+    raise ValueError(f"unsupported CycloneDX output extension: {output.suffix}")
+
+
+def _cyclonedx_output_path(value: str) -> Path:
+    """Validate a CycloneDX output path supplied on the command line."""
+    output = Path(value)
+    if output.suffix.lower() not in {".json", ".xml"}:
+        raise argparse.ArgumentTypeError(
+            "CycloneDX output must have a .json or .xml filename extension"
+        )
+    return output
+
+
 @enum.unique
 class OutputFormatChoice(str, enum.Enum):
     """
@@ -373,6 +393,12 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         default=os.environ.get("PIP_AUDIT_OUTPUT", "stdout"),
     )
     parser.add_argument(
+        "--cyclonedx",
+        type=_cyclonedx_output_path,
+        metavar="FILE",
+        help="write a CycloneDX SBOM to FILE; infer JSON or XML from its extension",
+    )
+    parser.add_argument(
         "--ignore-vuln",
         type=str,
         metavar="ID",
@@ -458,6 +484,7 @@ def audit() -> None:  # pragma: no cover
     output_desc = args.desc.to_bool(args.format)
     output_aliases = args.aliases.to_bool(args.format)
     formatter = args.format.to_format(output_desc, output_aliases)
+    cyclonedx_formatter = _cyclonedx_format(args.cyclonedx) if args.cyclonedx else None
 
     # Check for flags that are only valid with project paths
     if args.project_path is None:
@@ -612,6 +639,10 @@ def audit() -> None:  # pragma: no cover
                         logger.debug(skip_reason)
                         fix = SkippedFixVersion(fix.dep, skip_reason)
                 fixes.append(fix)
+
+    if cyclonedx_formatter:
+        with _output_io(args.cyclonedx) as io:
+            print(cyclonedx_formatter.format(result, fixes), file=io)
 
     if vuln_count > 0:
         if vuln_ignore_count:
