@@ -8,6 +8,14 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Changed
+
+* `pip-audit` now shares `pip`'s `http-v2` HTTP cache format (`pip` >= 23.3) when
+  reusing `pip`'s cache directory, instead of only reading and writing the older,
+  now-frozen `http` format. Sharing with older `pip` installations, which never
+  write to `http-v2`, still uses the legacy format
+  ([#794](https://github.com/pypa/pip-audit/issues/794))
+
 ## [2.10.1]
 
 ### Fixed
