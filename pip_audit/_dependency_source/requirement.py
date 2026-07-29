@@ -200,13 +200,20 @@ class RequirementSource(DependencySource):
                     shutil.copyfileobj(f, tmp_file)
 
             try:
-                # Now fix the files inplace
+                # Now fix the files inplace.
+                #
+                # When fixing a package that isn't listed in a given requirements file, we may need
+                # to add an explicit pin (vulnerable transitive). With multiple requirements files
+                # we can't attribute that transitive to a specific file without resolving again, so
+                # only allow those explicit adds for the single-file case. Multi-file fixes still
+                # update any file that already lists the package.
+                allow_explicit_add = len(self._filenames) == 1
                 for filename in self._filenames:
                     self.state.update_state(
                         f"Fixing dependency {fix_version.dep.name} ({fix_version.dep.version} => "
                         f"{fix_version.version})"
                     )
-                    self._fix_file(filename, fix_version)
+                    self._fix_file(filename, fix_version, allow_explicit_add=allow_explicit_add)
             except Exception as e:
                 logger.warning(
                     f"encountered an exception while applying fixes, recovering original files: {e}"
@@ -214,7 +221,13 @@ class RequirementSource(DependencySource):
                 self._recover_files(tmp_files)
                 raise e
 
-    def _fix_file(self, filename: Path, fix_version: ResolvedFixVersion) -> None:
+    def _fix_file(
+        self,
+        filename: Path,
+        fix_version: ResolvedFixVersion,
+        *,
+        allow_explicit_add: bool = True,
+    ) -> None:
         # Reparse the requirements file. We want to rewrite each line to the new requirements file
         # and only modify the lines that we're fixing.
         #
@@ -264,12 +277,8 @@ class RequirementSource(DependencySource):
 
             # The vulnerable dependency may not be explicitly listed in the requirements file if it
             # is a subdependency of a requirement. In this case, we should explicitly add the fixed
-            # dependency into the requirements file.
-            #
-            # To know whether this is the case, we'll need to resolve dependencies if we haven't
-            # already in order to figure out whether this subdependency belongs to this file or
-            # another.
-            if not found:
+            # dependency into the requirements file — but only when callers allow it (see `fix`).
+            if not found and allow_explicit_add:
                 logger.warning(
                     "added fixed subdependency explicitly to requirements file "
                     f"{filename}: {fix_version.dep.canonical_name}"

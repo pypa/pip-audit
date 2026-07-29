@@ -260,6 +260,22 @@ def test_requirement_source_fix_multiple_files(req_file):
     )
 
 
+def test_requirement_source_fix_skips_unrelated_files(req_file):
+    # Regression test for #633: when fixing a package listed in only one of several
+    # requirements files, do not append an explicit pin to the unrelated files.
+    _check_fixes(
+        ["httpx==0.13.3", "astpretty==3.0.0"],
+        ["httpx==0.23.0", "astpretty==3.0.0"],
+        [req_file(), req_file()],
+        [
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="httpx", version=Version("0.13.3")),
+                version=Version("0.23.0"),
+            )
+        ],
+    )
+
+
 def test_requirement_source_fix_specifier_match(req_file):
     _check_fixes(
         ["flask<1.0", "requests==2.0\nflask<=0.6"],

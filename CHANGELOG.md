@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* `--fix` no longer appends an explicit pin to requirements files that do not
+  list the fixed package when auditing multiple `-r` inputs
+  ([#633](https://github.com/pypa/pip-audit/issues/633))
+
 ## [2.10.1]
 
 ### Fixed
