@@ -260,6 +260,41 @@ def test_requirement_source_fix_multiple_files(req_file):
     )
 
 
+def test_requirement_source_fix_does_not_touch_unrelated_files(req_file):
+    # The fixed dependency is listed in the first file only, so the second file must be left
+    # alone rather than gaining a pin it never had (#633).
+    _check_fixes(
+        ["flask==0.5", "requests==2.0"],
+        ["flask==1.0", "requests==2.0"],
+        [req_file(), req_file()],
+        [
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("0.5")),
+                version=Version("1.0"),
+            )
+        ],
+    )
+
+
+def test_requirement_source_fix_explicit_subdep_added_once(req_file):
+    # A subdependency that is listed in none of the files gets pinned exactly once: the audited
+    # environment is the union of all inputs, so one pin is enough (#633).
+    _check_fixes(
+        ["flask==1.0", "requests==2.0"],
+        [
+            "flask==1.0\n    # pip-audit: subdependency explicitly fixed\njinja2==4.0.0",
+            "requests==2.0",
+        ],
+        [req_file(), req_file()],
+        [
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="jinja2", version=Version("3.0.0")),
+                version=Version("4.0.0"),
+            )
+        ],
+    )
+
+
 def test_requirement_source_fix_specifier_match(req_file):
     _check_fixes(
         ["flask<1.0", "requests==2.0\nflask<=0.6"],

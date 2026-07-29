@@ -201,12 +201,21 @@ class RequirementSource(DependencySource):
 
             try:
                 # Now fix the files inplace
+                explicitly_listed = False
                 for filename in self._filenames:
                     self.state.update_state(
                         f"Fixing dependency {fix_version.dep.name} ({fix_version.dep.version} => "
                         f"{fix_version.version})"
                     )
-                    self._fix_file(filename, fix_version)
+                    explicitly_listed |= self._fix_file(filename, fix_version)
+
+                # The vulnerable dependency may not be explicitly listed in any of the
+                # requirements files if it is a subdependency of a requirement. In that case we
+                # add an explicit pin, but only to one file: the audited environment is the union
+                # of all the inputs, so repeating the pin in every file would add the dependency
+                # to files that never contained it.
+                if not explicitly_listed:
+                    self._add_explicit_fix(self._filenames[0], fix_version)
             except Exception as e:
                 logger.warning(
                     f"encountered an exception while applying fixes, recovering original files: {e}"
@@ -214,7 +223,9 @@ class RequirementSource(DependencySource):
                 self._recover_files(tmp_files)
                 raise e
 
-    def _fix_file(self, filename: Path, fix_version: ResolvedFixVersion) -> None:
+    def _fix_file(self, filename: Path, fix_version: ResolvedFixVersion) -> bool:
+        # Returns whether the fixed dependency was explicitly listed in this file.
+        #
         # Reparse the requirements file. We want to rewrite each line to the new requirements file
         # and only modify the lines that we're fixing.
         #
@@ -262,23 +273,21 @@ class RequirementSource(DependencySource):
                         req.req.specifier = SpecifierSet(f"=={fix_version.version}")
                 print(req.dumps(), file=f)
 
-            # The vulnerable dependency may not be explicitly listed in the requirements file if it
-            # is a subdependency of a requirement. In this case, we should explicitly add the fixed
-            # dependency into the requirements file.
-            #
-            # To know whether this is the case, we'll need to resolve dependencies if we haven't
-            # already in order to figure out whether this subdependency belongs to this file or
-            # another.
-            if not found:
-                logger.warning(
-                    "added fixed subdependency explicitly to requirements file "
-                    f"{filename}: {fix_version.dep.canonical_name}"
-                )
-                print(
-                    "    # pip-audit: subdependency explicitly fixed",
-                    file=f,
-                )
-                print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
+        return found
+
+    def _add_explicit_fix(self, filename: Path, fix_version: ResolvedFixVersion) -> None:
+        # The vulnerable dependency was not explicitly listed in any requirements file, so it is
+        # a subdependency of one of the requirements. Add an explicit pin for it.
+        logger.warning(
+            "added fixed subdependency explicitly to requirements file "
+            f"{filename}: {fix_version.dep.canonical_name}"
+        )
+        with filename.open("a") as f:
+            print(
+                "    # pip-audit: subdependency explicitly fixed",
+                file=f,
+            )
+            print(f"{fix_version.dep.canonical_name}=={fix_version.version}", file=f)
 
     def _recover_files(self, tmp_files: list[IO[str]]) -> None:
         for filename, tmp_file in zip(self._filenames, tmp_files, strict=True):
