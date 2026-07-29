@@ -69,17 +69,7 @@ class Auditor:
                 unique_vulns: list[VulnerabilityResult] = []
                 seen_aliases: set[str] = set()
 
-                # First pass, add all PYSEC vulnerabilities and track their
-                # alias sets.
-                for v in vulns:
-                    if not v.id.startswith("PYSEC"):
-                        continue
-
-                    seen_aliases.update(v.aliases | {v.id})
-                    unique_vulns.append(v)
-
-                # Second pass: add any non-PYSEC vulnerabilities.
-                for v in vulns:
+                def add_or_merge(v: VulnerabilityResult) -> None:
                     # If we've already seen this vulnerability by another name,
                     # don't add it. Instead, find the previous result and update
                     # its alias set.
@@ -88,9 +78,22 @@ class Auditor:
                             (i, p) for (i, p) in enumerate(unique_vulns) if p.alias_of(v)
                         )
                         unique_vulns[idx] = previous.merge_aliases(v)
-                        continue
+                        return
 
                     seen_aliases.update(v.aliases | {v.id})
                     unique_vulns.append(v)
+
+                # First pass, add all PYSEC vulnerabilities and track their
+                # alias sets. Two PYSEC results can describe the same
+                # vulnerability, so they are deduplicated like the rest.
+                for v in vulns:
+                    if not v.id.startswith("PYSEC"):
+                        continue
+
+                    add_or_merge(v)
+
+                # Second pass: add any non-PYSEC vulnerabilities.
+                for v in vulns:
+                    add_or_merge(v)
 
                 yield dep, unique_vulns

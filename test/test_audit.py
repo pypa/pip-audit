@@ -130,3 +130,44 @@ def test_audit_dedupes_aliases_by_id(dep_source, vulns):
 
     # The result contains the merged alias set for all aliases.
     assert results[0][1][0].aliases == {"FAKE-1", "CVE-XXXX-YYYYY"}
+
+
+@pytest.mark.parametrize(
+    "vulns",
+    itertools.permutations(
+        [
+            # The same vulnerability, returned twice with different descriptions:
+            # OSV can serve two records that share a PYSEC identifier.
+            VulnerabilityResult(
+                id="PYSEC-0",
+                description="first copy",
+                fix_versions=[Version("1.1.0")],
+                aliases={"CVE-XXXX-YYYYY"},
+            ),
+            VulnerabilityResult(
+                id="PYSEC-0",
+                description="second copy",
+                fix_versions=[Version("1.1.0")],
+                aliases={"GHSA-xxxx-yyyy-zzzz"},
+            ),
+        ]
+    ),
+)
+def test_audit_dedupes_repeated_pysec_ids(dep_source, vulns):
+    class Service(VulnerabilityService):
+        def query(self, spec):
+            return spec, vulns
+
+    service = Service()
+    source = dep_source()
+
+    auditor = Auditor(service)
+    results = list(auditor.audit(source))
+
+    # One dependency, one unique vulnerability result for that dependency.
+    assert len(results) == 1
+    assert len(results[0][1]) == 1
+    assert results[0][1][0].id == "PYSEC-0"
+
+    # Aliases from both copies are kept.
+    assert results[0][1][0].aliases == {"CVE-XXXX-YYYYY", "GHSA-xxxx-yyyy-zzzz"}
