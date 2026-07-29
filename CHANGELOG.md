@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Deduplicate OSV vulnerability records that share a `PYSEC` identifier
+  ([#1093](https://github.com/pypa/pip-audit/pull/1093)).
+
 ## [2.10.1]
 
 ### Fixed

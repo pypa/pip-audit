@@ -171,3 +171,43 @@ def test_audit_dedupes_repeated_pysec_ids(dep_source, vulns):
 
     # Aliases from both copies are kept.
     assert results[0][1][0].aliases == {"CVE-XXXX-YYYYY", "GHSA-xxxx-yyyy-zzzz"}
+
+
+def test_audit_dedupes_alias_of_repeated_pysec_id(dep_source):
+    vulns = [
+        VulnerabilityResult(
+            id="PYSEC-0",
+            description="first copy",
+            fix_versions=[Version("1.1.0")],
+            aliases={"CVE-XXXX-YYYYY"},
+        ),
+        VulnerabilityResult(
+            id="PYSEC-0",
+            description="second copy",
+            fix_versions=[Version("1.1.0")],
+            aliases={"GHSA-xxxx-yyyy-zzzz"},
+        ),
+        VulnerabilityResult(
+            id="GHSA-xxxx-yyyy-zzzz",
+            description="alias of the second copy",
+            fix_versions=[Version("1.1.0")],
+            aliases=set(),
+        ),
+    ]
+
+    class Service(VulnerabilityService):
+        def query(self, spec):
+            return spec, vulns
+
+    service = Service()
+    source = dep_source()
+
+    auditor = Auditor(service)
+    results = list(auditor.audit(source))
+
+    # The alias introduced by the second PYSEC record is tracked when the two
+    # records are merged, so a later record using that alias is also deduped.
+    assert len(results) == 1
+    assert len(results[0][1]) == 1
+    assert results[0][1][0].id == "PYSEC-0"
+    assert results[0][1][0].aliases == {"CVE-XXXX-YYYYY", "GHSA-xxxx-yyyy-zzzz"}

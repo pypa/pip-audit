@@ -77,7 +77,9 @@ class Auditor:
                         idx, previous = next(
                             (i, p) for (i, p) in enumerate(unique_vulns) if p.alias_of(v)
                         )
-                        unique_vulns[idx] = previous.merge_aliases(v)
+                        merged = previous.merge_aliases(v)
+                        unique_vulns[idx] = merged
+                        seen_aliases.update(merged.aliases | {merged.id})
                         return
 
                     seen_aliases.update(v.aliases | {v.id})
