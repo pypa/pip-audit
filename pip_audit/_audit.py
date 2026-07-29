@@ -69,28 +69,36 @@ class Auditor:
                 unique_vulns: list[VulnerabilityResult] = []
                 seen_aliases: set[str] = set()
 
+                def add_vulnerability(vuln: VulnerabilityResult) -> None:
+                    """Add a vulnerability result or merge it with a matching one."""
+                    if seen_aliases.intersection(vuln.aliases | {vuln.id}):
+                        idx, previous = next(
+                            (i, result)
+                            for (i, result) in enumerate(unique_vulns)
+                            if result.alias_of(vuln)
+                        )
+                        unique_vulns[idx] = previous.merge_aliases(vuln)
+                        return
+
+                    seen_aliases.update(vuln.aliases | {vuln.id})
+                    unique_vulns.append(vuln)
+
                 # First pass, add all PYSEC vulnerabilities and track their
                 # alias sets.
                 for v in vulns:
                     if not v.id.startswith("PYSEC"):
                         continue
 
-                    seen_aliases.update(v.aliases | {v.id})
-                    unique_vulns.append(v)
+                    add_vulnerability(v)
 
                 # Second pass: add any non-PYSEC vulnerabilities.
                 for v in vulns:
+                    if v.id.startswith("PYSEC"):
+                        continue
+
                     # If we've already seen this vulnerability by another name,
                     # don't add it. Instead, find the previous result and update
                     # its alias set.
-                    if seen_aliases.intersection(v.aliases | {v.id}):
-                        idx, previous = next(
-                            (i, p) for (i, p) in enumerate(unique_vulns) if p.alias_of(v)
-                        )
-                        unique_vulns[idx] = previous.merge_aliases(v)
-                        continue
-
-                    seen_aliases.update(v.aliases | {v.id})
-                    unique_vulns.append(v)
+                    add_vulnerability(v)
 
                 yield dep, unique_vulns

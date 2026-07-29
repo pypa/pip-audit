@@ -87,6 +87,35 @@ def test_audit_dedupes_aliases(dep_source, vulns):
     assert results[0][1][0].id == "PYSEC-0"
 
 
+def test_audit_dedupes_repeated_pysec_ids(dep_source):
+    class Service(VulnerabilityService):
+        def query(self, spec):
+            return (
+                spec,
+                [
+                    VulnerabilityResult(
+                        id="PYSEC-0",
+                        description="first description",
+                        fix_versions=[Version("1.1.0")],
+                        aliases={"CVE-XXXX-YYYYY"},
+                    ),
+                    VulnerabilityResult(
+                        id="PYSEC-0",
+                        description="second description",
+                        fix_versions=[Version("1.1.0")],
+                        aliases={"GHSA-XXXX-YYYY-YYYY"},
+                    ),
+                ],
+            )
+
+    results = list(Auditor(Service()).audit(dep_source()))
+
+    assert len(results) == 1
+    assert len(results[0][1]) == 1
+    assert results[0][1][0].id == "PYSEC-0"
+    assert results[0][1][0].aliases == {"CVE-XXXX-YYYYY", "GHSA-XXXX-YYYY-YYYY"}
+
+
 @pytest.mark.parametrize(
     "vulns",
     itertools.permutations(

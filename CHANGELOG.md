@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Deduplicated repeated `PYSEC` vulnerability records in audit output
+  ([#1068](https://github.com/pypa/pip-audit/issues/1068))
+
 ## [2.10.1]
 
 ### Fixed
