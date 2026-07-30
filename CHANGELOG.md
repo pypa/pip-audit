@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Added
+* `pip-audit` now trusts certification authorities which are installed on
+  the system. This enables using it behind corporate networks with custom
+  SSL certificates. Importing the certificate authorities is achieved by
+  using [`truststore`](https://pypi.org/project/truststore).
 ## [2.10.1]
 
 ### Fixed
