@@ -130,3 +130,40 @@ def test_audit_dedupes_aliases_by_id(dep_source, vulns):
 
     # The result contains the merged alias set for all aliases.
     assert results[0][1][0].aliases == {"FAKE-1", "CVE-XXXX-YYYYY"}
+
+
+@pytest.mark.parametrize(
+    "vulns",
+    itertools.permutations(
+        [
+            VulnerabilityResult(
+                id="PYSEC-2023-11",
+                description="first description",
+                fix_versions=[Version("39.0.1")],
+                aliases={"CVE-2023-23931", "GHSA-w7pp-m8wf-vj6r"},
+            ),
+            VulnerabilityResult(
+                id="PYSEC-2023-11",
+                description="second description",
+                fix_versions=[Version("39.0.1")],
+                aliases={"CVE-2023-23931", "GHSA-w7pp-m8wf-vj6r"},
+            ),
+        ]
+    ),
+)
+def test_audit_dedupes_duplicate_pysec_results(dep_source, vulns):
+    class Service(VulnerabilityService):
+        def query(self, spec):
+            return spec, vulns
+
+    service = Service()
+    source = dep_source()
+
+    auditor = Auditor(service)
+    results = list(auditor.audit(source))
+
+    # One dependency, one unique vulnerability result for that dependency.
+    assert len(results) == 1
+    assert len(results[0][1]) == 1
+    assert results[0][1][0].id == "PYSEC-2023-11"
+    assert results[0][1][0].aliases == {"CVE-2023-23931", "GHSA-w7pp-m8wf-vj6r"}

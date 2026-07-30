@@ -8,6 +8,11 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed duplicate vulnerability results when a vulnerability service returns
+  repeated `PYSEC` records with the same aliases.
+
 ## [2.10.1]
 
 ### Fixed
