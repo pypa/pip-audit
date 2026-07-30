@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* `--skip-editable` is now honored before hash enforcement in the
+  `--disable-pip` requirements path, so editable lines are skipped instead of
+  failing for missing hashes
+  ([#1024](https://github.com/pypa/pip-audit/issues/1024))
+
 ## [2.10.1]
 
 ### Fixed

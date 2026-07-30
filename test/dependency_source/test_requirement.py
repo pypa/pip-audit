@@ -522,6 +522,46 @@ def test_requirement_source_disable_pip_editable_skip(req_file):
     assert SkippedDependency(name="flask", skip_reason="requirement marked as editable") in specs
 
 
+def test_requirement_source_disable_pip_skip_editable_before_hash_check(req_file):
+    # Regression for #1024: hashed requirements imply --require-hashes, but editable
+    # lines skipped via --skip-editable must not fail for missing hashes.
+    source = _init_requirement(
+        [
+            (
+                req_file(),
+                "-e file:.\n"
+                "flask==2.0.1 "
+                "--hash=sha256:a6c9c3b5f7c1e4a80e4e5d6c8e8c1a0b0c0d0e0f0a0b0c0d0e0f0a0b0c0d0e0f\n",
+            )
+        ],
+        disable_pip=True,
+        skip_editable=True,
+    )
+
+    specs = list(source.collect())
+    assert any(
+        isinstance(s, SkippedDependency) and s.skip_reason == "requirement marked as editable"
+        for s in specs
+    )
+    assert ResolvedDependency(name="flask", version=Version("2.0.1")) in specs
+
+    # Without --skip-editable, the unhashed editable line fails hash policy.
+    source_strict = _init_requirement(
+        [
+            (
+                req_file(),
+                "-e file:.\n"
+                "flask==2.0.1 "
+                "--hash=sha256:a6c9c3b5f7c1e4a80e4e5d6c8e8c1a0b0c0d0e0f0a0b0c0d0e0f0a0b0c0d0e0f\n",
+            )
+        ],
+        disable_pip=True,
+        skip_editable=False,
+    )
+    with pytest.raises(DependencySourceError, match="does not contain a hash"):
+        list(source_strict.collect())
+
+
 def test_requirement_source_disable_pip_duplicate_dependencies(req_file):
     source = _init_requirement(
         [(req_file(), "flask==1.0\nflask==1.0")], disable_pip=True, no_deps=True
