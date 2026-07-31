@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Added
+
+* CLI: The `--format sarif` option has been added, emitting SARIF 2.1.0 reports
+  suitable for code-scanning style integrations
+  ([#206](https://github.com/pypa/pip-audit/issues/206))
+
 ## [2.10.1]
 
 ### Fixed

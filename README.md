@@ -46,8 +46,10 @@ with support from Google. This is not an official Google or Trail of Bits produc
 * Support for emitting
   [SBOMs](https://en.wikipedia.org/wiki/Software_bill_of_materials) in
   [CycloneDX](https://cyclonedx.org/) XML or JSON
+* Support for emitting [SARIF](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html)
+  reports for code-scanning style integrations
 * Support for automatically fixing vulnerable dependencies (`--fix`)
-* Human and machine-readable output formats (columnar, Markdown, JSON)
+* Human and machine-readable output formats (columnar, Markdown, JSON, SARIF)
 * Seamlessly reuses your existing local `pip` caches
 
 ## Installation
@@ -161,7 +163,7 @@ options:
                         (default: False)
   -f FORMAT, --format FORMAT
                         the format to emit audit results in (choices: columns,
-                        json, cyclonedx-json, cyclonedx-xml, markdown)
+                        json, cyclonedx-json, cyclonedx-xml, markdown, sarif)
                         (default: columns)
   -s SERVICE, --vulnerability-service SERVICE
                         the vulnerability service to audit dependencies
@@ -176,14 +178,14 @@ options:
                         on any dependency (default: False)
   --desc [{on,off,auto}]
                         include a description for each vulnerability; `auto`
-                        defaults to `on` for the `json` format. This flag has
-                        no effect on the `cyclonedx-json` or `cyclonedx-xml`
-                        formats. (default: auto)
+                        defaults to `on` for the `json` and `sarif` formats.
+                        This flag has no effect on the `cyclonedx-json` or
+                        `cyclonedx-xml` formats. (default: auto)
   --aliases [{on,off,auto}]
                         includes alias IDs for each vulnerability; `auto`
-                        defaults to `on` for the `json` format. This flag has
-                        no effect on the `cyclonedx-json` or `cyclonedx-xml`
-                        formats. (default: auto)
+                        defaults to `on` for the `json` and `sarif` formats.
+                        This flag has no effect on the `cyclonedx-json` or
+                        `cyclonedx-xml` formats. (default: auto)
   --cache-dir CACHE_DIR
                         the directory to use as an HTTP cache for PyPI; uses
                         the `pip` HTTP cache by default (default: None)
@@ -223,7 +225,7 @@ options:
   --disable-pip         don't use `pip` for dependency resolution; this can
                         only be used with hashed requirements files or if the
                         `--no-deps` flag has been provided (default: False)
-```
+`
 <!-- @end-pip-audit-help@ -->
 
 ### Environment variables

@@ -7,6 +7,7 @@ from .cyclonedx import CycloneDxFormat
 from .interface import VulnerabilityFormat
 from .json import JsonFormat
 from .markdown import MarkdownFormat
+from .sarif import SarifFormat
 
 __all__ = [
     "ColumnsFormat",
@@ -14,4 +15,5 @@ __all__ = [
     "VulnerabilityFormat",
     "JsonFormat",
     "MarkdownFormat",
+    "SarifFormat",
 ]
