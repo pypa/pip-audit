@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed unsound subprocess stream handling that could split multi-byte UTF-8
+  sequences and deadlock on large `stderr` output, by using
+  `Popen.communicate()` instead of a manual `poll()`/`read()` loop
+  ([#574](https://github.com/pypa/pip-audit/issues/574))
+
 ## [2.10.1]
 
 ### Fixed

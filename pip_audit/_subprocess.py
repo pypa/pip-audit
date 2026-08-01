@@ -39,29 +39,22 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
     # state updates, so we trim the first argument down to its basename.
     pretty_args = " ".join([os.path.basename(args[0]), *args[1:]])
 
-    terminated = False
-    stdout = b""
-    stderr = b""
+    # Rather than draining `stdout`/`stderr` with a manual `poll()`/`read()` loop
+    # (which can deadlock when `stderr` fills its pipe buffer, and can split a
+    # multi-byte UTF-8 sequence mid-codepoint and produce mojibake), we use
+    # `Popen.communicate()` to read both streams concurrently and return complete,
+    # correctly-decoded output.
+    with Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+        stdout, stderr = process.communicate()
 
-    # Run the process with unbuffered I/O, to make the poll-and-read loop below
-    # more responsive.
-    with Popen(args, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
-        # NOTE: We use `poll()` to control this loop instead of the `read()` call
-        # to prevent deadlocks. Similarly, `read(size)` will return an empty bytes
-        # once `stdout` hits EOF, so we don't have to worry about that blocking.
-        while not terminated:
-            terminated = process.poll() is not None
-            stdout += process.stdout.read()  # type: ignore
-            stderr += process.stderr.read()  # type: ignore
-            state.update_state(
-                f"Running {pretty_args}",
-                stdout.decode(errors="replace") if log_stdout else None,
-            )
+    if process.returncode != 0:
+        raise CalledProcessError(
+            f"{pretty_args} exited with {process.returncode}",
+            stderr=stderr.decode(errors="replace"),
+        )
 
-        if process.returncode != 0:
-            raise CalledProcessError(
-                f"{pretty_args} exited with {process.returncode}",
-                stderr=stderr.decode(errors="replace"),
-            )
-
+    state.update_state(
+        f"Running {pretty_args}",
+        stdout.decode(errors="replace") if log_stdout else None,
+    )
     return stdout.decode("utf-8", errors="replace")
