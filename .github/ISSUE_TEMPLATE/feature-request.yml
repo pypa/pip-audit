@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank for for making a `pip-audit` feature request!
+        Thank you for making a `pip-audit` feature request!
 
         Please read the following parts of this form carefully.
         Invalid or incomplete submissions will be given a lower priority or
@@ -19,6 +19,10 @@ body:
       description: |
         By submitting this issue, you affirm that you've satisfied the following conditions.
       options:
+        - label: >-
+             I am running the **latest stable release** of `pip-audit`.
+             Check the [releases page](https://github.com/pypa/pip-audit/releases) to confirm.
+           required: true
         - label: >-
             I am **not** reporting a new vulnerability or requesting a new vulnerability identifier.
             These **must** be reported or managed via upstream dependency sources or services,
