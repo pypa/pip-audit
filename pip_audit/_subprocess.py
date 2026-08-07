@@ -5,7 +5,11 @@ responsive from the `pip-audit` CLI.
 
 import os.path
 import subprocess
+import threading
+import time
+from codecs import getincrementaldecoder
 from collections.abc import Sequence
+from io import BufferedReader
 from subprocess import Popen
 
 from ._state import AuditState
@@ -24,6 +28,14 @@ class CalledProcessError(Exception):
         self.stderr = stderr
 
 
+def _read_stream(stream: BufferedReader, output: bytearray) -> None:
+    """
+    Read a subprocess stream into the given output buffer.
+    """
+    while chunk := stream.read(8192):
+        output.extend(chunk)
+
+
 def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = AuditState()) -> str:
     """
     Execute the given arguments.
@@ -39,29 +51,46 @@ def run(args: Sequence[str], *, log_stdout: bool = False, state: AuditState = Au
     # state updates, so we trim the first argument down to its basename.
     pretty_args = " ".join([os.path.basename(args[0]), *args[1:]])
 
-    terminated = False
-    stdout = b""
-    stderr = b""
+    stdout = bytearray()
+    stderr = bytearray()
 
     # Run the process with unbuffered I/O, to make the poll-and-read loop below
     # more responsive.
     with Popen(args, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
-        # NOTE: We use `poll()` to control this loop instead of the `read()` call
-        # to prevent deadlocks. Similarly, `read(size)` will return an empty bytes
-        # once `stdout` hits EOF, so we don't have to worry about that blocking.
-        while not terminated:
-            terminated = process.poll() is not None
-            stdout += process.stdout.read()  # type: ignore
-            stderr += process.stderr.read()  # type: ignore
+        assert process.stdout is not None
+        assert process.stderr is not None
+
+        stdout_thread = threading.Thread(target=_read_stream, args=(process.stdout, stdout))
+        stderr_thread = threading.Thread(target=_read_stream, args=(process.stderr, stderr))
+        stdout_thread.start()
+        stderr_thread.start()
+
+        stdout_decoder = getincrementaldecoder("utf-8")(errors="replace")
+        stdout_decoded = ""
+        stdout_decoded_len = 0
+
+        while process.poll() is None:
+            stdout_decoded += stdout_decoder.decode(bytes(stdout[stdout_decoded_len:]))
+            stdout_decoded_len = len(stdout)
             state.update_state(
                 f"Running {pretty_args}",
-                stdout.decode(errors="replace") if log_stdout else None,
+                stdout_decoded if log_stdout else None,
             )
+            time.sleep(0.1)
+
+        stdout_thread.join()
+        stderr_thread.join()
+
+        stdout_decoded += stdout_decoder.decode(bytes(stdout[stdout_decoded_len:]), final=True)
+        state.update_state(
+            f"Running {pretty_args}",
+            stdout_decoded if log_stdout else None,
+        )
 
         if process.returncode != 0:
             raise CalledProcessError(
                 f"{pretty_args} exited with {process.returncode}",
-                stderr=stderr.decode(errors="replace"),
+                stderr=stderr.decode("utf-8", errors="replace"),
             )
 
     return stdout.decode("utf-8", errors="replace")
