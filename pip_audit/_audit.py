@@ -14,6 +14,26 @@ from pip_audit._service import Dependency, VulnerabilityResult, VulnerabilitySer
 logger = logging.getLogger(__name__)
 
 
+def _add_unique_vulnerability(
+    unique_vulns: list[VulnerabilityResult],
+    seen_aliases: set[str],
+    vuln: VulnerabilityResult,
+) -> None:
+    """
+    Add a vulnerability result, merging it with an existing alias match.
+    """
+
+    if seen_aliases.intersection(vuln.aliases | {vuln.id}):
+        idx, previous = next(
+            (i, p) for (i, p) in enumerate(unique_vulns) if p.alias_of(vuln)
+        )
+        unique_vulns[idx] = previous.merge_aliases(vuln)
+        return
+
+    seen_aliases.update(vuln.aliases | {vuln.id})
+    unique_vulns.append(vuln)
+
+
 @dataclass(frozen=True)
 class AuditOptions:
     """
@@ -75,22 +95,13 @@ class Auditor:
                     if not v.id.startswith("PYSEC"):
                         continue
 
-                    seen_aliases.update(v.aliases | {v.id})
-                    unique_vulns.append(v)
+                    _add_unique_vulnerability(unique_vulns, seen_aliases, v)
 
                 # Second pass: add any non-PYSEC vulnerabilities.
                 for v in vulns:
                     # If we've already seen this vulnerability by another name,
                     # don't add it. Instead, find the previous result and update
                     # its alias set.
-                    if seen_aliases.intersection(v.aliases | {v.id}):
-                        idx, previous = next(
-                            (i, p) for (i, p) in enumerate(unique_vulns) if p.alias_of(v)
-                        )
-                        unique_vulns[idx] = previous.merge_aliases(v)
-                        continue
-
-                    seen_aliases.update(v.aliases | {v.id})
-                    unique_vulns.append(v)
+                    _add_unique_vulnerability(unique_vulns, seen_aliases, v)
 
                 yield dep, unique_vulns
