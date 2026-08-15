@@ -72,9 +72,11 @@ class Auditor:
                 # First pass, add all PYSEC vulnerabilities and track their
                 # alias sets.
                 for v in vulns:
-                    if not v.id.startswith("PYSEC"):
+                    if not v.id. startswith('PYSEC'):
                         continue
 
+                    if v.id in seen_aliases:
+                        continue
                     seen_aliases.update(v.aliases | {v.id})
                     unique_vulns.append(v)
 
