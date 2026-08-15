@@ -232,3 +232,44 @@ def test_environment_variable(monkeypatch):
     assert args.output == Path("/tmp/fake")
     assert not args.progress_spinner
     assert args.vulnerability_service == VulnerabilityServiceChoice.Osv
+
+
+class TestCheckOutputWritable:
+    """`--output` is validated before the audit runs.
+
+    Without this, a mistyped path surfaced only after every dependency had
+    been queried, as an uncaught FileNotFoundError, and the results of that
+    work were lost.
+    """
+
+    @pytest.mark.parametrize("name", ["stdout", "-"])
+    def test_stdout_is_always_writable(self, name):
+        assert pip_audit._cli._check_output_writable(Path(name)) is None
+
+    def test_new_file_in_an_existing_directory(self, tmp_path):
+        assert pip_audit._cli._check_output_writable(tmp_path / "out.json") is None
+
+    def test_existing_file_is_writable(self, tmp_path):
+        out = tmp_path / "out.json"
+        out.write_text("stale")
+        assert pip_audit._cli._check_output_writable(out) is None
+
+    def test_bare_filename_uses_the_current_directory(self):
+        assert pip_audit._cli._check_output_writable(Path("out.json")) is None
+
+    def test_missing_directory(self, tmp_path):
+        reason = pip_audit._cli._check_output_writable(tmp_path / "nope" / "out.json")
+        assert reason is not None
+        assert "no such directory" in reason
+
+    def test_parent_is_a_file(self, tmp_path):
+        parent = tmp_path / "afile"
+        parent.write_text("")
+        reason = pip_audit._cli._check_output_writable(parent / "out.json")
+        assert reason is not None
+        assert "not a directory" in reason
+
+    def test_output_is_a_directory(self, tmp_path):
+        reason = pip_audit._cli._check_output_writable(tmp_path)
+        assert reason is not None
+        assert "is a directory" in reason
