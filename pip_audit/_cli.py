@@ -53,6 +53,34 @@ package_logger = logging.getLogger("pip_audit")
 package_logger.setLevel(os.environ.get("PIP_AUDIT_LOGLEVEL", "INFO").upper())
 
 
+def _is_stdout(name: Path) -> bool:
+    return str(name) in {"stdout", "-"}
+
+
+def _check_output_writable(name: Path) -> str | None:
+    """
+    Return a reason why `--output` cannot be written to, or `None` if it can.
+
+    Creation stays deferred (see `_output_io`), so this only inspects the
+    parent directory. It is called before the audit starts: without it, a
+    mistyped path is reported after every dependency has been queried, and
+    the results of that work are lost.
+    """
+    if _is_stdout(name):
+        return None
+
+    parent = name.parent if str(name.parent) else Path(".")
+    if not parent.exists():
+        return f"no such directory: {parent}"
+    if not parent.is_dir():
+        return f"not a directory: {parent}"
+    if name.exists() and name.is_dir():
+        return f"is a directory: {name}"
+    if not os.access(parent, os.W_OK):
+        return f"directory is not writable: {parent}"
+    return None
+
+
 @contextmanager
 def _output_io(name: Path) -> Iterator[IO[str]]:  # pragma: no cover
     """
@@ -60,10 +88,16 @@ def _output_io(name: Path) -> Iterator[IO[str]]:  # pragma: no cover
     to avoid `argparse.FileType`'s "eager" file creation, which is generally
     the wrong/unexpected behavior when dealing with fallible processes.
     """
-    if str(name) in {"stdout", "-"}:
+    if _is_stdout(name):
         yield sys.stdout
     else:
-        with name.open("w") as io:
+        try:
+            io = name.open("w")
+        except OSError as e:
+            # The audit has already run by this point, so this is the last
+            # chance to say something useful rather than raise.
+            _fatal(f"can't write to {name}: {e.strerror or e}")
+        with io:
             yield io
 
 
@@ -444,6 +478,12 @@ def audit() -> None:  # pragma: no cover
     """
     parser = _parser()
     args = _parse_args(parser)
+
+    # Checked before any auditing so a mistyped path costs nothing. The file
+    # itself is still created only once there is something to write into it.
+    output_problem = _check_output_writable(args.output)
+    if output_problem is not None:
+        parser.error(f"argument -o/--output: {output_problem}")
 
     service: VulnerabilityService
     if args.vulnerability_service is VulnerabilityServiceChoice.Osv:
