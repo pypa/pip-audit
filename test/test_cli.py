@@ -215,6 +215,69 @@ def test_print_format(monkeypatch, vuln_count, pkg_count, skip_count, print_form
     assert bool(dummyformat.format.calls) == print_format
 
 
+def test_path_nonexistent(monkeypatch, capsys, tmp_path):
+    """A --path that doesn't exist is a fatal error, not a clean audit."""
+    dummysource = pretend.stub(collect=lambda: iter(()))
+    pipsource_init = pretend.call_recorder(lambda *a, **kw: dummysource)
+    monkeypatch.setattr(pip_audit._cli, "PipSource", pipsource_init)
+
+    missing = tmp_path / "does-not-exist"
+    parser = pip_audit._cli._parser()
+    monkeypatch.setattr(
+        pip_audit._cli, "_parse_args", lambda *a: parser.parse_args(["--path", str(missing)])
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        pip_audit._cli.audit()
+
+    assert exc_info.value.code == 1
+    assert f"invalid path input: {missing}" in capsys.readouterr().err
+    assert pipsource_init.calls == []
+
+
+def test_path_is_a_file(monkeypatch, capsys, tmp_path):
+    """A --path pointing at a file rather than a directory is also a fatal error."""
+    dummysource = pretend.stub(collect=lambda: iter(()))
+    pipsource_init = pretend.call_recorder(lambda *a, **kw: dummysource)
+    monkeypatch.setattr(pip_audit._cli, "PipSource", pipsource_init)
+
+    a_file = tmp_path / "not-a-directory"
+    a_file.write_text("")
+    parser = pip_audit._cli._parser()
+    monkeypatch.setattr(
+        pip_audit._cli, "_parse_args", lambda *a: parser.parse_args(["--path", str(a_file)])
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        pip_audit._cli.audit()
+
+    assert exc_info.value.code == 1
+    assert f"invalid path input: {a_file}" in capsys.readouterr().err
+    assert pipsource_init.calls == []
+
+
+def test_path_valid_directory(monkeypatch, tmp_path):
+    """A --path that exists and is a directory is passed through to PipSource as before."""
+    dummysource = pretend.stub(fix=lambda a: None)
+    pipsource_init = pretend.call_recorder(lambda *a, **kw: dummysource)
+    monkeypatch.setattr(pip_audit._cli, "PipSource", pipsource_init)
+
+    auditor = pretend.stub(audit=lambda a: [])
+    monkeypatch.setattr(pip_audit._cli, "Auditor", lambda *a, **kw: auditor)
+
+    parser = pip_audit._cli._parser()
+    monkeypatch.setattr(
+        pip_audit._cli, "_parse_args", lambda *a: parser.parse_args(["--path", str(tmp_path)])
+    )
+
+    try:
+        pip_audit._cli.audit()
+    except SystemExit:
+        pass
+
+    assert pipsource_init.calls[0].kwargs["paths"] == [tmp_path]
+
+
 def test_environment_variable(monkeypatch):
     """Environment variables set before execution change CLI option default."""
     monkeypatch.setenv("PIP_AUDIT_DESC", "off")

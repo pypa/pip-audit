@@ -532,6 +532,10 @@ def audit() -> None:  # pragma: no cover
                 state,
             )
         else:
+            for path in args.paths:
+                if not path.is_dir():
+                    _fatal(f"invalid path input: {path}")
+
             source = PipSource(
                 local=args.local,
                 paths=args.paths,

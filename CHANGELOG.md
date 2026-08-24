@@ -14,6 +14,10 @@ All versions prior to 0.0.9 are untracked.
   when auditing hashed requirements files
   ([#1024](https://github.com/pypa/pip-audit/issues/1024))
 
+* `--path` given a directory that doesn't exist, or a path that isn't a
+  directory, is now a fatal error instead of a silent clean audit
+  ([#1115](https://github.com/pypa/pip-audit/issues/1115))
+
 ## [2.10.1]
 
 ### Fixed
