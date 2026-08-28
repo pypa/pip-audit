@@ -12,7 +12,7 @@ pip-audit
 `pip-audit` is a tool for scanning Python environments for packages
 with known vulnerabilities. It uses the Python Packaging Advisory Database
 (https://github.com/pypa/advisory-database) via the
-[PyPI JSON API](https://warehouse.pypa.io/api-reference/json.html) as a source
+[PyPI JSON API](https://warehouse.pypa.io/api-reference/json/) as a source
 of vulnerability reports.
 
 This project is maintained in part by [Trail of Bits](https://www.trailofbits.com/)
@@ -41,7 +41,7 @@ with support from Google. This is not an official Google or Trail of Bits produc
 
 * Support for auditing local environments and requirements-style files
 * Support for multiple vulnerability services
-  ([PyPI](https://warehouse.pypa.io/api-reference/json.html#known-vulnerabilities),
+  ([PyPI](https://warehouse.pypa.io/api-reference/json/#known-vulnerabilities),
   [OSV](https://osv.dev/docs/))
 * Support for emitting
   [SBOMs](https://en.wikipedia.org/wiki/Software_bill_of_materials) in
@@ -521,7 +521,7 @@ See [#742](https://github.com/pypa/pip-audit/issues/742) and
 instead of a `requirements.txt` file. `pip-audit` cannot process the `Pipfile[.lock]`
 files directly, however, these can be converted to a supported `requirements.txt` file
 that `pip-audit` can run against. `pipenv` has a built-in command to convert dependencies
-to a `requirements.txt` file (as of [`v2022.4.8`](https://pipenv.pypa.io/en/latest/changelog/#id206)):
+to a `requirements.txt` file (as of [`v2022.4.8`](https://github.com/pypa/pipenv/releases/tag/v2022.4.8)):
 
 ```console
 $ pipenv run pip-audit -r <(pipenv requirements)
