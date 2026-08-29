@@ -24,9 +24,7 @@ def _add_unique_vulnerability(
     """
 
     if seen_aliases.intersection(vuln.aliases | {vuln.id}):
-        idx, previous = next(
-            (i, p) for (i, p) in enumerate(unique_vulns) if p.alias_of(vuln)
-        )
+        idx, previous = next((i, p) for (i, p) in enumerate(unique_vulns) if p.alias_of(vuln))
         unique_vulns[idx] = previous.merge_aliases(vuln)
         return
 
