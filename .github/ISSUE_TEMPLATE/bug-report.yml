@@ -20,6 +20,10 @@ body:
         By submitting this issue, you affirm that you've satisfied the following conditions.
       options:
         - label: >-
+            I am running the **latest stable release** of `pip-audit`.
+            Check the [releases page](https://github.com/pypa/pip-audit/releases) to confirm.
+          required: true
+        - label: >-
             I am **not** filing an auditing error (false positive or negative).
             These **must** be reported to
             [pypa/advisory-database](https://github.com/pypa/advisory-database/issues/new) instead.
