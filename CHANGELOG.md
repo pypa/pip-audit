@@ -8,6 +8,13 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Added
+
+* Added a `pip_audit.VENDORED` feature flag so a vendored `pip audit` build can
+  hide third-party CLI features (OSV, Ecosyste.ms, CycloneDX SBOM) and avoid
+  importing `cyclonedx-python-lib`
+  ([#336](https://github.com/pypa/pip-audit/issues/336))
+
 ### Fixed
 
 * Editable requirements skipped with `--skip-editable` no longer require a hash

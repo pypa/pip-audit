@@ -9,12 +9,12 @@ import enum
 import logging
 import os
 import sys
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from typing import IO, NoReturn, cast
 
-from pip_audit import __version__
+from pip_audit import VENDORED, __version__
 from pip_audit._audit import AuditOptions, Auditor
 from pip_audit._dependency_source import (
     DependencySource,
@@ -27,7 +27,6 @@ from pip_audit._dependency_source.pylock import PyLockSource
 from pip_audit._fix import ResolvedFixVersion, SkippedFixVersion, resolve_fix_versions
 from pip_audit._format import (
     ColumnsFormat,
-    CycloneDxFormat,
     JsonFormat,
     MarkdownFormat,
     VulnerabilityFormat,
@@ -85,8 +84,16 @@ class OutputFormatChoice(str, enum.Enum):
         elif self is OutputFormatChoice.Json:
             return JsonFormat(output_desc, output_aliases)
         elif self is OutputFormatChoice.CycloneDxJson:
+            if VENDORED:
+                raise RuntimeError("CycloneDX output is not available in a vendored pip-audit")
+            from pip_audit._format.cyclonedx import CycloneDxFormat
+
             return CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Json)
         elif self is OutputFormatChoice.CycloneDxXml:
+            if VENDORED:
+                raise RuntimeError("CycloneDX output is not available in a vendored pip-audit")
+            from pip_audit._format.cyclonedx import CycloneDxFormat
+
             return CycloneDxFormat(inner_format=CycloneDxFormat.InnerFormat.Xml)
         elif self is OutputFormatChoice.Markdown:
             return MarkdownFormat(output_desc, output_aliases)
@@ -175,7 +182,33 @@ class ProgressSpinnerChoice(str, enum.Enum):
         return self.value
 
 
-def _enum_help(msg: str, e: type[enum.Enum]) -> str:  # pragma: no cover
+def _output_format_choices() -> list[OutputFormatChoice]:
+    """
+    Output formats exposed by the CLI.
+
+    Vendored builds omit SBOM formats that depend on third-party libraries.
+    """
+    if VENDORED:
+        return [
+            choice
+            for choice in OutputFormatChoice
+            if choice not in {OutputFormatChoice.CycloneDxJson, OutputFormatChoice.CycloneDxXml}
+        ]
+    return list(OutputFormatChoice)
+
+
+def _vulnerability_service_choices() -> list[VulnerabilityServiceChoice]:
+    """
+    Vulnerability services exposed by the CLI.
+
+    Vendored builds keep the PyPI service and omit third-party APIs such as OSV.
+    """
+    if VENDORED:
+        return [VulnerabilityServiceChoice.Pypi]
+    return list(VulnerabilityServiceChoice)
+
+
+def _enum_help(msg: str, e: Iterable[enum.Enum]) -> str:
     """
     Render a `--help`-style string for the given enumeration.
     """
@@ -227,35 +260,38 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         help="audit lock files from the local Python project. This "
         "flag only applies to auditing from project paths",
     )
+    output_formats = _output_format_choices()
+    vulnerability_services = _vulnerability_service_choices()
     parser.add_argument(
         "-f",
         "--format",
         type=OutputFormatChoice,
-        choices=OutputFormatChoice,
+        choices=output_formats,
         default=os.environ.get("PIP_AUDIT_FORMAT", OutputFormatChoice.Columns),
         metavar="FORMAT",
-        help=_enum_help("the format to emit audit results in", OutputFormatChoice),
+        help=_enum_help("the format to emit audit results in", output_formats),
     )
     parser.add_argument(
         "-s",
         "--vulnerability-service",
         type=VulnerabilityServiceChoice,
-        choices=VulnerabilityServiceChoice,
+        choices=vulnerability_services,
         default=os.environ.get("PIP_AUDIT_VULNERABILITY_SERVICE", VulnerabilityServiceChoice.Pypi),
         metavar="SERVICE",
         help=_enum_help(
             "the vulnerability service to audit dependencies against",
-            VulnerabilityServiceChoice,
+            vulnerability_services,
         ),
     )
-    parser.add_argument(
-        "--osv-url",
-        type=str,
-        metavar="OSV_URL",
-        dest="osv_url",
-        default=os.environ.get("PIP_AUDIT_OSV_URL", OsvService.DEFAULT_OSV_URL),
-        help="URL to use for the OSV API instead of the default",
-    )
+    if not VENDORED:
+        parser.add_argument(
+            "--osv-url",
+            type=str,
+            metavar="OSV_URL",
+            dest="osv_url",
+            default=os.environ.get("PIP_AUDIT_OSV_URL", OsvService.DEFAULT_OSV_URL),
+            help="URL to use for the OSV API instead of the default",
+        )
     parser.add_argument(
         "-d",
         "--dry-run",
@@ -269,6 +305,15 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         action="store_true",
         help="fail the entire audit if dependency collection fails on any dependency",
     )
+    desc_help = "include a description for each vulnerability; `auto` defaults to `on` for the `json` format."
+    aliases_help = (
+        "includes alias IDs for each vulnerability; `auto` defaults to `on` for the `json` format."
+    )
+    if not VENDORED:
+        desc_help += " This flag has no effect on the `cyclonedx-json` or `cyclonedx-xml` formats."
+        aliases_help += (
+            " This flag has no effect on the `cyclonedx-json` or `cyclonedx-xml` formats."
+        )
     parser.add_argument(
         "--desc",
         type=VulnerabilityDescriptionChoice,
@@ -276,9 +321,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         nargs="?",
         const=VulnerabilityDescriptionChoice.On,
         default=os.environ.get("PIP_AUDIT_DESC", VulnerabilityDescriptionChoice.Auto),
-        help="include a description for each vulnerability; "
-        "`auto` defaults to `on` for the `json` format. This flag has no "
-        "effect on the `cyclonedx-json` or `cyclonedx-xml` formats.",
+        help=desc_help,
     )
     parser.add_argument(
         "--aliases",
@@ -287,9 +330,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         nargs="?",
         const=VulnerabilityAliasChoice.On,
         default=VulnerabilityAliasChoice.Auto,
-        help="includes alias IDs for each vulnerability; "
-        "`auto` defaults to `on` for the `json` format. This flag has no "
-        "effect on the `cyclonedx-json` or `cyclonedx-xml` formats.",
+        help=aliases_help,
     )
     parser.add_argument(
         "--cache-dir",

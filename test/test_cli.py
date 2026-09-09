@@ -1,8 +1,10 @@
+import sys
 from pathlib import Path
 
 import pretend  # type: ignore
 import pytest
 
+import pip_audit
 import pip_audit._cli
 from pip_audit._cli import (
     OutputFormatChoice,
@@ -232,3 +234,61 @@ def test_environment_variable(monkeypatch):
     assert args.output == Path("/tmp/fake")
     assert not args.progress_spinner
     assert args.vulnerability_service == VulnerabilityServiceChoice.Osv
+
+
+def test_vendored_defaults_to_false():
+    assert pip_audit.VENDORED is False
+
+
+def test_parser_includes_third_party_features_by_default():
+    help_text = pip_audit._cli._parser().format_help()
+    assert "cyclonedx-json" in help_text
+    assert "cyclonedx-xml" in help_text
+    assert "osv" in help_text
+    assert "esms" in help_text
+    assert "--osv-url" in help_text
+
+
+def test_parser_hides_gated_features_when_vendored(monkeypatch):
+    monkeypatch.setattr(pip_audit._cli, "VENDORED", True)
+
+    parser = pip_audit._cli._parser()
+    help_text = parser.format_help()
+
+    normalized = " ".join(help_text.split())
+    assert "choices: columns, json, markdown" in normalized
+    assert "choices: pypi" in normalized
+    assert "cyclonedx-json" not in help_text
+    assert "cyclonedx-xml" not in help_text
+    assert "--osv-url" not in help_text
+    assert "osv" not in help_text
+    assert "esms" not in help_text
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["--format", "cyclonedx-json"])
+    with pytest.raises(SystemExit):
+        parser.parse_args(["-s", "osv"])
+
+
+def test_cyclonedx_unavailable_when_vendored(monkeypatch):
+    monkeypatch.setattr(pip_audit._cli, "VENDORED", True)
+    with pytest.raises(RuntimeError, match="vendored"):
+        OutputFormatChoice.CycloneDxJson.to_format(False, False)
+
+
+def test_format_package_does_not_eagerly_import_cyclonedx():
+    for name in list(sys.modules):
+        if "cyclonedx" in name:
+            del sys.modules[name]
+
+    import importlib
+
+    import pip_audit._format as fmt
+
+    importlib.reload(fmt)
+
+    assert "pip_audit._format.cyclonedx" not in sys.modules
+    assert "cyclonedx" not in sys.modules
+
+    assert fmt.CycloneDxFormat is not None
+    assert "pip_audit._format.cyclonedx" in sys.modules
