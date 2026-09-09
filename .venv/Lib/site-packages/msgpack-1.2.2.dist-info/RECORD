@@ -1,0 +1,15 @@
+msgpack-1.2.2.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+msgpack-1.2.2.dist-info/METADATA,sha256=4y7KhzbUmuH780MI1KpGxUKoLGrBGhbAwwYqlQovHT0,8542
+msgpack-1.2.2.dist-info/RECORD,,
+msgpack-1.2.2.dist-info/WHEEL,sha256=VHGZz7MUUFeLJXeJOLgvlOGQ5p51DmyFDjttZX-how8,101
+msgpack-1.2.2.dist-info/licenses/COPYING,sha256=T73_QuukWTwW96fqcHiIOytzSHCh4rY2KEzi3OYr9Pc,628
+msgpack-1.2.2.dist-info/top_level.txt,sha256=2tykSY1pXdiA2xYTDR6jPw0qI5ZGxRihyhf4S5hZyXk,8
+msgpack/__init__.py,sha256=KirFWM5Axr6J2yNGZEgbyClIT2oInMpfLOImyIeh0E0,1164
+msgpack/__pycache__/__init__.cpython-312.pyc,,
+msgpack/__pycache__/exceptions.cpython-312.pyc,,
+msgpack/__pycache__/ext.cpython-312.pyc,,
+msgpack/__pycache__/fallback.cpython-312.pyc,,
+msgpack/_cmsgpack.cp312-win_amd64.pyd,sha256=0pKHmcQ4YrLRjDnwXDI3jUyYugExYl9t-4sBIAalUjw,126464
+msgpack/exceptions.py,sha256=2fCtczricqQgdT3NtW6cTqmZn3WA7GQtmlPuT-NhLyM,1129
+msgpack/ext.py,sha256=np4x_cGwmdNwisgBWmcD65FWtV_72cXGNxoVdADG388,6612
+msgpack/fallback.py,sha256=ryzf3MFac57t6IRemIPt6G8T_IsbA3UpS7GByCQ2gws,33848

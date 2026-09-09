@@ -226,9 +226,65 @@ def test_environment_variable(monkeypatch):
     parser = pip_audit._cli._parser()
     monkeypatch.setattr(pip_audit._cli, "_parse_args", lambda *a: parser.parse_args([]))
     args = pip_audit._cli._parse_args(parser, [])
+    pip_audit._cli._resolve_formats_and_outputs(parser, args)
 
     assert args.desc == VulnerabilityDescriptionChoice.Off
-    assert args.format == OutputFormatChoice.Markdown
-    assert args.output == Path("/tmp/fake")
+    assert args.formats == [OutputFormatChoice.Markdown]
+    assert args.outputs == [Path("/tmp/fake")]
     assert not args.progress_spinner
     assert args.vulnerability_service == VulnerabilityServiceChoice.Osv
+
+
+class TestResolveFormatsAndOutputs:
+    def test_defaults_to_columns_and_stdout(self):
+        parser = pip_audit._cli._parser()
+        args = parser.parse_args([])
+        pip_audit._cli._resolve_formats_and_outputs(parser, args)
+
+        assert args.formats == [OutputFormatChoice.Columns]
+        assert args.outputs == [Path("stdout")]
+
+    def test_single_format_and_output_unaffected(self):
+        parser = pip_audit._cli._parser()
+        args = parser.parse_args(["-f", "json", "-o", "/tmp/out.json"])
+        pip_audit._cli._resolve_formats_and_outputs(parser, args)
+
+        assert args.formats == [OutputFormatChoice.Json]
+        assert args.outputs == [Path("/tmp/out.json")]
+
+    def test_multiple_formats_with_matching_outputs(self):
+        parser = pip_audit._cli._parser()
+        args = parser.parse_args(
+            ["-f", "columns", "-f", "cyclonedx-json", "-o", "-", "-o", "/tmp/sbom.json"]
+        )
+        pip_audit._cli._resolve_formats_and_outputs(parser, args)
+
+        assert args.formats == [OutputFormatChoice.Columns, OutputFormatChoice.CycloneDxJson]
+        assert args.outputs == [Path("-"), Path("/tmp/sbom.json")]
+
+    def test_multiple_formats_without_matching_outputs_errors(self):
+        parser = pip_audit._cli._parser()
+        args = parser.parse_args(["-f", "columns", "-f", "json"])
+        with pytest.raises(SystemExit):
+            pip_audit._cli._resolve_formats_and_outputs(parser, args)
+
+    def test_multiple_formats_with_mismatched_output_count_errors(self):
+        parser = pip_audit._cli._parser()
+        args = parser.parse_args(["-f", "columns", "-f", "json", "-o", "/tmp/one.txt"])
+        with pytest.raises(SystemExit):
+            pip_audit._cli._resolve_formats_and_outputs(parser, args)
+
+    def test_duplicate_non_stdout_outputs_errors(self):
+        parser = pip_audit._cli._parser()
+        args = parser.parse_args(
+            ["-f", "columns", "-f", "json", "-o", "/tmp/dupe.txt", "-o", "/tmp/dupe.txt"]
+        )
+        with pytest.raises(SystemExit):
+            pip_audit._cli._resolve_formats_and_outputs(parser, args)
+
+    def test_duplicate_stdout_outputs_allowed(self):
+        parser = pip_audit._cli._parser()
+        args = parser.parse_args(["-f", "columns", "-f", "json", "-o", "-", "-o", "stdout"])
+        pip_audit._cli._resolve_formats_and_outputs(parser, args)
+
+        assert args.outputs == [Path("-"), Path("stdout")]

@@ -232,9 +232,16 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         "--format",
         type=OutputFormatChoice,
         choices=OutputFormatChoice,
-        default=os.environ.get("PIP_AUDIT_FORMAT", OutputFormatChoice.Columns),
+        action="append",
+        dest="formats",
+        default=None,
         metavar="FORMAT",
-        help=_enum_help("the format to emit audit results in", OutputFormatChoice),
+        help=_enum_help(
+            "the format to emit audit results in; this option can be used "
+            "multiple times to emit multiple output formats, in which case "
+            "each use must be paired with a corresponding `--output`",
+            OutputFormatChoice,
+        ),
     )
     parser.add_argument(
         "-s",
@@ -369,8 +376,11 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         "--output",
         type=Path,
         metavar="FILE",
-        help="output results to the given file",
-        default=os.environ.get("PIP_AUDIT_OUTPUT", "stdout"),
+        action="append",
+        dest="outputs",
+        default=None,
+        help="output results to the given file; this option can be used "
+        "multiple times to pair with multiple uses of `--format`",
     )
     parser.add_argument(
         "--ignore-vuln",
@@ -406,6 +416,45 @@ def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:  # pragm
     logger.debug(f"parsed arguments: {args}")
 
     return args
+
+
+def _resolve_formats_and_outputs(
+    parser: argparse.ArgumentParser, args: argparse.Namespace
+) -> None:  # pragma: no cover
+    """
+    Normalize and validate the `--format`/`--output` pairs supplied on the
+    command line.
+
+    This allows `pip-audit` to emit multiple output formats in parallel
+    (e.g. columns to stdout and a CycloneDX SBOM to a file) in a single run,
+    while preserving the existing single-format/single-output behavior when
+    only one of each (or neither) is supplied.
+    """
+    if args.formats is None:
+        env_format = os.environ.get("PIP_AUDIT_FORMAT")
+        args.formats = [
+            OutputFormatChoice(env_format) if env_format else OutputFormatChoice.Columns
+        ]
+
+    if args.outputs is None:
+        args.outputs = [Path(os.environ.get("PIP_AUDIT_OUTPUT", "stdout"))]
+
+    if len(args.formats) > 1 or len(args.outputs) > 1:
+        if len(args.formats) != len(args.outputs):
+            parser.error(
+                "--format and --output must be used the same number of times "
+                "when emitting multiple output formats: each --format must "
+                "be paired with a corresponding --output"
+            )
+
+        seen_outputs: set[str] = set()
+        for output in args.outputs:
+            key = str(output)
+            if key in {"stdout", "-"}:
+                continue
+            if key in seen_outputs:
+                parser.error(f"--output {output} was specified more than once")
+            seen_outputs.add(key)
 
 
 def _dep_source_from_project_path(
@@ -444,6 +493,7 @@ def audit() -> None:  # pragma: no cover
     """
     parser = _parser()
     args = _parse_args(parser)
+    _resolve_formats_and_outputs(parser, args)
 
     service: VulnerabilityService
     if args.vulnerability_service is VulnerabilityServiceChoice.Osv:
@@ -455,9 +505,14 @@ def audit() -> None:  # pragma: no cover
     else:
         assert_never(args.vulnerability_service)  # pragma: no cover
 
-    output_desc = args.desc.to_bool(args.format)
-    output_aliases = args.aliases.to_bool(args.format)
-    formatter = args.format.to_format(output_desc, output_aliases)
+    # Build a (formatter, output) pair for each `--format`/`--output` combo
+    # that was supplied, so that multiple output formats can be emitted in
+    # parallel (e.g. columns to stdout and a CycloneDX SBOM to a file).
+    formatters: list[tuple[VulnerabilityFormat, Path]] = []
+    for format_choice, output in zip(args.formats, args.outputs):
+        output_desc = args.desc.to_bool(format_choice)
+        output_aliases = args.aliases.to_bool(format_choice)
+        formatters.append((format_choice.to_format(output_desc, output_aliases), output))
 
     # Check for flags that are only valid with project paths
     if args.project_path is None:
@@ -632,8 +687,9 @@ def audit() -> None:  # pragma: no cover
                 f"{'package' if fixed_pkg_count == 1 else 'packages'}"
             )
         print(summary_msg, file=sys.stderr)
-        with _output_io(args.output) as io:
-            print(formatter.format(result, fixes), file=io)
+        for formatter, output in formatters:
+            with _output_io(output) as io:
+                print(formatter.format(result, fixes), file=io)
         if pkg_count != fixed_pkg_count:
             sys.exit(1)
     else:
@@ -647,6 +703,7 @@ def audit() -> None:  # pragma: no cover
         )
         # If our output format is a "manifest" format we always emit it,
         # even if nothing other than a dependency summary is present.
-        if skip_count > 0 or formatter.is_manifest:
-            with _output_io(args.output) as io:
-                print(formatter.format(result, fixes), file=io)
+        for formatter, output in formatters:
+            if skip_count > 0 or formatter.is_manifest:
+                with _output_io(output) as io:
+                    print(formatter.format(result, fixes), file=io)
