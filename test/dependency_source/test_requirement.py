@@ -330,6 +330,23 @@ def test_requirement_source_fix_comments(req_file):
     )
 
 
+def test_requirement_source_fix_comments_preserve_indent(req_file):
+    # Regression test for the `pip-compile`-style "# via ..." backreference comment: it's a
+    # comment-only physical line indented by 4 spaces to signal that it belongs to the preceding
+    # requirement, and that indentation should survive a fix.
+    _check_fixes(
+        ["flask==0.5\n    # via -r requirements.in\nrequests==2.0"],
+        ["flask==1.0\n    # via -r requirements.in\nrequests==2.0"],
+        [req_file()],
+        [
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("0.5")),
+                version=Version("1.0"),
+            )
+        ],
+    )
+
+
 def test_requirement_source_fix_parse_failure(monkeypatch, req_file):
     logger = pretend.stub(warning=pretend.call_recorder(lambda s: None))
     monkeypatch.setattr(requirement, "logger", logger)
@@ -751,13 +768,11 @@ def test_requirement_source_fix_explicit_subdep_comment_retention(req_file):
     # Now place a fix for the top-level `flask` requirement after the `jinja2` subdependency fix.
     #
     # When applying the `flask` fix, `pip-audit` reparses the requirements file, and writes it back
-    # out with the fixed `flask` version with the comments preserved.
-    #
-    # One quirk is that comment indentation isn't preserved (the automated comment was originally
-    # indented with 4 spaces).
+    # out with the fixed `flask` version with the comments preserved, including the original
+    # indentation of the automated comment (it was originally indented with 4 spaces).
     _check_fixes(
         ["flask==2.0.1"],
-        ["flask==3.0.0\n# pip-audit: subdependency explicitly fixed\njinja2==4.0.0"],
+        ["flask==3.0.0\n    # pip-audit: subdependency explicitly fixed\njinja2==4.0.0"],
         [req_file()],
         [
             ResolvedFixVersion(
