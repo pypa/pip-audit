@@ -17,6 +17,7 @@ from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name
 from packaging.version import Version
 from pip_requirements_parser import (
+    CommentRequirementLine,
     InstallRequirement,
     InvalidRequirementLine,
     RequirementsFile,
@@ -221,6 +222,7 @@ class RequirementSource(DependencySource):
         # This time we're using the `RequirementsFile.parse` API instead of `Requirements.from_file`
         # since we want to access each line sequentially in order to rewrite the file.
         reqs = list(RequirementsFile.parse(filename=filename.as_posix()))
+        original_lines = filename.read_text().splitlines()
 
         # Check ahead of time for anything invalid in the requirements file since we don't want to
         # encounter this while writing out the file. Check for duplicate requirements and lines that
@@ -260,7 +262,20 @@ class RequirementSource(DependencySource):
                         fix_version.dep.version
                     ) and not req.specifier.contains(fix_version.version):
                         req.req.specifier = SpecifierSet(f"=={fix_version.version}")
-                print(req.dumps(), file=f)
+                line = req.dumps()
+                if isinstance(req, CommentRequirementLine):
+                    # `pip-requirements-parser` unconditionally strips comment-only
+                    # lines, discarding the indentation that tools like
+                    # `pip-compile` use to mark a "# via ..." backreference comment
+                    # as belonging to the preceding requirement. Recover the
+                    # original indentation from the source file when the physical
+                    # line consists solely of that comment.
+                    original_line = original_lines[req.line_number - 1]
+                    if original_line.lstrip().startswith("#") and (
+                        original_line.strip() == line
+                    ):
+                        line = original_line
+                print(line, file=f)
 
             # The vulnerable dependency may not be explicitly listed in the requirements file if it
             # is a subdependency of a requirement. In this case, we should explicitly add the fixed
