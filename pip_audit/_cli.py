@@ -378,7 +378,7 @@ def _parser() -> argparse.ArgumentParser:  # pragma: no cover
         metavar="ID",
         action="append",
         dest="ignore_vulns",
-        default=[],
+        default=os.environ.get("PIP_AUDIT_IGNORE_VULNS", "").split(),
         help=(
             "ignore a specific vulnerability by its vulnerability ID; "
             "this option can be used multiple times"
