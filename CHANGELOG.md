@@ -10,6 +10,9 @@ All versions prior to 0.0.9 are untracked.
 
 ### Fixed
 
+* Preserve fixed versions across multiple OSV affected entries and ecosystem ranges
+  ([#1146](https://github.com/pypa/pip-audit/issues/1146))
+
 * Editable requirements skipped with `--skip-editable` no longer require a hash
   when auditing hashed requirements files
   ([#1024](https://github.com/pypa/pip-audit/issues/1024))
