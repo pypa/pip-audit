@@ -85,6 +85,24 @@ def test_retains_fixes_from_multiple_ecosystem_ranges_in_one_entry(
     assert parsed_fixes(monkeypatch, "fastmcp", entries) == [Version("3.4.10"), Version("4.1.2")]
 
 
+def test_skips_non_ecosystem_ranges(monkeypatch: pytest.MonkeyPatch) -> None:
+    entries = [
+        affected(
+            "fastmcp",
+            "PyPI",
+            [
+                {
+                    "type": "GIT",
+                    "repo": "https://example.com/project.git",
+                    "events": [{"introduced": "0"}, {"fixed": "abcdef12345"}],
+                },
+                ecosystem("3.0.0", "3.4.10"),
+            ],
+        ),
+    ]
+    assert parsed_fixes(monkeypatch, "fastmcp", entries) == [Version("3.4.10")]
+
+
 def test_deduplicates_fixed_versions_and_ignores_missing_events(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
