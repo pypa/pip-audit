@@ -260,6 +260,41 @@ def test_requirement_source_fix_multiple_files(req_file):
     )
 
 
+def test_requirement_source_fix_multiple_files_only_fixes_containing_file(req_file):
+    # When multiple requirements files are provided, fixing an explicit dependency that is only
+    # present in one file should only modify that file and leave the others untouched.
+    _check_fixes(
+        ["flask==0.5", "requests==2.0"],
+        ["flask==1.0", "requests==2.0"],
+        [req_file(), req_file()],
+        [
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="flask", version=Version("0.5")),
+                version=Version("1.0"),
+            )
+        ],
+    )
+
+
+def test_requirement_source_fix_multiple_files_subdep_only_added_once(req_file):
+    # When multiple requirements files are provided, fixing a subdependency that is not explicitly
+    # present in any file should only add the fixed subdependency to the first file.
+    _check_fixes(
+        ["flask==0.5", "requests==2.0"],
+        [
+            "flask==0.5\n    # pip-audit: subdependency explicitly fixed\njinja2==3.0",
+            "requests==2.0",
+        ],
+        [req_file(), req_file()],
+        [
+            ResolvedFixVersion(
+                dep=ResolvedDependency(name="jinja2", version=Version("2.0")),
+                version=Version("3.0"),
+            )
+        ],
+    )
+
+
 def test_requirement_source_fix_specifier_match(req_file):
     _check_fixes(
         ["flask<1.0", "requests==2.0\nflask<=0.6"],
