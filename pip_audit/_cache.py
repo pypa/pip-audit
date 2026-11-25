@@ -12,9 +12,12 @@ import sys
 import zlib
 from collections.abc import Mapping
 from dataclasses import dataclass
+from ipaddress import ip_address, ip_network
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, cast
+from urllib.parse import unquote, urljoin, urlsplit
+from urllib.request import getproxies, proxy_bypass
 
 import pip_api
 import urllib3
@@ -23,6 +26,7 @@ from cachecontrol.controller import CacheController
 from packaging.version import Version
 from platformdirs import user_cache_path
 from urllib3._collections import HTTPHeaderDict
+from urllib3.exceptions import MaxRetryError, ResponseError
 from urllib3.response import BaseHTTPResponse
 from urllib3.util import Retry
 
@@ -169,18 +173,66 @@ class _CacheRequest:
 
 class _CachingPoolManager:
     def __init__(self, cache_dir: Path):
-        self._pool = urllib3.PoolManager(
-            retries=Retry(
-                total=None,
-                connect=False,
-                read=False,
-                redirect=5,
-                other=False,
-            )
-        )
+        self._retries = Retry(total=False, redirect=False)
+        self._ca_kwargs = self._ca_kwargs_from_environment()
+        self._pool = urllib3.PoolManager(retries=self._retries, **self._ca_kwargs)
+        self._proxy_pools: dict[str, urllib3.ProxyManager] = {}
         self._controller = CacheController(_SafeFileCache(cache_dir))
 
-    def request(
+    @staticmethod
+    def _ca_kwargs_from_environment() -> dict[str, Any]:
+        ca_bundle = os.environ.get("REQUESTS_CA_BUNDLE") or os.environ.get("CURL_CA_BUNDLE")
+        if ca_bundle is None:
+            return {}
+        if Path(ca_bundle).is_dir():
+            return {"ca_cert_dir": ca_bundle}
+        return {"ca_certs": ca_bundle}
+
+    def _pool_for_url(self, url: str) -> urllib3.PoolManager:
+        parsed_url = urlsplit(url)
+        if parsed_url.hostname is None:
+            return self._pool
+
+        proxies = getproxies()
+        if proxy_bypass(parsed_url.netloc):
+            return self._pool
+
+        try:
+            address = ip_address(parsed_url.hostname)
+        except ValueError:
+            address = None
+        if address is not None:
+            for entry in proxies.get("no", "").split(","):
+                if "/" not in entry:
+                    continue
+                try:
+                    if address in ip_network(entry.strip(), strict=False):
+                        return self._pool
+                except ValueError:
+                    continue
+
+        proxy_url = proxies.get(parsed_url.scheme, proxies.get("all"))
+        if proxy_url is None:
+            return self._pool
+        if "://" not in proxy_url:
+            proxy_url = f"http://{proxy_url}"
+
+        if proxy_url not in self._proxy_pools:
+            parsed_proxy = urllib3.util.parse_url(proxy_url)
+            proxy_headers = (
+                urllib3.make_headers(proxy_basic_auth=unquote(parsed_proxy.auth))
+                if parsed_proxy.auth
+                else None
+            )
+            self._proxy_pools[proxy_url] = urllib3.ProxyManager(
+                proxy_url,
+                proxy_headers=proxy_headers,
+                retries=self._retries,
+                **self._ca_kwargs,
+            )
+        return self._proxy_pools[proxy_url]
+
+    def _request_once(
         self,
         method: str,
         url: str,
@@ -192,7 +244,9 @@ class _CachingPoolManager:
         cache_request = _CacheRequest(method, url, request_headers)
 
         if method != "GET":
-            return self._pool.request(method, url, headers=request_headers, **kwargs)
+            return self._pool_for_url(url).request(
+                method, url, headers=request_headers, redirect=False, **kwargs
+            )
 
         try:
             cached_response = self._controller.cached_request(cast(Any, cache_request))
@@ -203,19 +257,93 @@ class _CachingPoolManager:
             return cached_response
 
         request_headers.update(self._controller.conditional_headers(cast(Any, cache_request)))
-        response = self._pool.request(method, url, headers=request_headers, **kwargs)
+        response = self._pool_for_url(url).request(
+            method, url, headers=request_headers, redirect=False, **kwargs
+        )
 
         if response.status == 304:
+            response.headers.pop("Content-Encoding", None)
+            response.headers.pop("Content-Length", None)
             cached_response = self._controller.update_cached_response(
                 cast(Any, cache_request), cast(Any, response)
             )
             response.release_conn()
             return cached_response
 
-        self._controller.cache_response(
-            cast(Any, cache_request), cast(Any, response), body=response.data
-        )
+        body = response.data
+        if response.decode_content and "Content-Encoding" in response.headers:
+            response.headers.pop("Content-Encoding")
+            response.headers.pop("Content-Length", None)
+        self._controller.cache_response(cast(Any, cache_request), cast(Any, response), body=body)
         return response
+
+    def request(
+        self,
+        method: str,
+        url: str,
+        *,
+        headers: Mapping[str, str] | None = None,
+        **kwargs: Any,
+    ) -> BaseHTTPResponse:
+        redirects = 0
+        method = method.upper()
+        request_headers = HTTPHeaderDict(headers)
+
+        while True:
+            response = self._request_once(method, url, headers=request_headers, **kwargs)
+            redirect_location = response.get_redirect_location()
+            if not redirect_location:
+                return response
+
+            if redirects >= 5:
+                response.drain_conn()
+                raise MaxRetryError(
+                    cast(Any, self._pool_for_url(url)),
+                    url,
+                    reason=ResponseError("too many redirects"),
+                )
+
+            redirects += 1
+            next_url = urljoin(url, redirect_location)
+            response.drain_conn()
+
+            if (
+                response.status == 303
+                and method != "HEAD"
+                or response.status == 302
+                and method != "HEAD"
+                or response.status == 301
+                and method == "POST"
+            ):
+                method = "GET"
+                kwargs.pop("body", None)
+                kwargs.pop("fields", None)
+                kwargs.pop("json", None)
+                for header in ("Content-Length", "Content-Type", "Transfer-Encoding"):
+                    request_headers.pop(header, None)
+
+            current = urlsplit(url)
+            target = urlsplit(next_url)
+            default_ports = {"http": 80, "https": 443}
+            current_port = current.port or default_ports.get(current.scheme)
+            target_port = target.port or default_ports.get(target.scheme)
+            same_host = current.hostname == target.hostname
+            same_origin = (
+                same_host and current.scheme == target.scheme and current_port == target_port
+            )
+            default_port_upgrade = (
+                same_host
+                and current.scheme == "http"
+                and current_port == 80
+                and target.scheme == "https"
+                and target_port == 443
+            )
+
+            if not same_host or not (same_origin or default_port_upgrade):
+                for header in ("Authorization", "Proxy-Authorization", "Cookie"):
+                    request_headers.pop(header, None)
+
+            url = next_url
 
 
 def caching_session(cache_dir: Path | None, *, use_pip: bool = False) -> _CachingPoolManager:

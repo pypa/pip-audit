@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import cast
 
 from packaging.version import InvalidVersion, Version
-from urllib3.exceptions import ConnectTimeoutError, MaxRetryError
+from urllib3.exceptions import ConnectTimeoutError, MaxRetryError, ResponseError
 from urllib3.response import BaseHTTPResponse
 
 from pip_audit._cache import caching_session
@@ -63,7 +63,12 @@ class PyPIService(VulnerabilityService):
 
         try:
             response: BaseHTTPResponse = self.session.request("GET", url=url, timeout=self.timeout)
-        except MaxRetryError:
+        except MaxRetryError as error:
+            if (
+                not isinstance(error.reason, ResponseError)
+                or str(error.reason) != "too many redirects"
+            ):
+                raise
             # This should never happen with a healthy PyPI instance, but might
             # happen during an outage or network event.
             # Ref 2022-06-10: https://status.python.org/incidents/lgpr13fy71bk

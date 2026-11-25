@@ -5,7 +5,7 @@ from datetime import datetime
 import pretend  # type: ignore
 import pytest
 from packaging.version import Version
-from urllib3.exceptions import ConnectTimeoutError, MaxRetryError
+from urllib3.exceptions import ConnectTimeoutError, MaxRetryError, ResponseError
 
 import pip_audit._service as service
 
@@ -51,7 +51,15 @@ def test_pypi_multiple_pkg(cache_dir):
 
 
 def test_pypi_redirect_loop(monkeypatch):
-    session = pretend.stub(request=pretend.raiser(MaxRetryError(None, "https://pypi.org")))
+    session = pretend.stub(
+        request=pretend.raiser(
+            MaxRetryError(
+                None,
+                "https://pypi.org",
+                reason=ResponseError("too many redirects"),
+            )
+        )
+    )
     caching_session = pretend.call_recorder(lambda c, **kw: session)
     monkeypatch.setattr(service.pypi, "caching_session", caching_session)
 
@@ -60,6 +68,19 @@ def test_pypi_redirect_loop(monkeypatch):
 
     with pytest.raises(service.ConnectionError, match="PyPI is not redirecting properly"):
         dict(pypi.query_all(iter([service.ResolvedDependency("fakedep", Version("1.0.0"))])))
+
+
+def test_pypi_non_redirect_retry_error(monkeypatch):
+    error = MaxRetryError(None, "https://pypi.org", reason=ValueError("not a redirect"))
+    session = pretend.stub(request=pretend.raiser(error))
+    caching_session = pretend.call_recorder(lambda c, **kw: session)
+    monkeypatch.setattr(service.pypi, "caching_session", caching_session)
+
+    pypi = service.PyPIService(pretend.stub())
+
+    with pytest.raises(MaxRetryError) as exc:
+        dict(pypi.query_all(iter([service.ResolvedDependency("fakedep", Version("1.0.0"))])))
+    assert exc.value is error
 
 
 def test_pypi_connect_timeout(monkeypatch):
