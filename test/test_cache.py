@@ -4,6 +4,7 @@ import pretend  # type: ignore
 from packaging.version import Version
 from platformdirs import user_cache_path
 
+import pip_audit
 import pip_audit._cache as cache
 from pip_audit._cache import _get_cache_dir, _get_pip_cache
 
@@ -78,3 +79,9 @@ def test_delete_legacy_cache_dir(monkeypatch, tmp_path):
 
     _get_cache_dir(None, use_pip=False)
     assert not legacy.exists()
+
+
+def test_caching_session_user_agent(tmp_path):
+    session = cache.caching_session(tmp_path)
+
+    assert session.headers["User-Agent"] == f"pip-audit/{pip_audit.__version__}"

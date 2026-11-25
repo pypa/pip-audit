@@ -8,6 +8,12 @@ All versions prior to 0.0.9 are untracked.
 
 ## [Unreleased]
 
+### Changed
+
+* `pip-audit` now identifies itself with a `pip-audit/<version>` `User-Agent`
+  header on its HTTP requests, instead of the default `python-requests/<version>`
+  ([#942](https://github.com/pypa/pip-audit/issues/942))
+
 ### Fixed
 
 * Editable requirements skipped with `--skip-editable` no longer require a hash
