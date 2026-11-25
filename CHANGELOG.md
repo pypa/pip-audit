@@ -17,6 +17,11 @@ All versions prior to 0.0.9 are untracked.
 * Deduplicate vulnerability results that share the same PYSEC identifier.
   ([#1068](https://github.com/pypa/pip-audit/issues/1068))
 
+* `--locked` no longer rejects a `pylock.toml` whose `packages` array is empty.
+  A zero-dependency lockfile now audits as having nothing to report instead of
+  aborting the whole `--locked` run before the other lockfiles are reported.
+  ([#1152](https://github.com/pypa/pip-audit/issues/1152))
+
 ## [2.10.1]
 
 ### Fixed

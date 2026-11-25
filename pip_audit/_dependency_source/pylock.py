@@ -61,7 +61,10 @@ class PyLockSource(DependencySource):
             raise PyLockSourceError(f"{filename}: lockfile version {lock_version} is not supported")
 
         packages = pylock.get("packages")
-        if not packages:
+        if packages is None:
+            # `packages` is a required array in PEP 751, but it may legitimately be
+            # empty (e.g. `pip lock --only-deps` on a project with no dependencies),
+            # in which case there is simply nothing to audit.
             raise PyLockSourceError(f"{filename}: missing packages in lockfile")
 
         try:

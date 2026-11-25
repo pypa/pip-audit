@@ -24,6 +24,21 @@ class TestPyLockSource:
         deps = list(source.collect())
         assert deps == [SkippedDependency(name="attrs", skip_reason="no version specified")]
 
+    def test_empty_packages(self, asset):
+        pylock = asset("pylock.empty-packages.toml")
+        source = PyLockSource([pylock])
+
+        assert list(source.collect()) == []
+
+    def test_empty_packages_alongside_populated(self, asset):
+        source = PyLockSource([asset("pylock.empty-packages.toml"), asset("pylock.basic.toml")])
+
+        assert list(source.collect()) == [
+            ResolvedDependency(name="attrs", version=Version("25.1.0")),
+            ResolvedDependency(name="cattrs", version=Version("24.1.2")),
+            ResolvedDependency(name="numpy", version=Version("2.2.3")),
+        ]
+
     @pytest.mark.parametrize(
         ("name", "error"),
         [
