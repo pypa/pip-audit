@@ -1,11 +1,13 @@
+from email.utils import formatdate
 from pathlib import Path
 
 import pretend  # type: ignore
 from packaging.version import Version
 from platformdirs import user_cache_path
+from urllib3.response import HTTPResponse
 
 import pip_audit._cache as cache
-from pip_audit._cache import _get_cache_dir, _get_pip_cache
+from pip_audit._cache import _get_cache_dir, _get_pip_cache, caching_session
 
 
 def test_get_cache_dir(monkeypatch):
@@ -78,3 +80,18 @@ def test_delete_legacy_cache_dir(monkeypatch, tmp_path):
 
     _get_cache_dir(None, use_pip=False)
     assert not legacy.exists()
+
+
+def test_caching_session(monkeypatch, tmp_path):
+    session = caching_session(tmp_path)
+    response = HTTPResponse(
+        body=b'{"cached": true}',
+        headers={"Date": formatdate(usegmt=True), "Cache-Control": "max-age=60"},
+        status=200,
+    )
+    request = pretend.call_recorder(lambda *args, **kwargs: response)
+    monkeypatch.setattr(session._pool, "request", request)
+
+    assert session.request("GET", "https://example.test/data").json() == {"cached": True}
+    assert session.request("GET", "https://example.test/data").json() == {"cached": True}
+    assert len(request.calls) == 1

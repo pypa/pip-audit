@@ -4,8 +4,8 @@ from datetime import datetime
 
 import pretend  # type: ignore
 import pytest
-import requests
 from packaging.version import Version
+from urllib3.exceptions import ConnectTimeoutError, MaxRetryError
 
 import pip_audit._service as service
 
@@ -15,7 +15,7 @@ def get_mock_session(func):
         def __init__(self, create_response):
             self.create_response = create_response
 
-        def get(self, url, **kwargs):
+        def request(self, method, url, **kwargs):
             return self.create_response()
 
     return MockSession(func)
@@ -51,7 +51,7 @@ def test_pypi_multiple_pkg(cache_dir):
 
 
 def test_pypi_redirect_loop(monkeypatch):
-    session = pretend.stub(get=pretend.raiser(requests.TooManyRedirects))
+    session = pretend.stub(request=pretend.raiser(MaxRetryError(None, "https://pypi.org")))
     caching_session = pretend.call_recorder(lambda c, **kw: session)
     monkeypatch.setattr(service.pypi, "caching_session", caching_session)
 
@@ -63,7 +63,7 @@ def test_pypi_redirect_loop(monkeypatch):
 
 
 def test_pypi_connect_timeout(monkeypatch):
-    session = pretend.stub(get=pretend.raiser(requests.ConnectTimeout))
+    session = pretend.stub(request=pretend.raiser(ConnectTimeoutError))
     caching_session = pretend.call_recorder(lambda c, **kw: session)
     monkeypatch.setattr(service.pypi, "caching_session", caching_session)
 
@@ -83,10 +83,7 @@ def test_pypi_http_notfound(monkeypatch, cache_dir):
     def get_error_response():
         class MockResponse:
             # 404: Not Found
-            status_code = 404
-
-            def raise_for_status(self):
-                raise requests.HTTPError
+            status = 404
 
         return MockResponse()
 
@@ -117,10 +114,7 @@ def test_pypi_http_error(monkeypatch, cache_dir):
     def get_error_response():
         class MockResponse:
             # 403: Forbidden
-            status_code = 403
-
-            def raise_for_status(self):
-                raise requests.HTTPError
+            status = 403
 
         return MockResponse()
 
@@ -137,8 +131,7 @@ def test_pypi_http_error(monkeypatch, cache_dir):
 def test_pypi_mocked_response(monkeypatch, cache_dir):
     def get_mock_response():
         class MockResponse:
-            def raise_for_status(self):
-                pass
+            status = 200
 
             def json(self):
                 return {
@@ -177,8 +170,7 @@ def test_pypi_mocked_response(monkeypatch, cache_dir):
 def test_pypi_vuln_withdrawn(monkeypatch, cache_dir):
     def get_mock_response():
         class MockResponse:
-            def raise_for_status(self):
-                pass
+            status = 200
 
             def json(self):
                 return {
@@ -228,8 +220,7 @@ def test_pypi_vuln_withdrawn(monkeypatch, cache_dir):
 def test_pypi_vuln_description_fallbacks(monkeypatch, cache_dir, summary, details, description):
     def get_mock_response():
         class MockResponse:
-            def raise_for_status(self):
-                pass
+            status = 200
 
             def json(self):
                 return {
@@ -271,8 +262,7 @@ def test_pypi_vuln_description_fallbacks(monkeypatch, cache_dir, summary, detail
 def test_pypi_no_vuln_key(monkeypatch, cache_dir):
     def get_mock_response():
         class MockResponse:
-            def raise_for_status(self):
-                pass
+            status = 200
 
             def json(self):
                 return {}
@@ -296,8 +286,7 @@ def test_pypi_no_vuln_key(monkeypatch, cache_dir):
 def test_pypi_invalid_version(monkeypatch, cache_dir):
     def get_mock_response():
         class MockResponse:
-            def raise_for_status(self):
-                pass
+            status = 200
 
             def json(self):
                 return {

@@ -3,7 +3,7 @@ from __future__ import annotations
 import pretend  # type: ignore
 import pytest
 from packaging.version import Version
-from requests.exceptions import ConnectTimeout, HTTPError
+from urllib3.exceptions import ConnectTimeoutError
 
 import pip_audit._service as service
 
@@ -13,7 +13,7 @@ def get_mock_session(func):
         def __init__(self, create_response):
             self.create_response = create_response
 
-        def post(self, url, **kwargs):
+        def request(self, method, url, **kwargs):
             return self.create_response()
 
     return MockSession(func)
@@ -97,7 +97,7 @@ def test_osv_no_vuln():
 
 def test_osv_connection_error(monkeypatch):
     osv = service.OsvService()
-    monkeypatch.setattr(osv.session, "post", pretend.raiser(ConnectTimeout))
+    monkeypatch.setattr(osv.session, "request", pretend.raiser(ConnectTimeoutError))
 
     dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
     with pytest.raises(
@@ -107,21 +107,17 @@ def test_osv_connection_error(monkeypatch):
 
 
 def test_osv_error_response(monkeypatch):
-    def raise_for_status():
-        raise HTTPError
-
-    response = pretend.stub(raise_for_status=pretend.call_recorder(raise_for_status))
-    post = pretend.call_recorder(lambda *a, **kw: response)
+    response = pretend.stub(status=500)
+    request = pretend.call_recorder(lambda *a, **kw: response)
 
     osv = service.OsvService()
-    monkeypatch.setattr(osv.session, "post", post)
+    monkeypatch.setattr(osv.session, "request", request)
 
     dep = service.ResolvedDependency("jinja2", Version("2.4.1"))
     with pytest.raises(service.ServiceError):
         dict(osv.query_all(iter([dep])))
 
-    assert len(post.calls) == 1
-    assert len(response.raise_for_status.calls) == 1
+    assert len(request.calls) == 1
 
 
 def test_osv_skipped_dep():
@@ -149,11 +145,11 @@ def test_osv_unsupported_schema_version(monkeypatch, version):
         ]
     }
 
-    response = pretend.stub(raise_for_status=lambda: None, json=lambda: payload)
-    post = pretend.call_recorder(lambda *a, **kw: response)
+    response = pretend.stub(status=200, json=lambda: payload)
+    request = pretend.call_recorder(lambda *a, **kw: response)
 
     osv = service.OsvService()
-    monkeypatch.setattr(osv.session, "post", post)
+    monkeypatch.setattr(osv.session, "request", request)
 
     dep = service.ResolvedDependency("foo", Version("1.0.0"))
     results = dict(osv.query_all(iter([dep])))
@@ -194,11 +190,11 @@ def test_osv_vuln_description_fallbacks(monkeypatch, summary, details, descripti
         ],
     }
 
-    response = pretend.stub(raise_for_status=lambda: None, json=lambda: payload)
-    post = pretend.call_recorder(lambda *a, **kw: response)
+    response = pretend.stub(status=200, json=lambda: payload)
+    request = pretend.call_recorder(lambda *a, **kw: response)
 
     osv = service.OsvService()
-    monkeypatch.setattr(osv.session, "post", post)
+    monkeypatch.setattr(osv.session, "request", request)
 
     dep = service.ResolvedDependency("foo", Version("1.0.0"))
     results = dict(osv.query_all(iter([dep])))
@@ -226,11 +222,11 @@ def test_osv_vuln_affected_missing(monkeypatch):
         ],
     }
 
-    response = pretend.stub(raise_for_status=lambda: None, json=lambda: payload)
-    post = pretend.call_recorder(lambda *a, **kw: response)
+    response = pretend.stub(status=200, json=lambda: payload)
+    request = pretend.call_recorder(lambda *a, **kw: response)
 
     osv = service.OsvService()
-    monkeypatch.setattr(osv.session, "post", post)
+    monkeypatch.setattr(osv.session, "request", request)
 
     dep = service.ResolvedDependency("foo", Version("1.0.0"))
     results = dict(osv.query_all(iter([dep])))
@@ -265,11 +261,11 @@ def test_osv_vuln_ranges_missing(monkeypatch):
         ],
     }
 
-    response = pretend.stub(raise_for_status=lambda: None, json=lambda: payload)
-    post = pretend.call_recorder(lambda *a, **kw: response)
+    response = pretend.stub(status=200, json=lambda: payload)
+    request = pretend.call_recorder(lambda *a, **kw: response)
 
     osv = service.OsvService()
-    monkeypatch.setattr(osv.session, "post", post)
+    monkeypatch.setattr(osv.session, "request", request)
 
     dep = service.ResolvedDependency("foo", Version("1.0.0"))
     results = dict(osv.query_all(iter([dep])))
@@ -297,11 +293,11 @@ def test_osv_vuln_withdrawn(monkeypatch):
         ],
     }
 
-    response = pretend.stub(raise_for_status=lambda: None, json=lambda: payload)
-    post = pretend.call_recorder(lambda *a, **kw: response)
+    response = pretend.stub(status=200, json=lambda: payload)
+    request = pretend.call_recorder(lambda *a, **kw: response)
 
     osv = service.OsvService()
-    monkeypatch.setattr(osv.session, "post", post)
+    monkeypatch.setattr(osv.session, "request", request)
 
     dep = service.ResolvedDependency("foo", Version("1.0.0"))
     results = dict(osv.query_all(iter([dep])))

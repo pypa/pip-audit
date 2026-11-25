@@ -9,8 +9,9 @@ import logging
 from pathlib import Path
 from typing import cast
 
-import requests
 from packaging.version import InvalidVersion, Version
+from urllib3.exceptions import ConnectTimeoutError, MaxRetryError
+from urllib3.response import BaseHTTPResponse
 
 from pip_audit._cache import caching_session
 from pip_audit._service.interface import (
@@ -61,29 +62,28 @@ class PyPIService(VulnerabilityService):
         url = f"https://pypi.org/pypi/{spec.canonical_name}/{str(spec.version)}/json"
 
         try:
-            response: requests.Response = self.session.get(url=url, timeout=self.timeout)
-            response.raise_for_status()
-        except requests.TooManyRedirects:
+            response: BaseHTTPResponse = self.session.request("GET", url=url, timeout=self.timeout)
+        except MaxRetryError:
             # This should never happen with a healthy PyPI instance, but might
             # happen during an outage or network event.
             # Ref 2022-06-10: https://status.python.org/incidents/lgpr13fy71bk
             raise ConnectionError("PyPI is not redirecting properly")
-        except requests.ConnectTimeout:
+        except ConnectTimeoutError:
             # Apart from a normal network outage, this can happen for two main
             # reasons:
             # 1. PyPI's APIs are offline
             # 2. The user is behind a firewall or corporate network that blocks
             #    PyPI (and they're probably using custom indices)
             raise ConnectionError("Could not connect to PyPI's vulnerability feed")
-        except requests.HTTPError as http_error:
-            if response.status_code == 404:
-                skip_reason = (
-                    "Dependency not found on PyPI and could not be audited: "
-                    f"{spec.canonical_name} ({spec.version})"
-                )
-                logger.debug(skip_reason)
-                return SkippedDependency(name=spec.name, skip_reason=skip_reason), []
-            raise ServiceError from http_error
+        if response.status == 404:
+            skip_reason = (
+                "Dependency not found on PyPI and could not be audited: "
+                f"{spec.canonical_name} ({spec.version})"
+            )
+            logger.debug(skip_reason)
+            return SkippedDependency(name=spec.name, skip_reason=skip_reason), []
+        if response.status >= 400:
+            raise ServiceError
 
         response_json = response.json()
         results: list[VulnerabilityResult] = []

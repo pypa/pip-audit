@@ -9,18 +9,22 @@ import os
 import shutil
 import subprocess
 import sys
+import zlib
+from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any
+from typing import Any, cast
 
 import pip_api
-import requests
-from cachecontrol import CacheControl
+import urllib3
 from cachecontrol.caches import FileCache
+from cachecontrol.controller import CacheController
 from packaging.version import Version
 from platformdirs import user_cache_path
-
-from pip_audit._service.interface import ServiceError
+from urllib3._collections import HTTPHeaderDict
+from urllib3.response import BaseHTTPResponse
+from urllib3.util import Retry
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +46,8 @@ def _get_pip_cache() -> Path:
     except subprocess.CalledProcessError as cpe:  # pragma: no cover
         # NOTE: This should only happen if pip's cache has been explicitly disabled,
         # which we check for in the caller (via `PIP_NO_CACHE_DIR`).
+        from pip_audit._service.interface import ServiceError
+
         raise ServiceError(f"Failed to query the `pip` HTTP cache directory: {cmd}") from cpe
     cache_dir = process.stdout.decode("utf-8").strip("\n")
     http_cache_dir = Path(cache_dir) / "http"
@@ -154,9 +160,67 @@ class _SafeFileCache(FileCache):
                 self._logged_warning = True
 
 
-def caching_session(cache_dir: Path | None, *, use_pip: bool = False) -> requests.Session:
+@dataclass
+class _CacheRequest:
+    method: str
+    url: str
+    headers: HTTPHeaderDict
+
+
+class _CachingPoolManager:
+    def __init__(self, cache_dir: Path):
+        self._pool = urllib3.PoolManager(
+            retries=Retry(
+                total=None,
+                connect=False,
+                read=False,
+                redirect=5,
+                other=False,
+            )
+        )
+        self._controller = CacheController(_SafeFileCache(cache_dir))
+
+    def request(
+        self,
+        method: str,
+        url: str,
+        *,
+        headers: Mapping[str, str] | None = None,
+        **kwargs: Any,
+    ) -> BaseHTTPResponse:
+        request_headers = HTTPHeaderDict(headers)
+        cache_request = _CacheRequest(method, url, request_headers)
+
+        if method != "GET":
+            return self._pool.request(method, url, headers=request_headers, **kwargs)
+
+        try:
+            cached_response = self._controller.cached_request(cast(Any, cache_request))
+        except zlib.error:
+            cached_response = False
+
+        if cached_response:
+            return cached_response
+
+        request_headers.update(self._controller.conditional_headers(cast(Any, cache_request)))
+        response = self._pool.request(method, url, headers=request_headers, **kwargs)
+
+        if response.status == 304:
+            cached_response = self._controller.update_cached_response(
+                cast(Any, cache_request), cast(Any, response)
+            )
+            response.release_conn()
+            return cached_response
+
+        self._controller.cache_response(
+            cast(Any, cache_request), cast(Any, response), body=response.data
+        )
+        return response
+
+
+def caching_session(cache_dir: Path | None, *, use_pip: bool = False) -> _CachingPoolManager:
     """
-    Return a `requests` style session, with suitable caching middleware.
+    Return an HTTP session with suitable caching middleware.
 
     Uses the given `cache_dir` for the HTTP cache.
 
@@ -167,12 +231,4 @@ def caching_session(cache_dir: Path | None, *, use_pip: bool = False) -> request
     version of `pip` is too old.
     """
 
-    # We limit the number of redirects to 5, since the services we connect to
-    # should really never redirect more than once or twice.
-    inner_session = requests.Session()
-    inner_session.max_redirects = 5
-
-    return CacheControl(
-        inner_session,
-        cache=_SafeFileCache(_get_cache_dir(cache_dir, use_pip=use_pip)),
-    )
+    return _CachingPoolManager(_get_cache_dir(cache_dir, use_pip=use_pip))

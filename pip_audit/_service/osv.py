@@ -9,8 +9,9 @@ import logging
 from pathlib import Path
 from typing import Any, cast
 
-import requests
 from packaging.version import Version
+from urllib3.exceptions import ConnectTimeoutError
+from urllib3.response import BaseHTTPResponse
 
 from pip_audit._cache import caching_session
 from pip_audit._service.interface import (
@@ -67,16 +68,16 @@ class OsvService(VulnerabilityService):
             "version": str(spec.version),
         }
         try:
-            response: requests.Response = self.session.post(
-                url=self.osv_url,
-                data=json.dumps(query),
+            response: BaseHTTPResponse = self.session.request(
+                "POST",
+                self.osv_url,
+                body=json.dumps(query),
                 timeout=self.timeout,
             )
-            response.raise_for_status()
-        except requests.ConnectTimeout:
+        except ConnectTimeoutError:
             raise ConnectionError("Could not connect to OSV's vulnerability feed")
-        except requests.HTTPError as http_error:
-            raise ServiceError from http_error
+        if response.status >= 400:
+            raise ServiceError
 
         # If the response is empty, that means that the package/version pair doesn't have any
         # associated vulnerabilities

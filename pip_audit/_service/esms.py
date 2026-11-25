@@ -10,9 +10,10 @@ from pathlib import Path
 from typing import Any, cast
 from urllib.parse import urlencode
 
-import requests
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
+from urllib3.exceptions import ConnectTimeoutError
+from urllib3.response import BaseHTTPResponse
 
 from pip_audit._cache import caching_session
 from pip_audit._service.interface import (
@@ -69,15 +70,15 @@ class EcosystemsService(VulnerabilityService):
         }
 
         try:
-            response: requests.Response = self.session.get(
+            response: BaseHTTPResponse = self.session.request(
+                "GET",
                 f"{url}?{urlencode(query)}",
                 timeout=self.timeout,
             )
-            response.raise_for_status()
-        except requests.ConnectTimeout:
+        except ConnectTimeoutError:
             raise ConnectionError("Could not connect to ESMS' vulnerability feed")
-        except requests.HTTPError as http_error:
-            raise ServiceError from http_error
+        if response.status >= 400:
+            raise ServiceError
 
         # If the response is empty, that means that the package/version pair doesn't have any
         # associated vulnerabilities
