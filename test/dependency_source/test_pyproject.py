@@ -117,8 +117,7 @@ dependencies = [
         list(source.collect())
 
 
-@pytest.mark.online
-def test_pyproject_source_fix(req_file):
+def test_pyproject_source_fix(req_file, monkeypatch):
     source = _init_pyproject(
         req_file(),
         """
@@ -132,6 +131,12 @@ dependencies = [
         dep=ResolvedDependency(name="flask", version=Version("0.5")),
         version=Version("1.0"),
     )
+
+    def resolve(deps):
+        assert deps == ["flask==1.0"]
+        yield ResolvedDependency(name="flask", version=Version("1.0"))
+
+    monkeypatch.setattr(source, "_resolve", resolve)
     source.fix(fix)
     _check_file(source.filename, {"project": {"dependencies": ["flask==1.0"]}})
 
@@ -173,3 +178,23 @@ def test_pyproject_source_fix_no_deps(monkeypatch, req_file):
     # We log a warning when we find a `pyproject.toml` file with no dependencies
     assert len(logger.warning.calls) == 1
     _check_file(source.filename, {"project": {}})
+
+
+@pytest.mark.parametrize("resolved", ["1", "2", None])
+def test_fix_checks_transitive_dependency(req_file, monkeypatch, resolved):
+    source = _init_pyproject(req_file(), '[project]\ndependencies = ["parent==1"]\n')
+    original = source.filename.read_bytes()
+    fix = ResolvedFixVersion(ResolvedDependency(name="child", version=Version("1")), Version("2"))
+
+    def resolve(deps):
+        assert deps == ["parent==1"]
+        if resolved is not None:
+            yield ResolvedDependency(name="child", version=Version(resolved))
+
+    monkeypatch.setattr(source, "_resolve", resolve)
+    if resolved == "1":
+        with pytest.raises(DependencyFixError, match="child resolves to 1"):
+            source.fix(fix)
+    else:
+        source.fix(fix)
+    assert source.filename.read_bytes() == original

@@ -14,6 +14,7 @@ import tomli
 import tomli_w
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
+from packaging.utils import canonicalize_name
 
 from pip_audit._dependency_source import (
     DependencyFixError,
@@ -78,74 +79,93 @@ class PyProjectSource(DependencySource):
                 )
                 return
 
-            # NOTE(alex): This is probably due for a redesign. Since we're leaning on `pip` for
-            # dependency resolution now, we can think about doing `pip install <local-project-dir>`
-            # regardless of whether the project has a `pyproject.toml` or not. And if it doesn't
-            # have a `pyproject.toml`, we can raise an error if the user provides `--fix`.
-            with (
-                TemporaryDirectory() as ve_dir,
-                NamedTemporaryFile(dir=ve_dir, delete=False) as req_file,
-            ):
-                # We use delete=False in creating the tempfile to allow it to be
-                # closed and opened multiple times within the context scope on
-                # windows, see GitHub issue #646.
+            yield from self._resolve(deps)
 
-                # Write the dependencies to a temporary requirements file.
-                req_file.write(os.linesep.join(deps).encode())
-                req_file.flush()
+    def _resolve(self, deps: list[str]) -> Iterator[ResolvedDependency]:
+        """Resolve the supplied dependency declarations using the audit environment."""
+        # NOTE(alex): This is probably due for a redesign. Since we're leaning on `pip` for
+        # dependency resolution now, we can think about doing `pip install <local-project-dir>`
+        # regardless of whether the project has a `pyproject.toml` or not. And if it doesn't
+        # have a `pyproject.toml`, we can raise an error if the user provides `--fix`.
+        with (
+            TemporaryDirectory() as ve_dir,
+            NamedTemporaryFile(dir=ve_dir, delete=False) as req_file,
+        ):
+            # We use delete=False in creating the tempfile to allow it to be
+            # closed and opened multiple times within the context scope on
+            # windows, see GitHub issue #646.
 
-                # Try to install the generated requirements file.
-                ve = VirtualEnv(install_args=["-r", req_file.name], state=self.state)
-                try:
-                    ve.create(ve_dir)
-                except VirtualEnvError as exc:
-                    raise PyProjectSourceError(str(exc)) from exc
+            # Write the dependencies to a temporary requirements file.
+            req_file.write(os.linesep.join(deps).encode())
+            req_file.flush()
 
-                # Now query the installed packages.
-                for name, version in ve.installed_packages:
-                    yield ResolvedDependency(name=name, version=version)
+            # Try to install the generated requirements file.
+            ve = VirtualEnv(install_args=["-r", req_file.name], state=self.state)
+            try:
+                ve.create(ve_dir)
+            except VirtualEnvError as exc:
+                raise PyProjectSourceError(str(exc)) from exc
+
+            # Now query the installed packages.
+            for name, version in ve.installed_packages:
+                yield ResolvedDependency(name=name, version=version)
 
     def fix(self, fix_version: ResolvedFixVersion) -> None:
         """
         Fixes a dependency version for this `PyProjectSource`.
         """
 
-        with self.filename.open("rb+") as f, NamedTemporaryFile(mode="rb+", delete=False) as tmp:
+        with self.filename.open("rb") as f:
             pyproject_data = tomli.load(f)
 
-            project = pyproject_data.get("project")
-            if project is None:
+        project = pyproject_data.get("project")
+        if project is None:
+            raise PyProjectFixError(
+                f"pyproject file {self.filename} does not contain `project` section"
+            )
+
+        deps = project.get("dependencies")
+        if deps is None:
+            # Projects without dependencies aren't an error case
+            logger.warning(f"pyproject file {self.filename} does not contain `dependencies` list")
+            return
+
+        changed = False
+        reqs = [Requirement(dep) for dep in deps]
+        for i in range(len(reqs)):
+            # When we find a requirement that matches the provided fix version, we need to edit
+            # the requirement's specifier and then write it back to the underlying TOML data.
+            req = reqs[i]
+            if (
+                canonicalize_name(req.name) == fix_version.dep.canonical_name
+                and req.specifier.contains(fix_version.dep.version)
+                and not req.specifier.contains(fix_version.version)
+            ):
+                req.specifier = SpecifierSet(f"=={fix_version.version}")
+                deps[i] = str(req)
+                changed = True
+            assert req.marker is None or req.marker.evaluate()
+
+        # Resolve the proposed declarations before publishing the edit or reporting a fix.
+        for dep in self._resolve(deps):
+            if (
+                dep.canonical_name == fix_version.dep.canonical_name
+                and dep.version != fix_version.version
+            ):
                 raise PyProjectFixError(
-                    f"pyproject file {self.filename} does not contain `project` section"
+                    f"{dep.name} resolves to {dep.version} instead of the proposed "
+                    f"fix version {fix_version.version}"
                 )
 
-            deps = project.get("dependencies")
-            if deps is None:
-                # Projects without dependencies aren't an error case
-                logger.warning(
-                    f"pyproject file {self.filename} does not contain `dependencies` list"
-                )
-                return
-
-            reqs = [Requirement(dep) for dep in deps]
-            for i in range(len(reqs)):
-                # When we find a requirement that matches the provided fix version, we need to edit
-                # the requirement's specifier and then write it back to the underlying TOML data.
-                req = reqs[i]
-                if (
-                    req.name == fix_version.dep.name
-                    and req.specifier.contains(fix_version.dep.version)
-                    and not req.specifier.contains(fix_version.version)
-                ):
-                    req.specifier = SpecifierSet(f"=={fix_version.version}")
-                    deps[i] = str(req)
-                assert req.marker is None or req.marker.evaluate()
-
-            # Now dump the new edited TOML to the temporary file.
-            tomli_w.dump(pyproject_data, tmp)
-
-        # And replace the original `pyproject.toml` file.
-        os.replace(tmp.name, self.filename)
+        if changed:
+            tmp = NamedTemporaryFile(dir=self.filename.parent, delete=False)
+            try:
+                with tmp:
+                    tomli_w.dump(pyproject_data, tmp)
+                os.replace(tmp.name, self.filename)
+            except BaseException:
+                Path(tmp.name).unlink(missing_ok=True)
+                raise
 
 
 class PyProjectSourceError(DependencySourceError):
